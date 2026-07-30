@@ -1,25 +1,33 @@
 /** Backend'deki userdef değerlerini temsil eden enum. */
 export enum UserDef {
-  Ogrenci  = 11,
-  Ogretmen = 12,
-  Veli     = 13,
+  Ogrenci = 11,
+  Ogretmen = 13,
+  Veli = 12,
 }
 
 export function getUserDefLabel(userdef: number): string {
   switch (userdef) {
-    case UserDef.Ogrenci:  return 'Öğrenci';
-    case UserDef.Ogretmen: return 'Öğretmen';
-    case UserDef.Veli:     return 'Veli';
-    default:               return 'Personel';
+    case UserDef.Ogrenci:
+      return 'Öğrenci';
+    case UserDef.Ogretmen:
+      return 'Öğretmen';
+    case UserDef.Veli:
+      return 'Veli';
+    default:
+      return 'Personel';
   }
 }
 
 export function getUserDefBadgeClass(userdef: number): string {
   switch (userdef) {
-    case UserDef.Ogrenci:  return 'badge-student';
-    case UserDef.Ogretmen: return 'badge-teacher';
-    case UserDef.Veli:     return 'badge-parent';
-    default:               return 'badge-default';
+    case UserDef.Ogrenci:
+      return 'badge-student';
+    case UserDef.Ogretmen:
+      return 'badge-teacher';
+    case UserDef.Veli:
+      return 'badge-parent';
+    default:
+      return 'badge-default';
   }
 }
 
@@ -36,20 +44,20 @@ export interface Person {
   okod1?: string;
 
   // Referans alanları — API hem ID hem text döndürebilir
-  firma?: string;       // Firma ID (backend'e update'te ID olarak gönderilir)
-  firmaad: string;      // Firma adı (görünen metin)
-  bolum?: string;       // Bölüm ID
-  bolumad: string;      // Bölüm adı
-  pozisyon?: string;    // Pozisyon ID
-  pozisyonad: string;   // Pozisyon adı
-  altfirma?: string;    // Alt firma ID
-  altfirmaad: string;   // Alt firma adı
+  firma?: string; // Firma ID (backend'e update'te ID olarak gönderilir)
+  firmaad: string; // Firma adı (görünen metin)
+  bolum?: string; // Bölüm ID
+  bolumad: string; // Bölüm adı
+  pozisyon?: string; // Pozisyon ID
+  pozisyonad: string; // Pozisyon adı
+  altfirma?: string; // Alt firma ID
+  altfirmaad: string; // Alt firma adı
   direktorluk?: string; // Directorate ID
-  direktorlukad: string;// Directorate adı
-  gorev?: string;       // Görev ID
-  gorevad: string;      // Görev adı
-  yaka?: string;        // Yaka ID
-  yakaad: string;       // Yaka adı
+  direktorlukad: string; // Directorate adı
+  gorev?: string; // Görev ID
+  gorevad: string; // Görev adı
+  yaka?: string; // Yaka ID
+  yakaad: string; // Yaka adı
 
   // Ek alanlar
   credit: number;
@@ -178,17 +186,17 @@ export interface ReportLinkResponse {
 }
 
 export interface PersonLeaveRequest {
-  bastarih: string;      // start date (dd-mm-yyyy format)
-  bittarih: string;      // end date (dd-mm-yyyy format)
-  siciller: string;      // sicilno value (single person's sicilno string)
-  tip: number;           // fixed: 30
-  islemtipi: string;     // fixed: 'i'
-  izinadresi: string;    // leave address
-  ulasim: number;        // transport: 0 or 1
-  yemek: number;         // meal: 0 or 1
-  aciklama: string;      // description
-  kaynak: string;        // fixed: 'izin'
-  point: string;         // fixed: 'talep'
+  bastarih: string; // start date (dd-mm-yyyy format)
+  bittarih: string; // end date (dd-mm-yyyy format)
+  siciller: string; // sicilno value (single person's sicilno string)
+  tip: number; // fixed: 30
+  islemtipi: string; // fixed: 'i'
+  izinadresi: string; // leave address
+  ulasim: number; // transport: 0 or 1
+  yemek: number; // meal: 0 or 1
+  aciklama: string; // description
+  kaynak: string; // fixed: 'izin'
+  point: string; // fixed: 'talep'
 }
 
 /** İzin tipi dropdown seçeneği — TypesService.getDropdownList('Izintipleri') dönüşü */
@@ -202,32 +210,35 @@ export interface LeaveType {
  * Legacy: izinkaydet2() → POST /TA.
  */
 export interface PersonLeaveAssignParams {
-  islemtipi: string;          // 'ik' (sabit)
-  extra: string;              // JSON.stringify([{sicilid, tarih, tarihbit}])
-  tip: number;                // izin tipi ID
-  saatbas: string;            // '09:00'
-  saatbit: string;            // '18:00'
+  islemtipi: string; // 'ik' (sabit)
+  extra: string; // JSON.stringify([{sicilid, tarih, tarihbit}])
+  tip: number; // izin tipi ID
+  saatbas: string; // '09:00'
+  saatbit: string; // '18:00'
   ucretli: boolean;
   saatlik: boolean;
   aciklama: string;
-  sicilid: number;            // 0 (legacy uyumu)
-  tarih: string;              // 'undefined' (legacy uyumu)
-  tarihbit: string;           // 'undefined' (legacy uyumu)
+  sicilid: number; // 0 (legacy uyumu)
+  tarih: string; // 'undefined' (legacy uyumu)
+  tarihbit: string; // 'undefined' (legacy uyumu)
 }
 
 export function parseLinkedIds(raw: string | null | undefined): number[] {
   if (!raw || raw.trim() === '' || raw === '- - - - - - -') return [];
-  return raw.split(',').map(s => parseInt(s.trim(), 10)).filter(n => !isNaN(n));
+  return raw
+    .split(',')
+    .map((s) => parseInt(s.trim(), 10))
+    .filter((n) => !isNaN(n));
 }
 
 export function serializeLinkedIds(ids: number[]): string {
-  return ids.filter(n => !isNaN(n)).join(',');
+  return ids.filter((n) => !isNaN(n)).join(',');
 }
 
 export function resolveLinkedNames(ids: number[], allPersons: Person[]): LinkedPerson[] {
   if (ids.length === 0 || allPersons.length === 0) return [];
-  const personMap = new Map(allPersons.map(p => [p.id, p]));
-  return ids.map(id => {
+  const personMap = new Map(allPersons.map((p) => [p.id, p]));
+  return ids.map((id) => {
     const found = personMap.get(id);
     return {
       id,
@@ -269,4 +280,3 @@ export function buildLinkedPersonelno(linkedIds: number[], teacherIds: number[] 
   if (teacherIds.length > 0) parts.push('T:' + teacherIds.join(','));
   return parts.join(' ');
 }
-

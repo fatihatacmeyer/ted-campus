@@ -87,7 +87,7 @@
           <span class="material-symbols-outlined">badge</span>
         </div>
         <div class="stat-info">
-          <span class="stat-count">{{ allPersons.length }}</span>
+          <span class="stat-count">{{ getTotalCount() }}</span>
           <span class="stat-label">Toplam Kayıtlı</span>
         </div>
         <span class="material-symbols-outlined stat-arrow">arrow_forward</span>
@@ -130,7 +130,7 @@
                 <div class="person-row">
                   <div
                     class="person-avatar"
-                    [class]="person.userdef === 12 ? 'avatar-teacher' : 'avatar-student'"
+                    [class]="person.userdef === UserDef.Ogretmen ? 'avatar-teacher' : 'avatar-student'"
                   >
                     {{ person.ad.charAt(0) }}{{ person.soyad.charAt(0) }}
                   </div>
@@ -437,7 +437,7 @@
       <div class="person-row">
         <div
           class="person-avatar"
-          [class]="person.userdef === 12 ? 'avatar-teacher' : 'avatar-student'"
+          [class]="person.userdef === UserDef.Ogretmen ? 'avatar-teacher' : 'avatar-student'"
         >
           {{ person.ad.charAt(0) }}{{ person.soyad.charAt(0) }}
         </div>

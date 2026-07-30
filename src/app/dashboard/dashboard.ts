@@ -1,4 +1,10 @@
-import { Component, OnInit, ChangeDetectionStrategy, ChangeDetectorRef, inject } from '@angular/core';
+import {
+  Component,
+  OnInit,
+  ChangeDetectionStrategy,
+  ChangeDetectorRef,
+  inject,
+} from '@angular/core';
 import { Router } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { PersonService } from '../services/person.service';
@@ -31,6 +37,8 @@ export interface AccessTransaction {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class DashboardComponent implements OnInit {
+  readonly UserDef = UserDef;
+
   /* ── State ─────────────────────────────────────────────── */
   isLoading = false;
   errorMessage = '';
@@ -211,7 +219,9 @@ export class DashboardComponent implements OnInit {
 
   getUserName(): string {
     return (
-      this.authService.currentUserValue?.fullname || this.authService.currentUserValue?.loginname || 'Kullanıcı'
+      this.authService.currentUserValue?.fullname ||
+      this.authService.currentUserValue?.loginname ||
+      'Kullanıcı'
     );
   }
 
@@ -242,5 +252,11 @@ export class DashboardComponent implements OnInit {
       default:
         return '';
     }
+  }
+
+  getTotalCount(): number {
+    let totalCount: number = 0;
+    totalCount = this.studentCount + this.parentCount + this.teacherCount;
+    return totalCount;
   }
 }

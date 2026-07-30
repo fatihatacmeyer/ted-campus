@@ -156,7 +156,7 @@ export class PersonService {
    */
   insertPerson(personData: PersonInsertRequest): Observable<unknown> {
     if (!personData || personData.userdef == null) {
-      throw new Error('userdef zorunludur (11: Öğrenci, 12: Öğretmen, 13: Veli).');
+      throw new Error(`userdef zorunludur (${UserDef.Ogrenci}: Öğrenci, ${UserDef.Ogretmen}: Öğretmen, ${UserDef.Veli}: Veli).`);
     }
 
     const payload = this.buildPersonPayload(personData, 'i', 0);
@@ -170,7 +170,7 @@ export class PersonService {
    */
   updatePerson(personData: PersonInsertRequest & { id: number }): Observable<unknown> {
     if (!personData || personData.userdef == null) {
-      throw new Error('userdef zorunludur (11: Öğrenci, 12: Öğretmen, 13: Veli).');
+      throw new Error(`userdef zorunludur (${UserDef.Ogrenci}: Öğrenci, ${UserDef.Ogretmen}: Öğretmen, ${UserDef.Veli}: Veli).`);
     }
 
     const payload = this.buildPersonPayload(personData, 'u', personData.id);

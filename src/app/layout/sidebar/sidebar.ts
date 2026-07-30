@@ -23,8 +23,8 @@ export class SidebarComponent {
   protected readonly navItems: NavItem[] = [
     { label: 'Anasayfa', route: '/home', icon: 'dashboard' },
     { label: 'Öğrenciler', route: '/home/students', icon: 'school' },
-    { label: 'Öğretmenler', route: '/home/teachers', icon: 'badge' },
     { label: 'Veliler', route: '/home/parents', icon: 'group' },
+    { label: 'Öğretmenler', route: '/home/teachers', icon: 'badge' },
     { label: 'Servis', route: '/home/transport', icon: 'directions_bus' },
     { label: 'Etkinlikler', route: '/home/activities', icon: 'event' },
   ];

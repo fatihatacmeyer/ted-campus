@@ -1,6 +1,6 @@
 import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { PersonService } from '../services/person.service';
-import { Person } from '../core/person.model';
+import { Person, UserDef } from '../core/person.model';
 import { PersonTableComponent } from '../shared/person-table/person-table';
 
 @Component({
@@ -30,7 +30,7 @@ export class ParentsComponent implements OnInit {
 
     this.personService.getPersonList().subscribe({
       next: (data: Person[]) => {
-        this.persons = data.filter((p) => p.userdef === 13);
+        this.persons = data.filter((p) => p.userdef === UserDef.Veli);
         this.isLoading = false;
         this.cdr.detectChanges();
       },

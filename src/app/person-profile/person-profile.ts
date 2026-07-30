@@ -2,7 +2,7 @@ import { ChangeDetectionStrategy, Component, EventEmitter, Input, Output } from 
 import { CommonModule } from '@angular/common';
 import { DialogModule } from 'primeng/dialog';
 import { ButtonModule } from 'primeng/button';
-import { Person, LinkedPerson, extractLinkedPersonIds, extractLinkedTeacherIds, resolveLinkedNames } from '../core/person.model';
+import { Person, LinkedPerson, extractLinkedPersonIds, extractLinkedTeacherIds, resolveLinkedNames, UserDef } from '../core/person.model';
 
 @Component({
   selector: 'app-person-profile',
@@ -16,7 +16,7 @@ export class PersonProfileComponent {
   @Input() visible = false;
   @Input() person: Person | null = null;
   @Input() allPersons: Person[] = [];
-  @Input() userdefContext = 11;
+  @Input() userdefContext = UserDef.Ogrenci;
 
   @Output() visibleChange = new EventEmitter<boolean>();
   @Output() personClick = new EventEmitter<Person>();
@@ -38,29 +38,29 @@ export class PersonProfileComponent {
     return resolveLinkedNames(ids, this.allPersons);
   }
 
-  /** Öğrenci (11) ise hem veliler hem öğretmenler görünür */
+  /** Öğrenci (UserDef.Ogrenci) ise hem veliler hem öğretmenler görünür */
   get showLinkedPersons(): boolean {
     const ctx = this.person?.userdef ?? this.userdefContext;
-    return ctx === 11 || ctx === 13;
+    return ctx === UserDef.Ogrenci || ctx === UserDef.Veli;
   }
 
   get showLinkedTeachers(): boolean {
     const ctx = this.person?.userdef ?? this.userdefContext;
-    return ctx === 11;
+    return ctx === UserDef.Ogrenci;
   }
 
   /** Dinamik label — tıklanan kişinin userdef değerine göre */
   get linkedPersonsLabel(): string {
     const ctx = this.person?.userdef ?? this.userdefContext;
-    if (ctx === 11) return 'Veliler';
-    if (ctx === 13) return 'Çocuklar';
+    if (ctx === UserDef.Ogrenci) return 'Veliler';
+    if (ctx === UserDef.Veli) return 'Çocuklar';
     return 'Bağlantılı Kişiler';
   }
 
   /** Dinamik label — öğretmenler bölümü için */
   get linkedTeachersLabel(): string {
     const ctx = this.person?.userdef ?? this.userdefContext;
-    if (ctx === 11) return 'Öğretmenler';
+    if (ctx === UserDef.Ogrenci) return 'Öğretmenler';
     return 'Bağlantılı Öğretmenler';
   }
 
