@@ -2,7 +2,21 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, switchMap, tap, map } from 'rxjs';
 import { APP_CONFIG, AppConfig } from './app-config.service';
-import { Person, PersonInsertRequest, PersonLeaveRequest, PersonLeaveAssignParams, OperationResultResponse, ExitReason, UserDef, LeaveRequestResponse, ReportLinkResponse, extractLinkedPersonIds, extractLinkedTeacherIds, buildLinkedPersonelno } from '../core/person.model';
+import {
+  Person,
+  PersonInsertRequest,
+  PersonLeaveRequest,
+  PersonLeaveAssignParams,
+  PersonLeaveAssignCampusParams,
+  OperationResultResponse,
+  ExitReason,
+  UserDef,
+  LeaveRequestResponse,
+  ReportLinkResponse,
+  extractLinkedPersonIds,
+  extractLinkedTeacherIds,
+  buildLinkedPersonelno,
+} from '../core/person.model';
 import { AuthService } from './auth.service';
 import { PrepareService } from './prepare.service';
 
@@ -156,7 +170,9 @@ export class PersonService {
    */
   insertPerson(personData: PersonInsertRequest): Observable<unknown> {
     if (!personData || personData.userdef == null) {
-      throw new Error(`userdef zorunludur (${UserDef.Ogrenci}: Öğrenci, ${UserDef.Ogretmen}: Öğretmen, ${UserDef.Veli}: Veli).`);
+      throw new Error(
+        `userdef zorunludur (${UserDef.Ogrenci}: Öğrenci, ${UserDef.Ogretmen}: Öğretmen, ${UserDef.Veli}: Veli).`,
+      );
     }
 
     const payload = this.buildPersonPayload(personData, 'i', 0);
@@ -170,7 +186,9 @@ export class PersonService {
    */
   updatePerson(personData: PersonInsertRequest & { id: number }): Observable<unknown> {
     if (!personData || personData.userdef == null) {
-      throw new Error(`userdef zorunludur (${UserDef.Ogrenci}: Öğrenci, ${UserDef.Ogretmen}: Öğretmen, ${UserDef.Veli}: Veli).`);
+      throw new Error(
+        `userdef zorunludur (${UserDef.Ogrenci}: Öğrenci, ${UserDef.Ogretmen}: Öğretmen, ${UserDef.Veli}: Veli).`,
+      );
     }
 
     const payload = this.buildPersonPayload(personData, 'u', personData.id);
@@ -196,7 +214,7 @@ export class PersonService {
         const updated = [...currentParentIds, personId];
         this.updateLinkedPerson(target, updated, currentTeacherIds);
       } else if (!shouldHaveLink && hasLink) {
-        const updated = currentParentIds.filter(id => id !== personId);
+        const updated = currentParentIds.filter((id) => id !== personId);
         this.updateLinkedPerson(target, updated, currentTeacherIds);
       }
     }
@@ -221,7 +239,7 @@ export class PersonService {
         const updated = [...currentTeacherIds, studentId];
         this.updateLinkedPerson(target, currentParentIds, updated);
       } else if (!shouldHaveLink && hasLink) {
-        const updated = currentTeacherIds.filter(id => id !== studentId);
+        const updated = currentTeacherIds.filter((id) => id !== studentId);
         this.updateLinkedPerson(target, currentParentIds, updated);
       }
     }
@@ -367,15 +385,41 @@ export class PersonService {
     console.log('[assignLeave] Encrypted:', encryptedParam);
     console.log('[assignLeave] Token:', user?.tokenid);
 
-    return this.http.post<OperationResultResponse[] | OperationResultResponse>(`${this.config.apiUrl}/TA`, payload).pipe(
-      tap((raw) => console.log('[assignLeave] RAW response:', JSON.stringify(raw))),
-      map((raw) => {
-        if (Array.isArray(raw)) return raw;
-        if (raw && typeof raw === 'object') return [raw];
-        console.error('[assignLeave] Beklenmeyen response:', raw);
-        return [];
-      }),
-    );
+    return this.http
+      .post<OperationResultResponse[] | OperationResultResponse>(
+        `${this.config.apiUrl}/TA`,
+        payload,
+      )
+      .pipe(
+        tap((raw) => console.log('[assignLeave] RAW response:', JSON.stringify(raw))),
+        map((raw) => {
+          if (Array.isArray(raw)) return raw;
+          if (raw && typeof raw === 'object') return [raw];
+          console.error('[assignLeave] Beklenmeyen response:', raw);
+          return [];
+        }),
+      );
+  }
+
+  assignLeaveCampus(params: PersonLeaveAssignCampusParams): Observable<unknown> {
+    const paramString = this.buildParamString({
+      point: 'izinatacampus',
+      islemtipi: 'i',
+      sicilid: params.sicilid,
+      tip: params.tip,
+      bastarih: params.bastarih,
+      bittarih: params.bittarih,
+      saatlikmi: params.saatlikmi,
+      aciklama: params.aciklama,
+      blok: params.blok,
+    });
+
+    console.log('[assignLeaveCampus] RAW param:', paramString);
+
+    const encryptedParam = this.prepareService.prepare(paramString);
+    const apiUrl = `${this.config.apiUrl}/Dynamic?Name=${encodeURIComponent(encryptedParam)}`;
+
+    return this.http.get<unknown>(apiUrl);
   }
 
   getLeaveReport(formid: string): Observable<ReportLinkResponse[]> {

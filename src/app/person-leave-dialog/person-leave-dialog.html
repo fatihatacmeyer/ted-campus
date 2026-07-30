@@ -15,17 +15,6 @@
     }
 
     <div class="field">
-      <label class="field-label" for="leaveDate">İzin Tarihi</label>
-      <input
-        pInputText
-        id="leaveDate"
-        [value]="selectedDate | date:'dd.MM.yyyy'"
-        [readonly]="true"
-        [style]="{ width: '100%' }"
-      />
-    </div>
-
-    <div class="field">
       <label class="field-label" for="leaveType">İzin Tipi <span class="required">*</span></label>
       <p-select
         id="leaveType"
@@ -38,9 +27,19 @@
       />
     </div>
 
-    <div class="field-row time-row">
+    <div class="field-row">
+      <div class="field">
+        <label class="field-label" for="startDate">Başlangıç Tarihi <span class="required">*</span></label>
+        <input
+          pInputText
+          id="startDate"
+          type="date"
+          [(ngModel)]="startDateStr"
+          [style]="{ width: '100%' }"
+        />
+      </div>
       <div class="field time-field">
-        <label class="field-label" for="startTime">Başlangıç Saati <span class="required">*</span></label>
+        <label class="field-label" for="startTime">Saati <span class="required">*</span></label>
         <input
           pInputText
           id="startTime"
@@ -50,9 +49,21 @@
           [style]="{ width: '100%' }"
         />
       </div>
+    </div>
 
+    <div class="field-row">
+      <div class="field">
+        <label class="field-label" for="endDate">Bitiş Tarihi <span class="required">*</span></label>
+        <input
+          pInputText
+          id="endDate"
+          type="date"
+          [(ngModel)]="endDateStr"
+          [style]="{ width: '100%' }"
+        />
+      </div>
       <div class="field time-field">
-        <label class="field-label" for="endTime">Bitiş Saati <span class="required">*</span></label>
+        <label class="field-label" for="endTime">Saati <span class="required">*</span></label>
         <input
           pInputText
           id="endTime"
@@ -60,6 +71,27 @@
           [(ngModel)]="endTime"
           placeholder="18:00"
           [style]="{ width: '100%' }"
+        />
+      </div>
+    </div>
+
+    <div class="field-row">
+      <div class="field">
+        <p-checkbox
+          id="saatlikCheck"
+          [(ngModel)]="isSaatlik"
+          [binary]="true"
+          inputId="saatlikCheck"
+          label="Saatlik"
+        />
+      </div>
+      <div class="field">
+        <p-checkbox
+          id="blokCheck"
+          [(ngModel)]="isBlok"
+          [binary]="true"
+          inputId="blokCheck"
+          label="Blok izin (her gün aynı saat)"
         />
       </div>
     </div>

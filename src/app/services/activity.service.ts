@@ -289,7 +289,7 @@ export class ActivityService {
   private prepareService = inject(PrepareService);
   private authService = inject(AuthService);
 
-  private readonly point = 'EtkinlikCampus';
+  private readonly point = 'etkinlikcampus';
 
   private buildParamString(params: Record<string, string | number>): string {
     return Object.entries(params)
@@ -302,6 +302,7 @@ export class ActivityService {
       point: this.point,
       ...params,
     });
+    console.log(`[ActivityService] RAW param (${this.point}):`, paramString);
     const encryptedParam = this.prepareService.prepare(paramString);
     const apiUrl = `${this.config.apiUrl}/Dynamic?Name=${encodeURIComponent(encryptedParam)}`;
     return this.http.get<T>(apiUrl);

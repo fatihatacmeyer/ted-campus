@@ -206,6 +206,21 @@ export interface LeaveType {
 }
 
 /**
+ * sp_izinatacampus_i prosedürüne gönderilen parametreler.
+ * point=IzinataCampus & islemtipi=i & sicilid=... & tip=... & bastarih=... & bittarih=... & saatlikmi=... & aciklama=... & blok=...
+ * /Dynamic endpoint'i üzerinden GET isteğiyle gider.
+ */
+export interface PersonLeaveAssignCampusParams {
+  sicilid: number;
+  tip: number;
+  bastarih: string; // '2026-07-30 09:00:00' (DATETIME)
+  bittarih: string; // '2026-07-30 18:00:00' (DATETIME)
+  saatlikmi: number; // 0 | 1
+  aciklama: string;
+  blok: number; // 0 = gün bazlı, 1 = blok (her gün aynı saat)
+}
+
+/**
  * sp_pdks_ik prosedürüne gönderilen parametreler (islemtipi=ik).
  * Legacy: izinkaydet2() → POST /TA.
  */

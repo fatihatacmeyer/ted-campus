@@ -16,11 +16,11 @@ import { ButtonModule } from 'primeng/button';
 import { InputTextModule } from 'primeng/inputtext';
 import { TextareaModule } from 'primeng/textarea';
 import { SelectModule } from 'primeng/select';
+import { CheckboxModule } from 'primeng/checkbox';
 import {
   Person,
-  PersonLeaveAssignParams,
+  PersonLeaveAssignCampusParams,
   LeaveType,
-  OperationResultResponse,
 } from '../core/person.model';
 import { PersonService } from '../services/person.service';
 import { TypesService, DropdownItem } from '../services/types.service';
@@ -36,6 +36,7 @@ import { TypesService, DropdownItem } from '../services/types.service';
     InputTextModule,
     TextareaModule,
     SelectModule,
+    CheckboxModule,
   ],
   templateUrl: './person-leave-dialog.html',
   styleUrl: './person-leave-dialog.scss',
@@ -51,7 +52,8 @@ export class PersonLeaveDialogComponent implements OnChanges {
   private typesService = inject(TypesService);
   private cdr = inject(ChangeDetectorRef);
 
-  selectedDate: Date | null = null;
+  startDateStr = '';
+  endDateStr = '';
   selectedLeaveType: number | null = null;
   startTime = '';
   endTime = '';
@@ -59,6 +61,8 @@ export class PersonLeaveDialogComponent implements OnChanges {
   isProcessing = false;
   errorMessage = '';
   leaveTypes: LeaveType[] = [];
+  isBlok = true; // varsayılan: blok izin
+  isSaatlik = true; // varsayılan: saatlik izin
 
   ngOnChanges(changes: SimpleChanges): void {
     if (changes['visible'] && this.visible) {
@@ -68,13 +72,17 @@ export class PersonLeaveDialogComponent implements OnChanges {
   }
 
   private resetForm(): void {
+    const today = new Date();
     this.errorMessage = '';
-    this.selectedDate = new Date();
+    this.startDateStr = this.formatDate(today);
+    this.endDateStr = this.formatDate(today);
     this.selectedLeaveType = null;
     this.startTime = '';
     this.endTime = '';
     this.description = '';
     this.isProcessing = false;
+    this.isBlok = true;
+    this.isSaatlik = true;
   }
 
   private loadLeaveTypes(): void {
@@ -97,7 +105,8 @@ export class PersonLeaveDialogComponent implements OnChanges {
   }
 
   get isFormValid(): boolean {
-    if (!this.selectedDate) return false;
+    if (!this.startDateStr) return false;
+    if (!this.endDateStr) return false;
     if (this.selectedLeaveType == null) return false;
     if (!this.startTime || !this.endTime) return false;
     return true;
@@ -117,45 +126,39 @@ export class PersonLeaveDialogComponent implements OnChanges {
     this.isProcessing = true;
     this.errorMessage = '';
 
-    const dateISO = this.formatDate(this.selectedDate!);
-    const extra = JSON.stringify([
-      {
-        sicilid: this.person.id,
-        tarih: dateISO,
-        tarihbit: dateISO,
-      },
-    ]);
+    const bastarih = `${this.startDateStr} ${this.startTime}:00`;
+    const bittarih = `${this.endDateStr} ${this.endTime}:00`;
 
-    const request: PersonLeaveAssignParams = {
-      islemtipi: 'ik',
-      extra,
+    const request: PersonLeaveAssignCampusParams = {
+      sicilid: this.person.id,
       tip: this.selectedLeaveType!,
-      saatbas: this.startTime,
-      saatbit: this.endTime,
-      ucretli: false,
-      saatlik: true,
-      aciklama: this.description || '',
-      sicilid: 0,
-      tarih: 'undefined',
-      tarihbit: 'undefined',
+      bastarih,
+      bittarih,
+      saatlikmi: this.isSaatlik ? 1 : 0,
+      aciklama: (this.description || '').trim(),
+      blok: this.isBlok ? 1 : 0,
     };
 
-    this.personService.assignLeave(request).subscribe({
-      next: (response: OperationResultResponse[]) => {
+    this.personService.assignLeaveCampus(request).subscribe({
+      next: (response: unknown) => {
         this.isProcessing = false;
 
-        const result = response[0];
+        // /Dynamic response'u array olarak gelir; başarı = islemsonuc "1"
+        const items = Array.isArray(response) ? response : [response];
+        const result = items[0] as Record<string, unknown> | undefined;
+
         if (!result) {
           this.errorMessage = 'Sunucudan geçerli bir yanıt alınamadı.';
           this.cdr.markForCheck();
           return;
         }
 
-        if (result.islemsonuc === '1' || result.islemsonuc === 1) {
+        const sonuc = String(result['islemsonuc'] ?? '');
+        if (sonuc === '1') {
           this.confirmed.emit();
           this.close();
         } else {
-          this.errorMessage = result.sunucucevap || 'İzin kaydedilemedi.';
+          this.errorMessage = (result['sunucucevap'] as string) || 'İzin kaydedilemedi.';
           this.cdr.markForCheck();
         }
       },
