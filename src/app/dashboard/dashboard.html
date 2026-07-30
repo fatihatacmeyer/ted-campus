@@ -1,0 +1,517 @@
+<!-- ════════════════════════════════════════════════════════════
+     TED Dashboard — Ana Sayfa
+     Geçiş cihazları verisi ile beslenecek kartlar.
+     Gerçek API bağlandığında mock veri üreticileri kaldırılacak.
+     ════════════════════════════════════════════════════════════ -->
+
+<div class="dashboard">
+  <!-- ── Welcome Banner ──────────────────────────────────── -->
+  <div class="welcome-banner">
+    <div class="welcome-content">
+      <h1>{{ getGreeting() }}, {{ getUserName() }}!</h1>
+      <!-- <p>TED Yönetim Paneli &mdash; bugünün özeti aşağıda.</p> -->
+      <p>TED Dashboard Paneli &mdash; bugünün özeti aşağıda.</p>
+    </div>
+    <div class="welcome-decoration">
+      <span class="material-symbols-outlined">dashboard</span>
+    </div>
+  </div>
+
+  <!-- ── Loading State ───────────────────────────────────── -->
+  @if (isLoading) {
+    <div class="loading-container">
+      <p-progressSpinner strokeWidth="4" animationDuration=".8s" />
+      <p class="loading-text">Veriler yükleniyor...</p>
+    </div>
+  }
+
+  <!-- ── Error State ─────────────────────────────────────── -->
+  @if (errorMessage && !isLoading) {
+    <div class="error-banner">
+      <span class="material-symbols-outlined">error</span>
+      <span>{{ errorMessage }}</span>
+      <button
+        pButton
+        label="Yeniden Dene"
+        icon="pi pi-refresh"
+        class="p-button-sm p-button-text"
+        (click)="fetchData()"
+      ></button>
+    </div>
+  }
+
+  @if (!isLoading && !errorMessage) {
+    <!-- ════════════════════════════════════════════════════ -->
+    <!-- Row 1 — Stat Cards (4 sütun)                        -->
+    <!-- ════════════════════════════════════════════════════ -->
+    <div class="stat-grid">
+      <!-- İçerdeki Öğrenci -->
+      <div class="stat-card stat-student" (click)="navigateTo('students')">
+        <div class="stat-icon icon-emerald">
+          <span class="material-symbols-outlined">school</span>
+        </div>
+        <div class="stat-info">
+          <span class="stat-count">{{ studentCount }}</span>
+          <span class="stat-label">Öğrenci</span>
+        </div>
+        <span class="material-symbols-outlined stat-arrow">arrow_forward</span>
+      </div>
+
+      <!-- İçerdeki Öğretmen -->
+      <div class="stat-card stat-teacher" (click)="navigateTo('teachers')">
+        <div class="stat-icon icon-blue">
+          <span class="material-symbols-outlined">co_present</span>
+        </div>
+        <div class="stat-info">
+          <span class="stat-count">{{ teacherCount }}</span>
+          <span class="stat-label">Öğretmen</span>
+        </div>
+        <span class="material-symbols-outlined stat-arrow">arrow_forward</span>
+      </div>
+
+      <!-- Ziyaretçi (Veli) -->
+      <div class="stat-card stat-parent" (click)="navigateTo('parents')">
+        <div class="stat-icon icon-orange">
+          <span class="material-symbols-outlined">groups</span>
+        </div>
+        <div class="stat-info">
+          <span class="stat-count">{{ parentCount }}</span>
+          <span class="stat-label">Veli</span>
+        </div>
+        <span class="material-symbols-outlined stat-arrow">arrow_forward</span>
+      </div>
+
+      <!-- Toplam Kayıtlı Kişi -->
+      <div class="stat-card stat-total">
+        <div class="stat-icon icon-purple">
+          <span class="material-symbols-outlined">badge</span>
+        </div>
+        <div class="stat-info">
+          <span class="stat-count">{{ allPersons.length }}</span>
+          <span class="stat-label">Toplam Kayıtlı</span>
+        </div>
+        <span class="material-symbols-outlined stat-arrow">arrow_forward</span>
+      </div>
+    </div>
+
+    <!-- ════════════════════════════════════════════════════ -->
+    <!-- Row 2 — İki sütun: Erken Çıkan & Geç Kalan          -->
+    <!-- ════════════════════════════════════════════════════ -->
+    <div class="detail-grid">
+      <!-- Erken Çıkanlar -->
+      <div class="detail-card">
+        <div class="detail-card-header">
+          <div class="detail-card-title">
+            <div class="detail-icon icon-red">
+              <span class="material-symbols-outlined">logout</span>
+            </div>
+            <div>
+              <h3>Erken Çıkanlar</h3>
+              <span class="detail-subtitle">{{ earlyLeavers.length }} kişi</span>
+            </div>
+          </div>
+          <button
+            pButton
+            class="p-button-text p-button-sm p-button-rounded"
+            icon="pi pi-expand"
+            pTooltip="Tam Ekranda Gör"
+            (click)="earlyLeaverDialogVisible = true"
+          ></button>
+        </div>
+        <div class="detail-card-body">
+          @if (earlyLeavers.length === 0) {
+            <div class="empty-state">
+              <span class="material-symbols-outlined">check_circle</span>
+              <p>Bugün erken çıkan kişi yok.</p>
+            </div>
+          } @else {
+            <div class="person-list">
+              @for (person of earlyLeavers.slice(0, 5); track person.id) {
+                <div class="person-row">
+                  <div
+                    class="person-avatar"
+                    [class]="person.userdef === 12 ? 'avatar-teacher' : 'avatar-student'"
+                  >
+                    {{ person.ad.charAt(0) }}{{ person.soyad.charAt(0) }}
+                  </div>
+                  <div class="person-info">
+                    <span class="person-name">{{ person.adsoyad }}</span>
+                    <span class="person-meta"
+                      >No: {{ person.sicilno }} &middot; {{ person.userdefad }}</span
+                    >
+                  </div>
+                  <span class="person-badge" [class]="getUserdefBadgeClass(person.userdef)">
+                    {{ getUserdefBadge(person.userdef) }}
+                  </span>
+                  <span class="person-exit-time">
+                    <span class="material-symbols-outlined">schedule</span>
+                    {{ person.cikistarih }}
+                  </span>
+                </div>
+              }
+            </div>
+            @if (earlyLeavers.length > 5) {
+              <button class="show-more-btn" (click)="earlyLeaverDialogVisible = true">
+                +{{ earlyLeavers.length - 5 }} kişi daha &hellip;
+              </button>
+            }
+          }
+        </div>
+      </div>
+
+      <!-- Geç Kalan Kişiler -->
+      <div class="detail-card">
+        <div class="detail-card-header">
+          <div class="detail-card-title">
+            <div class="detail-icon icon-teal">
+              <span class="material-symbols-outlined">alarm</span>
+            </div>
+            <div>
+              <h3>Geç Kalan Kişiler</h3>
+              <span class="detail-subtitle">{{ lateArrivals.length }} kişi</span>
+            </div>
+          </div>
+          <button
+            pButton
+            class="p-button-text p-button-sm p-button-rounded"
+            icon="pi pi-expand"
+            pTooltip="Tam Ekranda Gör"
+            (click)="lateDialogVisible = true"
+          ></button>
+        </div>
+        <div class="detail-card-body">
+          @if (lateArrivals.length === 0) {
+            <div class="empty-state">
+              <span class="material-symbols-outlined">check_circle</span>
+              <p>Bugün geç kalan kişi yok.</p>
+            </div>
+          } @else {
+            <div class="person-list">
+              @for (late of lateArrivals.slice(0, 5); track late.sicilno) {
+                <div class="person-row">
+                  <div class="person-avatar avatar-late">
+                    <span class="material-symbols-outlined">person_add</span>
+                  </div>
+                  <div class="person-info">
+                    <span class="person-name">{{ late.name }}</span>
+                    <span class="person-meta"
+                      >No: {{ late.sicilno }} &middot; Beklenen: {{ late.expected }}</span
+                    >
+                  </div>
+                  <span class="person-delay-badge">
+                    <span class="material-symbols-outlined">timer</span>
+                    {{ late.delay }} geç
+                  </span>
+                </div>
+              }
+            </div>
+          }
+        </div>
+      </div>
+    </div>
+
+    <!-- ════════════════════════════════════════════════════ -->
+    <!-- Row 3 — Son İşlemler (tam genişlik)                  -->
+    <!-- ════════════════════════════════════════════════════ -->
+    <div class="full-card">
+      <div class="detail-card-header">
+        <div class="detail-card-title">
+          <div class="detail-icon icon-slate">
+            <span class="material-symbols-outlined">receipt_long</span>
+          </div>
+          <div>
+            <h3>Geçiş Cihazı &mdash; Son İşlemler</h3>
+            <span class="detail-subtitle">Son {{ showAllTransactions ? '100' : '10' }} işlem</span>
+          </div>
+        </div>
+        <div class="header-actions">
+          <button
+            pButton
+            [label]="showAllTransactions ? 'Küçült' : 'Tümünü Göster'"
+            class="p-button-outlined p-button-sm"
+            (click)="toggleAllTransactions()"
+          ></button>
+          <button
+            pButton
+            class="p-button-text p-button-sm p-button-rounded"
+            icon="pi pi-expand"
+            pTooltip="Tam Ekranda Gör"
+            (click)="txnDialogVisible = true"
+          ></button>
+        </div>
+      </div>
+      <div class="txn-table-wrapper">
+        <table class="txn-table">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Kişi</th>
+              <th>Sicil No</th>
+              <th>Kart</th>
+              <th>Yön</th>
+              <th>Cihaz</th>
+              <th>Saat</th>
+              <th>Sonuç</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (txn of displayedTransactions; track txn.id) {
+              <tr [class.txn-failed]="txn.result === 'Başarısız'">
+                <td class="txn-id">{{ txn.id }}</td>
+                <td>
+                  <div class="txn-person">
+                    <span class="person-badge" [class]="getUserdefBadgeClass(txn.userdef)">
+                      {{ getUserdefBadge(txn.userdef) }}
+                    </span>
+                    {{ txn.personName }}
+                  </div>
+                </td>
+                <td class="txn-sicil">{{ txn.sicilno }}</td>
+                <td class="txn-card">{{ txn.cardid }}</td>
+                <td>
+                  <span
+                    class="txn-direction"
+                    [class.direction-in]="txn.direction === 'Giriş'"
+                    [class.direction-out]="txn.direction === 'Çıkış'"
+                  >
+                    <span class="material-symbols-outlined">{{
+                      txn.direction === 'Giriş' ? 'login' : 'logout'
+                    }}</span>
+                    {{ txn.direction }}
+                  </span>
+                </td>
+                <td>{{ txn.device }}</td>
+                <td class="txn-time">{{ txn.time }}</td>
+                <td>
+                  <span
+                    class="txn-result"
+                    [class.result-ok]="txn.result === 'Başarılı'"
+                    [class.result-fail]="txn.result === 'Başarısız'"
+                  >
+                    {{ txn.result }}
+                  </span>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ════════════════════════════════════════════════════ -->
+    <!-- Row 4 — Etkinlik Kişi Listesi (tam genişlik)         -->
+    <!-- ════════════════════════════════════════════════════ -->
+    <div class="full-card">
+      <div class="detail-card-header">
+        <div class="detail-card-title">
+          <div class="detail-icon icon-cyan">
+            <span class="material-symbols-outlined">event_available</span>
+          </div>
+          <div>
+            <h3>Etkinlik Kişi Listesi</h3>
+            <span class="detail-subtitle">{{ eventPersons.length }} katılımcı</span>
+          </div>
+        </div>
+        <button
+          pButton
+          class="p-button-text p-button-sm p-button-rounded"
+          icon="pi pi-expand"
+          pTooltip="Tam Ekranda Gör"
+          (click)="eventDialogVisible = true"
+        ></button>
+      </div>
+      <div class="detail-card-body">
+        @if (eventPersons.length === 0) {
+          <div class="empty-state">
+            <span class="material-symbols-outlined">info</span>
+            <p>Etkinlik katılımcısı bulunamadı.</p>
+          </div>
+        } @else {
+          <div class="event-grid">
+            @for (ep of eventPersons; track ep.name) {
+              <div class="event-person-card">
+                <div class="person-avatar avatar-event">
+                  {{ getInitials(ep.name) }}
+                </div>
+                <div class="event-person-info">
+                  <span class="person-name">{{ ep.name }}</span>
+                  <span class="person-meta">{{ ep.role }}</span>
+                </div>
+                <div class="event-person-task">{{ ep.task }}</div>
+                <span class="event-status-badge" [class]="getStatusClass(ep.status)">
+                  {{ ep.status }}
+                </span>
+              </div>
+            }
+          </div>
+        }
+      </div>
+    </div>
+  }
+</div>
+
+<!-- ════════════════════════════════════════════════════════════ -->
+<!-- Dialoglar — Tam ekran genişletme                             -->
+<!-- ════════════════════════════════════════════════════════════ -->
+
+<!-- İşlemler Dialog -->
+<p-dialog
+  header="Geçiş Cihazı — Son 100 İşlem"
+  [(visible)]="txnDialogVisible"
+  [modal]="true"
+  [style]="{ width: '90vw', maxHeight: '85vh' }"
+  [draggable]="false"
+  [resizable]="false"
+  styleClass="dashboard-dialog"
+>
+  <div class="txn-table-wrapper">
+    <table class="txn-table">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Kişi</th>
+          <th>Sicil No</th>
+          <th>Kart</th>
+          <th>Yön</th>
+          <th>Cihaz</th>
+          <th>Saat</th>
+          <th>Sonuç</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (txn of recentTransactions; track txn.id) {
+          <tr [class.txn-failed]="txn.result === 'Başarısız'">
+            <td class="txn-id">{{ txn.id }}</td>
+            <td>
+              <div class="txn-person">
+                <span class="person-badge" [class]="getUserdefBadgeClass(txn.userdef)">
+                  {{ getUserdefBadge(txn.userdef) }}
+                </span>
+                {{ txn.personName }}
+              </div>
+            </td>
+            <td class="txn-sicil">{{ txn.sicilno }}</td>
+            <td class="txn-card">{{ txn.cardid }}</td>
+            <td>
+              <span
+                class="txn-direction"
+                [class.direction-in]="txn.direction === 'Giriş'"
+                [class.direction-out]="txn.direction === 'Çıkış'"
+              >
+                <span class="material-symbols-outlined">{{
+                  txn.direction === 'Giriş' ? 'login' : 'logout'
+                }}</span>
+                {{ txn.direction }}
+              </span>
+            </td>
+            <td>{{ txn.device }}</td>
+            <td class="txn-time">{{ txn.time }}</td>
+            <td>
+              <span
+                class="txn-result"
+                [class.result-ok]="txn.result === 'Başarılı'"
+                [class.result-fail]="txn.result === 'Başarısız'"
+              >
+                {{ txn.result }}
+              </span>
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+</p-dialog>
+
+<!-- Erken Çıkanlar Dialog -->
+<p-dialog
+  header="Erken Çıkanlar"
+  [(visible)]="earlyLeaverDialogVisible"
+  [modal]="true"
+  [style]="{ width: '60vw', maxHeight: '80vh' }"
+  [draggable]="false"
+  [resizable]="false"
+  styleClass="dashboard-dialog"
+>
+  <div class="person-list dialog-list">
+    @for (person of earlyLeavers; track person.id) {
+      <div class="person-row">
+        <div
+          class="person-avatar"
+          [class]="person.userdef === 12 ? 'avatar-teacher' : 'avatar-student'"
+        >
+          {{ person.ad.charAt(0) }}{{ person.soyad.charAt(0) }}
+        </div>
+        <div class="person-info">
+          <span class="person-name">{{ person.adsoyad }}</span>
+          <span class="person-meta">No: {{ person.sicilno }} &middot; {{ person.userdefad }}</span>
+        </div>
+        <span class="person-badge" [class]="getUserdefBadgeClass(person.userdef)">
+          {{ getUserdefBadge(person.userdef) }}
+        </span>
+        <span class="person-exit-time">
+          <span class="material-symbols-outlined">schedule</span>
+          {{ person.cikistarih }}
+        </span>
+      </div>
+    }
+  </div>
+</p-dialog>
+
+<!-- Geç Kalanlar Dialog -->
+<p-dialog
+  header="Geç Kalan Kişiler"
+  [(visible)]="lateDialogVisible"
+  [modal]="true"
+  [style]="{ width: '60vw', maxHeight: '80vh' }"
+  [draggable]="false"
+  [resizable]="false"
+  styleClass="dashboard-dialog"
+>
+  <div class="person-list dialog-list">
+    @for (late of lateArrivals; track late.sicilno) {
+      <div class="person-row">
+        <div class="person-avatar avatar-late">
+          <span class="material-symbols-outlined">alarm</span>
+        </div>
+        <div class="person-info">
+          <span class="person-name">{{ late.name }}</span>
+          <span class="person-meta"
+            >No: {{ late.sicilno }} &middot; Beklenen: {{ late.expected }}</span
+          >
+        </div>
+        <span class="person-delay-badge">
+          <span class="material-symbols-outlined">timer</span>
+          {{ late.delay }} geç
+        </span>
+      </div>
+    }
+  </div>
+</p-dialog>
+
+<!-- Etkinlik Listesi Dialog -->
+<p-dialog
+  header="Etkinlik Kişi Listesi"
+  [(visible)]="eventDialogVisible"
+  [modal]="true"
+  [style]="{ width: '60vw', maxHeight: '80vh' }"
+  [draggable]="false"
+  [resizable]="false"
+  styleClass="dashboard-dialog"
+>
+  <div class="person-list dialog-list">
+    @for (ep of eventPersons; track ep.name) {
+      <div class="person-row">
+        <div class="person-avatar avatar-event">
+          {{ getInitials(ep.name) }}
+        </div>
+        <div class="person-info">
+          <span class="person-name">{{ ep.name }}</span>
+          <span class="person-meta">{{ ep.role }} &middot; {{ ep.task }}</span>
+        </div>
+        <span class="event-status-badge" [class]="getStatusClass(ep.status)">
+          {{ ep.status }}
+        </span>
+      </div>
+    }
+  </div>
+</p-dialog>

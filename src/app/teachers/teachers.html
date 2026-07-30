@@ -1,0 +1,21 @@
+<div class="home-container">
+  <div class="title-section">
+    <h3>Öğretmenler</h3>
+  </div>
+
+  @if (isLoading) {
+    <div class="loading-box">
+      <p>Bekle...</p>
+    </div>
+  }
+
+  @if (errorMessage) {
+    <div class="error-box">
+      <p>{{ errorMessage }}</p>
+    </div>
+  }
+
+  @if (!isLoading && !errorMessage) {
+    <app-person-table [persons]="persons"></app-person-table>
+  }
+</div>

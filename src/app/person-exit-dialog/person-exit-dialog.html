@@ -1,0 +1,88 @@
+<p-dialog
+  [header]="dialogTitle"
+  [modal]="true"
+  [draggable]="false"
+  [resizable]="false"
+  [style]="{ width: '440px' }"
+  [visible]="visible"
+  (visibleChange)="close()"
+>
+  <div class="exit-dialog-body">
+    @if (errorMessage) {
+      <div class="error-box">
+        <p>{{ errorMessage }}</p>
+      </div>
+    }
+
+    @if (mode === 'exit') {
+      <div class="field">
+        <label class="field-label" for="exitDate">Çıkış Tarihi <span class="required">*</span></label>
+        <p-datepicker
+          id="exitDate"
+          [(ngModel)]="selectedDate"
+          dateFormat="dd.mm.yy"
+          [showIcon]="true"
+          [showOnFocus]="false"
+          placeholder="Tarih seçin"
+          appendTo="body"
+          [style]="{ width: '100%' }"
+        />
+      </div>
+
+      <div class="field">
+        <label class="field-label" for="exitNeden">Neden <span class="required">*</span></label>
+        <p-select
+          id="exitNeden"
+          [(ngModel)]="selectedReason"
+          [options]="reasonOptions"
+          optionLabel="label"
+          optionValue="value"
+          placeholder="Ayrılış nedeni seçin"
+          [style]="{ width: '100%' }"
+          appendTo="body"
+        />
+      </div>
+    } @else {
+      <div class="field">
+        <label class="field-label" for="restoreDate">Giriş Tarihi <span class="required">*</span></label>
+        <p-datepicker
+          id="restoreDate"
+          [(ngModel)]="selectedDate"
+          dateFormat="dd.mm.yy"
+          [showIcon]="true"
+          [showOnFocus]="false"
+          placeholder="Tarih seçin"
+          appendTo="body"
+          [style]="{ width: '100%' }"
+        />
+      </div>
+
+      <div class="confirm-text">
+        <i class="pi pi-info-circle"></i>
+        <span>Bu işlem <strong>{{ person?.ad }} {{ person?.soyad }}</strong> kişisini tekrar aktif hale getirecektir.</span>
+      </div>
+    }
+  </div>
+
+  <ng-template pTemplate="footer">
+    <div class="dialog-actions">
+      <button
+        pButton
+        label="İptal"
+        class="p-button-text"
+        aria-label="İptal"
+        (click)="close()"
+        [disabled]="isProcessing"
+      ></button>
+      <button
+        pButton
+        [label]="isProcessing ? 'İşleniyor...' : (mode === 'exit' ? 'Çıkış Ver' : 'Geri Al')"
+        [class]="mode === 'exit' ? 'p-button-danger' : 'p-button-success'"
+        [icon]="mode === 'exit' ? 'pi pi-times' : 'pi pi-replay'"
+        aria-label="İşlemi onayla"
+        (click)="onConfirm()"
+        [disabled]="!isFormValid || isProcessing"
+      ></button>
+    </div>
+  </ng-template>
+</p-dialog>

@@ -1,0 +1,86 @@
+<div class="admin-wrapper">
+  <div class="admin-card">
+    <div class="d-flex justify-content-between align-items-center mb-3 gap-2 flex-wrap">
+      <h4 class="fw-bold mb-0" style="color: #dc2134;">{{ pageTitle }}</h4>
+
+      <button
+        pButton
+        class="p-button-sm"
+        icon="pi pi-plus"
+        [label]="addLabel"
+        [attr.aria-label]="addLabel"
+        (click)="openAddDialog()"
+      ></button>
+    </div>
+
+    <div class="small text-muted mb-3">
+      {{ descriptionText }}
+    </div>
+
+    @if (isLoading) {
+      <div class="loading-box">
+        <p-progressSpinner strokeWidth="4" fill="transparent" animationDuration=".8s"></p-progressSpinner>
+        <span class="loading-text">Yükleniyor...</span>
+      </div>
+    }
+
+    @if (errorMessage) {
+      <div class="error-box">
+        <p>{{ errorMessage }}</p>
+      </div>
+    }
+
+    @if (!isLoading && !errorMessage) {
+      <app-person-table
+        [persons]="persons"
+        [loading]="isLoading"
+        [tableId]="USERDEF.toString()"
+        [allPersons]="allPersons"
+        [columnOverrides]="columnOverrides"
+        [showLeaveButton]="USERDEF === UserDef.Ogrenci"
+        [showActionsColumn]="showActionsColumn"
+        (rowClick)="onRowClick($event)"
+        (leaveRequest)="onLeaveRequest($event)"
+      ></app-person-table>
+    }
+  </div>
+</div>
+
+@if (hasProfileModal) {
+  <app-person-profile
+    [(visible)]="showProfileModal"
+    [person]="selectedProfilePerson"
+    [allPersons]="allPersons"
+    [userdefContext]="USERDEF"
+    (personClick)="onLinkedPersonClick($event)"
+    (editRequest)="onEditRequest($event)"
+    (exitRequest)="onProfileExitRequest($event)"
+    (restoreRequest)="onProfileRestoreRequest($event)"
+  ></app-person-profile>
+}
+
+<app-person-form
+  [(visible)]="showAddDialog"
+  [userdef]="USERDEF"
+  [editPerson]="editPerson"
+  [allPersons]="allPersons"
+  [linkedPersonIds]="editPerson ? getLinkedIds(editPerson) : []"
+  [title]="formTitle"
+  (visibleChange)="onEditDialogClose()"
+  (saved)="onPersonSaved($event)"
+></app-person-form>
+
+<app-person-exit-dialog
+  [(visible)]="showExitDialog"
+  [person]="exitPerson"
+  [mode]="exitMode"
+  (visibleChange)="onExitDialogClose()"
+  (confirmed)="onExitConfirmed()"
+></app-person-exit-dialog>
+
+<app-person-leave-dialog
+  [(visible)]="showLeaveDialog"
+  [person]="leavePerson"
+  (visibleChange)="onLeaveDialogClose()"
+  (confirmed)="onLeaveConfirmed()"
+></app-person-leave-dialog>

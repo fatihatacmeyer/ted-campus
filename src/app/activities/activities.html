@@ -1,0 +1,416 @@
+<div class="admin-wrapper">
+  <div class="admin-card">
+    <div class="table-toolbar mb-3">
+      <h4 class="fw-bold mb-0" style="color: #dc2134">Etkinlik Yönetimi</h4>
+      <button
+        pButton
+        label="Yeni Etkinlik Ekle"
+        icon="pi pi-plus"
+        class="p-button-success p-button-sm"
+        (click)="openAddDialog()"
+      ></button>
+    </div>
+
+    <p-table
+      [value]="activities()"
+      [paginator]="true"
+      [rows]="10"
+      class="admin-table"
+      styleClass="p-datatable-striped"
+      responsiveLayout="scroll"
+    >
+      <ng-template pTemplate="header">
+        <tr>
+          <th style="width: 50px">ID</th>
+          <th>Etkinlik Adı</th>
+          <th>Türü</th>
+          <th>Tarih</th>
+          <th>Yönetici</th>
+          <th>Sınıf / Kapsam</th>
+          <th>Durum</th>
+          <th style="width: 120px; text-align: center">İşlemler</th>
+        </tr>
+      </ng-template>
+
+      <ng-template pTemplate="body" let-activity>
+        <tr>
+          <td>{{ activity.id }}</td>
+          <td>
+            <strong>{{ activity.name }}</strong>
+          </td>
+          <td>{{ activity.activityType }}</td>
+          <td>{{ activity.startDate }}</td>
+          <td>{{ activity.eventManager || '-' }}</td>
+
+          <!-- Sınıf/Kapsam hücresi: gruplanmış özet + tooltip ile tam liste -->
+          <td [pTooltip]="getTableClassroomFull(activity.classroom)" tooltipPosition="top">
+            @if (activity.classroom && activity.classroom !== 'Tüm Sınıflar') {
+              <span class="cell-text classroom-summary-text" style="max-width: 180px">
+                {{ getTableClassroomSummary(activity.classroom) }}
+              </span>
+            } @else {
+              <span class="text-muted">Tüm Sınıflar</span>
+            }
+          </td>
+
+          <td>
+            <p-tag [value]="activity.status" [severity]="getSeverity(activity.status)"></p-tag>
+          </td>
+          <td>
+            <div class="d-flex justify-content-center gap-1">
+              <button
+                pButton
+                icon="pi pi-pencil"
+                class="p-button-text p-button-warning p-button-sm"
+                (click)="openEditDialog(activity)"
+                pTooltip="Düzenle"
+              ></button>
+              <button
+                pButton
+                icon="pi pi-trash"
+                class="p-button-text p-button-danger p-button-sm"
+                (click)="deleteActivity(activity.id)"
+                pTooltip="Sil"
+              ></button>
+            </div>
+          </td>
+        </tr>
+      </ng-template>
+
+      <ng-template pTemplate="emptymessage">
+        <tr>
+          <td colspan="8" class="text-center py-5 text-muted">
+            Henüz kayıtlı bir etkinlik bulunmuyor.
+          </td>
+        </tr>
+      </ng-template>
+    </p-table>
+  </div>
+</div>
+
+<!-- Ekleme / Düzenleme Dialog -->
+<p-dialog
+  [header]="dialogTitle"
+  [(visible)]="isDialogVisible"
+  [modal]="true"
+  [style]="{ width: '750px', maxHeight: '90vh' }"
+  [draggable]="false"
+  (onHide)="closeDialog()"
+>
+  <form
+    [formGroup]="activityForm"
+    (ngSubmit)="saveActivity()"
+    class="mt-3 d-flex flex-column gap-4 pb-3"
+  >
+    <!-- GENEL BİLGİLER -->
+    <div>
+      <h6 class="text-primary fw-bold mb-3 border-bottom pb-2">Genel Bilgiler</h6>
+      <div class="d-flex gap-3 mb-3">
+        <div class="w-100 d-flex flex-column gap-1">
+          <label class="fw-semibold small text-muted"
+            >Etkinlik Adı <span class="text-primary">*</span></label
+          >
+          <input pInputText formControlName="name" />
+        </div>
+        <div class="w-100 d-flex flex-column gap-1">
+          <label class="fw-semibold small text-muted"
+            >Türü <span class="text-primary">*</span></label
+          >
+          <p-select
+            formControlName="activityType"
+            [options]="typeOptions"
+            optionLabel="label"
+            optionValue="value"
+            appendTo="body"
+            styleClass="w-100"
+          ></p-select>
+        </div>
+      </div>
+      <div class="d-flex gap-3">
+        <div class="w-100 d-flex flex-column gap-1">
+          <label class="fw-semibold small text-muted">Yönetici (Sorumlu)</label>
+          <input pInputText formControlName="eventManager" />
+        </div>
+        <!-- <div class="w-100 d-flex flex-column gap-1">
+          <label class="fw-semibold small text-muted"
+            >Durum <span class="text-primary">*</span></label
+          >
+          <p-select
+            formControlName="status"
+            [options]="statusOptions"
+            optionLabel="label"
+            optionValue="value"
+            appendTo="body"
+            styleClass="w-100"
+          ></p-select>
+        </div> -->
+      </div>
+    </div>
+
+    <!-- TARİH BİLGİLERİ -->
+    <div>
+      <h6 class="text-primary fw-bold mb-3 border-bottom pb-2">Tarih Bilgileri</h6>
+      <div class="d-flex gap-3 mb-3">
+        <div class="w-100 d-flex flex-column gap-1">
+          <label class="fw-semibold small text-muted"
+            >Etkinlik Başlangıç <span class="text-primary">*</span></label
+          >
+          <p-datepicker
+            formControlName="startDate"
+            dateFormat="yy-mm-dd"
+            appendTo="body"
+            styleClass="w-100"
+            [showIcon]="true"
+          ></p-datepicker>
+        </div>
+        <div class="w-100 d-flex flex-column gap-1">
+          <label class="fw-semibold small text-muted"
+            >Etkinlik Bitiş <span class="text-primary">*</span></label
+          >
+          <p-datepicker
+            formControlName="endDate"
+            dateFormat="yy-mm-dd"
+            appendTo="body"
+            styleClass="w-100"
+            [showIcon]="true"
+          ></p-datepicker>
+        </div>
+      </div>
+      <div class="d-flex gap-3">
+        <div class="w-100 d-flex flex-column gap-1">
+          <label class="fw-semibold small text-muted">Başvuru Başlangıç</label>
+          <p-datepicker
+            formControlName="requestStartDate"
+            dateFormat="yy-mm-dd"
+            appendTo="body"
+            styleClass="w-100"
+            [showIcon]="true"
+          ></p-datepicker>
+        </div>
+        <div class="w-100 d-flex flex-column gap-1">
+          <label class="fw-semibold small text-muted">Başvuru Bitiş</label>
+          <p-datepicker
+            formControlName="requestEndDate"
+            dateFormat="yy-mm-dd"
+            appendTo="body"
+            styleClass="w-100"
+            [showIcon]="true"
+          ></p-datepicker>
+        </div>
+      </div>
+    </div>
+
+    <!-- KAPASİTE VE FİNANS -->
+    <div>
+      <h6 class="text-primary fw-bold mb-3 border-bottom pb-2">Kapasite, Veli & Finans</h6>
+      <div class="d-flex gap-3 mb-3 align-items-center">
+        <div class="w-100 d-flex align-items-center gap-2">
+          <p-checkbox
+            formControlName="isParentRequired"
+            [binary]="true"
+            inputId="parentReq"
+          ></p-checkbox>
+          <label for="parentReq" class="fw-semibold small text-muted mb-0"
+            >Veli Katılımı Zorunlu mu?</label
+          >
+        </div>
+        <div class="w-100 d-flex align-items-center gap-2">
+          <p-checkbox formControlName="isPaid" [binary]="true" inputId="isPaidCheck"></p-checkbox>
+          <label for="isPaidCheck" class="fw-semibold small text-muted mb-0"
+            >Ücretli Etkinlik</label
+          >
+        </div>
+      </div>
+      <div class="d-flex gap-3 mb-3">
+        <div class="w-100 d-flex flex-column gap-1">
+          <label class="fw-semibold small text-muted">Maks. Öğrenci</label>
+          <input pInputText type="number" formControlName="maxStudentCount" />
+        </div>
+        <div class="w-100 d-flex flex-column gap-1">
+          <label class="fw-semibold small text-muted">Veli Kontenjanı (Kişi Başı)</label>
+          <input pInputText type="number" formControlName="studentParentCount" />
+        </div>
+        <div class="w-100 d-flex flex-column gap-1">
+          <label class="fw-semibold small text-muted">Ücret (₺)</label>
+          <input
+            pInputText
+            type="number"
+            formControlName="fee"
+            [disabled]="!activityForm.get('isPaid')?.value"
+          />
+        </div>
+      </div>
+    </div>
+
+    <!-- ERİŞİM & DETAYLAR -->
+    <div>
+      <h6 class="text-primary fw-bold mb-3 border-bottom pb-2">Ekstra Bilgiler</h6>
+      <!-- Sınıf Kapsamı — quick-select但onları + MultiSelect -->
+      <div class="d-flex flex-column gap-2 mb-3">
+        <label class="fw-semibold small text-muted">Sınıf Kapsamı</label>
+
+        <!-- Üst aksiyon satırı: Tüm Şubeleri Seç / Seçimi Temizle -->
+        <div class="d-flex align-items-center gap-3">
+          <button
+            type="button"
+            class="btn btn-sm p-button-text p-button-sm"
+            style="color: var(--p-primary-color); text-decoration: underline; font-size: 0.8rem"
+            (click)="selectAllClasses()"
+          >
+            Tüm Şubeleri Seç
+          </button>
+          <button
+            type="button"
+            class="btn btn-sm p-button-text p-button-sm text-muted"
+            style="text-decoration: underline; font-size: 0.8rem"
+            (click)="clearAllClasses()"
+          >
+            Seçimi Temizle
+          </button>
+        </div>
+
+        <!-- Tüm Sınıflar toggle + grade pill但onları (yatay scroll) -->
+
+        <!-- Seçim özeti satırı -->
+        @if (getSelectionSummary) {
+          <div class="d-flex align-items-center gap-2 classroom-selection-summary">
+            <span class="small text-muted">
+              <i class="pi pi-info-circle me-1"></i>
+              {{ getSelectionSummary }}
+            </span>
+            <button
+              type="button"
+              class="btn btn-link btn-sm p-0 text-danger"
+              style="text-decoration: none; font-size: 0.75rem"
+              (click)="clearAllClasses()"
+            >
+              Temizle
+            </button>
+          </div>
+        }
+
+        <!-- MultiSelect — detaylı bireysel seçim için -->
+        <p-multiSelect
+          formControlName="classroom"
+          [options]="classroomGroups"
+          [group]="true"
+          optionLabel="label"
+          optionValue="value"
+          placeholder="Bireysel şube seçimi için tıklayın"
+          display="chip"
+          [maxSelectedLabels]="8"
+          appendTo="body"
+          styleClass="w-100"
+          [disabled]="isAllClassesSelected"
+        >
+          <!-- Grup header template: dropdown içinde de toplu seçim -->
+          <ng-template let-group pTemplate="group">
+            <div
+              class="d-flex align-items-center justify-content-between w-100 px-3 py-2 cursor-pointer classroom-group-header"
+              (click)="toggleGroup(group); $event.stopPropagation()"
+            >
+              <div class="d-flex align-items-center gap-2">
+                <span
+                  class="d-inline-flex align-items-center justify-content-center border rounded"
+                  [style.width]="'18px'"
+                  [style.height]="'18px'"
+                  [style.background-color]="
+                    isGroupSelected(group) ? 'var(--p-primary-color)' : 'transparent'
+                  "
+                  [style.border-color]="
+                    isGroupSelected(group) ? 'var(--p-primary-color)' : '#adb5bd'
+                  "
+                >
+                  @if (isGroupSelected(group)) {
+                    <i class="pi pi-check text-white" style="font-size: 0.65rem"></i>
+                  }
+                </span>
+                <span class="fw-semibold">{{ group.label }}</span>
+              </div>
+              <span class="text-muted small">
+                {{ getGroupSelectedCount(group) }}/{{ group.items.length }}
+              </span>
+            </div>
+          </ng-template>
+        </p-multiSelect>
+      </div>
+
+      <!-- Ulaşım Bilgisi — own row -->
+      <div class="d-flex flex-column gap-1 mb-3">
+        <label class="fw-semibold small text-muted">Ulaşım Bilgisi</label>
+        <input
+          pInputText
+          formControlName="transportation"
+          placeholder="Örn: Otobüs, Kendi İmkanları"
+        />
+      </div>
+
+      <div class="w-100 d-flex flex-column gap-1 mb-3">
+        <label class="fw-semibold small text-muted">Açıklama</label>
+        <textarea
+          pTextarea
+          formControlName="description"
+          rows="3"
+          style="resize: vertical"
+        ></textarea>
+      </div>
+    </div>
+
+    <!-- Butonlar -->
+    <div class="d-flex justify-content-end gap-2 mt-2 pt-3 border-top bg-white sticky-bottom">
+      <button
+        pButton
+        type="button"
+        label="İptal"
+        icon="pi pi-times"
+        class="p-button-text"
+        (click)="closeDialog()"
+      ></button>
+      <button
+        pButton
+        type="submit"
+        label="Kaydet"
+        icon="pi pi-check"
+        class="p-button-primary"
+        [disabled]="activityForm.invalid"
+      ></button>
+    </div>
+  </form>
+</p-dialog>
+
+<!-- Tüm Sınıflar onay dialogu -->
+<p-dialog
+  header="Etkinlik Kapsamı Onayı"
+  [(visible)]="showAllClassesConfirm"
+  [modal]="true"
+  [style]="{ width: '450px' }"
+  [draggable]="false"
+>
+  <div class="d-flex align-items-start gap-3">
+    <i class="pi pi-exclamation-triangle text-warning" style="font-size: 1.5rem"></i>
+    <div>
+      <p class="mb-2">Bu etkinlik <strong>tüm sınıflara</strong> açılacaktır.</p>
+      <p class="text-muted small mb-0">
+        Seçili sınıf bulunmuyor. Devam etmek istediğinize emin misiniz?
+      </p>
+    </div>
+  </div>
+  <ng-template pTemplate="footer">
+    <div class="d-flex justify-content-end gap-2">
+      <button
+        pButton
+        label="Geri Dön"
+        icon="pi pi-arrow-left"
+        class="p-button-text"
+        (click)="cancelConfirm()"
+      ></button>
+      <button
+        pButton
+        label="Evet, Kaydet"
+        icon="pi pi-check"
+        class="p-button-primary"
+        (click)="confirmSave()"
+      ></button>
+    </div>
+  </ng-template>
+</p-dialog>

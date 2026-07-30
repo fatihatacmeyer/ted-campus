@@ -1,0 +1,109 @@
+<p-dialog
+  [(visible)]="visible"
+  [modal]="true"
+  [style]="{ width: '500px' }"
+  [draggable]="false"
+  (onHide)="close()"
+  header="Kişisel Profil"
+  [baseZIndex]="10000"
+>
+  @if (person) {
+    <div class="profile-content">
+      <div class="profile-info">
+        <div class="info-row">
+          <span class="info-label">Ad Soyad</span>
+          <span class="info-value">{{ person.adsoyad }}</span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">Sicil No</span>
+          <span class="info-value">{{ person.sicilno || '-' }}</span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">Telefon</span>
+          <span class="info-value">{{ person.ceptelefon || '-' }}</span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">Kayıt Tipi</span>
+          <span class="info-value">{{ person.userdefad || '-' }}</span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">Kart ID</span>
+          <span class="info-value">{{ person.cardid || '-' }}</span>
+        </div>
+      </div>
+
+      @if (showLinkedPersons) {
+      <div class="linked-section">
+        <h6>{{ linkedPersonsLabel }}</h6>
+        @if (hasLinkedPersons) {
+          <ul class="linked-list">
+            @for (linked of linkedPersons; track linked.id) {
+              <li>
+                <button
+                  pButton
+                  type="button"
+                  class="p-button-text p-button-sm p-button-link"
+                  (click)="onLinkedPersonClick(linked)"
+                >{{ linked.name }} ({{ linked.sicilno || '-' }})</button>
+              </li>
+            }
+          </ul>
+        } @else {
+          <span class="no-linked">Atanmamış</span>
+        }
+      </div>
+      }
+
+      @if (showLinkedTeachers) {
+      <div class="linked-section">
+        <h6>{{ linkedTeachersLabel }}</h6>
+        @if (hasLinkedTeachers) {
+          <ul class="linked-list">
+            @for (linked of linkedTeachers; track linked.id) {
+              <li>
+                <button
+                  pButton
+                  type="button"
+                  class="p-button-text p-button-sm p-button-link"
+                  (click)="onLinkedPersonClick(linked)"
+                >{{ linked.name }} ({{ linked.sicilno || '-' }})</button>
+              </li>
+            }
+          </ul>
+        } @else {
+          <span class="no-linked">Atanmamış</span>
+        }
+      </div>
+      }
+
+      <div class="profile-actions">
+        <div class="profile-actions-left">
+          @if (isPersonActive) {
+            <button
+              pButton
+              type="button"
+              class="p-button-danger p-button-outlined"
+              icon="pi pi-times"
+              (click)="onExitClick()"
+            >Çıkış Ver</button>
+          } @else {
+            <button
+              pButton
+              type="button"
+              class="p-button-success p-button-outlined"
+              icon="pi pi-replay"
+              (click)="onRestoreClick()"
+            >İşe Geri Al</button>
+          }
+        </div>
+        <button
+          pButton
+          type="button"
+          class="p-button-outlined"
+          icon="pi pi-pencil"
+          (click)="onEditClick()"
+        >Düzenle</button>
+      </div>
+    </div>
+  }
+</p-dialog>
