@@ -29,7 +29,9 @@
 
     <div class="field-row">
       <div class="field">
-        <label class="field-label" for="startDate">Başlangıç Tarihi <span class="required">*</span></label>
+        <label class="field-label" for="startDate"
+          >Başlangıç Tarihi <span class="required">*</span></label
+        >
         <input
           pInputText
           id="startDate"
@@ -38,14 +40,14 @@
           [style]="{ width: '100%' }"
         />
       </div>
-      <div class="field time-field">
-        <label class="field-label" for="startTime">Saati <span class="required">*</span></label>
+      <div class="field">
+        <label class="field-label" for="startTime">Başlangıç Saati</label>
         <input
           pInputText
           id="startTime"
           type="time"
           [(ngModel)]="startTime"
-          placeholder="09:00"
+          placeholder="00:00 (boş geçilirse)"
           [style]="{ width: '100%' }"
         />
       </div>
@@ -53,7 +55,7 @@
 
     <div class="field-row">
       <div class="field">
-        <label class="field-label" for="endDate">Bitiş Tarihi <span class="required">*</span></label>
+        <label class="field-label" for="endDate">Bitiş Tarihi <span class="">*</span></label>
         <input
           pInputText
           id="endDate"
@@ -62,37 +64,35 @@
           [style]="{ width: '100%' }"
         />
       </div>
-      <div class="field time-field">
-        <label class="field-label" for="endTime">Saati <span class="required">*</span></label>
+      <div class="field">
+        <label class="field-label" for="endTime">Bitiş Saati</label>
         <input
           pInputText
           id="endTime"
           type="time"
           [(ngModel)]="endTime"
-          placeholder="18:00"
+          placeholder="00:00 (boş geçilirse)"
           [style]="{ width: '100%' }"
         />
       </div>
     </div>
 
-    <div class="field-row">
-      <div class="field">
+    <div class="checkbox-row">
+      <div class="checkbox-item">
         <p-checkbox
-          id="saatlikCheck"
           [(ngModel)]="isSaatlik"
           [binary]="true"
           inputId="saatlikCheck"
-          label="Saatlik"
         />
+        <label for="saatlikCheck" class="checkbox-label">Saatlik</label>
       </div>
-      <div class="field">
+      <div class="checkbox-item">
         <p-checkbox
-          id="blokCheck"
           [(ngModel)]="isBlok"
           [binary]="true"
           inputId="blokCheck"
-          label="Blok izin (her gün aynı saat)"
         />
+        <label for="blokCheck" class="checkbox-label">Blok izin (her gün aynı saat)</label>
       </div>
     </div>
 

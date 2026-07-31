@@ -19,7 +19,7 @@ export interface ActivityInterface {
   oKod2: string;
   oKod3: string;
   oKod4: string;
-  oKod5: string; // estra alanlar 5 bitiş
+  oKod5: string; // estra alanlar 5, bitiş
   xSicilID: number; // etkinliği oluşturan
   createdAt: Date | string;
   isPrivate: boolean; // sadece belli sınıfları seçebilmek için

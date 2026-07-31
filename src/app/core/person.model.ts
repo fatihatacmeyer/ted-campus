@@ -213,8 +213,8 @@ export interface LeaveType {
 export interface PersonLeaveAssignCampusParams {
   sicilid: number;
   tip: number;
-  bastarih: string; // '2026-07-30 09:00:00' (DATETIME)
-  bittarih: string; // '2026-07-30 18:00:00' (DATETIME)
+  bastarih: string; // '2026-07-30T09:00' (DATETIME, T separator)
+  bittarih: string; // '2026-07-30T18:00' (DATETIME, T separator)
   saatlikmi: number; // 0 | 1
   aciklama: string;
   blok: number; // 0 = gün bazlı, 1 = blok (her gün aynı saat)

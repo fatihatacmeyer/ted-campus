@@ -1,7 +1,7 @@
 .leave-dialog-body {
   display: flex;
   flex-direction: column;
-  gap: 1.25rem;
+  gap: 1rem;
 }
 
 .field {
@@ -31,7 +31,12 @@
 
 .field-row {
   display: flex;
-  gap: 1.5rem;
+  gap: 1rem;
+}
+
+.field-row > .field {
+  flex: 1;
+  min-width: 0;
 }
 
 .dialog-actions {
@@ -40,15 +45,28 @@
   gap: 0.5rem;
 }
 
-/* Saatlik izin — saat seçiciler yanyana */
-.time-row {
-  .field.time-field {
-    flex: 1;
-    min-width: 0;
-  }
+/* Checkbox satırı — yanyana gösterim */
+.checkbox-row {
+  display: flex;
+  gap: 1.5rem;
+  align-items: center;
+  padding: 0.25rem 0;
 }
 
-/* p-select PrimeNG bileşeni tam genişlik için */
+.checkbox-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.checkbox-label {
+  font-size: 0.875rem;
+  color: #334155;
+  cursor: pointer;
+  user-select: none;
+}
+
+/* PrimeNG bileşen override */
 :host ::ng-deep {
   .p-select {
     width: 100%;

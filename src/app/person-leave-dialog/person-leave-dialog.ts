@@ -62,7 +62,7 @@ export class PersonLeaveDialogComponent implements OnChanges {
   errorMessage = '';
   leaveTypes: LeaveType[] = [];
   isBlok = true; // varsayılan: blok izin
-  isSaatlik = true; // varsayılan: saatlik izin
+  isSaatlik = false; // varsayılan: tüm gün
 
   ngOnChanges(changes: SimpleChanges): void {
     if (changes['visible'] && this.visible) {
@@ -82,7 +82,7 @@ export class PersonLeaveDialogComponent implements OnChanges {
     this.description = '';
     this.isProcessing = false;
     this.isBlok = true;
-    this.isSaatlik = true;
+    this.isSaatlik = false;
   }
 
   private loadLeaveTypes(): void {
@@ -108,7 +108,6 @@ export class PersonLeaveDialogComponent implements OnChanges {
     if (!this.startDateStr) return false;
     if (!this.endDateStr) return false;
     if (this.selectedLeaveType == null) return false;
-    if (!this.startTime || !this.endTime) return false;
     return true;
   }
 
@@ -126,8 +125,11 @@ export class PersonLeaveDialogComponent implements OnChanges {
     this.isProcessing = true;
     this.errorMessage = '';
 
-    const bastarih = `${this.startDateStr} ${this.startTime}:00`;
-    const bittarih = `${this.endDateStr} ${this.endTime}:00`;
+    // YYYY-MM-DDTHH:MM formatı — saat boşsa 00:00
+    const basSaat = this.startTime || '00:00';
+    const bitSaat = this.endTime || '00:00';
+    const bastarih = `${this.startDateStr}T${basSaat}`;
+    const bittarih = `${this.endDateStr}T${bitSaat}`;
 
     const request: PersonLeaveAssignCampusParams = {
       sicilid: this.person.id,
