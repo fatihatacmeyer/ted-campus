@@ -6,6 +6,7 @@ import { APP_CONFIG } from './services/app-config.service';
 import { environment } from './environments/environment';
 import { authInterceptor } from './core/interceptors/auth.interceptor';
 
+import { MessageService } from 'primeng/api';
 import { provideAnimationsAsync } from '@angular/platform-browser/animations/async';
 import { providePrimeNG } from 'primeng/config';
 import MyPreset from './_primeng/mypreset';
@@ -25,6 +26,7 @@ export const appConfig: ApplicationConfig = {
         },
       },
     }),
+    MessageService,
     provideHttpClient(withInterceptors([authInterceptor])),
     { provide: APP_CONFIG, useValue: environment },
   ],

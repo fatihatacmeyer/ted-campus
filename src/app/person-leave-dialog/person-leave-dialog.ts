@@ -17,11 +17,7 @@ import { InputTextModule } from 'primeng/inputtext';
 import { TextareaModule } from 'primeng/textarea';
 import { SelectModule } from 'primeng/select';
 import { CheckboxModule } from 'primeng/checkbox';
-import {
-  Person,
-  PersonLeaveAssignCampusParams,
-  LeaveType,
-} from '../core/person.model';
+import { Person, PersonLeaveAssignCampusParams, LeaveType } from '../core/person.model';
 import { PersonService } from '../services/person.service';
 import { TypesService, DropdownItem } from '../services/types.service';
 
@@ -46,7 +42,7 @@ export class PersonLeaveDialogComponent implements OnChanges {
   @Input() visible = false;
   @Input() person: Person | null = null;
   @Output() visibleChange = new EventEmitter<boolean>();
-  @Output() confirmed = new EventEmitter<void>();
+  @Output() confirmed = new EventEmitter<string>();
 
   private personService = inject(PersonService);
   private typesService = inject(TypesService);
@@ -111,7 +107,6 @@ export class PersonLeaveDialogComponent implements OnChanges {
     return true;
   }
 
-  // Legacy uyumu: "2026-07-29" — T00:00:00 EKLENMEDEN, birebir aynı format
   private formatDate(date: Date): string {
     const day = String(date.getDate()).padStart(2, '0');
     const month = String(date.getMonth() + 1).padStart(2, '0');
@@ -125,7 +120,6 @@ export class PersonLeaveDialogComponent implements OnChanges {
     this.isProcessing = true;
     this.errorMessage = '';
 
-    // YYYY-MM-DDTHH:MM formatı — saat boşsa 00:00
     const basSaat = this.startTime || '00:00';
     const bitSaat = this.endTime || '00:00';
     const bastarih = `${this.startDateStr}T${basSaat}`;
@@ -155,12 +149,13 @@ export class PersonLeaveDialogComponent implements OnChanges {
           return;
         }
 
-        const sonuc = String(result['islemsonuc'] ?? '');
+        const sonuc = String(result['Sonuc'] ?? '');
         if (sonuc === '1') {
-          this.confirmed.emit();
+          const successMessage = (result['SunucuCevap'] as string) || 'İzin başarıyla atandı.';
+          this.confirmed.emit(successMessage);
           this.close();
         } else {
-          this.errorMessage = (result['sunucucevap'] as string) || 'İzin kaydedilemedi.';
+          this.errorMessage = (result['SunucuCevap'] as string) || 'İzin kaydedilemedi.';
           this.cdr.markForCheck();
         }
       },

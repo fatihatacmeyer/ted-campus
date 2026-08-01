@@ -1,4 +1,10 @@
-import { Component, OnInit, ChangeDetectionStrategy, ChangeDetectorRef, inject } from '@angular/core';
+import {
+  Component,
+  OnInit,
+  ChangeDetectionStrategy,
+  ChangeDetectorRef,
+  inject,
+} from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { PersonService } from '../services/person.service';
@@ -16,6 +22,8 @@ import { PersonLeaveDialogComponent } from '../person-leave-dialog/person-leave-
 import { PersonProfileComponent } from '../person-profile/person-profile';
 import { ButtonModule } from 'primeng/button';
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
+import { MessageService } from 'primeng/api';
+import { Toast, ToastModule } from 'primeng/toast';
 
 @Component({
   selector: 'app-person-crud-page',
@@ -28,6 +36,7 @@ import { ProgressSpinnerModule } from 'primeng/progressspinner';
     PersonProfileComponent,
     ButtonModule,
     ProgressSpinnerModule,
+    ToastModule,
   ],
   templateUrl: './person-crud-page.html',
   styleUrl: './person-crud-page.scss',
@@ -55,6 +64,7 @@ export class PersonCrudPageComponent implements OnInit {
   private personService = inject(PersonService);
   private cdr = inject(ChangeDetectorRef);
   private route = inject(ActivatedRoute);
+  private messageService = inject(MessageService);
 
   constructor() {
     this.USERDEF = Number(this.route.snapshot.data['userDef']) as UserDef;
@@ -202,8 +212,16 @@ export class PersonCrudPageComponent implements OnInit {
     this.leavePerson = null;
   }
 
-  onLeaveConfirmed(): void {
+  onLeaveConfirmed(message: string): void {
     this.leavePerson = null;
+
+    this.messageService.add({
+      severity: 'success',
+      summary: 'Başarılı',
+      detail: message,
+      life: 3000,
+    });
+
     this.fetchPersonList();
   }
 

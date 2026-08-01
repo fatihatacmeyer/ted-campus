@@ -1,7 +1,7 @@
 <div class="admin-wrapper">
   <div class="admin-card">
     <div class="d-flex justify-content-between align-items-center mb-3 gap-2 flex-wrap">
-      <h4 class="fw-bold mb-0" style="color: #dc2134;">{{ pageTitle }}</h4>
+      <h4 class="fw-bold mb-0" style="color: #dc2134">{{ pageTitle }}</h4>
 
       <button
         pButton
@@ -19,7 +19,11 @@
 
     @if (isLoading) {
       <div class="loading-box">
-        <p-progressSpinner strokeWidth="4" fill="transparent" animationDuration=".8s"></p-progressSpinner>
+        <p-progressSpinner
+          strokeWidth="4"
+          fill="transparent"
+          animationDuration=".8s"
+        ></p-progressSpinner>
         <span class="loading-text">Yükleniyor...</span>
       </div>
     }
@@ -82,5 +86,7 @@
   [(visible)]="showLeaveDialog"
   [person]="leavePerson"
   (visibleChange)="onLeaveDialogClose()"
-  (confirmed)="onLeaveConfirmed()"
+  (confirmed)="onLeaveConfirmed($event)"
 ></app-person-leave-dialog>
+
+<p-toast position="top-right"></p-toast>
