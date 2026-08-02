@@ -2,7 +2,11 @@ import { Component, ChangeDetectionStrategy, signal, inject, DestroyRef } from '
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
-import { TableModule } from 'primeng/table';
+import {
+  CustomizableTableComponent,
+  ColumnCellDirective,
+  ColumnDef,
+} from '../../../../shared/components/customizable-table/customizable-table';
 import { ButtonModule } from 'primeng/button';
 import { DialogModule } from 'primeng/dialog';
 import { InputTextModule } from 'primeng/inputtext';
@@ -23,7 +27,7 @@ import { formatDate, parseDate } from '../../../../shared/utils/date.utils';
   imports: [
     CommonModule,
     ReactiveFormsModule,
-    TableModule,
+    CustomizableTableComponent,
     ButtonModule,
     DialogModule,
     InputTextModule,
@@ -52,6 +56,29 @@ export class ActivitiesComponent {
   editingActivity = signal<ActivityInterface | null>(null);
   showAllClassesConfirm = signal(false);
   pendingSaveData = signal<ActivityInterface | null>(null);
+
+  activityColumns: ColumnDef<ActivityInterface>[] = [
+    { field: 'id', header: 'ID', sortable: true, width: '70px' },
+    { field: 'name', header: 'Etkinlik Adı', sortable: true },
+    { field: 'activityType', header: 'Türü', sortable: true },
+    { field: 'startDate', header: 'Tarih', sortable: true, width: '110px' },
+    { field: 'endDate', header: 'Bitiş Tarihi', sortable: true, width: '110px' },
+    { field: 'eventManager', header: 'Yönetici' },
+    { field: 'classroom', header: 'Sınıf / Kapsam' },
+    { field: 'status', header: 'Durum', sortable: true, width: '100px' },
+    { field: 'requestStartDate', header: 'Başvuru Başlangıcı', sortable: true, width: '130px' },
+    { field: 'requestEndDate', header: 'Başvuru Bitişi', sortable: true, width: '130px' },
+    { field: 'maxStudentCount', header: 'Max Öğrenci', sortable: true },
+    { field: 'studentParentCount', header: 'Veli Sayısı' },
+    { field: 'isPaid', header: 'Ücretli' },
+    { field: 'fee', header: 'Ücret' },
+    { field: 'isParentRequired', header: 'Veli Zorunlu' },
+    { field: 'transportation', header: 'Ulaşım' },
+    { field: 'description', header: 'Açıklama' },
+    { field: 'isPrivate', header: 'Özel Etkinlik' },
+    { field: 'createdAt', header: 'Oluşturulma Tarihi' },
+  ];
+  defaultActivityFields = ['id', 'name', 'activityType', 'startDate', 'eventManager', 'classroom', 'status'];
 
   activityForm: FormGroup = this.fb.group({
     name: ['', Validators.required],

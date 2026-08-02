@@ -2,92 +2,41 @@
   <div class="admin-card">
     <div class="table-toolbar mb-3">
       <h4 class="fw-bold mb-0" style="color: #dc2134">Etkinlik Yönetimi</h4>
-      <button
-        pButton
-        label="Yeni Etkinlik Ekle"
-        aria-label="Yeni Etkinlik Ekle"
-        icon="pi pi-plus"
-        class="p-button-success p-button-sm"
-        (click)="openAddDialog()"
-      ></button>
+      <button pButton label="Yeni Etkinlik Ekle" aria-label="Yeni Etkinlik Ekle" icon="pi pi-plus" class="p-button-success p-button-sm" (click)="openAddDialog()"></button>
     </div>
 
-    <p-table
-      [value]="activities()"
-      [paginator]="true"
-      [rows]="10"
-      class="admin-table"
-      styleClass="p-datatable-striped"
-      responsiveLayout="scroll"
+    <app-customizable-table
+      [rows]="activities()"
+      [columns]="activityColumns"
+      [loading]="isLoading()"
+      tableId="activities"
+      [defaultFields]="defaultActivityFields"
+      emptyMessage="Henüz kayıtlı bir etkinlik bulunmuyor."
+      [actionsTemplate]="actionsTpl"
     >
-      <ng-template pTemplate="header">
-        <tr>
-          <th style="width: 50px">ID</th>
-          <th>Etkinlik Adı</th>
-          <th>Türü</th>
-          <th>Tarih</th>
-          <th>Yönetici</th>
-          <th>Sınıf / Kapsam</th>
-          <th>Durum</th>
-          <th style="width: 120px; text-align: center">İşlemler</th>
-        </tr>
+      <ng-template appColumnCell="classroom" let-activity>
+        <span [pTooltip]="getTableClassroomFull(activity.classroom)" tooltipPosition="top">
+          @if (activity.classroom && activity.classroom !== 'Tüm Sınıflar') {
+            <span class="cell-text classroom-summary-text" style="max-width: 180px">
+              {{ getTableClassroomSummary(activity.classroom) }}
+            </span>
+          } @else {
+            <span class="text-muted">Tüm Sınıflar</span>
+          }
+        </span>
       </ng-template>
 
-      <ng-template pTemplate="body" let-activity>
-        <tr>
-          <td>{{ activity.id }}</td>
-          <td>
-            <strong>{{ activity.name }}</strong>
-          </td>
-          <td>{{ activity.activityType }}</td>
-          <td>{{ activity.startDate }}</td>
-          <td>{{ activity.eventManager || '-' }}</td>
-
-          <!-- Sınıf/Kapsam hücresi: gruplanmış özet + tooltip ile tam liste -->
-          <td [pTooltip]="getTableClassroomFull(activity.classroom)" tooltipPosition="top">
-            @if (activity.classroom && activity.classroom !== 'Tüm Sınıflar') {
-              <span class="cell-text classroom-summary-text" style="max-width: 180px">
-                {{ getTableClassroomSummary(activity.classroom) }}
-              </span>
-            } @else {
-              <span class="text-muted">Tüm Sınıflar</span>
-            }
-          </td>
-
-          <td>
-            <p-tag [value]="activity.status" [severity]="getSeverity(activity.status)"></p-tag>
-          </td>
-          <td>
-            <div class="d-flex justify-content-center gap-1">
-              <button
-                pButton
-        icon="pi pi-pencil"
-        class="p-button-text p-button-warning p-button-sm"
-        (click)="openEditDialog(activity)"
-        pTooltip="Düzenle"
-        aria-label="Düzenle"
-      ></button>
-              <button
-                pButton
-                icon="pi pi-trash"
-                class="p-button-text p-button-danger p-button-sm"
-        (click)="deleteActivity(activity.id)"
-        pTooltip="Sil"
-        aria-label="Sil"
-      ></button>
-            </div>
-          </td>
-        </tr>
+      <ng-template appColumnCell="status" let-activity>
+        <p-tag [value]="activity.status" [severity]="getSeverity(activity.status)"></p-tag>
       </ng-template>
 
-      <ng-template pTemplate="emptymessage">
-        <tr>
-          <td colspan="8" class="text-center py-5 text-muted">
-            Henüz kayıtlı bir etkinlik bulunmuyor.
-          </td>
-        </tr>
+      <ng-template #actionsTpl let-activity>
+        <div class="d-flex justify-content-center gap-1">
+          <button pButton icon="pi pi-pencil" class="p-button-text p-button-warning p-button-sm" (click)="openEditDialog(activity)" pTooltip="Düzenle" aria-label="Düzenle"></button>
+          <button pButton icon="pi pi-trash" class="p-button-text p-button-danger p-button-sm" (click)="deleteActivity(activity.id)" pTooltip="Sil" aria-label="Sil"></button>
+        </div>
       </ng-template>
-    </p-table>
+    </app-customizable-table>
   </div>
 </div>
 
