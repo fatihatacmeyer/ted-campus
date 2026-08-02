@@ -7,6 +7,7 @@ export interface AppConfig {
   isMockEnabled: boolean;
   isAuthEnabled: boolean;
   apiUrl: string;
+  reportBaseUrl: string;
 }
 
 export const APP_CONFIG = new InjectionToken<AppConfig>('APP_CONFIG');
