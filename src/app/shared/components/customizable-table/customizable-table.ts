@@ -17,7 +17,7 @@ import {
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { TableModule } from 'primeng/table';
+import { TableColResizeEvent, TableModule } from 'primeng/table';
 import { InputTextModule } from 'primeng/inputtext';
 import { FloatLabelModule } from 'primeng/floatlabel';
 import { IconFieldModule } from 'primeng/iconfield';
@@ -25,6 +25,7 @@ import { InputIconModule } from 'primeng/inputicon';
 import { TooltipModule } from 'primeng/tooltip';
 import { ButtonModule } from 'primeng/button';
 import { formatDate } from '../../utils/date.utils';
+import { exportToExcel } from '../../utils/table-export.utils';
 
 export interface ColumnDef<T = unknown> {
   field: string; // veri alanı adı
@@ -71,6 +72,8 @@ export class CustomizableTableComponent<T extends object = Record<string, unknow
   @Input() searchPlaceholder = 'Arama';
   @Input() rowClickable = false;
   @Input() actionsTemplate: TemplateRef<{ $implicit: T }> | null = null; // her satırın sonundaki sabit İşlemler sütunu
+  @Input() exportable = true; // Dışa Aktar (Excel/CSV) butonu
+  @Input() exportFilename = ''; // varsayılan: tablo_${tableId}
   @Output() rowClick = new EventEmitter<T>();
 
   @ContentChildren(ColumnCellDirective) cellDirectives!: QueryList<ColumnCellDirective>;
@@ -83,11 +86,17 @@ export class CustomizableTableComponent<T extends object = Record<string, unknow
 
   filterText = '';
 
+  /** Kullanıcının seçtiği sayfa boyutu — localStorage'da saklanır */
+  rowsPerPage = 10;
+
   private destroyRef = inject(DestroyRef);
 
   private cellTemplateMap = new Map<string, TemplateRef<unknown>>();
 
   private cachedVisibleColumns: ColumnDef<T>[] = [];
+
+  /** Kullanıcının yeniden boyutlandırdığı sütun genişlikleri (field → css değeri) */
+  private columnWidths = new Map<string, string>();
 
   private get storageKey(): string {
     return `ted_table_columns_${this.tableId}`;
@@ -108,6 +117,8 @@ export class CustomizableTableComponent<T extends object = Record<string, unknow
   }
 
   ngOnInit(): void {
+    this.loadPageSize();
+    this.loadColumnWidths();
     this.selectedColumnFields = this.loadFromStorage();
     this.refreshVisibleColumns();
   }
@@ -228,6 +239,116 @@ export class CustomizableTableComponent<T extends object = Record<string, unknow
 
   getCellTemplate(field: string): TemplateRef<unknown> | null {
     return this.cellTemplateMap.get(field) ?? null;
+  }
+
+  /* ── Sayfalama ─────────────────────────────────────────── */
+
+  /** p-table (onPage) — seçilen sayfa boyutunu kalıcı hale getirir */
+  onPageChange(event: { first: number; rows: number }): void {
+    this.rowsPerPage = event.rows;
+    this.savePageSize();
+  }
+
+  /** p-table rowTrackBy — gereksiz DOM güncellemelerini önler */
+  trackByRow(index: number, row: T): unknown {
+    return (row as unknown as Record<string, unknown>)['id'] ?? index;
+  }
+
+  /* ── Dışa Aktarma (Excel) ──────────────────────────────── */
+
+  private get exportBaseName(): string {
+    return this.exportFilename?.trim() || `tablo_${this.tableId}`;
+  }
+
+  /** Görünür sütunlara göre dışa aktarma verisi üretir (kullanıcının sütun tercihini yansıtır) */
+  private buildExportData(): { headers: string[]; rows: (string | number)[][] } {
+    const headers = this.visibleColumns.map((col) => col.header);
+    const rows = this.rows.map((row) =>
+      this.visibleColumns.map((col) => this.formatExportValue(row, col.field)),
+    );
+    return { headers, rows };
+  }
+
+  onExportExcel(): void {
+    const { headers, rows } = this.buildExportData();
+    exportToExcel(this.exportBaseName, headers, rows);
+  }
+
+  private formatExportValue(row: T, field: string): string {
+    const value = this.getFieldValue(row, field);
+    if (value === null || value === undefined) return '';
+    if (typeof value === 'boolean') return value ? 'Evet' : 'Hayır';
+    if (value instanceof Date) return formatDate(value);
+    return String(value);
+  }
+
+  /* ── Sayfa boyutu kalıcılığı ───────────────────────────── */
+
+  private get pageSizeStorageKey(): string {
+    return `ted_table_page_size_${this.tableId}`;
+  }  private loadPageSize(): void {
+    try {
+      const raw = localStorage.getItem(this.pageSizeStorageKey);
+      if (raw) {
+        const size = Number.parseInt(raw, 10);
+        if (Number.isFinite(size) && [10, 25, 50].includes(size)) {
+          this.rowsPerPage = size;
+        }
+      }
+    } catch {
+      /* localStorage erişilemiyorsa varsayılan 10 */
+    }
+  }
+
+  private savePageSize(): void {
+    try {
+      localStorage.setItem(this.pageSizeStorageKey, String(this.rowsPerPage));
+    } catch {
+      /* localStorage doluysa sessizce geç */
+    }
+  }
+
+  /* ── Sütun genişliği kalıcılığı ────────────────────────── */
+
+  private get colWidthStorageKey(): string {
+    return `ted_table_col_widths_${this.tableId}`;
+  }
+
+  /** Sütun genişliği — kullanıcı tercihi varsa onu, yoksa tanımlı genişliği döner */
+  getColumnWidth(field: string): string | undefined {
+    return this.columnWidths.get(field) ?? this.columns.find((col) => col.field === field)?.width;
+  }
+
+  /** p-table (onColResize) — yeni genişliği kaydeder */
+  onColResize(event: TableColResizeEvent): void {
+    const field = event.element.getAttribute('data-field');
+    if (!field) return;
+    this.columnWidths.set(field, `${event.element.offsetWidth}px`);
+    this.saveColumnWidths();
+  }
+
+  private loadColumnWidths(): void {
+    try {
+      const raw = localStorage.getItem(this.colWidthStorageKey);
+      if (raw) {
+        const parsed: Record<string, string> = JSON.parse(raw);
+        for (const field of Object.keys(parsed)) {
+          if (this.allColumnFields.includes(field)) {
+            this.columnWidths.set(field, parsed[field]);
+          }
+        }
+      }
+    } catch {
+      /* bozuk veri yok sayılır */
+    }
+  }
+
+  private saveColumnWidths(): void {
+    try {
+      localStorage.setItem(this.colWidthStorageKey, JSON.stringify(Object.fromEntries(this.columnWidths)));
+    } catch {
+      /* localStorage doluysa sessizce geç */
+    }
   }
 
   private refreshVisibleColumns(): void {

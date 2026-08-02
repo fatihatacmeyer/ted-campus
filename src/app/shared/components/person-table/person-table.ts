@@ -2,13 +2,14 @@ import { CommonModule } from '@angular/common';
 import { ChangeDetectionStrategy, Component, EventEmitter, HostListener, Input, OnChanges, OnInit, Output, SimpleChanges } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Person, resolveLinkedNames, extractLinkedPersonIds, extractLinkedTeacherIds } from '../../../core/models/person.model';
-import { TableModule } from 'primeng/table';
+import { TableColResizeEvent, TableModule } from 'primeng/table';
 import { InputTextModule } from 'primeng/inputtext';
 import { FloatLabelModule } from 'primeng/floatlabel';
 import { IconFieldModule } from 'primeng/iconfield';
 import { InputIconModule } from 'primeng/inputicon';
 import { TooltipModule } from 'primeng/tooltip';
 import { ButtonModule } from 'primeng/button';
+import { exportToExcel } from '../../utils/table-export.utils';
 
 
 export interface ColumnDef {
@@ -103,11 +104,23 @@ export class PersonTableComponent implements OnInit, OnChanges {
 
   filterText = '';
 
+  /** Kullanıcının seçtiği sayfa boyutu — localStorage'da saklanır */
+  rowsPerPage = 10;
+
+  /** Kullanıcının yeniden boyutlandırdığı sütun genişlikleri (field → css değeri) */
+  private columnWidths = new Map<string, string>();
+
   private get storageKey(): string {
     return `ted_table_columns_${this.tableId}`;
   }
 
+  private get colWidthStorageKey(): string {
+    return `ted_table_col_widths_${this.tableId}`;
+  }
+
   ngOnInit(): void {
+    this.loadPageSize();
+    this.loadColumnWidths();
     this.selectedColumnFields = this.loadFromStorage();
     this.applyColumnOverrides();
     this.refreshVisibleColumns();
@@ -162,6 +175,117 @@ export class PersonTableComponent implements OnInit, OnChanges {
 
   getTeacherLinkedDisplay(person: Person): string {
     return this.teacherLinkedDisplayCache.get(person.id) ?? '-';
+  }
+
+  /* ── Sayfalama ─────────────────────────────────────────── */
+
+  /** p-table (onPage) — seçilen sayfa boyutunu kalıcı hale getirir */
+  onPageChange(event: { first: number; rows: number }): void {
+    this.rowsPerPage = event.rows;
+    this.savePageSize();
+  }
+
+  /** p-table rowTrackBy — gereksiz DOM güncellemelerini önler */
+  trackByRow(index: number, row: Person): unknown {
+    return row.id ?? index;
+  }
+
+  /* ── Dışa Aktarma (Excel) ──────────────────────────────── */
+
+  private get exportBaseName(): string {
+    return `person_liste_${this.tableId}`;
+  }
+
+  /** Görünür sütunlara göre dışa aktarma verisi üretir (kullanıcının sütun tercihini yansıtır) */
+  private buildExportData(): { headers: string[]; rows: (string | number)[][] } {
+    const headers = this.visibleColumns.map((col) => col.header);
+    const rows = this.persons.map((person) =>
+      this.visibleColumns.map((col) => this.formatExportValue(person, col.field)),
+    );
+    return { headers, rows };
+  }
+
+  onExportExcel(): void {
+    const { headers, rows } = this.buildExportData();
+    exportToExcel(this.exportBaseName, headers, rows);
+  }
+
+  /** Person'a özel render'ları (linkedDisplay vb.) dışa aktarmaya yansıtır */
+  private formatExportValue(person: Person, field: string): string {
+    if (field === 'personelno' && this.allPersons.length) return this.getLinkedDisplay(person);
+    if (field === 'linkedTeachers' && this.allPersons.length) return this.getTeacherLinkedDisplay(person);
+    const value = this.getFieldValue(person, field);
+    if (value === null || value === undefined || value === '') return '';
+    if (typeof value === 'boolean') return value ? 'Evet' : 'Hayır';
+    if (field === 'indirimorani') return `${value}%`;
+    return String(value);
+  }
+
+  /* ── Sayfa boyutu kalıcılığı ───────────────────────────── */
+
+  private get pageSizeStorageKey(): string {
+    return `ted_table_page_size_${this.tableId}`;
+  }
+
+  private loadPageSize(): void {
+    try {
+      const raw = localStorage.getItem(this.pageSizeStorageKey);
+      if (raw) {
+        const size = Number.parseInt(raw, 10);
+        if (Number.isFinite(size) && [10, 25, 50].includes(size)) {
+          this.rowsPerPage = size;
+        }
+      }
+    } catch {
+      /* localStorage erişilemiyorsa varsayılan 10 */
+    }
+  }
+
+  private savePageSize(): void {
+    try {
+      localStorage.setItem(this.pageSizeStorageKey, String(this.rowsPerPage));
+    } catch {
+      /* localStorage doluysa sessizce geç */
+    }
+  }
+
+  /* ── Sütun genişliği kalıcılığı ────────────────────────── */
+
+  /** Sütun genişliği — kullanıcı tercihi varsa onu döner */
+  getColumnWidth(field: string): string | undefined {
+    return this.columnWidths.get(field);
+  }
+
+  /** p-table (onColResize) — yeni genişliği kaydeder */
+  onColResize(event: TableColResizeEvent): void {
+    const field = event.element.getAttribute('data-field');
+    if (!field) return;
+    this.columnWidths.set(field, `${event.element.offsetWidth}px`);
+    this.saveColumnWidths();
+  }
+
+  private loadColumnWidths(): void {
+    try {
+      const raw = localStorage.getItem(this.colWidthStorageKey);
+      if (raw) {
+        const parsed: Record<string, string> = JSON.parse(raw);
+        for (const field of Object.keys(parsed)) {
+          if (this.allColumns.some((col) => col.field === field)) {
+            this.columnWidths.set(field, parsed[field]);
+          }
+        }
+      }
+    } catch {
+      /* bozuk veri yok sayılır */
+    }
+  }
+
+  private saveColumnWidths(): void {
+    try {
+      localStorage.setItem(this.colWidthStorageKey, JSON.stringify(Object.fromEntries(this.columnWidths)));
+    } catch {
+      /* localStorage doluysa sessizce geç */
+    }
   }
 
   /* ── Selection & Leave ─────────────────────────────────── */

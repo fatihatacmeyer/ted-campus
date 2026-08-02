@@ -14,6 +14,12 @@
   min-width: 260px;
 }
 
+.table-toolbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
 .cell-text {
   display: block;
   max-width: 140px;

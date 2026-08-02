@@ -13,7 +13,21 @@
     <label for="person_search">Arama</label>
   </p-floatlabel>
 
-  <div class="col-selector-wrapper">
+  <div class="table-toolbar-actions">
+    @if (persons.length) {
+      <p-button
+        label="Excel'e Aktar"
+        icon="pi pi-file-excel"
+        size="small"
+        text="true"
+        (onClick)="onExportExcel()"
+        pTooltip="Excel'e Aktar"
+        tooltipPosition="bottom"
+        styleClass="table-export-btn"
+      ></p-button>
+    }
+
+    <div class="col-selector-wrapper">
     <button
       pButton
       icon="pi pi-list"
@@ -103,6 +117,7 @@
         </div>
       </div>
     }
+    </div>
   </div>
 </div>
 
@@ -113,23 +128,41 @@
   size="small"
   [globalFilterFields]="globalFilterFields"
   [paginator]="true"
-  [rows]="10"
+  [rows]="rowsPerPage"
+  [rowTrackBy]="trackByRow"
   [rowsPerPageOptions]="[10, 25, 50]"
   [showCurrentPageReport]="true"
   currentPageReportTemplate="{first}-{last} / {totalRecords}"
   responsiveLayout="scroll"
   class="admin-table"
+  [resizableColumns]="true"
+  columnResizeMode="fit"
+  (onColResize)="onColResize($event)"
+  (onPage)="onPageChange($event)"
 >
   <ng-template pTemplate="header">
     <tr>
       @for (col of visibleColumns; track col.field) {
         @if (col.sortable) {
-          <th [pSortableColumn]="col.field" [ngClass]="'col-' + col.field">
+          <th
+            pResizableColumn
+            [pSortableColumn]="col.field"
+            [ngClass]="'col-' + col.field"
+            [attr.data-field]="col.field"
+            [style.width]="getColumnWidth(col.field)"
+          >
             {{ col.header }}
             <p-sortIcon [field]="col.field" />
           </th>
         } @else {
-          <th [ngClass]="'col-' + col.field">{{ col.header }}</th>
+          <th
+            pResizableColumn
+            [ngClass]="'col-' + col.field"
+            [attr.data-field]="col.field"
+            [style.width]="getColumnWidth(col.field)"
+          >
+            {{ col.header }}
+          </th>
         }
       }
       @if (showActionsColumn) {

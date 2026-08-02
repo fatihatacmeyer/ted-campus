@@ -77,6 +77,38 @@ html, body {
 .col-pozisyon { width: 140px; }
 .col-telefon  { width: 120px; }
 
+/* ── Resizable Column Handles (görünür sürükleme çizgisi) ── */
+
+.p-datatable-thead > tr > th.p-datatable-resizable-column .p-datatable-column-resizer {
+  z-index: 1;
+}
+
+/* Her yeniden boyutlandırılabilir sütunun sağ kenarında ince ayraç çizgisi */
+.p-datatable-thead > tr > th.p-datatable-resizable-column .p-datatable-column-resizer::before {
+  content: '';
+  position: absolute;
+  top: 22%;
+  bottom: 22%;
+  inset-inline-end: 3px;
+  width: 2px;
+  border-radius: 1px;
+  background: #cbd5e1;
+  transition: background-color 0.15s ease, top 0.15s ease, bottom 0.15s ease;
+}
+
+/* Hover/sürükleme sırasında çizgi belirginleşir ve vurgu rengine döner */
+.p-datatable-thead > tr > th.p-datatable-resizable-column .p-datatable-column-resizer:hover::before,
+.p-datatable-thead > tr > th.p-datatable-resizable-column .p-datatable-column-resizer:active::before {
+  background: #dc2134;
+  top: 12%;
+  bottom: 12%;
+}
+
+/* Sürükleme sırasında tablonun üzerinde gezdirilen dikey gösterge çizgisi */
+.p-datatable-column-resize-indicator {
+  background: #dc2134;
+}
+
 /* ── Inline Action Cell ──────────────────────────────────── */
 
 .inline-action-cell {
