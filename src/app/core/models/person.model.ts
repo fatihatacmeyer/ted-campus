@@ -76,6 +76,16 @@ export interface Person {
   islemno: string;
   islemsonuc: number;
   sunucucevap: string | null;
+
+  dogumtarih?: string | null;
+  cinsiyet?: string | null;
+  kangrubu?: string | null;
+  telefon1?: string | null;
+  email?: string | null;
+  adres?: string | null;
+  il?: string | null;
+  ilce?: string | null;
+  giristarih?: string | null;
 }
 
 /**

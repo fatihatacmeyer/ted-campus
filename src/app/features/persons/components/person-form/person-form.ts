@@ -211,7 +211,15 @@ export class PersonFormComponent implements OnChanges, OnInit {
     })
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(
-        ({ cbo_firma, cbo_bolum, cbo_pozisyon, cbo_gorev, cbo_altfirma, cbo_direktorluk, cbo_yaka }) => {
+        ({
+          cbo_firma,
+          cbo_bolum,
+          cbo_pozisyon,
+          cbo_gorev,
+          cbo_altfirma,
+          cbo_direktorluk,
+          cbo_yaka,
+        }) => {
           this.firmaOptions = cbo_firma;
           this.bolumOptions = cbo_bolum;
           this.pozisyonOptions = cbo_pozisyon;
@@ -236,21 +244,26 @@ export class PersonFormComponent implements OnChanges, OnInit {
   private patchFormForEdit(): void {
     // Alan adları PERSON_FORM_FIELDS'tan gelir; değer eşlemesi düzensiz olduğu için açık tutulur.
     const p = this.editPerson!;
+    // DEBUG: backend'in bu kişi için gerçekte hangi alanları döndürdüğünü gör.
+    // dogumtarih/cinsiyet/kangrubu/telefon1/email/adres/il/ilce/giristarih
+    // undefined geliyorsa, backend'in sv2 select prosedürü bu kolonları hiç
+    // döndürmüyor demektir — bu durumda düzeltme backend tarafında yapılmalı.
+    console.log('[PersonForm] düzenlenen kişi (ham):', p);
     this.form.patchValue({
       ad: p.ad || '',
       soyad: p.soyad || '',
-      dogumtarih: parseDate(p.cikistarih), // sicil modelinde dogumtarih yok; cikistarih'i maps ediyoruz
-      cinsiyet: null,
-      kangrubu: null,
+      dogumtarih: parseDate(p.dogumtarih ?? null),
+      cinsiyet: p.cinsiyet ?? null,
+      kangrubu: p.kangrubu ?? null,
       sicilno: p.sicilno || '',
       personelno: p.personelno || '',
       cardid: p.cardid || '',
       ceptelefon: p.ceptelefon || '',
-      telefon1: '',
-      email: '',
-      adres: '',
-      il: '',
-      ilce: '',
+      telefon1: p.telefon1 || '',
+      email: p.email || '',
+      adres: p.adres || '',
+      il: p.il || '',
+      ilce: p.ilce || '',
       firma: p.firma || '',
       bolum: p.bolum || '',
       pozisyon: p.pozisyon || '',
@@ -258,7 +271,7 @@ export class PersonFormComponent implements OnChanges, OnInit {
       altfirma: p.altfirma || '',
       direktorluk: p.direktorluk || '',
       yaka: p.yaka || '',
-      giristarih: null,
+      giristarih: parseDate(p.giristarih ?? null),
     });
     // linkedPersons'ı personelno alanından oku
     const linkedIds = extractLinkedPersonIds(p.personelno);
@@ -419,7 +432,10 @@ export class PersonFormComponent implements OnChanges, OnInit {
     }
     if (field.key === 'personelno') {
       return this.showLinkedPersons
-        ? buildLinkedPersonelno((v['linkedPersons'] as number[]) || [], (v['linkedTeachers'] as number[]) || [])
+        ? buildLinkedPersonelno(
+            (v['linkedPersons'] as number[]) || [],
+            (v['linkedTeachers'] as number[]) || [],
+          )
         : (v['personelno'] as string) || '';
     }
     return (v[field.key] as string) || '';
