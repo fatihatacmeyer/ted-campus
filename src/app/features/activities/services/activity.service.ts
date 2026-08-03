@@ -130,15 +130,12 @@ export class ActivityService {
       islemtipi,
       ...(id !== undefined ? { Id: id } : {}),
       Ad: (activity.name as string) || '',
-      XSicilId:
-        (activity.xSicilID as number) ??
-        this.authService.currentUserValue?.xsicilid ??
-        233,
+      XSicilId: (activity.xSicilID as number) ?? this.authService.currentUserValue?.xsicilid ?? 233,
       BasTarih: formatDate(activity.startDate as string),
       BitTarih: formatDate(activity.endDate as string),
       TurId: (activity['turId'] as number) ?? '',
       UcretliMi: activity.isPaid ? 1 : 0,
-      Ucret: (activity.fee as number) ?? '',
+      Ucret: (activity.fee as number) ?? 0,
       // Backend Durum'u '1'/'0' olarak saklıyor (sp_etkinlikcampus_s "1"/"0" döner).
       // Form metin tutuyor ('Aktif'/'Pasif'/'İptal'), edit'te ise satırdan '1'/'0' gelir.
       // → 'Aktif' veya '1' → '1', diğerleri ('Pasif'/'İptal'/'0') → '0'.
