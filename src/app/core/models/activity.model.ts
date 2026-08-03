@@ -14,6 +14,7 @@ export interface ActivityInterface {
   maxStudentCount: number; // etkinliğe katılabilecek maksimum öğrenci sayısı
   studentParentCount: number; // öğrencinin getirebileceği veli sayısı
   transportation: string; // ulaşım
+  educationLevel?: string; // eğitim düzeyi (cbo_direktorluk lookup'ından, ekranda ad saklanır)
   eventManager: string; // etkinlik yöneticisi
   oKod1: string; // ekstra alanlar 1
   oKod2: string;

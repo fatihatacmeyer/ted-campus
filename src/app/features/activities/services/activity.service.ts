@@ -18,12 +18,11 @@ import { formatDate } from '../../../shared/utils/date.utils';
  * param string'i asla encode edilmiyor, tek parça halinde AES ile
  * şifrelenip "Name" query parametresi olarak GET isteğiyle gönderiliyor.
  *
- * NOT: islemno artık gönderilmiyor. Farklı islemno/point kombinasyonlarıyla
- * yapılan testlerde backend her seferinde aynı jenerik hata zarfını
- * (islemsonuc:3, sunucucevap:"sub") döndürdü — bu da sorunun bizim
- * gönderdiğimiz alanlarda değil, /Dynamic dispatcher'ının "EtkinlikCampus"
- * point'ini tanıyıp tanımadığında olduğuna işaret ediyor. Backend log'u/
- * dispatcher kodu netleşince burası tekrar gözden geçirilebilir.
+ * Dispatcher, point + islemtipi kombinasyonunu otomatik çözer ve ilgili
+ * prosedürü çağırır (sp_etkinlikcampus_{s,i,u,d}). 3.08.2026'da 'i' rutini
+ * backend'de hazır değilken aynı istek `islemsonuc:3, sunucucevap:"sub"`
+ * döndü; prosedür kaydedildikten sonra insert çalıştı. islemno göndermek
+ * bu zarfta hiçbir şeyi değiştirmiyordu (test edildi).
  */
 /** sp_etkinlikcampus_s'den dönen ham DB satırı (Türkçe/DB sütun adları). */
 interface ActivityRow {
@@ -43,6 +42,7 @@ interface ActivityRow {
   MaksVeliSayisi: number;
   UlasimTipi: string;
   SorumluAdSoyad: string;
+  EgitimDuzeyi?: string;
   Okod1: string;
   Okod2: string;
   Okod3: string;
@@ -63,10 +63,11 @@ export class ActivityService {
   private readonly point = 'etkinlikcampus';
 
   private callDynamic<T>(params: Record<string, string | number>): Observable<T> {
-    return this.api.callEndpoint<T>('Dynamic', {
-      point: this.point,
-      ...params,
-    });
+    const requestParams: Record<string, string | number> = { point: this.point, ...params };
+    // Debug: giden isteğin şifrelenmemiş (okunabilir) hali — backend'e giden
+    // gerçek wire string, ApiHelperService.callEndpoint içinde AES ile şifrelenir.
+    console.log('[ActivityService] giden istek:', requestParams);
+    return this.api.callEndpoint<T>('Dynamic', requestParams);
   }
 
   /**
@@ -96,6 +97,7 @@ export class ActivityService {
       studentParentCount: row.MaksVeliSayisi,
       transportation: row.UlasimTipi,
       eventManager: row.SorumluAdSoyad,
+      educationLevel: row.EgitimDuzeyi,
       oKod1: row.Okod1,
       oKod2: row.Okod2,
       oKod3: row.Okod3,
@@ -129,24 +131,31 @@ export class ActivityService {
       ...(id !== undefined ? { Id: id } : {}),
       Ad: (activity.name as string) || '',
       XSicilId:
-        islemtipi === 'i'
-          ? (activity.xSicilID as number) ??
-            this.authService.currentUserValue?.xsicilid ??
-            ''
-          : (activity.xSicilID as number) ?? '',
+        (activity.xSicilID as number) ??
+        this.authService.currentUserValue?.xsicilid ??
+        233,
       BasTarih: formatDate(activity.startDate as string),
       BitTarih: formatDate(activity.endDate as string),
       TurId: (activity['turId'] as number) ?? '',
       UcretliMi: activity.isPaid ? 1 : 0,
       Ucret: (activity.fee as number) ?? '',
-      Durum: (activity.status as string) || '',
+      // Backend Durum'u '1'/'0' olarak saklıyor (sp_etkinlikcampus_s "1"/"0" döner).
+      // Form metin tutuyor ('Aktif'/'Pasif'/'İptal'), edit'te ise satırdan '1'/'0' gelir.
+      // → 'Aktif' veya '1' → '1', diğerleri ('Pasif'/'İptal'/'0') → '0'.
+      Durum: ['Aktif', '1'].includes(String(activity.status)) ? '1' : '0',
       TalepBas: formatDate(activity.requestStartDate as string),
       TalepBit: formatDate(activity.requestEndDate as string),
       VeliZorunluMu: activity.isParentRequired ? 1 : 0,
       Aciklama: (activity.description as string) || '',
       MaksOgrenciSayisi: (activity.maxStudentCount as number) ?? '',
       MaksVeliSayisi: (activity.studentParentCount as number) ?? '',
-      SorumluSicilId: (activity['sorumluSicilId'] as number) ?? '',
+      // SorumluSicilId formda henüz seçilmiyor; şimdilik giriş yapmış kullanıcının
+      // sicil id'si default gider (şu anki kullanıcı 233). İleride formdan sorumlu
+      // seçimi eklenince gerçek değer buraya düşecek.
+      SorumluSicilId:
+        (activity['sorumluSicilId'] as number) ??
+        this.authService.currentUserValue?.xsicilid ??
+        233,
       UlasimId: (activity['ulasimId'] as number) ?? '',
       YasSiniri: (activity['yasSiniri'] as string) || '',
       EgitimDuzeyiId: (activity['egitimDuzeyiId'] as number) ?? '',
@@ -160,13 +169,14 @@ export class ActivityService {
   }
 
   /**
-   * @param activity Formdan gelen değerler. TurId/UlasimId/SinifId/EgitimDuzeyiId/
-   * SorumluSicilId gibi FK id alanları henüz formda toplanmıyor (lookup prosedürleri
-   * hazır olana kadar) — hepsi SP'de "= NULL" default'lu olduğu için boş gönderiyoruz,
-   * INSERT başarılı olur. Tek fark XSicilId (etkinliği oluşturan): form hiç toplamıyor,
-   * bu yüzden giriş yapmış kullanıcının kendi sicil id'sinden otomatik dolduruyoruz.
+   * @param activity Formdan gelen değerler. TurId/UlasimId/SinifId/EgitimDuzeyiId
+   * artık formdaki seçimlerden (ad → lookup id) doldurulup payload'a ekleniyor
+   * (activities-list.ts saveActivity). SorumluSicilId formda hâlâ yok — şimdilik
+   * giriş yapmış kullanıcının sicil id'si (233) default gönderiliyor.
+   * XSicilId (etkinliği oluşturan): form hiç toplamıyor, giriş yapmış
+   * kullanıcının kendi sicil id'sinden otomatik dolduruluyor.
    *
-   * NOT: sp_etkinlikcampus_s bu FK'lara INNER JOIN yaptığı için, NULL kalan bir
+   * NOT: sp_etkinlikcampus_s FK'lara INNER JOIN yaptığı için, NULL kalan bir
    * satır INSERT olsa da listede görünmeyebilir — bu ayrı bir konu, insert'in
    * kendisini etkilemez.
    */

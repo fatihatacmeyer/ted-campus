@@ -19,6 +19,9 @@ import { TagModule } from 'primeng/tag';
 import { CheckboxModule } from 'primeng/checkbox';
 import { MultiSelectModule } from 'primeng/multiselect';
 import { TooltipModule } from 'primeng/tooltip';
+import { forkJoin, of } from 'rxjs';
+import { catchError } from 'rxjs/operators';
+import { DropdownItem, TypesService } from '../../../persons/services/types.service';
 import { ActivityInterface } from '../../../../core/models/activity.model';
 import { ActivityService } from '../../services/activity.service';
 import { formatDate, parseDate } from '../../../../shared/utils/date.utils';
@@ -54,6 +57,7 @@ const BOOLEAN_FILTER_OPTIONS: FilterOption[] = [
 export class ActivitiesComponent {
   private fb = inject(FormBuilder);
   private activityService = inject(ActivityService);
+  private typesService = inject(TypesService);
   private destroyRef = inject(DestroyRef);
 
   activities = signal<ActivityInterface[]>([]);
@@ -138,6 +142,7 @@ export class ActivitiesComponent {
     isPaid: [false],
     fee: [{ value: null, disabled: true }],
     transportation: [''],
+    educationLevel: [''],
     eventManager: [''],
     description: [''],
     classroom: [[]],
@@ -158,6 +163,7 @@ export class ActivitiesComponent {
       });
 
     this.loadActivities();
+    this.loadDropdownData();
   }
 
   /** sp_etkinlikcampus_s'ten gerçek listeyi çeker. */
@@ -180,7 +186,74 @@ export class ActivitiesComponent {
       });
   }
 
-  private loadDropdownData(): void {}
+  /**
+   * Dropdown verilerini backend lookup prosedürlerinden çeker:
+   * TurCampus (etkinlik türü), UlasimCampus (ulaşım), cbo_bolum (sınıflar),
+   * cbo_direktorluk (eğitim düzeyi).
+   */
+  private loadDropdownData(): void {
+    forkJoin({
+      TurCampus: this.typesService.getDropdownList('TurCampus').pipe(
+        catchError((err) => {
+          console.error('Etkinlik türleri yüklenirken hata:', err);
+          return of([] as DropdownItem[]);
+        }),
+      ),
+      UlasimCampus: this.typesService.getDropdownList('UlasimCampus').pipe(
+        catchError((err) => {
+          console.error('Ulaşım bilgileri yüklenirken hata:', err);
+          return of([] as DropdownItem[]);
+        }),
+      ),
+      cbo_bolum: this.typesService.getDropdownList('cbo_bolum').pipe(
+        catchError((err) => {
+          console.error('Sınıflar yüklenirken hata:', err);
+          return of([] as DropdownItem[]);
+        }),
+      ),
+      cbo_direktorluk: this.typesService.getDropdownList('cbo_direktorluk').pipe(
+        catchError((err) => {
+          console.error('Eğitim düzeyleri yüklenirken hata:', err);
+          return of([] as DropdownItem[]);
+        }),
+      ),
+    })
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(({ TurCampus, UlasimCampus, cbo_bolum, cbo_direktorluk }) => {
+        this.typeOptions = TurCampus;
+        this.transportationOptions = UlasimCampus;
+        this.classroomOptions = cbo_bolum;
+        this.classroomGroups = this.buildClassroomGroups(cbo_bolum);
+        this.educationLevelOptions = cbo_direktorluk;
+      });
+  }
+
+  /**
+   * cbo_bolum'den gelen düz sınıf listesini grade gruplarına böler
+   * (örn. "1-A" → "1. Sınıflar"). Rakamla başlamayan ad'lar "Diğer" grubuna düşer.
+   */
+  private buildClassroomGroups(
+    items: DropdownItem[],
+  ): { label: string; items: { label: string; value: string }[] }[] {
+    const groups = new Map<string, { label: string; value: string }[]>();
+    for (const item of items) {
+      const gradeMatch = item.ad.trim().match(/^(\d+)/);
+      const groupLabel = gradeMatch ? `${gradeMatch[1]}. Sınıflar` : 'Diğer';
+      if (!groups.has(groupLabel)) {
+        groups.set(groupLabel, []);
+      }
+      groups.get(groupLabel)!.push({ label: item.ad, value: item.ad });
+    }
+    return Array.from(groups.entries())
+      .sort(([a], [b]) => {
+        const na = Number.parseInt(a, 10);
+        const nb = Number.parseInt(b, 10);
+        if (Number.isNaN(na)) return 1;
+        if (Number.isNaN(nb)) return -1;
+        return na - nb;
+      })
+      .map(([label, items]) => ({ label, items }));
+  }
 
   statusOptions = [
     { label: 'Aktif', value: 'Aktif' },
@@ -188,72 +261,20 @@ export class ActivitiesComponent {
     { label: 'İptal', value: 'İptal' },
   ];
 
-  typeOptions = [
-    { label: 'Gezi', value: 'Gezi' },
-    { label: 'Sosyal Etkinlik', value: 'Sosyal Etkinlik' },
-    { label: 'Eğitim / Seminer', value: 'Eğitim / Seminer' },
-    { label: 'Mezuniyet', value: 'Mezuniyet' },
-  ];
+  /** Etkinlik türleri — TurCampus lookup'undan doldurulur. */
+  typeOptions: DropdownItem[] = [];
 
-  // Sınıf seçenekleri — hierarchy (ortaokul 1-8)
-  classroomGroups = [
-    {
-      label: '1. Sınıflar',
-      items: [
-        { label: '1-A', value: '1-A' },
-        { label: '1-B', value: '1-B' },
-      ],
-    },
-    {
-      label: '2. Sınıflar',
-      items: [
-        { label: '2-A', value: '2-A' },
-        { label: '2-B', value: '2-B' },
-      ],
-    },
-    {
-      label: '3. Sınıflar',
-      items: [
-        { label: '3-A', value: '3-A' },
-        { label: '3-B', value: '3-B' },
-      ],
-    },
-    {
-      label: '4. Sınıflar',
-      items: [
-        { label: '4-A', value: '4-A' },
-        { label: '4-B', value: '4-B' },
-      ],
-    },
-    {
-      label: '5. Sınıflar',
-      items: [
-        { label: '5-A', value: '5-A' },
-        { label: '5-B', value: '5-B' },
-      ],
-    },
-    {
-      label: '6. Sınıflar',
-      items: [
-        { label: '6-A', value: '6-A' },
-        { label: '6-B', value: '6-B' },
-      ],
-    },
-    {
-      label: '7. Sınıflar',
-      items: [
-        { label: '7-A', value: '7-A' },
-        { label: '7-B', value: '7-B' },
-      ],
-    },
-    {
-      label: '8. Sınıflar',
-      items: [
-        { label: '8-A', value: '8-A' },
-        { label: '8-B', value: '8-B' },
-      ],
-    },
-  ];
+  /** Ulaşım bilgileri — UlasimCampus lookup'undan doldurulur. */
+  transportationOptions: DropdownItem[] = [];
+
+  /** Eğitim düzeyleri — cbo_direktorluk lookup'undan doldurulur. */
+  educationLevelOptions: DropdownItem[] = [];
+
+  /** Ham sınıf listesi — cbo_bolum lookup'undan doldurulur. */
+  classroomOptions: DropdownItem[] = [];
+
+  // Sınıf seçenekleri — cbo_bolum'den gelen veriden türetilen grade grupları (1. Sınıflar, 2. Sınıflar...)
+  classroomGroups: { label: string; items: { label: string; value: string }[] }[] = [];
 
   /** Grubun tüm şubeleri seçili mi? */
   isGroupSelected(group: { label: string; items: { label: string; value: string }[] }): boolean {
@@ -272,6 +293,7 @@ export class ActivitiesComponent {
 
   /** Tüm sınıflar seçili mi? */
   get isAllClassesSelected(): boolean {
+    if (this.allClassesCount === 0) return false;
     const selected: string[] = this.activityForm.get('classroom')?.value || [];
     return selected.length === this.allClassesCount;
   }
@@ -427,11 +449,27 @@ export class ActivitiesComponent {
     const classroomStr = hasClassroom ? formValues.classroom.join(', ') : 'Tüm Sınıflar';
     const isPrivate = hasClassroom;
 
+    // Seçilen ad'lardan FK id'lerini lookup ile türet (yazma SP'leri Id bekliyor)
+    const selectedType = this.typeOptions.find((o) => o.ad === formValues.activityType);
+    const selectedTransportation = this.transportationOptions.find(
+      (o) => o.ad === formValues.transportation,
+    );
+    const selectedClasses = this.classroomOptions.filter((o) =>
+      (formValues.classroom as string[]).includes(o.ad),
+    );
+    const selectedEducationLevel = this.educationLevelOptions.find(
+      (o) => o.ad === formValues.educationLevel,
+    );
+
     const payload = {
       ...formValues,
       isPrivate,
       classroom: classroomStr,
       fee: formValues.isPaid ? formValues.fee : null,
+      turId: selectedType?.id ?? '',
+      ulasimId: selectedTransportation?.id ?? '',
+      sinifId: selectedClasses.map((c) => c.id).join(';'),
+      egitimDuzeyiId: selectedEducationLevel?.id ?? '',
       oKod1: '',
       oKod2: '',
       oKod3: '',

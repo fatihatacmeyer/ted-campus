@@ -73,8 +73,8 @@
             formControlName="activityType"
             inputId="activityType"
             [options]="typeOptions"
-            optionLabel="label"
-            optionValue="value"
+            optionLabel="ad"
+            optionValue="ad"
             appendTo="body"
             styleClass="w-100"
           ></p-select>
@@ -298,15 +298,34 @@
         </p-multiSelect>
       </div>
 
-      <!-- Ulaşım Bilgisi — own row -->
+      <!-- Eğitim Düzeyi — cbo_direktorluk lookup'undan doldurulur -->
+      <div class="d-flex flex-column gap-1 mb-3">
+        <label for="educationLevel" class="fw-semibold small text-muted">Eğitim Düzeyi</label>
+        <p-select
+          formControlName="educationLevel"
+          inputId="educationLevel"
+          [options]="educationLevelOptions"
+          optionLabel="ad"
+          optionValue="ad"
+          appendTo="body"
+          styleClass="w-100"
+          placeholder="Eğitim düzeyi seçin"
+        ></p-select>
+      </div>
+
+      <!-- Ulaşım Bilgisi — UlasimCampus lookup'undan doldurulur -->
       <div class="d-flex flex-column gap-1 mb-3">
         <label for="transportation" class="fw-semibold small text-muted">Ulaşım Bilgisi</label>
-        <input
-          pInputText
-          id="transportation"
+        <p-select
           formControlName="transportation"
-          placeholder="Örn: Otobüs, Kendi İmkanları"
-        />
+          inputId="transportation"
+          [options]="transportationOptions"
+          optionLabel="ad"
+          optionValue="ad"
+          appendTo="body"
+          styleClass="w-100"
+          placeholder="Ulaşım seçin"
+        ></p-select>
       </div>
 
       <div class="w-100 d-flex flex-column gap-1 mb-3">
