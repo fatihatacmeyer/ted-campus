@@ -29,96 +29,111 @@
       ></p-button>
     }
 
-    <div class="col-selector-wrapper">
-    <button
-      pButton
-      icon="pi pi-list"
-      class="p-button-text p-button-xl col-toggle-btn"
-      pTooltip="Sütunlar"
-      aria-label="Sütunlar"
-      tooltipPosition="bottom"
-      (click)="showColumnPanel = !showColumnPanel; $event.stopPropagation()"
-    ></button>
+    @if (hasActiveFilters) {
+      <p-button
+        icon="pi pi-filter-slash"
+        size="small"
+        text="true"
+        (onClick)="clearColumnFilters()"
+        pTooltip="Filtreleri Temizle"
+        aria-label="Filtreleri Temizle"
+        tooltipPosition="bottom"
+        styleClass="table-clear-filters-btn"
+      ></p-button>
+    }
 
-    @if (showColumnPanel) {
-      <div
-        class="col-panel"
-        role="button"
-        tabindex="0"
-        (click)="$event.stopPropagation()"
-        (keyup.enter)="$event.stopPropagation()"
-      >
-        <div class="col-panel-header">
-          <span class="col-panel-title">Sütunlar</span>
-          <button
-            pButton
-            icon="pi pi-refresh"
-            class="p-button-text p-button-sm p-button-rounded"
-            pTooltip="Varsayılana Sıfırla"
-            aria-label="Varsayılana Sıfırla"
-            tooltipPosition="left"
-            (click)="onClearColumns()"
-          ></button>
-        </div>
-        <div class="col-panel-body">
-          <div class="col-panel-section">
-            @for (field of selectedColumnFields; track field; let i = $index) {
-              <div
-                class="col-panel-item"
-                [class.col-item-dragging]="draggedIndex === i"
-                [class.col-item-drop-target]="dragOverIndex === i && dragOverIndex !== draggedIndex"
-                draggable="true"
-                (dragstart)="onDragStart($event, i)"
-                (dragover)="onDragOver($event, i)"
-                (dragleave)="onDragLeave()"
-                (drop)="onDrop($event, i)"
-                (dragend)="onDragEnd()"
-              >
-                <span class="drag-handle">⠿</span>
-                <span class="col-label">{{ getColHeader(field) }}</span>
-                @if (isAlwaysVisible(field)) {
-                  <span class="col-locked">
-                    <i class="pi pi-lock" style="font-size: 10px"></i>
-                  </span>
-                } @else {
-                  <label
-                    class="col-toggle"
-                    role="button"
-                    tabindex="0"
-                    (click)="$event.stopPropagation()"
-                    (keyup.enter)="$event.stopPropagation()"
-                  >
-                    <input type="checkbox" checked (change)="toggleColumn(field)" />
-                    <span class="col-toggle-track"></span>
-                  </label>
+    <div class="col-selector-wrapper">
+      <button
+        pButton
+        icon="pi pi-list"
+        class="p-button-text p-button-xl col-toggle-btn"
+        pTooltip="Sütunlar"
+        aria-label="Sütunlar"
+        tooltipPosition="bottom"
+        (click)="showColumnPanel = !showColumnPanel; $event.stopPropagation()"
+      ></button>
+
+      @if (showColumnPanel) {
+        <div
+          class="col-panel"
+          role="button"
+          tabindex="0"
+          (click)="$event.stopPropagation()"
+          (keyup.enter)="$event.stopPropagation()"
+        >
+          <div class="col-panel-header">
+            <span class="col-panel-title">Sütunlar</span>
+            <button
+              pButton
+              icon="pi pi-refresh"
+              class="p-button-text p-button-sm p-button-rounded"
+              pTooltip="Varsayılana Sıfırla"
+              aria-label="Varsayılana Sıfırla"
+              tooltipPosition="left"
+              (click)="onClearColumns()"
+            ></button>
+          </div>
+          <div class="col-panel-body">
+            <div class="col-panel-section">
+              @for (field of selectedColumnFields; track field; let i = $index) {
+                <div
+                  class="col-panel-item"
+                  [class.col-item-dragging]="draggedIndex === i"
+                  [class.col-item-drop-target]="
+                    dragOverIndex === i && dragOverIndex !== draggedIndex
+                  "
+                  draggable="true"
+                  (dragstart)="onDragStart($event, i)"
+                  (dragover)="onDragOver($event, i)"
+                  (dragleave)="onDragLeave()"
+                  (drop)="onDrop($event, i)"
+                  (dragend)="onDragEnd()"
+                >
+                  <span class="drag-handle">⠿</span>
+                  <span class="col-label">{{ getColHeader(field) }}</span>
+                  @if (isAlwaysVisible(field)) {
+                    <span class="col-locked">
+                      <i class="pi pi-lock" style="font-size: 10px"></i>
+                    </span>
+                  } @else {
+                    <label
+                      class="col-toggle"
+                      role="button"
+                      tabindex="0"
+                      (click)="$event.stopPropagation()"
+                      (keyup.enter)="$event.stopPropagation()"
+                    >
+                      <input type="checkbox" checked (change)="toggleColumn(field)" />
+                      <span class="col-toggle-track"></span>
+                    </label>
+                  }
+                </div>
+              }
+            </div>
+            @if (hiddenColumns.length) {
+              <div class="col-panel-divider"></div>
+              <div class="col-panel-section col-panel-section--hidden">
+                @for (field of hiddenColumns; track field) {
+                  <div class="col-panel-item col-panel-item--off">
+                    <span class="drag-handle drag-handle--placeholder"></span>
+                    <span class="col-label col-label--dim">{{ getColHeader(field) }}</span>
+                    <label
+                      class="col-toggle"
+                      role="button"
+                      tabindex="0"
+                      (click)="$event.stopPropagation()"
+                      (keyup.enter)="$event.stopPropagation()"
+                    >
+                      <input type="checkbox" (change)="toggleColumn(field)" />
+                      <span class="col-toggle-track"></span>
+                    </label>
+                  </div>
                 }
               </div>
             }
           </div>
-          @if (hiddenColumns.length) {
-            <div class="col-panel-divider"></div>
-            <div class="col-panel-section col-panel-section--hidden">
-              @for (field of hiddenColumns; track field) {
-                <div class="col-panel-item col-panel-item--off">
-                  <span class="drag-handle drag-handle--placeholder"></span>
-                  <span class="col-label col-label--dim">{{ getColHeader(field) }}</span>
-                  <label
-                    class="col-toggle"
-                    role="button"
-                    tabindex="0"
-                    (click)="$event.stopPropagation()"
-                    (keyup.enter)="$event.stopPropagation()"
-                  >
-                    <input type="checkbox" (change)="toggleColumn(field)" />
-                    <span class="col-toggle-track"></span>
-                  </label>
-                </div>
-              }
-            </div>
-          }
         </div>
-      </div>
-    }
+      }
     </div>
   </div>
 </div>
@@ -144,6 +159,9 @@
 >
   <ng-template pTemplate="header">
     <tr>
+      @if (showRowNumbers) {
+        <th pResizableColumn class="col-row-number">{{ rowNumberHeader }}</th>
+      }
       @for (col of visibleColumns; track col.field) {
         @if (col.sortable) {
           <th
@@ -153,8 +171,26 @@
             [attr.data-field]="col.field"
             [style.width]="getColumnWidth(col.field)"
           >
-            {{ col.header }}
-            <p-sortIcon [field]="col.field" />
+            <div class="col-head">
+              <span class="col-head-label">{{ col.header }}</span>
+              <div class="col-head-actions">
+                <p-sortIcon [field]="col.field" />
+                <button
+                  pButton
+                  type="button"
+                  icon="pi pi-filter"
+                  text="true"
+                  rounded="true"
+                  size="small"
+                  class="col-filter-btn"
+                  [class.is-active]="hasFilterOn(col.field)"
+                  (click)="onFilterBtnClick($event, col)"
+                  [attr.aria-label]="'Filtrele: ' + col.header"
+                  pTooltip="Filtrele"
+                  tooltipPosition="top"
+                ></button>
+              </div>
+            </div>
           </th>
         } @else {
           <th
@@ -163,7 +199,25 @@
             [attr.data-field]="col.field"
             [style.width]="getColumnWidth(col.field)"
           >
-            {{ col.header }}
+            <div class="col-head">
+              <span class="col-head-label">{{ col.header }}</span>
+              <div class="col-head-actions">
+                <button
+                  pButton
+                  type="button"
+                  icon="pi pi-filter"
+                  text="true"
+                  rounded="true"
+                  size="small"
+                  class="col-filter-btn"
+                  [class.is-active]="hasFilterOn(col.field)"
+                  (click)="onFilterBtnClick($event, col)"
+                  [attr.aria-label]="'Filtrele: ' + col.header"
+                  pTooltip="Filtrele"
+                  tooltipPosition="top"
+                ></button>
+              </div>
+            </div>
           </th>
         }
       }
@@ -173,8 +227,11 @@
     </tr>
   </ng-template>
 
-  <ng-template pTemplate="body" let-row>
+  <ng-template pTemplate="body" let-row let-index="rowIndex">
     <tr (click)="rowClick.emit(row)" [style.cursor]="rowClickable ? 'pointer' : 'default'">
+      @if (showRowNumbers) {
+        <td class="col-row-number">{{ rowNumberFor(index) }}</td>
+      }
       @for (col of visibleColumns; track col.field) {
         <td [ngClass]="'col-' + col.field">
           @if (getCellTemplate(col.field); as tpl) {
@@ -194,7 +251,11 @@
 
   <ng-template pTemplate="emptymessage">
     <tr>
-      <td [attr.colspan]="visibleColumns.length + (actionsTemplate ? 1 : 0)">
+      <td
+        [attr.colspan]="
+          visibleColumns.length + (actionsTemplate ? 1 : 0) + (showRowNumbers ? 1 : 0)
+        "
+      >
         <div class="d-flex flex-column align-items-center py-5">
           <i class="pi pi-inbox text-4xl text-muted mb-3"></i>
           <span class="text-muted">{{ emptyMessage }}</span>
@@ -203,3 +264,56 @@
     </tr>
   </ng-template>
 </p-table>
+
+@if (filterPopup; as popup) {
+  <div
+    class="col-filter-popup"
+    [style]="{ left: popup.x + 'px', top: popup.y + 'px' }"
+    role="dialog"
+    [attr.aria-label]="'Filtre: ' + popup.col.header"
+  >
+    <div class="col-filter-popup-header">
+      <span>{{ popup.col.header }}</span>
+      <button
+        pButton
+        type="button"
+        icon="pi pi-times"
+        size="small"
+        text="true"
+        rounded="true"
+        (click)="closeFilterPopup()"
+        [attr.aria-label]="'Kapat'"
+      ></button>
+    </div>
+    @if (getColumnFilterType(popup.col) === 'select') {
+      <p-select
+        [options]="getFilterOptions(popup.col)"
+        optionLabel="label"
+        optionValue="value"
+        [ngModel]="getColumnFilterValue(popup.col.field)"
+        (ngModelChange)="onColumnFilterChange(popup.col, $event)"
+        placeholder="Tümü"
+        showClear="true"
+        class="col-filter-select"
+      />
+    } @else {
+      <input
+        pInputText
+        [ngModel]="getColumnFilterValue(popup.col.field)"
+        (ngModelChange)="onColumnFilterChange(popup.col, $event)"
+        placeholder="Ara..."
+        autocomplete="off"
+        class="col-filter-input"
+      />
+    }
+    <button
+      pButton
+      type="button"
+      label="Temizle"
+      icon="pi pi-filter-slash"
+      size="small"
+      text="true"
+      (click)="clearColumnFilter(popup.col)"
+    ></button>
+  </div>
+}

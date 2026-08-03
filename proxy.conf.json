@@ -1,6 +1,6 @@
 {
   "/api/*": {
-    "target": "https://meyerapi.local",
+    "target": "http://10.20.24.27:1323",
     "secure": false,
     "changeOrigin": true,
     "logLevel": "debug"

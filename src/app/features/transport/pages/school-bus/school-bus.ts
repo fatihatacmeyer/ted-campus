@@ -3,7 +3,6 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { CardModule } from 'primeng/card';
-import { TableModule } from 'primeng/table';
 import { TagModule } from 'primeng/tag';
 import { ButtonModule } from 'primeng/button';
 import { TooltipModule } from 'primeng/tooltip';
@@ -15,12 +14,14 @@ import {
   BusAssignment,
   Driver,
   Hostess,
+  Passenger,
   SeferTuru,
   MOCK_ASSIGNMENTS,
   MOCK_BUSES,
   MOCK_DRIVERS,
   MOCK_HOSTESSES,
 } from './mock-data';
+import { CustomizableTableComponent, ColumnCellDirective, ColumnDef } from '../../../../shared/components/customizable-table/customizable-table';
 
 type TabKey = 'dashboard' | 'buses' | 'drivers' | 'hostesses' | 'assignments';
 
@@ -32,13 +33,14 @@ type TabKey = 'dashboard' | 'buses' | 'drivers' | 'hostesses' | 'assignments';
     FormsModule,
     ReactiveFormsModule,
     CardModule,
-    TableModule,
     TagModule,
     ButtonModule,
     TooltipModule,
     SelectModule,
     InputTextModule,
     TextareaModule,
+    CustomizableTableComponent,
+    ColumnCellDirective,
   ],
   templateUrl: './school-bus.html',
   styleUrl: './school-bus.scss',
@@ -97,13 +99,7 @@ export class SchoolBusComponent {
   protected readonly assignmentDetail = signal<BusAssignment | null>(null);
 
   // ── Search Terms ───────────────────────────────────────
-  protected busSearchValue = '';
-  protected driverSearchValue = '';
-  protected hostessSearchValue = '';
   protected assignmentSearchValue = '';
-  protected readonly busSearch = signal('');
-  protected readonly driverSearch = signal('');
-  protected readonly hostessSearch = signal('');
   protected readonly assignmentSearch = signal('');
   protected readonly seferTuruFilter = signal<SeferTuru | null>(null);
 
@@ -144,31 +140,31 @@ export class SchoolBusComponent {
     this.assignments().filter(a => a.durum === 'Tamamlandı').length,
   );
 
+  // ── Table Columns ──────────────────────────────────────
+  protected readonly busColumns: ColumnDef<Bus>[] = [
+    { field: 'adi', header: 'Servis Adı', sortable: true },
+    { field: 'plaka', header: 'Plaka', sortable: true },
+  ];
+
+  protected readonly driverColumns: ColumnDef<Driver>[] = [
+    { field: 'id', header: 'ID', sortable: true },
+    { field: 'adSoyad', header: 'Ad Soyad', sortable: true },
+    { field: 'telefon', header: 'Telefon', sortable: true },
+  ];
+
+  protected readonly hostessColumns: ColumnDef<Hostess>[] = [
+    { field: 'id', header: 'ID', sortable: true },
+    { field: 'adSoyad', header: 'Ad Soyad', sortable: true },
+    { field: 'telefon', header: 'Telefon', sortable: true },
+  ];
+
+  protected readonly passengerColumns: ColumnDef<Passenger>[] = [
+    { field: 'adSoyad', header: 'Ad Soyad', sortable: true },
+    { field: 'sinif', header: 'Sınıf', sortable: true },
+    { field: 'durum', header: 'Durum', sortable: true },
+  ];
+
   // ── Filtered Lists ─────────────────────────────────────
-  protected readonly filteredBuses = computed(() => {
-    const term = this.busSearch().toLowerCase();
-    return this.buses().filter(b =>
-      b.adi.toLowerCase().includes(term) ||
-      b.plaka.toLowerCase().includes(term)
-    );
-  });
-
-  protected readonly filteredDrivers = computed(() => {
-    const q = this.driverSearch().toLowerCase();
-    return q ? this.drivers().filter(d =>
-      d.adSoyad.toLowerCase().includes(q) ||
-      d.telefon.toLowerCase().includes(q)
-    ) : this.drivers();
-  });
-
-  protected readonly filteredHostesses = computed(() => {
-    const q = this.hostessSearch().toLowerCase();
-    return q ? this.hostesses().filter(h =>
-      h.adSoyad.toLowerCase().includes(q) ||
-      h.telefon.toLowerCase().includes(q)
-    ) : this.hostesses();
-  });
-
   protected readonly filteredAssignments = computed(() => {
     const term = this.assignmentSearch().toLowerCase();
     const tur = this.seferTuruFilter();

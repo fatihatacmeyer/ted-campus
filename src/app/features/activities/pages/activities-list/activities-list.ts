@@ -6,6 +6,8 @@ import {
   CustomizableTableComponent,
   ColumnCellDirective,
   ColumnDef,
+  FilterOption,
+  uniqueFilterOptions,
 } from '../../../../shared/components/customizable-table/customizable-table';
 import { ButtonModule } from 'primeng/button';
 import { DialogModule } from 'primeng/dialog';
@@ -20,6 +22,12 @@ import { TooltipModule } from 'primeng/tooltip';
 import { ActivityInterface } from '../../../../core/models/activity.model';
 import { ActivityService } from '../../services/activity.service';
 import { formatDate, parseDate } from '../../../../shared/utils/date.utils';
+
+/** Boole sütun filtreleri için Evet/Hayır seçenekleri */
+const BOOLEAN_FILTER_OPTIONS: FilterOption[] = [
+  { label: 'Evet', value: true },
+  { label: 'Hayır', value: false },
+];
 
 @Component({
   selector: 'app-activities',
@@ -60,25 +68,61 @@ export class ActivitiesComponent {
   activityColumns: ColumnDef<ActivityInterface>[] = [
     { field: 'id', header: 'ID', sortable: true, width: '70px' },
     { field: 'name', header: 'Etkinlik Adı', sortable: true },
-    { field: 'activityType', header: 'Türü', sortable: true },
+    {
+      field: 'activityType',
+      header: 'Türü',
+      sortable: true,
+      filterType: 'select',
+      filterOptions: (rows) => uniqueFilterOptions(rows, 'activityType'),
+    },
     { field: 'startDate', header: 'Tarih', sortable: true, width: '110px' },
     { field: 'endDate', header: 'Bitiş Tarihi', sortable: true, width: '110px' },
     { field: 'eventManager', header: 'Yönetici' },
     { field: 'classroom', header: 'Sınıf / Kapsam' },
-    { field: 'status', header: 'Durum', sortable: true, width: '100px' },
+    {
+      field: 'status',
+      header: 'Durum',
+      sortable: true,
+      width: '100px',
+      filterType: 'select',
+      filterOptions: (rows) => uniqueFilterOptions(rows, 'status'),
+    },
     { field: 'requestStartDate', header: 'Başvuru Başlangıcı', sortable: true, width: '130px' },
     { field: 'requestEndDate', header: 'Başvuru Bitişi', sortable: true, width: '130px' },
     { field: 'maxStudentCount', header: 'Max Öğrenci', sortable: true },
     { field: 'studentParentCount', header: 'Veli Sayısı' },
-    { field: 'isPaid', header: 'Ücretli' },
+    {
+      field: 'isPaid',
+      header: 'Ücretli',
+      filterType: 'select',
+      filterOptions: BOOLEAN_FILTER_OPTIONS,
+    },
     { field: 'fee', header: 'Ücret' },
-    { field: 'isParentRequired', header: 'Veli Zorunlu' },
+    {
+      field: 'isParentRequired',
+      header: 'Veli Zorunlu',
+      filterType: 'select',
+      filterOptions: BOOLEAN_FILTER_OPTIONS,
+    },
     { field: 'transportation', header: 'Ulaşım' },
     { field: 'description', header: 'Açıklama' },
-    { field: 'isPrivate', header: 'Özel Etkinlik' },
+    {
+      field: 'isPrivate',
+      header: 'Özel Etkinlik',
+      filterType: 'select',
+      filterOptions: BOOLEAN_FILTER_OPTIONS,
+    },
     { field: 'createdAt', header: 'Oluşturulma Tarihi' },
   ];
-  defaultActivityFields = ['id', 'name', 'activityType', 'startDate', 'eventManager', 'classroom', 'status'];
+  defaultActivityFields = [
+    'id',
+    'name',
+    'activityType',
+    'startDate',
+    'eventManager',
+    'classroom',
+    'status',
+  ];
 
   activityForm: FormGroup = this.fb.group({
     name: ['', Validators.required],
@@ -135,6 +179,8 @@ export class ActivitiesComponent {
         },
       });
   }
+
+  private loadDropdownData(): void {}
 
   statusOptions = [
     { label: 'Aktif', value: 'Aktif' },

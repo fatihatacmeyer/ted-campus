@@ -16,13 +16,23 @@ import {
   getUserDefLabel,
   extractLinkedPersonIds,
   extractLinkedTeacherIds,
+  resolveLinkedNames,
 } from '../../../../core/models/person.model';
-import { PersonTableComponent } from '../../../../shared/components/person-table/person-table';
+import {
+  CustomizableTableComponent,
+  ColumnCellDirective,
+  ColumnDef,
+} from '../../../../shared/components/customizable-table/customizable-table';
+import {
+  PERSON_COLUMNS,
+  PERSON_DEFAULT_FIELDS,
+} from '../../../../shared/config/person-table.config';
 import { PersonFormComponent } from '../../components/person-form/person-form';
 import { PersonExitDialogComponent } from '../../components/person-exit-dialog/person-exit-dialog';
 import { PersonLeaveDialogComponent } from '../../components/person-leave-dialog/person-leave-dialog';
 import { PersonProfileComponent } from '../../components/person-profile/person-profile';
 import { ButtonModule } from 'primeng/button';
+import { TooltipModule } from 'primeng/tooltip';
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
 import { MessageService } from 'primeng/api';
 import { ToastModule } from 'primeng/toast';
@@ -31,12 +41,14 @@ import { ToastModule } from 'primeng/toast';
   selector: 'app-person-crud',
   standalone: true,
   imports: [
-    PersonTableComponent,
+    CustomizableTableComponent,
+    ColumnCellDirective,
     PersonFormComponent,
     PersonExitDialogComponent,
     PersonLeaveDialogComponent,
     PersonProfileComponent,
     ButtonModule,
+    TooltipModule,
     ProgressSpinnerModule,
     ToastModule,
   ],
@@ -62,6 +74,16 @@ export class PersonCrudComponent implements OnInit {
   leavePerson: Person | null = null;
   showProfileModal = false;
   selectedProfilePerson: Person | null = null;
+
+  /** Tablo sütunları — userdef'a göre başlık override + export hook'ları uygulanır. */
+  columns: ColumnDef<Person>[] = PERSON_COLUMNS.map((c) => ({ ...c }));
+
+  /** Varsayılan görünür sütunlar (tablo tercihi olmadığında / sıfırlamada). */
+  readonly PERSON_DEFAULT_FIELDS = PERSON_DEFAULT_FIELDS;
+
+  /** Kişi bağlantı görünümleri (Veliler / Öğretmenler) için önbellek. */
+  private linkedDisplayCache = new Map<number, string>();
+  private teacherLinkedDisplayCache = new Map<number, string>();
 
   private personService = inject(PersonService);
   private cdr = inject(ChangeDetectorRef);
@@ -123,9 +145,71 @@ export class PersonCrudComponent implements OnInit {
     return [];
   }
 
+  // ─── Column config ───
+
+  private applyColumnOverrides(): void {
+    for (const override of this.columnOverrides) {
+      const col = this.columns.find((c) => c.field === override.field);
+      if (col) col.header = override.header;
+    }
+  }
+
+  /** Dışa aktarmada görünen hücre değerini değil, kişiye özel değeri kullan. */
+  private applyExportHooks(): void {
+    const setHook = (field: string, fn: (p: Person) => string): void => {
+      const col = this.columns.find((c) => c.field === field);
+      if (col) col.exportValue = fn;
+    };
+
+    if (this.needsAllPersons) {
+      setHook('personelno', (p) => this.getLinkedDisplay(p));
+      setHook('linkedTeachers', (p) => this.getTeacherLinkedDisplay(p));
+    }
+    setHook('indirimorani', (p) => (p.indirimorani != null ? `${p.indirimorani}%` : ''));
+  }
+
+  /** Kişi bağlantı görünümleri (Veliler / Öğretmenler) için önbelleği yeniden kurar. */
+  private rebuildLinkedDisplayCache(): void {
+    this.linkedDisplayCache.clear();
+    this.teacherLinkedDisplayCache.clear();
+    if (!this.allPersons.length) return;
+
+    for (const person of this.persons) {
+      const parentIds = extractLinkedPersonIds(person.personelno);
+      this.linkedDisplayCache.set(
+        person.id,
+        parentIds.length === 0
+          ? '-'
+          : resolveLinkedNames(parentIds, this.allPersons)
+              .map((l) => l.name)
+              .join(', ')
+      );
+
+      const teacherIds = extractLinkedTeacherIds(person.personelno);
+      this.teacherLinkedDisplayCache.set(
+        person.id,
+        teacherIds.length === 0
+          ? '-'
+          : resolveLinkedNames(teacherIds, this.allPersons)
+              .map((l) => l.name)
+              .join(', ')
+      );
+    }
+  }
+
+  getLinkedDisplay(person: Person): string {
+    return this.linkedDisplayCache.get(person.id) ?? '-';
+  }
+
+  getTeacherLinkedDisplay(person: Person): string {
+    return this.teacherLinkedDisplayCache.get(person.id) ?? '-';
+  }
+
   // ─── Lifecycle ───
 
   ngOnInit() {
+    this.applyColumnOverrides();
+    this.applyExportHooks();
     this.fetchPersonList();
   }
 
@@ -144,6 +228,7 @@ export class PersonCrudComponent implements OnInit {
             this.allPersons = data;
           }
           this.persons = data.filter((p) => p.userdef === this.USERDEF);
+          this.rebuildLinkedDisplayCache();
           this.isLoading = false;
           this.cdr.markForCheck();
         },
@@ -207,7 +292,9 @@ export class PersonCrudComponent implements OnInit {
 
   // ─── Leave ───
 
-  onLeaveRequest(person: Person): void {
+  /** İzin Ata — satır tıklamasını tetiklemesin diye olay yayılımı durdurulur. */
+  onLeaveRequest(event: Event, person: Person): void {
+    event.stopPropagation();
     this.leavePerson = person;
     this.showLeaveDialog = true;
   }

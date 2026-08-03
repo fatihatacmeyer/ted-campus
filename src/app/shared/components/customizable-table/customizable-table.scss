@@ -97,6 +97,110 @@
   text-align: center;
 }
 
+/* ── Sütun Başlığı ───────────────────────────────────────── */
+
+.col-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.col-head-label {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.col-head-actions {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  margin-left: auto;
+  margin-right: 6px;
+}
+
+/* ── Sütun Başlığı Filtre Butonu ─────────────────────────── */
+
+.col-filter-btn {
+  &.is-active {
+    color: #dc2134;
+  }
+}
+
+/* ── Filtre Popup'ı ─────────────────────────────────────── */
+
+.col-filter-popup {
+  position: fixed;
+  z-index: 1000;
+  min-width: 220px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  box-shadow: 0 8px 24px rgb(2 6 23 / 0.12);
+  font-size: 12px;
+
+  &-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    font-weight: 600;
+    color: #334155;
+  }
+
+  .col-filter-input {
+    width: 100%;
+  }
+
+  ::ng-deep .col-filter-select .p-select {
+    width: 100%;
+  }
+}
+
+/* ── Satır Numarası ─────────────────────────────────────── */
+
+.col-row-number {
+  width: 50px;
+  text-align: center;
+  color: #94a3b8;
+  font-weight: 500;
+}
+
+/* ── Column Width Classes ────────────────────────────────── */
+
+.col-id          { width: 70px; }
+.col-ad          { width: 120px; }
+.col-soyad       { width: 120px; }
+.col-sicilno     { width: 90px; }
+.col-firma       { width: 200px; }
+.col-firmaad     { width: 160px; }
+.col-bolumad     { width: 160px; }
+.col-pozisyonad  { width: 140px; }
+.col-ceptelefon  { width: 120px; }
+.col-personelno  { width: 100px; }
+.col-userid      { width: 80px; }
+.col-altfirmaad  { width: 140px; }
+.col-direktorlukad { width: 140px; }
+.col-gorevad     { width: 120px; }
+.col-yakaad      { width: 100px; }
+.col-credit      { width: 80px; }
+.col-indirimorani { width: 100px; }
+.col-mesaiperiyodu { width: 110px; }
+.col-mesaiperiyoduad { width: 130px; }
+.col-cikistarih  { width: 110px; }
+.col-lyetki      { width: 80px; }
+.col-lkademe     { width: 80px; }
+.col-userdef     { width: 80px; }
+.col-userdefad   { width: 100px; }
+.col-cardid      { width: 80px; }
+.col-yetkistr    { width: 90px; }
+.col-yetkistrad  { width: 110px; }
+
 /* ── Column Selector Panel ──────────────────────────────── */
 
 .col-selector-wrapper {

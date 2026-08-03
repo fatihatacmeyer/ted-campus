@@ -35,17 +35,47 @@
     }
 
     @if (!isLoading && !errorMessage) {
-      <app-person-table
-        [persons]="persons"
+      <app-customizable-table
+        [rows]="persons"
+        [columns]="columns"
         [loading]="isLoading"
         [tableId]="USERDEF.toString()"
-        [allPersons]="allPersons"
-        [columnOverrides]="columnOverrides"
-        [showLeaveButton]="USERDEF === UserDef.Ogrenci"
-        [showActionsColumn]="showActionsColumn"
+        [defaultFields]="PERSON_DEFAULT_FIELDS"
+        [emptyCellValue]="''"
+        [rowClickable]="true"
+        [showRowNumbers]="true"
+        [exportFilename]="'person_liste_' + USERDEF.toString()"
+        [actionsTemplate]="showActionsColumn ? actionsTpl : null"
         (rowClick)="onRowClick($event)"
-        (leaveRequest)="onLeaveRequest($event)"
-      ></app-person-table>
+      >
+        <ng-template appColumnCell="personelno" let-person>
+          <span class="cell-text">{{
+            allPersons.length ? getLinkedDisplay(person) : (person.personelno ?? '')
+          }}</span>
+        </ng-template>
+        <ng-template appColumnCell="linkedTeachers" let-person>
+          <span class="cell-text">{{
+            allPersons.length ? getTeacherLinkedDisplay(person) : ''
+          }}</span>
+        </ng-template>
+        <ng-template appColumnCell="indirimorani" let-person>
+          <span class="metric-badge">{{ person.indirimorani }}%</span>
+        </ng-template>
+        <ng-template appColumnCell="cikistarih" let-person>
+          <span class="cell-text">{{ person.cikistarih ?? '-' }}</span>
+        </ng-template>
+        <ng-template #actionsTpl let-person>
+          <button
+            pButton
+            type="button"
+            icon="pi pi-calendar-plus"
+            class="p-button-text p-button-sm p-button-success"
+            pTooltip="İzin Ata"
+            aria-label="İzin Ata"
+            (click)="onLeaveRequest($event, person)"
+          ></button>
+        </ng-template>
+      </app-customizable-table>
     }
   </div>
 </div>

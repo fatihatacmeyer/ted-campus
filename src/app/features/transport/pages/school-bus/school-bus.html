@@ -109,37 +109,26 @@
         <button pButton label="Yeni Araç Ekle" aria-label="Yeni Araç Ekle" icon="pi pi-plus" class="p-button-sm p-button-success" (click)="openBusForm()"></button>
       </div>
 
-      <!-- Search -->
-      <div class="search-bar">
-        <span class="material-symbols-outlined">search</span>
-        <input pInputText [ngModel]="busSearchValue" (ngModelChange)="busSearchValue=$event; busSearch.set($event)" placeholder="Araç ara... (adi, plaka)" class="w-full" />
-      </div>
-
       <!-- Table -->
-      <p-table [value]="filteredBuses()" [tableStyle]="{ 'min-width': '50rem' }" styleClass="p-datatable-striped" [paginator]="true" [rows]="10" [rowsPerPageOptions]="[5, 10, 20]">
-        <ng-template pTemplate="header">
-          <tr>
-            <th>Servis Adı</th>
-            <th>Plaka</th>
-            <th style="width:140px">İşlemler</th>
-          </tr>
+      <app-customizable-table
+        [rows]="buses()"
+        [columns]="busColumns"
+        tableId="school_bus_buses"
+        emptyMessage="Araç bulunamadı."
+        exportFilename="servis_araclari"
+        [showRowNumbers]="true"
+        [actionsTemplate]="busActionsTpl"
+      >
+        <ng-template appColumnCell="plaka" let-bus>
+          <strong>{{ bus.plaka }}</strong>
         </ng-template>
-        <ng-template pTemplate="body" let-bus>
-          <tr>
-            <td>{{ bus.adi }}</td>
-            <td><strong>{{ bus.plaka }}</strong></td>
-            <td>
-              <div class="row-actions">
-                <button pButton icon="pi pi-pencil" class="p-button-sm p-button-text p-button-warning" (click)="openBusForm(bus)" pTooltip="Düzenle" aria-label="Düzenle"></button>
-                <button pButton icon="pi pi-trash" class="p-button-sm p-button-text p-button-danger" (click)="confirmBusDelete(bus)" pTooltip="Sil" aria-label="Sil"></button>
-              </div>
-            </td>
-          </tr>
+        <ng-template #busActionsTpl let-bus>
+          <div class="row-actions">
+            <button pButton icon="pi pi-pencil" class="p-button-sm p-button-text p-button-warning" (click)="openBusForm(bus)" pTooltip="Düzenle" aria-label="Düzenle"></button>
+            <button pButton icon="pi pi-trash" class="p-button-sm p-button-text p-button-danger" (click)="confirmBusDelete(bus)" pTooltip="Sil" aria-label="Sil"></button>
+          </div>
         </ng-template>
-        <ng-template pTemplate="emptymessage">
-          <tr><td colspan="8" class="text-center">Araç bulunamadı.</td></tr>
-        </ng-template>
-      </p-table>
+      </app-customizable-table>
     </div>
   }
 
@@ -156,37 +145,26 @@
         <button pButton label="Yeni Şöför Ekle" aria-label="Yeni Şöför Ekle" icon="pi pi-plus" class="p-button-sm p-button-success" (click)="openDriverForm()"></button>
       </div>
 
-      <div class="search-bar">
-        <span class="material-symbols-outlined">search</span>
-        <input pInputText [ngModel]="driverSearchValue" (ngModelChange)="driverSearchValue=$event; driverSearch.set($event)" placeholder="Şöför ara... (ad, telefon)" class="w-full" />
-      </div>
-
-      <p-table [value]="filteredDrivers()" [tableStyle]="{ 'min-width': '50rem' }" styleClass="p-datatable-striped" [paginator]="true" [rows]="10">
-        <ng-template pTemplate="header">
-          <tr>
-            <th style="width:60px">ID</th>
-            <th>Ad Soyad</th>
-            <th>Telefon</th>
-            <th style="width:140px">İşlemler</th>
-          </tr>
+      <!-- Table -->
+      <app-customizable-table
+        [rows]="drivers()"
+        [columns]="driverColumns"
+        tableId="school_bus_drivers"
+        emptyMessage="Şöför bulunamadı."
+        exportFilename="soforler"
+        [showRowNumbers]="true"
+        [actionsTemplate]="driverActionsTpl"
+      >
+        <ng-template appColumnCell="adSoyad" let-driver>
+          <strong>{{ driver.adSoyad }}</strong>
         </ng-template>
-        <ng-template pTemplate="body" let-driver>
-          <tr>
-            <td>{{ driver.id }}</td>
-            <td><strong>{{ driver.adSoyad }}</strong></td>
-            <td>{{ driver.telefon }}</td>
-            <td>
-              <div class="row-actions">
-                <button pButton icon="pi pi-pencil" class="p-button-sm p-button-text p-button-warning" (click)="openDriverForm(driver)" pTooltip="Düzenle" aria-label="Düzenle"></button>
-                <button pButton icon="pi pi-trash" class="p-button-sm p-button-text p-button-danger" (click)="confirmDriverDelete(driver)" pTooltip="Sil" aria-label="Sil"></button>
-              </div>
-            </td>
-          </tr>
+        <ng-template #driverActionsTpl let-driver>
+          <div class="row-actions">
+            <button pButton icon="pi pi-pencil" class="p-button-sm p-button-text p-button-warning" (click)="openDriverForm(driver)" pTooltip="Düzenle" aria-label="Düzenle"></button>
+            <button pButton icon="pi pi-trash" class="p-button-sm p-button-text p-button-danger" (click)="confirmDriverDelete(driver)" pTooltip="Sil" aria-label="Sil"></button>
+          </div>
         </ng-template>
-        <ng-template pTemplate="emptymessage">
-          <tr><td colspan="4" class="text-center">Şöför bulunamadı.</td></tr>
-        </ng-template>
-      </p-table>
+      </app-customizable-table>
     </div>
   }
 
@@ -203,37 +181,26 @@
         <button pButton label="Yeni Hostes Ekle" aria-label="Yeni Hostes Ekle" icon="pi pi-plus" class="p-button-sm p-button-success" (click)="openHostessForm()"></button>
       </div>
 
-      <div class="search-bar">
-        <span class="material-symbols-outlined">search</span>
-        <input pInputText [ngModel]="hostessSearchValue" (ngModelChange)="hostessSearchValue=$event; hostessSearch.set($event)" placeholder="Hostes ara... (ad, telefon, görev)" class="w-full" />
-      </div>
-
-      <p-table [value]="filteredHostesses()" [tableStyle]="{ 'min-width': '50rem' }" styleClass="p-datatable-striped" [paginator]="true" [rows]="10">
-        <ng-template pTemplate="header">
-          <tr>
-            <th style="width:60px">ID</th>
-            <th>Ad Soyad</th>
-            <th>Telefon</th>
-            <th style="width:140px">İşlemler</th>
-          </tr>
+      <!-- Table -->
+      <app-customizable-table
+        [rows]="hostesses()"
+        [columns]="hostessColumns"
+        tableId="school_bus_hostesses"
+        emptyMessage="Hostes bulunamadı."
+        exportFilename="hostesler"
+        [showRowNumbers]="true"
+        [actionsTemplate]="hostessActionsTpl"
+      >
+        <ng-template appColumnCell="adSoyad" let-hostess>
+          <strong>{{ hostess.adSoyad }}</strong>
         </ng-template>
-        <ng-template pTemplate="body" let-hostess>
-          <tr>
-            <td>{{ hostess.id }}</td>
-            <td><strong>{{ hostess.adSoyad }}</strong></td>
-            <td>{{ hostess.telefon }}</td>
-            <td>
-              <div class="row-actions">
-                <button pButton icon="pi pi-pencil" class="p-button-sm p-button-text p-button-warning" (click)="openHostessForm(hostess)" pTooltip="Düzenle" aria-label="Düzenle"></button>
-                <button pButton icon="pi pi-trash" class="p-button-sm p-button-text p-button-danger" (click)="confirmHostessDelete(hostess)" pTooltip="Sil" aria-label="Sil"></button>
-              </div>
-            </td>
-          </tr>
+        <ng-template #hostessActionsTpl let-hostess>
+          <div class="row-actions">
+            <button pButton icon="pi pi-pencil" class="p-button-sm p-button-text p-button-warning" (click)="openHostessForm(hostess)" pTooltip="Düzenle" aria-label="Düzenle"></button>
+            <button pButton icon="pi pi-trash" class="p-button-sm p-button-text p-button-danger" (click)="confirmHostessDelete(hostess)" pTooltip="Sil" aria-label="Sil"></button>
+          </div>
         </ng-template>
-        <ng-template pTemplate="emptymessage">
-          <tr><td colspan="4" class="text-center">Hostes bulunamadı.</td></tr>
-        </ng-template>
-      </p-table>
+      </app-customizable-table>
     </div>
   }
 
@@ -690,29 +657,21 @@
             <span class="material-symbols-outlined">group</span>
             Yolcu Listesi ({{ assignmentDetail()!.yolcular.length }})
           </h4>
-          <p-table [value]="assignmentDetail()!.yolcular" [tableStyle]="{ 'min-width': '40rem' }" styleClass="p-datatable-striped" [paginator]="true" [rows]="10">
-            <ng-template pTemplate="header">
-              <tr>
-                <th>#</th>
-                <th>Ad Soyad</th>
-                <th>Sınıf</th>
-                <th>Durum</th>
-              </tr>
+          <app-customizable-table
+            [rows]="assignmentDetail()!.yolcular"
+            [columns]="passengerColumns"
+            tableId="school_bus_passengers"
+            [showRowNumbers]="true"
+            [exportable]="false"
+            emptyMessage="Bu atamada yolcu bulunmuyor."
+          >
+            <ng-template appColumnCell field="durum" let-passenger let-column="column">
+              <p-tag
+                [value]="passenger.durum"
+                [severity]="passenger.durum === 'Binmiş' ? 'success' : passenger.durum === 'İnmemiş' ? 'danger' : 'info'"
+              />
             </ng-template>
-            <ng-template pTemplate="body" let-passenger let-i="rowIndex">
-              <tr>
-                <td>{{ i + 1 }}</td>
-                <td>{{ passenger.adSoyad }}</td>
-                <td>{{ passenger.sinif }}</td>
-                <td>
-                  <p-tag
-                    [value]="passenger.durum"
-                    [severity]="passenger.durum === 'Binmiş' ? 'success' : passenger.durum === 'İnmemiş' ? 'danger' : 'info'"
-                  />
-                </td>
-              </tr>
-            </ng-template>
-          </p-table>
+          </app-customizable-table>
         </div>
       </div>
     </div>
