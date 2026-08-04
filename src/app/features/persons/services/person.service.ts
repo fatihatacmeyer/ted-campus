@@ -331,11 +331,11 @@ export class PersonService {
    * Yeni sicil (öğrenci / öğretmen / veli) ekler.
    * Hangi component'ten çağrıldığı fark etmez; ayrımı `personData.userdef` yapar.
    */
-  insertPerson(personData: PersonInsertRequest): Observable<unknown> {
+  insertPerson(personData: PersonInsertRequest): Observable<Person[]> {
     this.assertUserDef(personData);
 
     const payload = this.buildPersonPayload(personData, 'i', 0);
-    return this.http.post<unknown>(`${this.config.apiUrl}/Person`, payload);
+    return this.http.post<Person[]>(`${this.config.apiUrl}/Person`, payload);
   }
 
   /**
@@ -343,11 +343,11 @@ export class PersonService {
    * insertPerson ile aynı payload yapısını kullanır; fark olarak
    * `islemtipi: 'u'` ve gerçek `id` gönderilir.
    */
-  updatePerson(personData: PersonInsertRequest & { id: number }): Observable<unknown> {
+  updatePerson(personData: PersonInsertRequest & { id: number }): Observable<Person[]> {
     this.assertUserDef(personData);
 
     const payload = this.buildPersonPayload(personData, 'u', personData.id);
-    return this.http.post<unknown>(`${this.config.apiUrl}/Person`, payload);
+    return this.http.post<Person[]>(`${this.config.apiUrl}/Person`, payload);
   }
 
   /**

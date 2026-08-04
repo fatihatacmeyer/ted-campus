@@ -29,9 +29,12 @@ export class ApiHelperService {
    * bağımlı olmasa da, şifrelenmiş çıktıyı değiştirmemek için sıraya dokunulmaz.
    */
   buildParamString(params: Record<string, string | number | null | undefined>): string {
-    return Object.entries(params)
+    const result = Object.entries(params)
       .map(([key, value]) => `${key}=${value ?? ''}`)
       .join('&');
+
+    console.debug('[buildParamString] plaintext param:', result);
+    return result;
   }
 
   /**

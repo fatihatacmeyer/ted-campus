@@ -26,3 +26,17 @@ export function isSuccessResult(
 ): boolean {
   return result?.islemsonuc === '1' || result?.islemsonuc === 1;
 }
+
+/**
+ * Insert/update sonrası dönen satırdan gerçek DB id'sini çıkarır.
+ *
+ * DİKKAT: `islemno` bir DB id'si DEĞİLDİR — backend'in ürettiği işlem takip
+ * kodudur (örn. "85-20260804080951349@S_233U_147L_tr"). Yeni oluşturulan
+ * kaydın id'si için HER ZAMAN bu fonksiyon (yani `result.id`) kullanılmalı;
+ * `Number(result.islemno)` her zaman NaN döner ve bu daha önce veli-öğrenci
+ * ilişkisinin hiç kurulamadığı sessiz bir hataya yol açmıştı.
+ */
+export function extractNewId(result: { id?: number } | null | undefined): number | null {
+  const id = Number(result?.id);
+  return Number.isFinite(id) && id > 0 ? id : null;
+}

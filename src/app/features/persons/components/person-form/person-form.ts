@@ -1,5 +1,6 @@
 import {
   ChangeDetectionStrategy,
+  ChangeDetectorRef,
   Component,
   DestroyRef,
   EventEmitter,
@@ -35,7 +36,11 @@ import {
 } from '../../../../core/models/person.model';
 import { TypesService, DropdownItem } from '../../services/types.service';
 import { formatDate, parseDate } from '../../../../shared/utils/date.utils';
-import { unwrapResponse, isSuccessResult } from '../../../../shared/utils/response.utils';
+import {
+  unwrapResponse,
+  isSuccessResult,
+  extractNewId,
+} from '../../../../shared/utils/response.utils';
 
 /** Form alanlarının tek kaynağı (single source of truth) — 24 alan adı yalnızca burada tanımlanır. */
 interface PersonFormFieldMeta {
@@ -112,6 +117,7 @@ export class PersonFormComponent implements OnChanges, OnInit {
   private personService = inject(PersonService);
   private typesService = inject(TypesService);
   private destroyRef = inject(DestroyRef);
+  private cdr = inject(ChangeDetectorRef);
 
   form: FormGroup = this.fb.group(this.buildFormControls());
 
@@ -289,6 +295,8 @@ export class PersonFormComponent implements OnChanges, OnInit {
       direktorluk: p.direktorluk || '',
       yaka: p.yaka || '',
       giristarih: parseDate(p.giristarih ?? null),
+
+      //veliSicilId: p.veliSicilId ?? null,
     });
     // linkedPersons'ı personelno alanından oku
     const linkedIds = p.veliSicilId ? [Number(p.veliSicilId)] : [];
@@ -308,6 +316,7 @@ export class PersonFormComponent implements OnChanges, OnInit {
     this.photoFileName = '';
     this.form.reset();
     this.form.patchValue({ linkedPersons: [], linkedTeachers: [] });
+    this.cdr.markForCheck();
   }
 
   onPhotoSelected(event: Event): void {
@@ -452,14 +461,20 @@ export class PersonFormComponent implements OnChanges, OnInit {
       // 1. ÖNCE VELİYİ KAYDET
       this.personService.insertPerson(yeniVeliPayload).subscribe({
         next: (veliRes: any) => {
-          const veliResult = unwrapResponse<OperationResultResponse>(veliRes);
-          // Backend'den yeni velinin ID'sini alıyoruz (Varsayım: islemno içinde dönüyor)
-          const yeniVeliId = Number(veliResult?.islemno);
+          const veliResult = unwrapResponse<Person>(veliRes);
+          if (!isSuccessResult(veliResult)) {
+            this.errorMessage = veliResult?.sunucucevap || 'Veli oluşturulamadı.';
+            this.isSaving = false;
+            this.cdr.markForCheck();
+            return;
+          }
+          const yeniVeliId = extractNewId(veliResult);
 
-          if (!yeniVeliId || isNaN(yeniVeliId)) {
+          if (!yeniVeliId) {
             this.errorMessage =
               "Veli oluşturuldu ancak ID'si alınamadığı için öğrenciye bağlanamadı.";
             this.isSaving = false;
+            this.cdr.markForCheck();
             return;
           }
 
@@ -488,11 +503,18 @@ export class PersonFormComponent implements OnChanges, OnInit {
       : this.personService.insertPerson(payload);
 
     saveObs.subscribe({
-      next: (stdRes: any) => {
-        const stdResult = unwrapResponse<OperationResultResponse>(stdRes);
+      next: (stdRes) => {
+        const stdResult = unwrapResponse<Person>(stdRes);
+        if (!isSuccessResult(stdResult)) {
+          this.errorMessage = stdResult?.sunucucevap || 'Kayıt başarısız oldu.';
+          this.isSaving = false;
+          this.cdr.markForCheck();
+          return;
+        }
+        const ogrenciId = this.isEditMode ? this.editPerson!.id : extractNewId(stdResult);
 
         // Düzenlemeyse kendi ID'si, yeniyse backend'den dönen ID
-        const ogrenciId = this.isEditMode ? this.editPerson!.id : Number(stdResult?.islemno);
+        //const ogrenciId = this.isEditMode ? this.editPerson!.id : Number(stdResult?.islemno);
 
         // 3. VELİ - ÖĞRENCİ İLİŞKİSİNİ VERİTABANINA YAZ
         if (this.userdef === UserDef.Ogrenci && veliId && ogrenciId) {
@@ -500,10 +522,17 @@ export class PersonFormComponent implements OnChanges, OnInit {
             ? this.personService.updateRelationCampus(ogrenciId, veliId)
             : this.personService.addRelationCampus(ogrenciId, veliId);
 
-          relationObs.subscribe(() => {
-            this.isSaving = false;
-            this.saved.emit(stdRes);
-            this.close();
+          relationObs.subscribe({
+            next: () => {
+              this.isSaving = false;
+              this.saved.emit(stdRes);
+              this.close();
+            },
+            error: () => {
+              this.errorMessage = 'Kayıt yapıldı ancak veli ilişkisi kurulamadı.';
+              this.isSaving = false;
+              this.cdr.markForCheck();
+            },
           });
         } else {
           // Veli seçilmemişse direkt bitir
