@@ -2,7 +2,14 @@ import { ChangeDetectionStrategy, Component, EventEmitter, Input, Output } from 
 import { CommonModule } from '@angular/common';
 import { DialogModule } from 'primeng/dialog';
 import { ButtonModule } from 'primeng/button';
-import { Person, LinkedPerson, extractLinkedPersonIds, extractLinkedTeacherIds, resolveLinkedNames, UserDef } from '../../../../core/models/person.model';
+import {
+  Person,
+  LinkedPerson,
+  extractLinkedPersonIds,
+  extractLinkedTeacherIds,
+  resolveLinkedNames,
+  UserDef,
+} from '../../../../core/models/person.model';
 
 @Component({
   selector: 'app-person-profile',
@@ -25,10 +32,26 @@ export class PersonProfileComponent {
   @Output() restoreRequest = new EventEmitter<Person>();
 
   get linkedPersons(): LinkedPerson[] {
-    if (!this.person) return [];
-    const ids = extractLinkedPersonIds(this.person.personelno);
-    if (ids.length === 0) return [];
-    return resolveLinkedNames(ids, this.allPersons);
+    // 1. Kişi yoksa veya backend'den veliSicilId gelmemişse boş liste dön.
+    if (!this.person || !this.person.veliSicilId) return [];
+
+    const veliId = Number(this.person.veliSicilId);
+
+    // 2. Tıklanabilir (link) yapabilmek için, bu veliyi allPersons (tüm kişiler) listesinde arıyoruz.
+    const found = this.allPersons.find((p) => p.id === veliId);
+
+    if (found) {
+      return [{ id: found.id, name: found.adsoyad, sicilno: found.sicilno }];
+    }
+
+    // 3. Eğer allPersons içinde bulamazsa (ya da liste yüklenmemişse), backend'in doğrudan verdiği VeliAdSoyad metnini göster.
+    return [
+      {
+        id: veliId,
+        name: this.person.veliAdSoyad || 'Bilinmeyen Veli',
+        sicilno: '',
+      },
+    ];
   }
 
   get linkedTeachers(): LinkedPerson[] {
@@ -73,9 +96,26 @@ export class PersonProfileComponent {
   }
 
   onLinkedPersonClick(linked: LinkedPerson): void {
-    const found = this.allPersons.find(p => p.id === linked.id);
+    const found = this.allPersons.find((p) => p.id === linked.id);
+
     if (found) {
+      // Eğer ana listede bulursa tüm verileriyle modalı aç
       this.personClick.emit(found);
+    } else {
+      // Eğer listede bulamazsa (API'den gelmemişse), elimizdeki isim ve ID ile
+      // modalı en azından temel bilgilerle açması için sahte (kısmi) bir profil fırlatıyoruz.
+      const fallbackPerson = {
+        id: linked.id,
+        adsoyad: linked.name,
+        ad: linked.name,
+        soyad: '',
+        sicilno: linked.sicilno || '',
+        userdefad: 'Veli',
+        ceptelefon: '',
+        cardid: '',
+      } as Person;
+
+      this.personClick.emit(fallbackPerson);
     }
   }
 

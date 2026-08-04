@@ -33,47 +33,54 @@
       </div>
 
       @if (showLinkedPersons) {
-      <div class="linked-section">
-        <h6>{{ linkedPersonsLabel }}</h6>
-        @if (hasLinkedPersons) {
-          <ul class="linked-list">
-            @for (linked of linkedPersons; track linked.id) {
-              <li>
-                <button
-                  pButton
-                  type="button"
-                  class="p-button-text p-button-sm p-button-link"
-                  (click)="onLinkedPersonClick(linked)"
-                >{{ linked.name }} ({{ linked.sicilno || '-' }})</button>
-              </li>
-            }
-          </ul>
-        } @else {
-          <span class="no-linked">Atanmamış</span>
-        }
-      </div>
+        <div class="linked-section">
+          <h6>{{ linkedPersonsLabel }}</h6>
+          @if (hasLinkedPersons) {
+            <ul class="linked-list">
+              @for (linked of linkedPersons; track linked.id) {
+                <li>
+                  <button
+                    pButton
+                    type="button"
+                    class="p-button-text p-button-sm p-button-link"
+                    (click)="onLinkedPersonClick(linked)"
+                  >
+                    {{ linked.name }}
+                    @if (linked.sicilno) {
+                      ({{ linked.sicilno || '-' }})
+                    }
+                  </button>
+                </li>
+              }
+            </ul>
+          } @else {
+            <span class="no-linked">Atanmamış</span>
+          }
+        </div>
       }
 
       @if (showLinkedTeachers) {
-      <div class="linked-section">
-        <h6>{{ linkedTeachersLabel }}</h6>
-        @if (hasLinkedTeachers) {
-          <ul class="linked-list">
-            @for (linked of linkedTeachers; track linked.id) {
-              <li>
-                <button
-                  pButton
-                  type="button"
-                  class="p-button-text p-button-sm p-button-link"
-                  (click)="onLinkedPersonClick(linked)"
-                >{{ linked.name }} ({{ linked.sicilno || '-' }})</button>
-              </li>
-            }
-          </ul>
-        } @else {
-          <span class="no-linked">Atanmamış</span>
-        }
-      </div>
+        <div class="linked-section">
+          <h6>{{ linkedTeachersLabel }}</h6>
+          @if (hasLinkedTeachers) {
+            <ul class="linked-list">
+              @for (linked of linkedTeachers; track linked.id) {
+                <li>
+                  <button
+                    pButton
+                    type="button"
+                    class="p-button-text p-button-sm p-button-link"
+                    (click)="onLinkedPersonClick(linked)"
+                  >
+                    {{ linked.name }} ({{ linked.sicilno || '-' }})
+                  </button>
+                </li>
+              }
+            </ul>
+          } @else {
+            <span class="no-linked">Atanmamış</span>
+          }
+        </div>
       }
 
       <div class="profile-actions">
@@ -85,7 +92,9 @@
               class="p-button-danger p-button-outlined"
               icon="pi pi-times"
               (click)="onExitClick()"
-            >Çıkış Ver</button>
+            >
+              Çıkış Ver
+            </button>
           } @else {
             <button
               pButton
@@ -93,7 +102,9 @@
               class="p-button-success p-button-outlined"
               icon="pi pi-replay"
               (click)="onRestoreClick()"
-            >İşe Geri Al</button>
+            >
+              İşe Geri Al
+            </button>
           }
         </div>
         <button
@@ -102,7 +113,9 @@
           class="p-button-outlined"
           icon="pi pi-pencil"
           (click)="onEditClick()"
-        >Düzenle</button>
+        >
+          Düzenle
+        </button>
       </div>
     </div>
   }

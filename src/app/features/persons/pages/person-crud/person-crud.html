@@ -48,10 +48,15 @@
         [actionsTemplate]="showActionsColumn ? actionsTpl : null"
         (rowClick)="onRowClick($event)"
       >
-        <ng-template appColumnCell="personelno" let-person>
+        <!-- <ng-template appColumnCell="personelno" let-person>
           <span class="cell-text">{{
             allPersons.length ? getLinkedDisplay(person) : (person.personelno ?? '')
           }}</span>
+        </ng-template> -->
+        <ng-template appColumnCell="veliAdSoyad" let-person>
+          <span class="cell-text">
+            {{ person.veliAdSoyad ? person.veliAdSoyad : '-' }}
+          </span>
         </ng-template>
         <ng-template appColumnCell="linkedTeachers" let-person>
           <span class="cell-text">{{

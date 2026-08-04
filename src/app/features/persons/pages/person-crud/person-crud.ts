@@ -135,12 +135,12 @@ export class PersonCrudComponent implements OnInit {
   get columnOverrides(): { field: string; header: string }[] {
     if (this.USERDEF === UserDef.Ogrenci) {
       return [
-        { field: 'personelno', header: 'Veliler' },
+        { field: 'veliAdSoyad', header: 'Veliler' }, // personelno yerine veliAdSoyad oldu
         { field: 'linkedTeachers', header: 'Öğretmenler' },
       ];
     }
     if (this.USERDEF === UserDef.Veli) {
-      return [{ field: 'personelno', header: 'Çocuklar' }];
+      return [{ field: 'veliAdSoyad', header: 'Çocuklar' }]; // personelno yerine veliAdSoyad oldu
     }
     return [];
   }
@@ -162,7 +162,7 @@ export class PersonCrudComponent implements OnInit {
     };
 
     if (this.needsAllPersons) {
-      setHook('personelno', (p) => this.getLinkedDisplay(p));
+      // personelno hook'unu siliyoruz, çünkü artık excel'de direkt kendi değerini (gerçek personel no) yazacak
       setHook('linkedTeachers', (p) => this.getTeacherLinkedDisplay(p));
     }
     setHook('indirimorani', (p) => (p.indirimorani != null ? `${p.indirimorani}%` : ''));
@@ -182,7 +182,7 @@ export class PersonCrudComponent implements OnInit {
           ? '-'
           : resolveLinkedNames(parentIds, this.allPersons)
               .map((l) => l.name)
-              .join(', ')
+              .join(', '),
       );
 
       const teacherIds = extractLinkedTeacherIds(person.personelno);
@@ -192,7 +192,7 @@ export class PersonCrudComponent implements OnInit {
           ? '-'
           : resolveLinkedNames(teacherIds, this.allPersons)
               .map((l) => l.name)
-              .join(', ')
+              .join(', '),
       );
     }
   }
@@ -220,7 +220,8 @@ export class PersonCrudComponent implements OnInit {
     this.errorMessage = '';
 
     this.personService
-      .getPersonList()
+      .getPersonListCampus()
+      //.getPersonList()
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: (data: Person[]) => {

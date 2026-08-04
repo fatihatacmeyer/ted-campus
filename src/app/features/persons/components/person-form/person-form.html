@@ -189,7 +189,7 @@
     </div>
 
     <!-- Bağlantılı Kişiler (Veliler / Çocuklar) -->
-    @if (showLinkedPersons) {
+    <!-- @if (showLinkedPersons) {
       <div class="form-section">
         <h5>{{ linkedPersonsLabel }}</h5>
         <div class="field">
@@ -206,6 +206,57 @@
             appendTo="body"
           />
         </div>
+      </div>
+    } -->
+    @if (userdef === 11) {
+      <div class="form-section">
+        <div class="d-flex justify-content-between align-items-center mb-2">
+          <h5 class="mb-0">Veli Bilgisi</h5>
+          <button
+            pButton
+            type="button"
+            class="p-button-text p-button-sm"
+            [icon]="isCreatingNewParent ? 'pi pi-list' : 'pi pi-plus'"
+            [label]="isCreatingNewParent ? 'Listeden Seç' : 'Yeni Veli Oluştur'"
+            (click)="toggleParentMode()"
+          ></button>
+        </div>
+
+        <!-- VAR OLAN VELİYİ SEÇ -->
+        @if (!isCreatingNewParent) {
+          <div class="field">
+            <p-select
+              formControlName="veliSicilId"
+              [options]="linkedPersonOptions"
+              placeholder="Veli seçin"
+              optionLabel="label"
+              optionValue="value"
+              styleClass="w-100"
+              [showClear]="true"
+              appendTo="body"
+            />
+          </div>
+        }
+
+        <!-- YENİ VELİ OLUŞTUR -->
+        @else {
+          <div class="p-3 border rounded bg-light">
+            <div class="field-row mb-2">
+              <div class="field">
+                <label>Veli Adı <span class="required">*</span></label>
+                <input pInputText formControlName="yeniVeliAd" placeholder="Veli Adı" />
+              </div>
+              <div class="field">
+                <label>Veli Soyadı <span class="required">*</span></label>
+                <input pInputText formControlName="yeniVeliSoyad" placeholder="Veli Soyadı" />
+              </div>
+            </div>
+            <div class="field">
+              <label>Veli Telefonu</label>
+              <input pInputText formControlName="yeniVeliTelefon" placeholder="05XX XXX XX XX" />
+            </div>
+          </div>
+        }
       </div>
     }
 

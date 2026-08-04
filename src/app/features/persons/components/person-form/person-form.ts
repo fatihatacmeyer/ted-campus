@@ -106,6 +106,7 @@ export class PersonFormComponent implements OnChanges, OnInit {
 
   /** Düzenleme modunda mı? NguyenChanges tarafından ayarlanır. */
   isEditMode = false;
+  isCreatingNewParent = false;
 
   private fb = inject(FormBuilder);
   private personService = inject(PersonService);
@@ -128,7 +129,23 @@ export class PersonFormComponent implements OnChanges, OnInit {
         controls[field.key] = [field.initValue !== undefined ? field.initValue : ''];
       }
     }
+
+    controls['veliSicilId'] = [null];
+    controls['yeniVeliAd'] = [''];
+    controls['yeniVeliSoyad'] = [''];
+    controls['yeniVeliTelefon'] = [''];
     return controls;
+  }
+
+  toggleParentMode(): void {
+    this.isCreatingNewParent = !this.isCreatingNewParent;
+
+    // Mod değiştiğinde gereksiz alanları temizle
+    if (this.isCreatingNewParent) {
+      this.form.get('veliSicilId')?.setValue(null);
+    } else {
+      this.form.patchValue({ yeniVeliAd: '', yeniVeliSoyad: '', yeniVeliTelefon: '' });
+    }
   }
   isSaving = false;
   errorMessage = '';
@@ -274,7 +291,7 @@ export class PersonFormComponent implements OnChanges, OnInit {
       giristarih: parseDate(p.giristarih ?? null),
     });
     // linkedPersons'ı personelno alanından oku
-    const linkedIds = extractLinkedPersonIds(p.personelno);
+    const linkedIds = p.veliSicilId ? [Number(p.veliSicilId)] : [];
     this.form.patchValue({ linkedPersons: linkedIds });
     // linkedTeachers'ı personelno alanından oku
     const teacherIds = extractLinkedTeacherIds(p.personelno);
@@ -338,6 +355,81 @@ export class PersonFormComponent implements OnChanges, OnInit {
     return this.userdef === UserDef.Ogrenci ? 'Veliler' : 'Çocuklar';
   }
 
+  // submit(): void {
+  //   if (this.form.invalid) {
+  //     this.form.markAllAsTouched();
+  //     return;
+  //   }
+
+  //   this.isSaving = true;
+  //   this.errorMessage = '';
+
+  //   const payload = this.buildPayload(this.form.value);
+
+  //   if (this.isEditMode) {
+  //     // UPDATE: Tek aşamalı — POST /Person (AngelWeb'de de Dynamic GET yok)
+  //     this.personService
+  //       .updatePerson({ ...payload, id: this.editPerson!.id })
+  //       .pipe(takeUntilDestroyed(this.destroyRef))
+  //       .subscribe({
+  //         next: (response: unknown) => {
+  //           this.isSaving = false;
+
+  //           // Backend [] dönerse — muhtemelen parametre sorunu
+  //           if (Array.isArray(response) && response.length === 0) {
+  //             this.errorMessage = 'Kayıt güncellenemedi. Sunucu boş yanıt döndü.';
+  //             return;
+  //           }
+
+  //           const result = unwrapResponse<OperationResultResponse>(
+  //             response as OperationResultResponse | OperationResultResponse[] | null | undefined,
+  //           );
+
+  //           if (isSuccessResult(result)) {
+  //             this.saved.emit(response);
+  //             this.close();
+  //           } else {
+  //             const islemno = result?.islemno || 'bilinmiyor';
+  //             const islemsonuc = result?.islemsonuc ?? 'bilinmiyor';
+  //             this.errorMessage = `Kayıt güncellenemedi. (islemsonuc=${islemsonuc}, islemno=${islemno})`;
+  //           }
+  //         },
+  //         error: (err: unknown) => {
+  //           this.isSaving = false;
+  //           console.error('Person update error:', err);
+  //           this.errorMessage = 'Sunucu hatası: Kayıt güncellenemedi.';
+  //         },
+  //       });
+  //   } else {
+  //     // INSERT: Tek aşamalı — POST /Person
+  //     this.personService
+  //       .insertPerson(payload)
+  //       .pipe(takeUntilDestroyed(this.destroyRef))
+  //       .subscribe({
+  //         next: (response: unknown) => {
+  //           this.isSaving = false;
+
+  //           const result = unwrapResponse<OperationResultResponse>(
+  //             response as OperationResultResponse | OperationResultResponse[] | null | undefined,
+  //           );
+
+  //           if (isSuccessResult(result)) {
+  //             this.saved.emit(response);
+  //             this.close();
+  //           } else {
+  //             this.errorMessage =
+  //               (result && result.sunucucevap) || 'Kayıt başarısız oldu. Lütfen tekrar deneyin.';
+  //           }
+  //         },
+  //         error: (err: unknown) => {
+  //           this.isSaving = false;
+  //           console.error('Person insert error:', err);
+  //           this.errorMessage = 'Sunucu hatası: Kayıt oluşturulamadı.';
+  //         },
+  //       });
+  //   }
+  // }
+
   submit(): void {
     if (this.form.invalid) {
       this.form.markAllAsTouched();
@@ -346,71 +438,85 @@ export class PersonFormComponent implements OnChanges, OnInit {
 
     this.isSaving = true;
     this.errorMessage = '';
+    const formVals = this.form.value;
 
+    // Eğer YENİ VELİ oluşturuluyorsa
+    if (this.userdef === UserDef.Ogrenci && this.isCreatingNewParent) {
+      const yeniVeliPayload: PersonInsertRequest = {
+        ad: formVals.yeniVeliAd,
+        soyad: formVals.yeniVeliSoyad,
+        ceptelefon: formVals.yeniVeliTelefon,
+        userdef: UserDef.Veli,
+      };
+
+      // 1. ÖNCE VELİYİ KAYDET
+      this.personService.insertPerson(yeniVeliPayload).subscribe({
+        next: (veliRes: any) => {
+          const veliResult = unwrapResponse<OperationResultResponse>(veliRes);
+          // Backend'den yeni velinin ID'sini alıyoruz (Varsayım: islemno içinde dönüyor)
+          const yeniVeliId = Number(veliResult?.islemno);
+
+          if (!yeniVeliId || isNaN(yeniVeliId)) {
+            this.errorMessage =
+              "Veli oluşturuldu ancak ID'si alınamadığı için öğrenciye bağlanamadı.";
+            this.isSaving = false;
+            return;
+          }
+
+          // 2. ARDINDAN ÖĞRENCİYİ KAYDET VE İLİŞKİYİ KUR
+          this.saveStudentAndLink(yeniVeliId);
+        },
+        error: () => {
+          this.errorMessage = 'Yeni Veli oluşturulurken hata meydana geldi.';
+          this.isSaving = false;
+        },
+      });
+    }
+    // Mevcut Veli Seçildiyse veya Öğrenci Değilse normal akış
+    else {
+      const mevcutVeliId = formVals.veliSicilId ? Number(formVals.veliSicilId) : null;
+      this.saveStudentAndLink(mevcutVeliId);
+    }
+  }
+
+  // Öğrenciyi kaydeder ve relation atamasını yapar
+  private saveStudentAndLink(veliId: number | null) {
     const payload = this.buildPayload(this.form.value);
 
-    if (this.isEditMode) {
-      // UPDATE: Tek aşamalı — POST /Person (AngelWeb'de de Dynamic GET yok)
-      this.personService
-        .updatePerson({ ...payload, id: this.editPerson!.id })
-        .pipe(takeUntilDestroyed(this.destroyRef))
-        .subscribe({
-          next: (response: unknown) => {
+    const saveObs = this.isEditMode
+      ? this.personService.updatePerson({ ...payload, id: this.editPerson!.id })
+      : this.personService.insertPerson(payload);
+
+    saveObs.subscribe({
+      next: (stdRes: any) => {
+        const stdResult = unwrapResponse<OperationResultResponse>(stdRes);
+
+        // Düzenlemeyse kendi ID'si, yeniyse backend'den dönen ID
+        const ogrenciId = this.isEditMode ? this.editPerson!.id : Number(stdResult?.islemno);
+
+        // 3. VELİ - ÖĞRENCİ İLİŞKİSİNİ VERİTABANINA YAZ
+        if (this.userdef === UserDef.Ogrenci && veliId && ogrenciId) {
+          const relationObs = this.isEditMode
+            ? this.personService.updateRelationCampus(ogrenciId, veliId)
+            : this.personService.addRelationCampus(ogrenciId, veliId);
+
+          relationObs.subscribe(() => {
             this.isSaving = false;
-
-            // Backend [] dönerse — muhtemelen parametre sorunu
-            if (Array.isArray(response) && response.length === 0) {
-              this.errorMessage = 'Kayıt güncellenemedi. Sunucu boş yanıt döndü.';
-              return;
-            }
-
-            const result = unwrapResponse<OperationResultResponse>(
-              response as OperationResultResponse | OperationResultResponse[] | null | undefined,
-            );
-
-            if (isSuccessResult(result)) {
-              this.saved.emit(response);
-              this.close();
-            } else {
-              const islemno = result?.islemno || 'bilinmiyor';
-              const islemsonuc = result?.islemsonuc ?? 'bilinmiyor';
-              this.errorMessage = `Kayıt güncellenemedi. (islemsonuc=${islemsonuc}, islemno=${islemno})`;
-            }
-          },
-          error: (err: unknown) => {
-            this.isSaving = false;
-            console.error('Person update error:', err);
-            this.errorMessage = 'Sunucu hatası: Kayıt güncellenemedi.';
-          },
-        });
-    } else {
-      // INSERT: Tek aşamalı — POST /Person
-      this.personService
-        .insertPerson(payload)
-        .pipe(takeUntilDestroyed(this.destroyRef))
-        .subscribe({
-          next: (response: unknown) => {
-            this.isSaving = false;
-
-            const result = unwrapResponse<OperationResultResponse>(
-              response as OperationResultResponse | OperationResultResponse[] | null | undefined,
-            );
-
-            if (isSuccessResult(result)) {
-              this.saved.emit(response);
-              this.close();
-            } else {
-              this.errorMessage =
-                (result && result.sunucucevap) || 'Kayıt başarısız oldu. Lütfen tekrar deneyin.';
-            }
-          },
-          error: (err: unknown) => {
-            this.isSaving = false;
-            console.error('Person insert error:', err);
-            this.errorMessage = 'Sunucu hatası: Kayıt oluşturulamadı.';
-          },
-        });
-    }
+            this.saved.emit(stdRes);
+            this.close();
+          });
+        } else {
+          // Veli seçilmemişse direkt bitir
+          this.isSaving = false;
+          this.saved.emit(stdRes);
+          this.close();
+        }
+      },
+      error: () => {
+        this.errorMessage = 'Kayıt işlemi sırasında bir hata oluştu.';
+        this.isSaving = false;
+      },
+    });
   }
 
   /** PERSON_FORM_FIELDS metadata'sından insert/update payload'ını üretir. */
@@ -431,12 +537,8 @@ export class PersonFormComponent implements OnChanges, OnInit {
       return formatDate(v[field.key] as Date | null);
     }
     if (field.key === 'personelno') {
-      return this.showLinkedPersons
-        ? buildLinkedPersonelno(
-            (v['linkedPersons'] as number[]) || [],
-            (v['linkedTeachers'] as number[]) || [],
-          )
-        : (v['personelno'] as string) || '';
+      // Artık P: T: gibi formatlamalar yapmıyoruz. Direkt girilen Personel No'yu döndürüyoruz!
+      return (v['personelno'] as string) || '';
     }
     return (v[field.key] as string) || '';
   }

@@ -1,5 +1,8 @@
 import { Person } from '../../core/models/person.model';
-import { ColumnDef, uniqueFilterOptions } from '../components/customizable-table/customizable-table';
+import {
+  ColumnDef,
+  uniqueFilterOptions,
+} from '../components/customizable-table/customizable-table';
 
 /**
  * Person listeleri için ortak sütun tanımları.
@@ -10,12 +13,31 @@ export const PERSON_COLUMNS: ColumnDef<Person>[] = [
   { field: 'ad', header: 'Ad', sortable: true, alwaysVisible: true },
   { field: 'soyad', header: 'Soyad', sortable: true, alwaysVisible: true },
   { field: 'sicilno', header: 'Sicil No', sortable: true },
-  { field: 'firmaad', header: 'Firma', sortable: true, filterType: 'select', filterOptions: (rows) => uniqueFilterOptions(rows, 'firmaad') },
-  { field: 'bolumad', header: 'Bölüm', sortable: true, filterType: 'select', filterOptions: (rows) => uniqueFilterOptions(rows, 'bolumad') },
-  { field: 'pozisyonad', header: 'Pozisyon', sortable: true, filterType: 'select', filterOptions: (rows) => uniqueFilterOptions(rows, 'pozisyonad') },
+  {
+    field: 'firmaad',
+    header: 'Firma',
+    sortable: true,
+    filterType: 'select',
+    filterOptions: (rows) => uniqueFilterOptions(rows, 'firmaad'),
+  },
+  {
+    field: 'bolumad',
+    header: 'Bölüm',
+    sortable: true,
+    filterType: 'select',
+    filterOptions: (rows) => uniqueFilterOptions(rows, 'bolumad'),
+  },
+  {
+    field: 'pozisyonad',
+    header: 'Pozisyon',
+    sortable: true,
+    filterType: 'select',
+    filterOptions: (rows) => uniqueFilterOptions(rows, 'pozisyonad'),
+  },
   { field: 'ceptelefon', header: 'Telefon' },
   { field: 'id', header: 'ID', sortable: true },
   { field: 'personelno', header: 'Personel No', sortable: true },
+  { field: 'veliAdSoyad', header: 'Veli', sortable: true },
   { field: 'linkedTeachers', header: 'Öğretmenler' },
   { field: 'userid', header: 'User ID' },
   { field: 'altfirmaad', header: 'Alt Firma' },

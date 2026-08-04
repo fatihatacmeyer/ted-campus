@@ -116,7 +116,7 @@ export class DashboardComponent implements OnInit {
     this.isLoading = true;
     this.errorMessage = '';
 
-    this.personService.getPersonList()
+    this.personService.getPersonListCampus()
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
       next: (data: Person[]) => {

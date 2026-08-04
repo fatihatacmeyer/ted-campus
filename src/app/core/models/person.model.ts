@@ -70,6 +70,12 @@ export interface Person {
   lkademe: number;
   userdef: number;
   userdefad: string;
+
+  // sp_sicilcampus_s'ten gelen ek kolonlar (opsiyonel — sv2 yanıtında yok)
+  userType?: string; // sys_userdef.ad metni ("Öğrenci"/"Veli"/"Öğretmen")
+  veliSicilId?: number; // RelationCampus üzerinden ilk velinin sicil id
+  veliAdSoyad?: string; // İlk velinin "Ad Soyad" metni (display'de doğrudan kullanılabilir)
+
   cardid: string;
   yetkistr: string;
   yetkistrad: string;
