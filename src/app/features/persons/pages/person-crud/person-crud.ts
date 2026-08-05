@@ -75,6 +75,9 @@ export class PersonCrudComponent implements OnInit {
   /** Veli sayfası: veliId → çocukları (sp_relationcampus_s tip=0'dan tek çağrıda kurulur). */
   childrenMap = new Map<number, Person[]>();
 
+  /** Öğrenci sayfası: ogrenciId → velileri (aynı getAllRelations çağrısında kurulur). */
+  parentsMap = new Map<number, Person[]>();
+
   /** Tablo sütunları — userdef'a göre başlık override + export hook'ları uygulanır. */
   columns: ColumnDef<Person>[] = PERSON_COLUMNS.map((c) => ({ ...c }));
 
@@ -159,8 +162,8 @@ export class PersonCrudComponent implements OnInit {
     }
     setHook('indirimorani', (p) => (p.indirimorani != null ? `${p.indirimorani}%` : ''));
 
-    // Veli sayfasında "Çocuklar" kolonu excel'e ad listesi olarak yazılsın
-    if (this.USERDEF === UserDef.Veli) {
+    // Öğrenci ("Veliler") ve Veli ("Çocuklar") sayfalarında ilgili kolon excel'e ad listesi olarak yazılsın
+    if (this.USERDEF !== UserDef.Ogretmen) {
       setHook('veliAdSoyad', (p) => this.childrenSummary(p));
     }
   }
@@ -190,9 +193,9 @@ export class PersonCrudComponent implements OnInit {
           }
           this.persons = data.filter((p) => p.userdef === this.USERDEF);
 
-          // Veli sayfasında "Çocuklar" kolonu için ilişki haritasını kur
-          if (this.USERDEF === UserDef.Veli) {
-            this.loadChildrenMap();
+          // Öğrenci ("Veliler") ve Veli ("Çocuklar") sayfaları için ilişki haritalarını kur
+          if (this.needsAllPersons) {
+            this.loadRelationsMap();
           } else {
             this.isLoading = false;
             this.cdr.markForCheck();
@@ -208,9 +211,12 @@ export class PersonCrudComponent implements OnInit {
 
   /**
    * Tüm veli-öğrenci ilişkilerini tek çağrıda çeker (sp_relationcampus_s, tip=0)
-   * ve veliId → çocuk listesi haritası kurar. İsimler allPersons'tan çözülür.
+   * ve iki yönlü harita kurar:
+   *   childrenMap: veliId → çocuk listesi   (Veli sayfası "Çocuklar" kolonu)
+   *   parentsMap:  ogrenciId → veli listesi (Öğrenci sayfası "Veliler" kolonu)
+   * İsimler allPersons'tan çözülür.
    */
-  private loadChildrenMap(): void {
+  private loadRelationsMap(): void {
     this.personService
       .getAllRelations()
       .pipe(takeUntilDestroyed(this.destroyRef))
@@ -218,15 +224,26 @@ export class PersonCrudComponent implements OnInit {
         next: (relations) => {
           console.log('[Rel] getAllRelations satırları:', JSON.stringify(relations));
           this.childrenMap.clear();
+          this.parentsMap.clear();
           for (const rel of relations || []) {
             const veliId = Number(rel.VeliSicilId);
-            const child = this.allPersons.find((p) => p.id === Number(rel.OgrenciSicilId));
-            if (!child) {
+            const ogrenciId = Number(rel.OgrenciSicilId);
+            const veli = this.allPersons.find((p) => p.id === veliId);
+            const child = this.allPersons.find((p) => p.id === ogrenciId);
+            if (!veli && !child) {
               console.log('[Rel] eşleşmeyen satır → anahtarlar:', Object.keys(rel), '| VeliSicilId:', rel.VeliSicilId, '| OgrenciSicilId:', rel.OgrenciSicilId);
               continue;
             }
-            if (!this.childrenMap.has(veliId)) this.childrenMap.set(veliId, []);
-            this.childrenMap.get(veliId)!.push(child);
+            // childrenMap: eski davranış korunur (çocuk çözülebilen her satır)
+            if (child) {
+              if (!this.childrenMap.has(veliId)) this.childrenMap.set(veliId, []);
+              this.childrenMap.get(veliId)!.push(child);
+            }
+            // parentsMap: ters yön — veli çözülebilen her satır
+            if (veli) {
+              if (!this.parentsMap.has(ogrenciId)) this.parentsMap.set(ogrenciId, []);
+              this.parentsMap.get(ogrenciId)!.push(veli);
+            }
           }
           this.isLoading = false;
           this.cdr.markForCheck();
@@ -241,25 +258,32 @@ export class PersonCrudComponent implements OnInit {
 
   /**
    * veliAdSoyad kolon hücresi:
-   *   - Öğrenci sayfası → ilk veli adı (sp_sicilcampus_s TOP(1) sonucu)
-   *   - Veli sayfası → çocuk adları (ilk 2 + kalan sayısı)
+   *   - Öğrenci sayfası → veli adları (ilk 2 + kalan sayısı) — parentsMap'ten
+   *   - Veli sayfası → çocuk adları (ilk 2 + kalan sayısı) — childrenMap'ten
+   *   - Öğretmen sayfası → tek veli adı (sicilcampus TOP(1), eski davranış)
+   * İlişki haritası boşsa sicil listesinden gelen tek veli adına düşülür.
    */
   childrenSummary(p: Person): string {
-    if (this.USERDEF !== UserDef.Veli) {
+    if (this.USERDEF === UserDef.Ogretmen) {
       return p.veliAdSoyad || '-';
     }
-    const kids = this.childrenMap.get(p.id) ?? [];
-    if (!kids.length) return '-';
-    const names = kids.map((k) => k.adsoyad);
+    const linked =
+      (this.USERDEF === UserDef.Veli ? this.childrenMap : this.parentsMap).get(p.id) ?? [];
+    if (!linked.length) return p.veliAdSoyad || '-';
+    const names = linked.map((k) => k.adsoyad);
     if (names.length <= 2) return names.join(', ');
     return `${names.slice(0, 2).join(', ')} +${names.length - 2} daha`;
   }
 
-  /** Veli satırında tüm çocuk adlarını tooltip olarak döndürür (boşsa null → tooltip yok). */
+  /**
+   * Satırda tüm ilişkili kişi adlarını tooltip olarak döndürür (boşsa null → tooltip yok).
+   * Öğrenci → veliler, Veli → çocuklar, Öğretmen → tooltip yok.
+   */
   childrenTooltip(p: Person): string | null {
-    if (this.USERDEF !== UserDef.Veli) return null;
-    const kids = this.childrenMap.get(p.id) ?? [];
-    return kids.length ? kids.map((k) => k.adsoyad).join('\n') : null;
+    if (this.USERDEF === UserDef.Ogretmen) return null;
+    const linked =
+      (this.USERDEF === UserDef.Veli ? this.childrenMap : this.parentsMap).get(p.id) ?? [];
+    return linked.length ? linked.map((k) => k.adsoyad).join('\n') : null;
   }
 
   // ─── Dialog open / close ───

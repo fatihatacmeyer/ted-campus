@@ -21,6 +21,7 @@ export class PersonProfileComponent {
   @Input() person: Person | null = null;
   @Input() allPersons: Person[] = [];
   @Input() childrenMap: Map<number, Person[]> = new Map();
+  @Input() parentsMap: Map<number, Person[]> = new Map();
   @Input() userdefContext = UserDef.Ogrenci;
 
   @Output() visibleChange = new EventEmitter<boolean>();
@@ -42,7 +43,15 @@ export class PersonProfileComponent {
       return kids.map((k) => ({ id: k.id, name: k.adsoyad, sicilno: k.sicilno }));
     }
 
-    // Öğrenci profili → veliSicilId üzerinden (sp_sicilcampus_s TOP(1) sonucu).
+    // Öğrenci profili → veliler; parentsMap (sp_relationcampus_s tip=0) üzerinden çözülür.
+    // Tüm veliler gelir (sicilcampus yalnızca TOP(1) ilk veliyi döndürür).
+    const parents = this.parentsMap.get(this.person.id) ?? [];
+    if (parents.length) {
+      return parents.map((p) => ({ id: p.id, name: p.adsoyad, sicilno: p.sicilno }));
+    }
+
+    // Harita boşsa (ilişki verisi yüklenmemişse) eski davranışa düş:
+    // veliSicilId üzerinden tek veli (sp_sicilcampus_s TOP(1) sonucu).
     if (!this.person.veliSicilId) return [];
 
     const veliId = Number(this.person.veliSicilId);
