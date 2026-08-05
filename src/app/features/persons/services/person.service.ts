@@ -14,9 +14,6 @@ import {
   getUserDefLabel,
   LeaveRequestResponse,
   ReportLinkResponse,
-  extractLinkedPersonIds,
-  extractLinkedTeacherIds,
-  buildLinkedPersonelno,
 } from '../../../core/models/person.model';
 import { AuthService } from '../../../core/services/auth.service';
 import { PrepareService } from '../../../core/services/prepare.service';
@@ -42,7 +39,7 @@ import { ApiHelperService } from '../../../core/services/api-helper.service';
  * modeline çevrim mapSicilCampusRow içinde yapılır.
  */
 interface SicilCampusRow {
-  Id: number;
+  ID: number;
   Ad: string;
   Soyad: string;
   AdSoyad?: string;
@@ -67,22 +64,22 @@ interface SicilCampusRow {
   UserDef?: number;
   UserDefAd?: string;
   CikisTarih?: string | null;
-  IndirimOrani?: number;
-  Ceptelefon?: string;
+  indirimorani?: number;
+  CepTelefon?: string;
   MesaiPeriyodu?: number;
   MesaiPeriyoduAd?: string;
-  Credit?: number;
+  credit?: number;
   Lyetki?: number;
   Lkademe?: number;
   YetkiStr?: string;
   YetkiStrAd?: string;
   DogumTarih?: string | null;
   Cinsiyet?: string | null;
-  Kangrubu?: string | null;
+  KanGrubu?: string | null;
   Telefon1?: string | null;
-  Email?: string | null;
+  EMail?: string | null;
   Adres?: string | null;
-  Il?: string | null;
+  IL?: string | null;
   Ilce?: string | null;
   GirisTarih?: string | null;
   OKod1?: string;
@@ -262,7 +259,7 @@ export class PersonService {
     const veliSicilId =
       row.VeliSicilId != null && row.VeliSicilId !== '' ? Number(row.VeliSicilId) : undefined;
     return {
-      id: row.Id,
+      id: row.ID,
       ad: row.Ad,
       soyad: row.Soyad,
       adsoyad: row.AdSoyad || [row.Ad, row.Soyad].filter(Boolean).join(' ') || '',
@@ -283,9 +280,9 @@ export class PersonService {
       gorevad: row.GorevAd || '',
       yaka: row.Yaka || '',
       yakaad: row.YakaAd || '',
-      credit: row.Credit ?? 0,
-      indirimorani: row.IndirimOrani ?? 0,
-      ceptelefon: row.Ceptelefon || '',
+      credit: row.credit ?? 0,
+      indirimorani: row.indirimorani ?? 0,
+      ceptelefon: row.CepTelefon || '',
       mesaiperiyodu: row.MesaiPeriyodu ?? 0,
       mesaiperiyoduad: row.MesaiPeriyoduAd || '',
       cikistarih: row.CikisTarih ?? null,
@@ -301,11 +298,11 @@ export class PersonService {
       sunucucevap: null,
       dogumtarih: row.DogumTarih ?? null,
       cinsiyet: row.Cinsiyet ?? null,
-      kangrubu: row.Kangrubu ?? null,
+      kangrubu: row.KanGrubu ?? null,
       telefon1: row.Telefon1 ?? null,
-      email: row.Email ?? null,
+      email: row.EMail ?? null,
       adres: row.Adres ?? null,
-      il: row.Il ?? null,
+      il: row.IL ?? null,
       ilce: row.Ilce ?? null,
       giristarih: row.GirisTarih ?? null,
       okod1: row.OKod1 || '',
@@ -348,84 +345,6 @@ export class PersonService {
 
     const payload = this.buildPersonPayload(personData, 'u', personData.id);
     return this.http.post<Person[]>(`${this.config.apiUrl}/Person`, payload);
-  }
-
-  /**
-   * Bidirectional parent-child sync: When a person's linked persons change,
-   * add/remove that personId from the target's personelno field.
-   * Also handles teacher links (T: prefix).
-   * Fire-and-forget — errors logged, never blocks the user.
-   */
-  updatePersonLinks(personId: number, newLinkedIds: number[], allPersons: Person[]): void {
-    for (const target of allPersons) {
-      if (target.id === personId) continue;
-
-      const currentParentIds = extractLinkedPersonIds(target.personelno);
-      const currentTeacherIds = extractLinkedTeacherIds(target.personelno);
-      const hasLink = currentParentIds.includes(personId);
-      const shouldHaveLink = newLinkedIds.includes(target.id);
-
-      if (shouldHaveLink && !hasLink) {
-        const updated = [...currentParentIds, personId];
-        this.updateLinkedPerson(target, updated, currentTeacherIds);
-      } else if (!shouldHaveLink && hasLink) {
-        const updated = currentParentIds.filter((id) => id !== personId);
-        this.updateLinkedPerson(target, updated, currentTeacherIds);
-      }
-    }
-  }
-
-  /**
-   * Bidirectional teacher-student sync: When a student's linked teachers change,
-   * add/remove the studentId from the teacher's personelno T: field.
-   * Fire-and-forget — errors logged, never blocks the user.
-   */
-  updateTeacherLinks(studentId: number, newTeacherIds: number[], allPersons: Person[]): void {
-    for (const target of allPersons) {
-      if (target.id === studentId) continue;
-      if (target.userdef !== UserDef.Ogretmen) continue; // only sync to teachers
-
-      const currentParentIds = extractLinkedPersonIds(target.personelno);
-      const currentTeacherIds = extractLinkedTeacherIds(target.personelno);
-      const hasLink = currentTeacherIds.includes(studentId);
-      const shouldHaveLink = newTeacherIds.includes(target.id);
-
-      if (shouldHaveLink && !hasLink) {
-        const updated = [...currentTeacherIds, studentId];
-        this.updateLinkedPerson(target, currentParentIds, updated);
-      } else if (!shouldHaveLink && hasLink) {
-        const updated = currentTeacherIds.filter((id) => id !== studentId);
-        this.updateLinkedPerson(target, currentParentIds, updated);
-      }
-    }
-  }
-
-  private updateLinkedPerson(person: Person, linkedIds: number[], teacherIds: number[] = []): void {
-    const payload: PersonInsertRequest & { id: number } = {
-      id: person.id,
-      ad: person.ad || '',
-      soyad: person.soyad || '',
-      firma: person.firma || '',
-      bolum: person.bolum || '',
-      pozisyon: person.pozisyon || '',
-      gorev: person.gorev || '',
-      altfirma: person.altfirma || '',
-      yaka: person.yaka || '',
-      direktorluk: person.direktorluk || '',
-      sicilno: person.sicilno || '',
-      personelno: person.personelno || '',
-      cardid: person.cardid || '',
-      adres: ' ',
-      ceptelefon: person.ceptelefon || '',
-      userdef: person.userdef,
-    };
-
-    // Write linked IDs into personelno with both P: and T: prefixes
-    payload.personelno = buildLinkedPersonelno(linkedIds, teacherIds);
-
-    this.updatePerson(payload).subscribe({
-      error: (err) => console.error('[updatePersonLinks] Sync error for person', person.id, err),
-    });
   }
 
   /**
@@ -515,6 +434,7 @@ export class PersonService {
       `&tarihbit=${params.tarihbit}`;
 
     const user = this.authService.currentUserValue;
+    console.log(paramString);
 
     return this.api
       .postParam<OperationResultResponse[] | OperationResultResponse>('TA', paramString, {

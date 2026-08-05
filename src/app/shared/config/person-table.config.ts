@@ -38,7 +38,6 @@ export const PERSON_COLUMNS: ColumnDef<Person>[] = [
   { field: 'id', header: 'ID', sortable: true },
   { field: 'personelno', header: 'Personel No', sortable: true },
   { field: 'veliAdSoyad', header: 'Veli', sortable: true },
-  { field: 'linkedTeachers', header: 'Öğretmenler' },
   { field: 'userid', header: 'User ID' },
   { field: 'altfirmaad', header: 'Alt Firma' },
   { field: 'direktorlukad', header: 'Direktörlük' },

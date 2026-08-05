@@ -5,9 +5,6 @@ import { ButtonModule } from 'primeng/button';
 import {
   Person,
   LinkedPerson,
-  extractLinkedPersonIds,
-  extractLinkedTeacherIds,
-  resolveLinkedNames,
   UserDef,
 } from '../../../../core/models/person.model';
 
@@ -54,22 +51,10 @@ export class PersonProfileComponent {
     ];
   }
 
-  get linkedTeachers(): LinkedPerson[] {
-    if (!this.person) return [];
-    const ids = extractLinkedTeacherIds(this.person.personelno);
-    if (ids.length === 0) return [];
-    return resolveLinkedNames(ids, this.allPersons);
-  }
-
-  /** Öğrenci (UserDef.Ogrenci) ise hem veliler hem öğretmenler görünür */
+  /** Öğrenci (UserDef.Ogrenci) ise veliler görünür */
   get showLinkedPersons(): boolean {
     const ctx = this.person?.userdef ?? this.userdefContext;
     return ctx === UserDef.Ogrenci || ctx === UserDef.Veli;
-  }
-
-  get showLinkedTeachers(): boolean {
-    const ctx = this.person?.userdef ?? this.userdefContext;
-    return ctx === UserDef.Ogrenci;
   }
 
   /** Dinamik label — tıklanan kişinin userdef değerine göre */
@@ -80,19 +65,8 @@ export class PersonProfileComponent {
     return 'Bağlantılı Kişiler';
   }
 
-  /** Dinamik label — öğretmenler bölümü için */
-  get linkedTeachersLabel(): string {
-    const ctx = this.person?.userdef ?? this.userdefContext;
-    if (ctx === UserDef.Ogrenci) return 'Öğretmenler';
-    return 'Bağlantılı Öğretmenler';
-  }
-
   get hasLinkedPersons(): boolean {
     return this.linkedPersons.length > 0;
-  }
-
-  get hasLinkedTeachers(): boolean {
-    return this.linkedTeachers.length > 0;
   }
 
   onLinkedPersonClick(linked: LinkedPerson): void {

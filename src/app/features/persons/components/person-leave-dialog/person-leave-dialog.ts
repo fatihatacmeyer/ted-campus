@@ -19,7 +19,11 @@ import { InputTextModule } from 'primeng/inputtext';
 import { TextareaModule } from 'primeng/textarea';
 import { SelectModule } from 'primeng/select';
 import { CheckboxModule } from 'primeng/checkbox';
-import { Person, PersonLeaveAssignCampusParams, LeaveType } from '../../../../core/models/person.model';
+import {
+  Person,
+  PersonLeaveAssignCampusParams,
+  LeaveType,
+} from '../../../../core/models/person.model';
 import { PersonService } from '../../services/person.service';
 import { TypesService, DropdownItem } from '../../services/types.service';
 import { formatDate } from '../../../../shared/utils/date.utils';
@@ -87,17 +91,20 @@ export class PersonLeaveDialogComponent implements OnChanges {
   }
 
   private loadLeaveTypes(): void {
-    this.typesService.getDropdownList('izintipleri').pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
-      next: (items: DropdownItem[]) => {
-        this.leaveTypes = items.map((item) => ({ id: item.id, ad: item.ad }));
-        this.cdr.markForCheck();
-      },
-      error: (err) => {
-        console.error('[PersonLeaveDialog] İzin tipleri yüklenirken hata:', err);
-        this.leaveTypes = [];
-        this.cdr.markForCheck();
-      },
-    });
+    this.typesService
+      .getDropdownList('izintipleri')
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (items: DropdownItem[]) => {
+          this.leaveTypes = items.map((item) => ({ id: item.id, ad: item.ad }));
+          this.cdr.markForCheck();
+        },
+        error: (err) => {
+          console.error('[PersonLeaveDialog] İzin tipleri yüklenirken hata:', err);
+          this.leaveTypes = [];
+          this.cdr.markForCheck();
+        },
+      });
   }
 
   get dialogTitle(): string {
@@ -133,38 +140,43 @@ export class PersonLeaveDialogComponent implements OnChanges {
       blok: this.isBlok ? 1 : 0,
     };
 
-    this.personService.assignLeaveCampus(request).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
-      next: (response: unknown) => {
-        this.isProcessing = false;
+    this.personService
+      .assignLeaveCampus(request)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (response: unknown) => {
+          this.isProcessing = false;
 
-        // /Dynamic response'u array olarak gelir; başarı = islemsonuc "1"
-        const result = unwrapResponse<Record<string, unknown>>(
-          response as Record<string, unknown> | Record<string, unknown>[] | null | undefined,
-        );
+          // /Dynamic response'u array olarak gelir; başarı = islemsonuc "1"
+          const result = unwrapResponse<Record<string, unknown>>(
+            response as Record<string, unknown> | Record<string, unknown>[] | null | undefined,
+          );
 
-        if (!result) {
-          this.errorMessage = 'Sunucudan geçerli bir yanıt alınamadı.';
+          if (!result) {
+            this.errorMessage = 'Sunucudan geçerli bir yanıt alınamadı.';
+            this.cdr.markForCheck();
+            return;
+          }
+
+          const sonuc = String(result['Sonuc'] ?? '');
+          if (sonuc === '1') {
+            const successMessage = (result['SunucuCevap'] as string) || 'İzin başarıyla atandı.';
+            this.confirmed.emit(successMessage);
+            this.close();
+          } else {
+            this.errorMessage = (result['SunucuCevap'] as string) || 'İzin kaydedilemedi.';
+            this.cdr.markForCheck();
+          }
+
+          console.log(request);
+        },
+        error: (err: unknown) => {
+          this.isProcessing = false;
+          this.errorMessage =
+            'Bir hata oluştu: ' + (err instanceof Error ? err.message : 'Bilinmeyen hata');
           this.cdr.markForCheck();
-          return;
-        }
-
-        const sonuc = String(result['Sonuc'] ?? '');
-        if (sonuc === '1') {
-          const successMessage = (result['SunucuCevap'] as string) || 'İzin başarıyla atandı.';
-          this.confirmed.emit(successMessage);
-          this.close();
-        } else {
-          this.errorMessage = (result['SunucuCevap'] as string) || 'İzin kaydedilemedi.';
-          this.cdr.markForCheck();
-        }
-      },
-      error: (err: unknown) => {
-        this.isProcessing = false;
-        this.errorMessage =
-          'Bir hata oluştu: ' + (err instanceof Error ? err.message : 'Bilinmeyen hata');
-        this.cdr.markForCheck();
-      },
-    });
+        },
+      });
   }
 
   close(): void {

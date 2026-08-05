@@ -188,26 +188,6 @@
       </div>
     </div>
 
-    <!-- Bağlantılı Kişiler (Veliler / Çocuklar) -->
-    <!-- @if (showLinkedPersons) {
-      <div class="form-section">
-        <h5>{{ linkedPersonsLabel }}</h5>
-        <div class="field">
-          <p-multi-select
-            formControlName="linkedPersons"
-            [options]="linkedPersonOptions"
-            [placeholder]="linkedPersonsLabel + ' seçin'"
-            [maxSelectedLabels]="3"
-            optionLabel="label"
-            optionValue="value"
-            styleClass="w-100"
-            display="chip"
-            [showClear]="true"
-            appendTo="body"
-          />
-        </div>
-      </div>
-    } -->
     @if (userdef === 11) {
       <div class="form-section">
         <div class="d-flex justify-content-between align-items-center mb-2">
@@ -259,27 +239,6 @@
         }
       </div>
     }
-
-    <!-- Bağlantılı Öğretmenler -->
-    <!-- @if (showLinkedTeachers) {
-      <div class="form-section">
-        <h5>Öğretmenler</h5>
-        <div class="field">
-          <p-multi-select
-            formControlName="linkedTeachers"
-            [options]="linkedTeacherOptions"
-            placeholder="Öğretmen seçin"
-            [maxSelectedLabels]="3"
-            optionLabel="label"
-            optionValue="value"
-            styleClass="w-100"
-            display="chip"
-            [showClear]="true"
-            appendTo="body"
-          />
-        </div>
-      </div>
-    } -->
 
     <!-- Kurumsal -->
     <div class="form-section">

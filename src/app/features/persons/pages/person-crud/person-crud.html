@@ -48,20 +48,10 @@
         [actionsTemplate]="showActionsColumn ? actionsTpl : null"
         (rowClick)="onRowClick($event)"
       >
-        <!-- <ng-template appColumnCell="personelno" let-person>
-          <span class="cell-text">{{
-            allPersons.length ? getLinkedDisplay(person) : (person.personelno ?? '')
-          }}</span>
-        </ng-template> -->
         <ng-template appColumnCell="veliAdSoyad" let-person>
           <span class="cell-text">
             {{ person.veliAdSoyad ? person.veliAdSoyad : '-' }}
           </span>
-        </ng-template>
-        <ng-template appColumnCell="linkedTeachers" let-person>
-          <span class="cell-text">{{
-            allPersons.length ? getTeacherLinkedDisplay(person) : ''
-          }}</span>
         </ng-template>
         <ng-template appColumnCell="indirimorani" let-person>
           <span class="metric-badge">{{ person.indirimorani }}%</span>
@@ -103,7 +93,6 @@
   [userdef]="USERDEF"
   [editPerson]="editPerson"
   [allPersons]="allPersons"
-  [linkedPersonIds]="editPerson ? getLinkedIds(editPerson) : []"
   [title]="formTitle"
   (visibleChange)="onEditDialogClose()"
   (saved)="onPersonSaved($event)"

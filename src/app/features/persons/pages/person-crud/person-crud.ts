@@ -14,9 +14,6 @@ import {
   Person,
   UserDef,
   getUserDefLabel,
-  extractLinkedPersonIds,
-  extractLinkedTeacherIds,
-  resolveLinkedNames,
 } from '../../../../core/models/person.model';
 import {
   CustomizableTableComponent,
@@ -81,10 +78,6 @@ export class PersonCrudComponent implements OnInit {
   /** Varsayılan görünür sütunlar (tablo tercihi olmadığında / sıfırlamada). */
   readonly PERSON_DEFAULT_FIELDS = PERSON_DEFAULT_FIELDS;
 
-  /** Kişi bağlantı görünümleri (Veliler / Öğretmenler) için önbellek. */
-  private linkedDisplayCache = new Map<number, string>();
-  private teacherLinkedDisplayCache = new Map<number, string>();
-
   private personService = inject(PersonService);
   private cdr = inject(ChangeDetectorRef);
   private route = inject(ActivatedRoute);
@@ -134,10 +127,7 @@ export class PersonCrudComponent implements OnInit {
   /** Tablo sütun başlıkları — userdef'a göre farklılık gösterir. */
   get columnOverrides(): { field: string; header: string }[] {
     if (this.USERDEF === UserDef.Ogrenci) {
-      return [
-        { field: 'veliAdSoyad', header: 'Veliler' }, // personelno yerine veliAdSoyad oldu
-        { field: 'linkedTeachers', header: 'Öğretmenler' },
-      ];
+      return [{ field: 'veliAdSoyad', header: 'Veliler' }]; // personelno yerine veliAdSoyad oldu
     }
     if (this.USERDEF === UserDef.Veli) {
       return [{ field: 'veliAdSoyad', header: 'Çocuklar' }]; // personelno yerine veliAdSoyad oldu
@@ -162,47 +152,9 @@ export class PersonCrudComponent implements OnInit {
     };
 
     if (this.needsAllPersons) {
-      // personelno hook'unu siliyoruz, çünkü artık excel'de direkt kendi değerini (gerçek personel no) yazacak
-      setHook('linkedTeachers', (p) => this.getTeacherLinkedDisplay(p));
+      // personelno hook'u yok: excel'de direkt kendi değerini (gerçek personel no) yazar
     }
     setHook('indirimorani', (p) => (p.indirimorani != null ? `${p.indirimorani}%` : ''));
-  }
-
-  /** Kişi bağlantı görünümleri (Veliler / Öğretmenler) için önbelleği yeniden kurar. */
-  private rebuildLinkedDisplayCache(): void {
-    this.linkedDisplayCache.clear();
-    this.teacherLinkedDisplayCache.clear();
-    if (!this.allPersons.length) return;
-
-    for (const person of this.persons) {
-      const parentIds = extractLinkedPersonIds(person.personelno);
-      this.linkedDisplayCache.set(
-        person.id,
-        parentIds.length === 0
-          ? '-'
-          : resolveLinkedNames(parentIds, this.allPersons)
-              .map((l) => l.name)
-              .join(', '),
-      );
-
-      const teacherIds = extractLinkedTeacherIds(person.personelno);
-      this.teacherLinkedDisplayCache.set(
-        person.id,
-        teacherIds.length === 0
-          ? '-'
-          : resolveLinkedNames(teacherIds, this.allPersons)
-              .map((l) => l.name)
-              .join(', '),
-      );
-    }
-  }
-
-  getLinkedDisplay(person: Person): string {
-    return this.linkedDisplayCache.get(person.id) ?? '-';
-  }
-
-  getTeacherLinkedDisplay(person: Person): string {
-    return this.teacherLinkedDisplayCache.get(person.id) ?? '-';
   }
 
   // ─── Lifecycle ───
@@ -229,7 +181,6 @@ export class PersonCrudComponent implements OnInit {
             this.allPersons = data;
           }
           this.persons = data.filter((p) => p.userdef === this.USERDEF);
-          this.rebuildLinkedDisplayCache();
           this.isLoading = false;
           this.cdr.markForCheck();
         },
@@ -259,22 +210,6 @@ export class PersonCrudComponent implements OnInit {
 
   onPersonSaved(response: unknown): void {
     const personData = unwrapResponse(response) as Person;
-
-    // Bidirectional sync: Ogrenci hem PersonLinks hem TeacherLinks senkronize eder,
-    // sadece PersonLinks senkronize eder.
-    if (personData?.id && this.needsAllPersons) {
-      const newLinkedIds = extractLinkedPersonIds(personData.personelno);
-      if (newLinkedIds.length > 0) {
-        this.personService.updatePersonLinks(personData.id, newLinkedIds, this.allPersons);
-      }
-
-      if (this.USERDEF === UserDef.Ogrenci) {
-        const newTeacherIds = extractLinkedTeacherIds(personData.personelno);
-        if (newTeacherIds.length > 0) {
-          this.personService.updateTeacherLinks(personData.id, newTeacherIds, this.allPersons);
-        }
-      }
-    }
 
     this.editPerson = null;
     this.fetchPersonList();
@@ -341,9 +276,5 @@ export class PersonCrudComponent implements OnInit {
     this.exitPerson = person;
     this.exitMode = 'restore';
     this.showExitDialog = true;
-  }
-
-  getLinkedIds(person: Person): number[] {
-    return extractLinkedPersonIds(person.personelno);
   }
 }

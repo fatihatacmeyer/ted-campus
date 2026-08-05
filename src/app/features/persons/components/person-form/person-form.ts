@@ -23,16 +23,12 @@ import { ButtonModule } from 'primeng/button';
 import { DatePickerModule } from 'primeng/datepicker';
 import { SelectModule } from 'primeng/select';
 import { TooltipModule } from 'primeng/tooltip';
-import { MultiSelectModule } from 'primeng/multiselect';
 import { PersonService } from '../../services/person.service';
 import {
   Person,
   UserDef,
   OperationResultResponse,
   PersonInsertRequest,
-  extractLinkedPersonIds,
-  extractLinkedTeacherIds,
-  buildLinkedPersonelno,
 } from '../../../../core/models/person.model';
 import { TypesService, DropdownItem } from '../../services/types.service';
 import { formatDate, parseDate } from '../../../../shared/utils/date.utils';
@@ -42,12 +38,11 @@ import {
   extractNewId,
 } from '../../../../shared/utils/response.utils';
 
-/** Form alanlarının tek kaynağı (single source of truth) — 24 alan adı yalnızca burada tanımlanır. */
+/** Form alanlarının tek kaynağı (single source of truth) — alan adları yalnızca burada tanımlanır. */
 interface PersonFormFieldMeta {
   key: string;
   required?: boolean;
   isDate?: boolean;
-  isIdArray?: boolean;
   /** Form ilk değeri — yalnızca varsayılandan farklıysa verilir (varsayılan: '') */
   initValue?: unknown;
 }
@@ -75,8 +70,6 @@ const PERSON_FORM_FIELDS: PersonFormFieldMeta[] = [
   { key: 'direktorluk' },
   { key: 'yaka' },
   { key: 'giristarih', isDate: true },
-  { key: 'linkedPersons', isIdArray: true },
-  { key: 'linkedTeachers', isIdArray: true },
 ];
 
 @Component({
@@ -92,7 +85,6 @@ const PERSON_FORM_FIELDS: PersonFormFieldMeta[] = [
     DatePickerModule,
     SelectModule,
     TooltipModule,
-    MultiSelectModule,
   ],
   templateUrl: './person-form.html',
   styleUrl: './person-form.scss',
@@ -104,7 +96,6 @@ export class PersonFormComponent implements OnChanges, OnInit {
   @Input() title = 'Yeni Kayıt Ekle';
   @Input() editPerson: Person | null = null;
   @Input() allPersons: Person[] = [];
-  @Input() linkedPersonIds: number[] = [];
 
   @Output() visibleChange = new EventEmitter<boolean>();
   @Output() saved = new EventEmitter<unknown>();
@@ -128,8 +119,6 @@ export class PersonFormComponent implements OnChanges, OnInit {
         controls[field.key] = ['', Validators.required];
       } else if (field.isDate) {
         controls[field.key] = [null as Date | null];
-      } else if (field.isIdArray) {
-        controls[field.key] = [[] as number[]];
       } else {
         // DİKKAT: `null ?? ''` === '' — initValue null ise null kalmalı!
         controls[field.key] = [field.initValue !== undefined ? field.initValue : ''];
@@ -298,12 +287,6 @@ export class PersonFormComponent implements OnChanges, OnInit {
 
       //veliSicilId: p.veliSicilId ?? null,
     });
-    // linkedPersons'ı personelno alanından oku
-    const linkedIds = p.veliSicilId ? [Number(p.veliSicilId)] : [];
-    this.form.patchValue({ linkedPersons: linkedIds });
-    // linkedTeachers'ı personelno alanından oku
-    const teacherIds = extractLinkedTeacherIds(p.personelno);
-    this.form.patchValue({ linkedTeachers: teacherIds });
   }
 
   close(): void {
@@ -315,7 +298,6 @@ export class PersonFormComponent implements OnChanges, OnInit {
     this.selectedPhoto = null;
     this.photoFileName = '';
     this.form.reset();
-    this.form.patchValue({ linkedPersons: [], linkedTeachers: [] });
     this.cdr.markForCheck();
   }
 
@@ -344,24 +326,6 @@ export class PersonFormComponent implements OnChanges, OnInit {
     return this.allPersons
       .filter((p) => p.userdef === targetUserdef)
       .map((p) => ({ label: `${p.adsoyad} (${p.sicilno})`, value: p.id }));
-  }
-
-  get linkedTeacherOptions(): { label: string; value: number }[] {
-    return this.allPersons
-      .filter((p) => p.userdef === UserDef.Ogretmen)
-      .map((p) => ({ label: `${p.adsoyad} (${p.sicilno})`, value: p.id }));
-  }
-
-  get showLinkedPersons(): boolean {
-    return this.userdef === UserDef.Ogrenci || this.userdef === UserDef.Veli;
-  }
-
-  get showLinkedTeachers(): boolean {
-    return this.userdef === UserDef.Ogrenci;
-  }
-
-  get linkedPersonsLabel(): string {
-    return this.userdef === UserDef.Ogrenci ? 'Veliler' : 'Çocuklar';
   }
 
   // submit(): void {
@@ -555,7 +519,6 @@ export class PersonFormComponent implements OnChanges, OnInit {
       fotoImage: this.selectedPhoto,
     };
     for (const field of PERSON_FORM_FIELDS) {
-      if (field.isIdArray) continue; // linked* alanları personelno'ya gömülür
       payload[field.key] = this.payloadValueFor(field, v);
     }
     return payload as unknown as PersonInsertRequest;

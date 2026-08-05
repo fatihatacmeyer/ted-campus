@@ -59,30 +59,6 @@
         </div>
       }
 
-      @if (showLinkedTeachers) {
-        <div class="linked-section">
-          <h6>{{ linkedTeachersLabel }}</h6>
-          @if (hasLinkedTeachers) {
-            <ul class="linked-list">
-              @for (linked of linkedTeachers; track linked.id) {
-                <li>
-                  <button
-                    pButton
-                    type="button"
-                    class="p-button-text p-button-sm p-button-link"
-                    (click)="onLinkedPersonClick(linked)"
-                  >
-                    {{ linked.name }} ({{ linked.sicilno || '-' }})
-                  </button>
-                </li>
-              }
-            </ul>
-          } @else {
-            <span class="no-linked">Atanmamış</span>
-          }
-        </div>
-      }
-
       <div class="profile-actions">
         <div class="profile-actions-left">
           @if (isPersonActive) {
