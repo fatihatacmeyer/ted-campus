@@ -1,9 +1,12 @@
-import { ApplicationConfig } from '@angular/core';
+import { provideAppInitializer, ApplicationConfig } from '@angular/core';
 import { provideRouter } from '@angular/router';
 import { provideHttpClient, withInterceptors } from '@angular/common/http';
 import { routes } from './app.routes';
-import { APP_CONFIG } from './core/services/app-config.service';
-import { environment } from './environments/environment';
+import {
+  APP_CONFIG,
+  appConfigFactory,
+  loadRuntimeConfig,
+} from './core/services/app-config.service';
 import { authInterceptor } from './core/interceptors/auth.interceptor';
 
 import { MessageService } from 'primeng/api';
@@ -28,6 +31,7 @@ export const appConfig: ApplicationConfig = {
     }),
     MessageService,
     provideHttpClient(withInterceptors([authInterceptor])),
-    { provide: APP_CONFIG, useValue: environment },
+    provideAppInitializer(() => loadRuntimeConfig()),
+    { provide: APP_CONFIG, useFactory: appConfigFactory },
   ],
 };
