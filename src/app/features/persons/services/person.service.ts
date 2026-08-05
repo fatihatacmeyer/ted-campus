@@ -1,6 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable, switchMap, map } from 'rxjs';
+import { Observable, switchMap, map, tap } from 'rxjs';
 import { APP_CONFIG, AppConfig } from '../../../core/services/app-config.service';
 import {
   Person,
@@ -14,6 +14,7 @@ import {
   getUserDefLabel,
   LeaveRequestResponse,
   ReportLinkResponse,
+  RelationCampusRow,
 } from '../../../core/models/person.model';
 import { AuthService } from '../../../core/services/auth.service';
 import { PrepareService } from '../../../core/services/prepare.service';
@@ -497,6 +498,76 @@ export class PersonService {
 
   // --- VELİ - ÖĞRENCİ İLİŞKİSİ (RelationCampus) ---
 
+  /**
+   * Öğrencinin tüm velilerini getirir (sp_relationcampus_s, tip=2).
+   * Her satır: { VeliSicilId, Id: relid } — relid, ilişkiyi güncellemek/silmek için zorunludur.
+   *
+   * NOT: Prosedürde parametre varsayılanı yok; dispatcher yalnızca gönderilen
+   * parametreleri iletiyor. Bu yüzden kullanılmayanlar boş string ('') gönderilir
+   * (int'e 0 olarak dönüşür) — aksi halde "expects parameter" hatası döner.
+   */
+  getStudentRelation(ogrenciSicilId: number): Observable<RelationCampusRow[]> {
+    return this.api
+      .callEndpoint<RelationCampusRow[]>('Dynamic', {
+        point: 'relationcampus',
+        islemtipi: 's',
+        //islemno: '',
+        tip: 2,
+        vsicilid: '',
+        osicilid: ogrenciSicilId,
+      })
+      .pipe(
+        tap((rows) =>
+          console.log('[Rel] getStudentRelation ham yanıt (tip=2):', JSON.stringify(rows)),
+        ),
+      );
+  }
+
+  /**
+   * Velinin tüm öğrencilerini getirir (sp_relationcampus_s, tip=1).
+   * Her satır: { OgrenciSicilId, Id: relid }.
+   * Kullanılmayan parametreler boş string gönderilir (bkz. getStudentRelation notu).
+   */
+  getParentRelations(veliSicilId: number): Observable<RelationCampusRow[]> {
+    return this.api
+      .callEndpoint<RelationCampusRow[]>('Dynamic', {
+        point: 'relationcampus',
+        islemtipi: 's',
+        //islemno: '',
+        tip: 1,
+        vsicilid: veliSicilId,
+        osicilid: '',
+      })
+      .pipe(
+        tap((rows) =>
+          console.log('[Rel] getParentRelations ham yanıt (tip=1):', JSON.stringify(rows)),
+        ),
+      );
+  }
+
+  /**
+   * TÜM veli-öğrenci ilişkilerini tek çağrıda getirir (sp_relationcampus_s, tip=0).
+   * Veli listesi sayfasında "Çocuklar" kolonunu beslemek için kullanılır —
+   * satır başına N+1 çağrı yapmak yerine tek istek + client-side map kurulur.
+   * Kullanılmayan parametreler boş string gönderilir (bkz. getStudentRelation notu).
+   */
+  getAllRelations(): Observable<RelationCampusRow[]> {
+    return this.api
+      .callEndpoint<RelationCampusRow[]>('Dynamic', {
+        point: 'relationcampus',
+        islemtipi: 's',
+        //islemno: '',
+        tip: 0,
+        vsicilid: '',
+        osicilid: '',
+      })
+      .pipe(
+        tap((rows) =>
+          console.log('[Rel] getAllRelations ham yanıt (tip=0):', JSON.stringify(rows)),
+        ),
+      );
+  }
+
   addRelationCampus(ogrenciSicilId: number, veliSicilId: number): Observable<unknown> {
     return this.api.callEndpoint('Dynamic', {
       point: 'velicampus',
@@ -506,21 +577,25 @@ export class PersonService {
     });
   }
 
-  updateRelationCampus(ogrenciSicilId: number, veliSicilId: number): Observable<unknown> {
+  updateRelationCampus(
+    ogrenciSicilId: number,
+    veliSicilId: number,
+    relId: number,
+  ): Observable<unknown> {
     return this.api.callEndpoint('Dynamic', {
       point: 'velicampus',
       islemtipi: 'u',
       ogrencisicilid: ogrenciSicilId,
       velisicilid: veliSicilId,
+      relid: relId,
     });
   }
 
-  deleteRelationCampus(ogrenciSicilId: number, veliSicilId: number): Observable<unknown> {
+  deleteRelationCampus(relId: number): Observable<unknown> {
     return this.api.callEndpoint('Dynamic', {
       point: 'velicampus',
       islemtipi: 'd',
-      ogrencisicilid: ogrenciSicilId,
-      velisicilid: veliSicilId,
+      relid: relId,
     });
   }
 }

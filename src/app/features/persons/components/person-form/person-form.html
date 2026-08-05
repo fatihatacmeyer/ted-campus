@@ -202,7 +202,104 @@
           ></button>
         </div>
 
-        <!-- VAR OLAN VELİYİ SEÇ -->
+        <!-- DÜZENLEME MODU: MEVCUT VELİLER -->
+        @if (isEditMode) {
+          <div class="relation-list">
+            @for (row of relationRows; track rowKey(row)) {
+              <div class="relation-row">
+                <div class="relation-info">
+                  <span class="relation-name">{{ row.veliName }}</span>
+                  @if (row.sicilno) {
+                    <small class="relation-sicilno">({{ row.sicilno }})</small>
+                  }
+                  @if (row.changed) {
+                    <span class="relation-badge relation-badge-change">Değişecek</span>
+                  }
+                  @if (row.pending) {
+                    <span class="relation-badge relation-badge-add">Eklenecek</span>
+                  }
+                </div>
+
+                @if (changingRelid === row.relid) {
+                  <!-- Veliyi değiştir modu: yeni veli seç + onayla -->
+                  <div class="relation-change">
+                    <p-select
+                      formControlName="changeVeliId"
+                      [options]="linkedPersonOptions"
+                      placeholder="Yeni veli seçin"
+                      optionLabel="label"
+                      optionValue="value"
+                      styleClass="w-100"
+                      appendTo="body"
+                    />
+                    <div class="relation-change-actions">
+                      <button
+                        pButton
+                        type="button"
+                        icon="pi pi-check"
+                        class="p-button-sm p-button-success"
+                        pTooltip="Değişikliği onayla"
+                        (click)="confirmChange()"
+                      ></button>
+                      <button
+                        pButton
+                        type="button"
+                        icon="pi pi-times"
+                        class="p-button-sm p-button-text"
+                        pTooltip="Vazgeç"
+                        (click)="cancelChange()"
+                      ></button>
+                    </div>
+                  </div>
+                } @else if (confirmRemoveKey === rowKey(row)) {
+                  <!-- İki aşamalı silme onayı -->
+                  <div class="relation-actions relation-confirm">
+                    <span class="relation-confirm-text">Kaldırılsın mı?</span>
+                    <button
+                      pButton
+                      type="button"
+                      icon="pi pi-check"
+                      class="p-button-sm p-button-danger"
+                      pTooltip="Onayla"
+                      (click)="confirmRemove(row)"
+                    ></button>
+                    <button
+                      pButton
+                      type="button"
+                      icon="pi pi-times"
+                      class="p-button-sm p-button-text"
+                      pTooltip="Vazgeç"
+                      (click)="cancelRemove()"
+                    ></button>
+                  </div>
+                } @else {
+                  <div class="relation-actions">
+                    <button
+                      pButton
+                      type="button"
+                      icon="pi pi-pencil"
+                      class="p-button-text p-button-sm"
+                      pTooltip="Veliyi Değiştir"
+                      (click)="startChange(row)"
+                    ></button>
+                    <button
+                      pButton
+                      type="button"
+                      icon="pi pi-trash"
+                      class="p-button-text p-button-sm p-button-danger"
+                      pTooltip="Veli İlişkisini Kaldır"
+                      (click)="requestRemove(row)"
+                    ></button>
+                  </div>
+                }
+              </div>
+            } @empty {
+              <div class="relation-empty">Veli atanmamış</div>
+            }
+          </div>
+        }
+
+        <!-- VAR OLAN VELİYİ EKLE -->
         @if (!isCreatingNewParent) {
           <div class="field">
             <p-select
@@ -216,6 +313,16 @@
               appendTo="body"
             />
           </div>
+          @if (isEditMode) {
+            <button
+              pButton
+              type="button"
+              icon="pi pi-plus"
+              label="Veliyi Ekle"
+              class="p-button-sm p-button-outlined w-100 mb-2"
+              (click)="addSelectedVeli()"
+            ></button>
+          }
         }
 
         <!-- YENİ VELİ OLUŞTUR -->

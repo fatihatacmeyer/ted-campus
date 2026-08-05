@@ -173,3 +173,96 @@
   padding-top: 0.75rem;
   border-top: 1px solid #f0f0f0;
 }
+
+/* ── Veli İlişkisi Listesi ─────────────────────────────── */
+
+.relation-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.relation-row {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  background: #fafbfc;
+}
+
+.relation-info {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.relation-name {
+  font-weight: 600;
+  font-size: 0.8125rem;
+  color: #1e293b;
+}
+
+.relation-sicilno {
+  font-size: 0.75rem;
+  color: #64748b;
+}
+
+.relation-badge {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  padding: 0.125rem 0.5rem;
+  border-radius: 999px;
+}
+
+.relation-badge-change {
+  background: #fef3c7;
+  color: #b45309;
+}
+
+.relation-badge-add {
+  background: #d1fae5;
+  color: #047857;
+}
+
+.relation-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.25rem;
+}
+
+.relation-confirm {
+  gap: 0.5rem;
+}
+
+.relation-confirm-text {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #b91c1c;
+  margin-right: 0.25rem;
+}
+
+.relation-change {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding-top: 0.5rem;
+  border-top: 1px dashed #e2e8f0;
+}
+
+.relation-change-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.25rem;
+}
+
+.relation-empty {
+  font-size: 0.8125rem;
+  color: #94a3b8;
+  font-style: italic;
+  padding: 0.25rem 0;
+}

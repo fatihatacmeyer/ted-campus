@@ -33,7 +33,7 @@ export class ApiHelperService {
       .map(([key, value]) => `${key}=${value ?? ''}`)
       .join('&');
 
-    console.debug('[buildParamString] plaintext param:', result);
+    console.log('[Req] plaintext param:', result);
     return result;
   }
 

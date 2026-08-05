@@ -188,6 +188,24 @@ export interface LinkedPerson {
 }
 
 /**
+ * sp_relationcampus_s'ten dönen ham ilişki satırı (RelationCampus).
+ *
+ * Prosedür @tip'e göre farklı kolonlar döndürür:
+ *   tip=0 → tüm kolonlar (Id, OgrenciSicilId, VeliSicilId, ...)
+ *   tip=1 → OgrenciSicilId, Id (alias: relid)  — velinin öğrencileri
+ *   tip=2 → VeliSicilId, Id (alias: relid)     — öğrencinin velileri
+ *
+ * Backend JSON'da Id değeri bazen "relid" adıyla dönebildiği için her iki
+ * anahtar da isteğe bağlı tutulur; okuma tarafında `Number(row.Id)` yeterli.
+ */
+export interface RelationCampusRow {
+  Id?: number | string;
+  OgrenciSicilId?: number | string;
+  VeliSicilId?: number | string;
+  [key: string]: unknown;
+}
+
+/**
  * İzin talebi sonucu (talepkaydet).
  * Legacy: talepkaydet() → { sonuc: number, formid: string }
  */

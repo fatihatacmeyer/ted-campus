@@ -49,8 +49,13 @@
         (rowClick)="onRowClick($event)"
       >
         <ng-template appColumnCell="veliAdSoyad" let-person>
-          <span class="cell-text">
-            {{ person.veliAdSoyad ? person.veliAdSoyad : '-' }}
+          <span
+            class="cell-text"
+            [pTooltip]="childrenTooltip(person) ?? ''"
+            [tooltipDisabled]="!childrenTooltip(person)"
+            tooltipPosition="top"
+          >
+            {{ childrenSummary(person) }}
           </span>
         </ng-template>
         <ng-template appColumnCell="indirimorani" let-person>

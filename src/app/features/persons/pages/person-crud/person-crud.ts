@@ -72,6 +72,9 @@ export class PersonCrudComponent implements OnInit {
   showProfileModal = false;
   selectedProfilePerson: Person | null = null;
 
+  /** Veli sayfası: veliId → çocukları (sp_relationcampus_s tip=0'dan tek çağrıda kurulur). */
+  childrenMap = new Map<number, Person[]>();
+
   /** Tablo sütunları — userdef'a göre başlık override + export hook'ları uygulanır. */
   columns: ColumnDef<Person>[] = PERSON_COLUMNS.map((c) => ({ ...c }));
 
@@ -155,6 +158,11 @@ export class PersonCrudComponent implements OnInit {
       // personelno hook'u yok: excel'de direkt kendi değerini (gerçek personel no) yazar
     }
     setHook('indirimorani', (p) => (p.indirimorani != null ? `${p.indirimorani}%` : ''));
+
+    // Veli sayfasında "Çocuklar" kolonu excel'e ad listesi olarak yazılsın
+    if (this.USERDEF === UserDef.Veli) {
+      setHook('veliAdSoyad', (p) => this.childrenSummary(p));
+    }
   }
 
   // ─── Lifecycle ───
@@ -181,8 +189,14 @@ export class PersonCrudComponent implements OnInit {
             this.allPersons = data;
           }
           this.persons = data.filter((p) => p.userdef === this.USERDEF);
-          this.isLoading = false;
-          this.cdr.markForCheck();
+
+          // Veli sayfasında "Çocuklar" kolonu için ilişki haritasını kur
+          if (this.USERDEF === UserDef.Veli) {
+            this.loadChildrenMap();
+          } else {
+            this.isLoading = false;
+            this.cdr.markForCheck();
+          }
         },
         error: () => {
           this.errorMessage = 'Sistem hatası: Personel listesi sunucudan çekilemedi.';
@@ -190,6 +204,62 @@ export class PersonCrudComponent implements OnInit {
           this.cdr.markForCheck();
         },
       });
+  }
+
+  /**
+   * Tüm veli-öğrenci ilişkilerini tek çağrıda çeker (sp_relationcampus_s, tip=0)
+   * ve veliId → çocuk listesi haritası kurar. İsimler allPersons'tan çözülür.
+   */
+  private loadChildrenMap(): void {
+    this.personService
+      .getAllRelations()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (relations) => {
+          console.log('[Rel] getAllRelations satırları:', JSON.stringify(relations));
+          this.childrenMap.clear();
+          for (const rel of relations || []) {
+            const veliId = Number(rel.VeliSicilId);
+            const child = this.allPersons.find((p) => p.id === Number(rel.OgrenciSicilId));
+            if (!child) {
+              console.log('[Rel] eşleşmeyen satır → anahtarlar:', Object.keys(rel), '| VeliSicilId:', rel.VeliSicilId, '| OgrenciSicilId:', rel.OgrenciSicilId);
+              continue;
+            }
+            if (!this.childrenMap.has(veliId)) this.childrenMap.set(veliId, []);
+            this.childrenMap.get(veliId)!.push(child);
+          }
+          this.isLoading = false;
+          this.cdr.markForCheck();
+        },
+        error: (err) => {
+          console.error('[PersonCrud] Veli-öğrenci ilişkileri yüklenemedi:', err);
+          this.isLoading = false;
+          this.cdr.markForCheck();
+        },
+      });
+  }
+
+  /**
+   * veliAdSoyad kolon hücresi:
+   *   - Öğrenci sayfası → ilk veli adı (sp_sicilcampus_s TOP(1) sonucu)
+   *   - Veli sayfası → çocuk adları (ilk 2 + kalan sayısı)
+   */
+  childrenSummary(p: Person): string {
+    if (this.USERDEF !== UserDef.Veli) {
+      return p.veliAdSoyad || '-';
+    }
+    const kids = this.childrenMap.get(p.id) ?? [];
+    if (!kids.length) return '-';
+    const names = kids.map((k) => k.adsoyad);
+    if (names.length <= 2) return names.join(', ');
+    return `${names.slice(0, 2).join(', ')} +${names.length - 2} daha`;
+  }
+
+  /** Veli satırında tüm çocuk adlarını tooltip olarak döndürür (boşsa null → tooltip yok). */
+  childrenTooltip(p: Person): string | null {
+    if (this.USERDEF !== UserDef.Veli) return null;
+    const kids = this.childrenMap.get(p.id) ?? [];
+    return kids.length ? kids.map((k) => k.adsoyad).join('\n') : null;
   }
 
   // ─── Dialog open / close ───
