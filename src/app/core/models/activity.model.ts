@@ -26,3 +26,12 @@ export interface ActivityInterface {
   isPrivate: boolean; // sadece belli sınıfları seçebilmek için
   classroom: string; // etkinliğe katılacak sınıflar
 }
+
+/** sp_EtkinlikOnayCampus'ten dönen etkinlik onay istatistikleri. */
+export interface ActivityApprovalStats {
+  etkinlikId: number;
+  bekleyen: number;
+  onaylanan: number;
+  reddedilen: number;
+  toplam: number;
+}

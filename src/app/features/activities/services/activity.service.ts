@@ -1,7 +1,7 @@
 import { inject, Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
-import { ActivityInterface } from '../../../core/models/activity.model';
+import { ActivityApprovalStats, ActivityInterface } from '../../../core/models/activity.model';
 import { ApiHelperService } from '../../../core/services/api-helper.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { formatDate } from '../../../shared/utils/date.utils';
@@ -51,6 +51,15 @@ interface ActivityRow {
   Duzenleyen: number;
   CreatedDate: Date | string;
   Sinif: string;
+}
+
+/** sp_EtkinlikOnayCampus_s'ten dönen ham DB satırı (Türkçe/DB sütun adları). */
+interface ActivityApprovalRow {
+  EtkinlikId: number;
+  Bekleyen: number;
+  Onaylanan: number;
+  Reddedilen: number;
+  Toplam: number;
 }
 
 @Injectable({
@@ -114,6 +123,30 @@ export class ActivityService {
     return this.callDynamic<ActivityRow[]>({
       islemtipi: 's',
     }).pipe(map((rows) => (rows || []).map((row) => this.mapRowToActivity(row))));
+  }
+
+  /**
+   * sp_EtkinlikOnayCampus_s: etkinlik bazlı onay istatistiklerini döndürür.
+   * EtkinlikId parametresi gönderildiğinde yalnızca o etkinliğin satırı döner
+   * (parametresiz gönderilirse tüm etkinliklerin satırları döner).
+   */
+  getApprovalStats(etkinlikId: number): Observable<ActivityApprovalStats> {
+    return this.callDynamic<ActivityApprovalRow[]>({
+      point: 'etkinlikonaycampus',
+      islemtipi: 's',
+      EtkinlikId: etkinlikId,
+    }).pipe(
+      map((rows) => {
+        const row = (rows || [])[0];
+        return {
+          etkinlikId: row?.EtkinlikId ?? etkinlikId,
+          bekleyen: row?.Bekleyen ?? 0,
+          onaylanan: row?.Onaylanan ?? 0,
+          reddedilen: row?.Reddedilen ?? 0,
+          toplam: row?.Toplam ?? 0,
+        };
+      }),
+    );
   }
 
   /**

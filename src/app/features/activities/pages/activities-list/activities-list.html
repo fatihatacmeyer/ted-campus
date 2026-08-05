@@ -14,6 +14,8 @@
       emptyMessage="Henüz kayıtlı bir etkinlik bulunmuyor."
       [showRowNumbers]="true"
       [actionsTemplate]="actionsTpl"
+      [rowClickable]="true"
+      (rowClick)="openDetailDialog($event)"
     >
       <ng-template appColumnCell="classroom" let-activity>
         <span [pTooltip]="getTableClassroomFull(activity.classroom)" tooltipPosition="top">
@@ -33,8 +35,8 @@
 
       <ng-template #actionsTpl let-activity>
         <div class="d-flex justify-content-center gap-1">
-          <button pButton icon="pi pi-pencil" class="p-button-text p-button-warning p-button-sm" (click)="openEditDialog(activity)" pTooltip="Düzenle" aria-label="Düzenle"></button>
-          <button pButton icon="pi pi-trash" class="p-button-text p-button-danger p-button-sm" (click)="deleteActivity(activity.id)" pTooltip="Sil" aria-label="Sil"></button>
+          <button pButton icon="pi pi-pencil" class="p-button-text p-button-warning p-button-sm" (click)="openEditDialog(activity); $event.stopPropagation()" pTooltip="Düzenle" aria-label="Düzenle"></button>
+          <button pButton icon="pi pi-trash" class="p-button-text p-button-danger p-button-sm" (click)="deleteActivity(activity.id); $event.stopPropagation()" pTooltip="Sil" aria-label="Sil"></button>
         </div>
       </ng-template>
     </app-customizable-table>
@@ -399,6 +401,108 @@
         class="p-button-primary"
         (click)="confirmSave()"
       ></button>
+    </div>
+  </ng-template>
+</p-dialog>
+
+<!-- Etkinlik Detay Dialogu -->
+<p-dialog
+  [header]="selectedActivity()?.name || 'Etkinlik Detayı'"
+  [(visible)]="isDetailVisible"
+  [modal]="true"
+  [style]="{ width: '820px', height: '80vh' }"
+  [draggable]="false"
+  (onHide)="closeDetailDialog()"
+>
+  <div class="detail-body">
+    <!-- ONAY DASHBOARD -->
+    <h6 class="text-primary fw-bold mb-3 border-bottom pb-2">Onay Durumu</h6>
+
+    @if (isLoadingStats()) {
+      <div class="d-flex justify-content-center py-4">
+        <i class="pi pi-spin pi-spinner" style="font-size: 2rem; color: var(--p-primary-color)"></i>
+      </div>
+    } @else if (approvalError()) {
+      <div class="approval-error d-flex flex-column align-items-center gap-2 py-4">
+        <span class="text-danger small">{{ approvalError() }}</span>
+        @if (selectedActivity(); as act) {
+          <button pButton label="Tekrar Dene" icon="pi pi-refresh" class="p-button-text p-button-sm" (click)="loadApprovalStats(act.id)"></button>
+        }
+      </div>
+    } @else if (approvalStats(); as stats) {
+      <div class="stat-grid">
+        <div class="stat-card stat-bekleyen" role="button" tabindex="0" [class.active]="activeParticipantFilter() === 'Bekleyen'" (click)="setParticipantFilter('Bekleyen')" (keyup.enter)="setParticipantFilter('Bekleyen')">
+          <div class="stat-icon"><i class="pi pi-clock"></i></div>
+          <div class="stat-info">
+            <span class="stat-count">{{ stats.bekleyen }}</span>
+            <span class="stat-label">Bekleyen</span>
+          </div>
+        </div>
+        <div class="stat-card stat-onaylanan" role="button" tabindex="0" [class.active]="activeParticipantFilter() === 'Onaylanan'" (click)="setParticipantFilter('Onaylanan')" (keyup.enter)="setParticipantFilter('Onaylanan')">
+          <div class="stat-icon"><i class="pi pi-check-circle"></i></div>
+          <div class="stat-info">
+            <span class="stat-count">{{ stats.onaylanan }}</span>
+            <span class="stat-label">Onaylanan</span>
+          </div>
+        </div>
+        <div class="stat-card stat-reddedilen" role="button" tabindex="0" [class.active]="activeParticipantFilter() === 'Reddedilen'" (click)="setParticipantFilter('Reddedilen')" (keyup.enter)="setParticipantFilter('Reddedilen')">
+          <div class="stat-icon"><i class="pi pi-times-circle"></i></div>
+          <div class="stat-info">
+            <span class="stat-count">{{ stats.reddedilen }}</span>
+            <span class="stat-label">Reddedilen</span>
+          </div>
+        </div>
+        <div class="stat-card stat-toplam" role="button" tabindex="0" [class.active]="activeParticipantFilter() === 'Tümü'" (click)="setParticipantFilter('Tümü')" (keyup.enter)="setParticipantFilter('Tümü')">
+          <div class="stat-icon"><i class="pi pi-users"></i></div>
+          <div class="stat-info">
+            <span class="stat-count">{{ stats.toplam }}</span>
+            <span class="stat-label">Toplam</span>
+          </div>
+        </div>
+      </div>
+    }
+
+    <!-- KATILIMCI LİSTESİ (MOCK) -->
+    <h6 class="text-primary fw-bold mb-3 mt-4 border-bottom pb-2 d-flex align-items-center justify-content-between">
+      <span>Etkinliğe Katılanlar</span>
+      <span class="text-muted small fw-normal">{{ filteredParticipants().length }} katılımcı</span>
+    </h6>
+    <div class="participant-table-wrapper">
+      <table class="participant-table">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Öğrenci</th>
+            <th>Sınıf</th>
+            <th>Veli</th>
+            <th>Telefon</th>
+            <th>Durum</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (p of filteredParticipants(); track p.id) {
+            <tr>
+              <td>{{ p.id }}</td>
+              <td>{{ p.ogrenci }}</td>
+              <td>{{ p.sinif }}</td>
+              <td>{{ p.veli }}</td>
+              <td>{{ p.telefon }}</td>
+              <td>
+                <p-tag [value]="p.durum" [severity]="getParticipantSeverity(p.durum)"></p-tag>
+              </td>
+            </tr>
+          } @empty {
+            <tr>
+              <td colspan="6" class="text-center text-muted py-3">Bu filtreye uygun katılımcı bulunamadı.</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  </div>
+  <ng-template pTemplate="footer">
+    <div class="d-flex justify-content-end">
+      <button pButton label="Kapat" icon="pi pi-times" class="p-button-text" (click)="closeDetailDialog()"></button>
     </div>
   </ng-template>
 </p-dialog>

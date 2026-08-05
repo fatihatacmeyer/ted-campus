@@ -1,4 +1,4 @@
-import { Component, ChangeDetectionStrategy, signal, inject, DestroyRef } from '@angular/core';
+import { Component, ChangeDetectionStrategy, signal, computed, inject, DestroyRef } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
@@ -22,9 +22,16 @@ import { TooltipModule } from 'primeng/tooltip';
 import { forkJoin, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { DropdownItem, TypesService } from '../../../persons/services/types.service';
-import { ActivityInterface } from '../../../../core/models/activity.model';
+import { ActivityApprovalStats, ActivityInterface } from '../../../../core/models/activity.model';
 import { ActivityService } from '../../services/activity.service';
+import {
+  MOCK_ACTIVITY_PARTICIPANTS,
+  MockActivityParticipant,
+} from '../../mocks/activity-participants.mock';
 import { formatDate, parseDate } from '../../../../shared/utils/date.utils';
+
+/** Katılımcı durum filtreleri — dashboard kartlarıyla eşleşir. */
+type ParticipantFilter = 'Tümü' | MockActivityParticipant['durum'];
 
 /** Boole sütun filtreleri için Evet/Hayır seçenekleri */
 const BOOLEAN_FILTER_OPTIONS: FilterOption[] = [
@@ -68,6 +75,23 @@ export class ActivitiesComponent {
   editingActivity = signal<ActivityInterface | null>(null);
   showAllClassesConfirm = signal(false);
   pendingSaveData = signal<ActivityInterface | null>(null);
+
+  isDetailVisible = signal(false);
+  selectedActivity = signal<ActivityInterface | null>(null);
+  approvalStats = signal<ActivityApprovalStats | null>(null);
+  isLoadingStats = signal(false);
+  approvalError = signal<string | null>(null);
+  participants = signal<MockActivityParticipant[]>(MOCK_ACTIVITY_PARTICIPANTS);
+
+  /** Katılımcı listesi için aktif filtre — dashboard kartlarından seçilir. */
+  activeParticipantFilter = signal<ParticipantFilter>('Tümü');
+
+  /** Aktif filtreye göre filtrelenmiş katılımcı listesi. */
+  filteredParticipants = computed(() => {
+    const filter = this.activeParticipantFilter();
+    if (filter === 'Tümü') return this.participants();
+    return this.participants().filter((p) => p.durum === filter);
+  });
 
   activityColumns: ColumnDef<ActivityInterface>[] = [
     { field: 'id', header: 'ID', sortable: true, width: '70px' },
@@ -434,6 +458,58 @@ export class ActivitiesComponent {
     this.isDialogVisible.set(false);
     this.editingActivity.set(null);
     this.activityForm.reset();
+  }
+
+  /** Tablo satırına tıklandığında detay modalını açar ve istatistikleri çeker. */
+  openDetailDialog(activity: ActivityInterface) {
+    this.activeParticipantFilter.set('Tümü');
+    this.selectedActivity.set(activity);
+    this.isDetailVisible.set(true);
+    this.loadApprovalStats(activity.id);
+  }
+
+  closeDetailDialog() {
+    this.isDetailVisible.set(false);
+    this.selectedActivity.set(null);
+    this.approvalStats.set(null);
+    this.approvalError.set(null);
+  }
+
+  /** sp_EtkinlikOnayCampus_s'ten o etkinliğin onay istatistiklerini çeker. */
+  loadApprovalStats(etkinlikId: number) {
+    this.isLoadingStats.set(true);
+    this.approvalError.set(null);
+    this.activityService
+      .getApprovalStats(etkinlikId)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (stats) => {
+          this.approvalStats.set(stats);
+          this.isLoadingStats.set(false);
+        },
+        error: (err) => {
+          console.error('[ActivitiesComponent] getApprovalStats error:', err);
+          this.approvalError.set('Onay istatistikleri yüklenirken bir hata oluştu.');
+          this.isLoadingStats.set(false);
+        },
+      });
+  }
+
+  /** Katılımcı durumu için p-tag severity değeri. */
+  getParticipantSeverity(durum: string) {
+    switch (durum) {
+      case 'Onaylanan':
+        return 'success';
+      case 'Reddedilen':
+        return 'danger';
+      default:
+        return 'warn'; // Bekleyen
+    }
+  }
+
+  /** Dashboard kartına tıklanınca katılımcı listesini filtreler. */
+  setParticipantFilter(filter: ParticipantFilter) {
+    this.activeParticipantFilter.set(filter);
   }
 
   saveActivity() {

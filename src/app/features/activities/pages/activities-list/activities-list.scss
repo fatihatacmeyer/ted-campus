@@ -52,3 +52,137 @@
   font-size: 0.7rem;
   font-weight: 500;
 }
+
+/* ── Etkinlik Detay Modalı ─────────────────────────────── */
+.detail-body {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  padding-bottom: 0.5rem;
+}
+
+.approval-error {
+  text-align: center;
+}
+
+.stat-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 14px;
+
+  @media (max-width: 700px) {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+.stat-card {
+  background: #fff;
+  border: 1px solid #f1f5f9;
+  border-radius: 14px;
+  padding: 18px 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  cursor: pointer;
+  user-select: none;
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.09);
+  }
+
+  &.active {
+    box-shadow: 0 0 0 2px currentColor, 0 6px 20px rgba(0, 0, 0, 0.1);
+  }
+
+  .stat-icon {
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    font-size: 1.2rem;
+  }
+
+  .stat-info {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .stat-count {
+    font-size: 1.7rem;
+    font-weight: 700;
+    line-height: 1.1;
+    letter-spacing: -0.02em;
+    color: #1f2937;
+  }
+
+  .stat-label {
+    font-size: 0.82rem;
+    font-weight: 500;
+    color: #6b7280;
+  }
+
+  &.stat-bekleyen .stat-icon { background: #fffbeb; color: #d97706; }
+  &.stat-onaylanan .stat-icon { background: #ecfdf5; color: #059669; }
+  &.stat-reddedilen .stat-icon { background: #fef2f2; color: #dc2626; }
+  &.stat-toplam .stat-icon { background: #eff6ff; color: #2563eb; }
+
+  &.stat-bekleyen.active { border-color: #d97706; }
+  &.stat-onaylanan.active { border-color: #059669; }
+  &.stat-reddedilen.active { border-color: #dc2626; }
+  &.stat-toplam.active { border-color: #2563eb; }
+}
+
+.participant-table-wrapper {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-x: auto;
+  overflow-y: auto;
+  border: 1px solid #f1f5f9;
+  border-radius: 12px;
+}
+
+.participant-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.88rem;
+
+  th {
+    background: #f9fafb;
+    text-align: left;
+    padding: 10px 14px;
+    font-weight: 600;
+    color: #374151;
+    border-bottom: 1px solid #f1f5f9;
+    white-space: nowrap;
+  }
+
+  td {
+    padding: 10px 14px;
+    border-bottom: 1px solid #f9fafb;
+    color: #1f2937;
+
+    &:first-child {
+      color: #9ca3af;
+    }
+  }
+
+  tbody tr {
+    transition: background-color 0.15s ease;
+
+    &:hover {
+      background-color: #f8fafc;
+    }
+
+    &:last-child td {
+      border-bottom: none;
+    }
+  }
+}
