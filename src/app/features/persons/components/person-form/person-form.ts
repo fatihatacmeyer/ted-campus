@@ -421,9 +421,12 @@ export class PersonFormComponent implements OnChanges, OnInit {
     }
     for (const linkedId of this.pendingAdditions) excludedIds.add(linkedId);
 
-    return this.allPersons
-      .filter((p) => p.userdef === targetUserdef && !excludedIds.has(p.id))
-      .map((p) => ({ label: `${p.adsoyad} (${p.sicilno})`, value: p.id }));
+    return (
+      this.allPersons
+        .filter((p) => p.userdef === targetUserdef && !excludedIds.has(p.id))
+        // .map((p) => ({ label: `${p.adsoyad} (${p.sicilno})`, value: p.id }));
+        .map((p) => ({ label: `${p.adsoyad} (${p.sicilno ? p.sicilno : p.id})`, value: p.id }))
+    );
   }
 
   // submit(): void {
@@ -534,8 +537,7 @@ export class PersonFormComponent implements OnChanges, OnInit {
           const yeniLinkedId = extractNewId(yeniResult);
 
           if (!yeniLinkedId) {
-            this.errorMessage =
-              `${this.linkedKind} oluşturuldu ancak ID'si alınamadığı için bağlanamadı.`;
+            this.errorMessage = `${this.linkedKind} oluşturuldu ancak ID'si alınamadığı için bağlanamadı.`;
             this.isSaving = false;
             this.cdr.markForCheck();
             return;
@@ -668,12 +670,18 @@ export class PersonFormComponent implements OnChanges, OnInit {
           const linkedId = Number(ogrenciModu ? r.VeliSicilId : r.OgrenciSicilId);
           const relid = Number(r.relid ?? r.Id);
           console.log(
-            '[Rel] satır anahtarları:', Object.keys(r),
-            '| VeliSicilId:', r.VeliSicilId,
-            '| OgrenciSicilId:', r.OgrenciSicilId,
-            '| relid:', r.relid,
-            '| → linkedId:', linkedId,
-            '| relid:', relid,
+            '[Rel] satır anahtarları:',
+            Object.keys(r),
+            '| VeliSicilId:',
+            r.VeliSicilId,
+            '| OgrenciSicilId:',
+            r.OgrenciSicilId,
+            '| relid:',
+            r.relid,
+            '| → linkedId:',
+            linkedId,
+            '| relid:',
+            relid,
           );
           const linked = this.allPersons.find((p) => p.id === linkedId);
           return {
@@ -744,9 +752,7 @@ export class PersonFormComponent implements OnChanges, OnInit {
 
   /** Eklenmek üzere seçilen mevcut kişiyi bekleyen eklemelere alır (edit modundaki "Ekle" butonu). */
   addSelectedLinked(): void {
-    const linkedId = this.form.value.linkedPersonId
-      ? Number(this.form.value.linkedPersonId)
-      : null;
+    const linkedId = this.form.value.linkedPersonId ? Number(this.form.value.linkedPersonId) : null;
     if (!linkedId) return;
     this.addPendingLinked(linkedId);
     this.form.patchValue({ linkedPersonId: null });
@@ -774,9 +780,7 @@ export class PersonFormComponent implements OnChanges, OnInit {
 
   /** "Değiştir" modunda seçilen yeni kişiyi onaylar → kayıtta sp_velicampus_u (relid ile) uygulanır. */
   confirmChange(): void {
-    const linkedId = this.form.value.changeLinkedId
-      ? Number(this.form.value.changeLinkedId)
-      : null;
+    const linkedId = this.form.value.changeLinkedId ? Number(this.form.value.changeLinkedId) : null;
     if (!linkedId || !this.changingRelid) return;
 
     const relid = this.changingRelid;
