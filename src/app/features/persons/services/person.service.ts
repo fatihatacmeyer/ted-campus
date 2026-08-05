@@ -500,7 +500,7 @@ export class PersonService {
 
   /**
    * Öğrencinin tüm velilerini getirir (sp_relationcampus_s, tip=2).
-   * Her satır: { VeliSicilId, Id: relid } — relid, ilişkiyi güncellemek/silmek için zorunludur.
+   * Her satır: { VeliSicilId, relid } — relid (Id'nin SQL alias'ı), ilişkiyi güncellemek/silmek için zorunludur.
    *
    * NOT: Prosedürde parametre varsayılanı yok; dispatcher yalnızca gönderilen
    * parametreleri iletiyor. Bu yüzden kullanılmayanlar boş string ('') gönderilir
@@ -525,7 +525,7 @@ export class PersonService {
 
   /**
    * Velinin tüm öğrencilerini getirir (sp_relationcampus_s, tip=1).
-   * Her satır: { OgrenciSicilId, Id: relid }.
+   * Her satır: { OgrenciSicilId, relid } (Id'nin SQL alias'ı).
    * Kullanılmayan parametreler boş string gönderilir (bkz. getStudentRelation notu).
    */
   getParentRelations(veliSicilId: number): Observable<RelationCampusRow[]> {

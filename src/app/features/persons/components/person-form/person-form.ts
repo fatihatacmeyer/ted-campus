@@ -594,11 +594,11 @@ export class PersonFormComponent implements OnChanges, OnInit {
           console.log('[Rel] getStudentRelation satırları:', JSON.stringify(rows));
           this.existingRelations = (rows || []).map((r) => {
             const veliId = Number(r.VeliSicilId);
-            const relid = Number(r.Id);
+            const relid = Number(r.relid ?? r.Id);
             console.log(
               '[Rel] satır anahtarları:', Object.keys(r),
               '| VeliSicilId:', r.VeliSicilId,
-              '| Id:', r.Id,
+              '| relid:', r.relid,
               '| → veliId:', veliId,
               '| relid:', relid,
             );

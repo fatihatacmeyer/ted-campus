@@ -192,13 +192,15 @@ export interface LinkedPerson {
  *
  * Prosedür @tip'e göre farklı kolonlar döndürür:
  *   tip=0 → tüm kolonlar (Id, OgrenciSicilId, VeliSicilId, ...)
- *   tip=1 → OgrenciSicilId, Id (alias: relid)  — velinin öğrencileri
- *   tip=2 → VeliSicilId, Id (alias: relid)     — öğrencinin velileri
+ *   tip=1 → OgrenciSicilId, Id AS relid         — velinin öğrencileri
+ *   tip=2 → VeliSicilId, Id AS relid            — öğrencinin velileri
  *
- * Backend JSON'da Id değeri bazen "relid" adıyla dönebildiği için her iki
- * anahtar da isteğe bağlı tutulur; okuma tarafında `Number(row.Id)` yeterli.
+ * NOT: tip=1/2'de SQL alias yüzünden Id anahtarı backend'de "relid" adıyla
+ * döner (Id anahtarı GELMEZ). Okuma tarafında `Number(row.relid ?? row.Id)`
+ * kullanılmalı — sadece `row.Id` okumak NaN üretir.
  */
 export interface RelationCampusRow {
+  relid?: number | string; // tip=1/2: Id'nin SQL alias'ı (Id yerine döner)
   Id?: number | string;
   OgrenciSicilId?: number | string;
   VeliSicilId?: number | string;
