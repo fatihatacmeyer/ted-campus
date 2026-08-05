@@ -73,18 +73,22 @@ const PERSON_FORM_FIELDS: PersonFormFieldMeta[] = [
   { key: 'giristarih', isDate: true },
 ];
 
-/** Öğrencinin mevcut veli ilişkisi (düzenleme modunda sp_relationcampus_s tip=2'den yüklenir). */
+/**
+ * Mevcut ilişki satırı. Yön, formun userdef'ine bağlıdır:
+ *  - Öğrenci modunda (userdef=11) linkedId = veli sicil id  (sp_relationcampus_s tip=2)
+ *  - Veli modunda (userdef=12) linkedId = öğrenci sicil id (sp_relationcampus_s tip=1)
+ */
 interface ExistingRelation {
   relid: number; // RelationCampus.Id — güncelleme/silme için zorunlu
-  veliSicilId: number;
-  veliName: string;
+  linkedId: number;
+  linkedName: string;
   sicilno: string;
 }
 
-/** "Veliyi Değiştir" işlemi — mevcut ilişki satırı (relid) yeni veliye güncellenir (sp_velicampus_u). */
+/** "Değiştir" işlemi — mevcut ilişki satırı (relid) yeni kişiye güncellenir (sp_velicampus_u). */
 interface RelationChange {
   relid: number;
-  newVeliId: number;
+  newLinkedId: number;
 }
 
 /** Şablonda listelenen birleşik satır: mevcut ilişki veya bekleyen ekleme. */
@@ -123,9 +127,9 @@ export class PersonFormComponent implements OnChanges, OnInit {
 
   /** Düzenleme modunda mı? NguyenChanges tarafından ayarlanır. */
   isEditMode = false;
-  isCreatingNewParent = false;
+  isCreatingNewLinked = false;
 
-  // ─── Veli ilişkisi yönetimi (sadece Öğrenci, userdef=11) ───
+  // ─── İlişkili kişi yönetimi (userdef=11 Öğrenci veya 12 Veli) ───
   existingRelations: ExistingRelation[] = []; // DB'deki mevcut ilişkiler
   removedRelIds: number[] = []; // silinecek ilişkiler (sp_velicampus_d)
   changedRelations: RelationChange[] = []; // velisi değişecek ilişkiler (sp_velicampus_u)
@@ -154,22 +158,22 @@ export class PersonFormComponent implements OnChanges, OnInit {
       }
     }
 
-    controls['veliSicilId'] = [null];
-    controls['yeniVeliAd'] = [''];
-    controls['yeniVeliSoyad'] = [''];
-    controls['yeniVeliTelefon'] = [''];
-    controls['changeVeliId'] = [null];
+    controls['linkedPersonId'] = [null];
+    controls['yeniLinkedAd'] = [''];
+    controls['yeniLinkedSoyad'] = [''];
+    controls['yeniLinkedTelefon'] = [''];
+    controls['changeLinkedId'] = [null];
     return controls;
   }
 
-  toggleParentMode(): void {
-    this.isCreatingNewParent = !this.isCreatingNewParent;
+  toggleNewLinkedMode(): void {
+    this.isCreatingNewLinked = !this.isCreatingNewLinked;
 
     // Mod değiştiğinde gereksiz alanları temizle
-    if (this.isCreatingNewParent) {
-      this.form.get('veliSicilId')?.setValue(null);
+    if (this.isCreatingNewLinked) {
+      this.form.get('linkedPersonId')?.setValue(null);
     } else {
-      this.form.patchValue({ yeniVeliAd: '', yeniVeliSoyad: '', yeniVeliTelefon: '' });
+      this.form.patchValue({ yeniLinkedAd: '', yeniLinkedSoyad: '', yeniLinkedTelefon: '' });
     }
   }
   isSaving = false;
@@ -279,8 +283,8 @@ export class PersonFormComponent implements OnChanges, OnInit {
       this.resetRelationState();
       if (this.editPerson) {
         this.patchFormForEdit();
-        // Düzenleme modunda öğrencinin mevcut velilerini ilişki tablosundan yükle
-        if (this.userdef === UserDef.Ogrenci) {
+        // Düzenleme modunda mevcut ilişkileri ilişki tablosundan yükle (öğrenci: tip=2, veli: tip=1)
+        if (this.isRelationMode) {
           this.loadExistingRelations();
         }
       }
@@ -354,6 +358,56 @@ export class PersonFormComponent implements OnChanges, OnInit {
     this.photoFileName = '';
   }
 
+  /** İlişki yönetimi bu formda aktif mi (Öğrenci veya Veli). */
+  get isRelationMode(): boolean {
+    return this.userdef === UserDef.Ogrenci || this.userdef === UserDef.Veli;
+  }
+
+  /** İlişkili kişinin tekil adı: öğrenci düzenlerken "Veli", veli düzenlerken "Öğrenci". */
+  get linkedKind(): string {
+    return this.userdef === UserDef.Veli ? 'Öğrenci' : 'Veli';
+  }
+
+  /** Bölüm başlığı: "Veli Bilgisi" / "Çocuk Bilgisi". */
+  get linkedSectionTitle(): string {
+    return this.userdef === UserDef.Veli ? 'Çocuk Bilgisi' : 'Veli Bilgisi';
+  }
+
+  /** Toggle buton etiketi: "Listeden Seç" / "Yeni Veli Oluştur" / "Yeni Öğrenci Oluştur". */
+  get newLinkedToggleLabel(): string {
+    return this.isCreatingNewLinked ? 'Listeden Seç' : `Yeni ${this.linkedKind} Oluştur`;
+  }
+
+  /** "Veli seçin" / "Öğrenci seçin" placeholder'ı. */
+  get linkedSelectPlaceholder(): string {
+    return `${this.linkedKind} seçin`;
+  }
+
+  /** Değiştir dropdown'ı placeholder'ı: "Yeni veli seçin" / "Yeni öğrenci seçin". */
+  get changeLinkedPlaceholder(): string {
+    return `Yeni ${this.linkedKind.toLowerCase()} seçin`;
+  }
+
+  /** "Veli Ekle" / "Öğrenci Ekle" buton etiketi. */
+  get addLinkedButtonLabel(): string {
+    return `${this.linkedKind} Ekle`;
+  }
+
+  /** Değiştir tooltip'i: "Veliyi Değiştir" / "Öğrenciyi Değiştir". */
+  get changeLinkedTooltip(): string {
+    return this.userdef === UserDef.Veli ? 'Öğrenciyi Değiştir' : 'Veliyi Değiştir';
+  }
+
+  /** Kaldır tooltip'i: "Veli İlişkisini Kaldır" / "Öğrenci İlişkisini Kaldır". */
+  get removeLinkedTooltip(): string {
+    return this.userdef === UserDef.Veli ? 'Öğrenci İlişkisini Kaldır' : 'Veli İlişkisini Kaldır';
+  }
+
+  /** Boş liste metni: "Veli atanmamış" / "Çocuk atanmamış". */
+  get noLinkedText(): string {
+    return this.userdef === UserDef.Veli ? 'Çocuk atanmamış' : 'Veli atanmamış';
+  }
+
   get linkedPersonOptions(): { label: string; value: number }[] {
     // userdef=Ogrenci → show userdef=Veli, userdef=Veli → show userdef=Ogrenci
     const targetUserdef = this.userdef === UserDef.Ogrenci ? UserDef.Veli : UserDef.Ogrenci;
@@ -363,9 +417,9 @@ export class PersonFormComponent implements OnChanges, OnInit {
     // - bekleyen eklemeler
     const excludedIds = new Set<number>();
     for (const rel of this.existingRelations) {
-      if (!this.removedRelIds.includes(rel.relid)) excludedIds.add(rel.veliSicilId);
+      if (!this.removedRelIds.includes(rel.relid)) excludedIds.add(rel.linkedId);
     }
-    for (const veliId of this.pendingAdditions) excludedIds.add(veliId);
+    for (const linkedId of this.pendingAdditions) excludedIds.add(linkedId);
 
     return this.allPersons
       .filter((p) => p.userdef === targetUserdef && !excludedIds.has(p.id))
@@ -457,39 +511,40 @@ export class PersonFormComponent implements OnChanges, OnInit {
     this.errorMessage = '';
     const formVals = this.form.value;
 
-    // Eğer YENİ VELİ oluşturuluyorsa
-    if (this.userdef === UserDef.Ogrenci && this.isCreatingNewParent) {
-      const yeniVeliPayload: PersonInsertRequest = {
-        ad: formVals.yeniVeliAd,
-        soyad: formVals.yeniVeliSoyad,
-        ceptelefon: formVals.yeniVeliTelefon,
-        userdef: UserDef.Veli,
+    // Eğer YENİ ilişkili kişi oluşturuluyorsa (öğrenci düzenlerken veli, veli düzenlerken öğrenci)
+    if (this.isCreatingNewLinked) {
+      const targetUserdef = this.userdef === UserDef.Ogrenci ? UserDef.Veli : UserDef.Ogrenci;
+      const yeniLinkedPayload: PersonInsertRequest = {
+        ad: formVals.yeniLinkedAd,
+        soyad: formVals.yeniLinkedSoyad,
+        ceptelefon: formVals.yeniLinkedTelefon,
+        userdef: targetUserdef,
       };
 
-      // 1. ÖNCE VELİYİ KAYDET
-      this.personService.insertPerson(yeniVeliPayload).subscribe({
-        next: (veliRes) => {
-          const veliResult = unwrapResponse<Person>(veliRes);
-          if (!isSuccessResult(veliResult)) {
-            this.errorMessage = veliResult?.sunucucevap || 'Veli oluşturulamadı.';
+      // 1. ÖNCE YENİ KİŞİYİ KAYDET
+      this.personService.insertPerson(yeniLinkedPayload).subscribe({
+        next: (yeniRes) => {
+          const yeniResult = unwrapResponse<Person>(yeniRes);
+          if (!isSuccessResult(yeniResult)) {
+            this.errorMessage = yeniResult?.sunucucevap || `${this.linkedKind} oluşturulamadı.`;
             this.isSaving = false;
             this.cdr.markForCheck();
             return;
           }
-          const yeniVeliId = extractNewId(veliResult);
+          const yeniLinkedId = extractNewId(yeniResult);
 
-          if (!yeniVeliId) {
+          if (!yeniLinkedId) {
             this.errorMessage =
-              "Veli oluşturuldu ancak ID'si alınamadığı için öğrenciye bağlanamadı.";
+              `${this.linkedKind} oluşturuldu ancak ID'si alınamadığı için bağlanamadı.`;
             this.isSaving = false;
             this.cdr.markForCheck();
             return;
           }
 
-          // 2. ARDINDAN ÖĞRENCİYİ KAYDET VE İLİŞKİYİ KUR
-          this.addPendingVeli(yeniVeliId);
-          this.isCreatingNewParent = false;
-          this.saveStudentAndLink();
+          // 2. ARDINDAN DÜZENLENEN KİŞİYİ KAYDET VE İLİŞKİYİ KUR
+          this.addPendingLinked(yeniLinkedId);
+          this.isCreatingNewLinked = false;
+          this.savePersonAndLink();
         },
         error: () => {
           this.errorMessage = 'Yeni Veli oluşturulurken hata meydana geldi.';
@@ -500,13 +555,13 @@ export class PersonFormComponent implements OnChanges, OnInit {
       return;
     }
 
-    // Mevcut veli seçildiyse (ekleme alanı) bekleyen eklemelere al.
-    if (this.userdef === UserDef.Ogrenci) {
-      const mevcutVeliId = formVals.veliSicilId ? Number(formVals.veliSicilId) : null;
-      if (mevcutVeliId) this.addPendingVeli(mevcutVeliId);
+    // Mevcut ilişkili kişi seçildiyse (ekleme alanı) bekleyen eklemelere al.
+    if (this.isRelationMode) {
+      const mevcutLinkedId = formVals.linkedPersonId ? Number(formVals.linkedPersonId) : null;
+      if (mevcutLinkedId) this.addPendingLinked(mevcutLinkedId);
     }
 
-    this.saveStudentAndLink();
+    this.savePersonAndLink();
   }
 
   /**
@@ -514,7 +569,7 @@ export class PersonFormComponent implements OnChanges, OnInit {
    * sırayla uygular. İlişki işlemleri öğrenci kaydına bağlı olduğu için öğrenci
    * (insert/update) başarılı olduktan sonra çalıştırılır.
    */
-  private saveStudentAndLink(): void {
+  private savePersonAndLink(): void {
     const payload = this.buildPayload(this.form.value);
 
     const saveObs = this.isEditMode
@@ -531,13 +586,13 @@ export class PersonFormComponent implements OnChanges, OnInit {
           return;
         }
 
-        const ogrenciId = this.isEditMode ? this.editPerson!.id : extractNewId(stdResult);
+        const personId = this.isEditMode ? this.editPerson!.id : extractNewId(stdResult);
 
-        if (this.userdef === UserDef.Ogrenci && ogrenciId) {
-          this.applyRelationOps(ogrenciId).subscribe({
+        if (this.isRelationMode && personId) {
+          this.applyRelationOps(personId).subscribe({
             next: () => this.finishSave(stdRes),
             error: () => {
-              this.errorMessage = 'Kayıt yapıldı ancak veli ilişkisi güncellenemedi.';
+              this.errorMessage = 'Kayıt yapıldı ancak ilişki güncellenemedi.';
               this.isSaving = false;
               this.cdr.markForCheck();
             },
@@ -560,17 +615,27 @@ export class PersonFormComponent implements OnChanges, OnInit {
    *   2. değişimler → sp_velicampus_u (relid ile — relid eksikse SP sessizce hiçbir satırı güncellemez)
    *   3. eklemeler → sp_velicampus_i (veli sicil id)
    */
-  private applyRelationOps(ogrenciId: number): Observable<unknown> {
+  private applyRelationOps(personId: number): Observable<unknown> {
     const ops: Observable<unknown>[] = [];
+    const ogrenciModu = this.userdef === UserDef.Ogrenci;
 
     for (const relid of this.removedRelIds) {
       ops.push(this.personService.deleteRelationCampus(relid));
     }
     for (const change of this.changedRelations) {
-      ops.push(this.personService.updateRelationCampus(ogrenciId, change.newVeliId, change.relid));
+      // sp_velicampus_u(ogrenciSicilId, veliSicilId, relid): sabit taraf yöne göre değişir.
+      ops.push(
+        ogrenciModu
+          ? this.personService.updateRelationCampus(personId, change.newLinkedId, change.relid)
+          : this.personService.updateRelationCampus(change.newLinkedId, personId, change.relid),
+      );
     }
-    for (const veliId of this.pendingAdditions) {
-      ops.push(this.personService.addRelationCampus(ogrenciId, veliId));
+    for (const linkedId of this.pendingAdditions) {
+      ops.push(
+        ogrenciModu
+          ? this.personService.addRelationCampus(personId, linkedId)
+          : this.personService.addRelationCampus(linkedId, personId),
+      );
     }
 
     return ops.length ? concat(...ops) : of(null);
@@ -584,40 +649,48 @@ export class PersonFormComponent implements OnChanges, OnInit {
 
   // ─── Veli ilişkisi yönetimi (sp_relationcampus_s / sp_velicampus_i-u-d) ───
 
-  /** Düzenleme modunda öğrencinin mevcut velilerini yükler (sp_relationcampus_s, tip=2). */
+  /**
+   * Düzenleme modunda mevcut ilişkileri yükler:
+   *  - öğrenci düzenlerken sp_relationcampus_s tip=2 (velileri) → { VeliSicilId, relid }
+   *  - veli düzenlerken sp_relationcampus_s tip=1 (çocukları) → { OgrenciSicilId, relid }
+   */
   private loadExistingRelations(): void {
-    this.personService
-      .getStudentRelation(this.editPerson!.id)
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe({
-        next: (rows: RelationCampusRow[]) => {
-          console.log('[Rel] getStudentRelation satırları:', JSON.stringify(rows));
-          this.existingRelations = (rows || []).map((r) => {
-            const veliId = Number(r.VeliSicilId);
-            const relid = Number(r.relid ?? r.Id);
-            console.log(
-              '[Rel] satır anahtarları:', Object.keys(r),
-              '| VeliSicilId:', r.VeliSicilId,
-              '| relid:', r.relid,
-              '| → veliId:', veliId,
-              '| relid:', relid,
-            );
-            const veli = this.allPersons.find((p) => p.id === veliId);
-            return {
-              relid,
-              veliSicilId: veliId,
-              veliName: veli ? veli.adsoyad : `Veli #${veliId}`,
-              sicilno: veli?.sicilno ?? '',
-            };
-          });
-          this.cdr.markForCheck();
-        },
-        error: (err) => {
-          console.error('[PersonForm] Mevcut veli ilişkileri yüklenemedi:', err);
-          this.existingRelations = [];
-          this.cdr.markForCheck();
-        },
-      });
+    const personId = this.editPerson!.id;
+    const ogrenciModu = this.userdef === UserDef.Ogrenci;
+    const obs = ogrenciModu
+      ? this.personService.getStudentRelation(personId)
+      : this.personService.getParentRelations(personId);
+
+    obs.pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+      next: (rows: RelationCampusRow[]) => {
+        console.log('[Rel] mevcut ilişkiler (ham):', JSON.stringify(rows));
+        this.existingRelations = (rows || []).map((r) => {
+          const linkedId = Number(ogrenciModu ? r.VeliSicilId : r.OgrenciSicilId);
+          const relid = Number(r.relid ?? r.Id);
+          console.log(
+            '[Rel] satır anahtarları:', Object.keys(r),
+            '| VeliSicilId:', r.VeliSicilId,
+            '| OgrenciSicilId:', r.OgrenciSicilId,
+            '| relid:', r.relid,
+            '| → linkedId:', linkedId,
+            '| relid:', relid,
+          );
+          const linked = this.allPersons.find((p) => p.id === linkedId);
+          return {
+            relid,
+            linkedId,
+            linkedName: linked ? linked.adsoyad : `${this.linkedKind} #${linkedId}`,
+            sicilno: linked?.sicilno ?? '',
+          };
+        });
+        this.cdr.markForCheck();
+      },
+      error: (err) => {
+        console.error('[PersonForm] Mevcut ilişkiler yüklenemedi:', err);
+        this.existingRelations = [];
+        this.cdr.markForCheck();
+      },
+    });
   }
 
   private resetRelationState(): void {
@@ -627,7 +700,7 @@ export class PersonFormComponent implements OnChanges, OnInit {
     this.pendingAdditions = [];
     this.changingRelid = null;
     this.confirmRemoveKey = null;
-    this.isCreatingNewParent = false;
+    this.isCreatingNewLinked = false;
   }
 
   /** Şablonda listelenen birleşik satırlar: mevcut (değişenler güncel isimle) + bekleyen eklemeler. */
@@ -638,25 +711,25 @@ export class PersonFormComponent implements OnChanges, OnInit {
       if (this.removedRelIds.includes(rel.relid)) continue;
 
       const change = this.changedRelations.find((c) => c.relid === rel.relid);
-      const veliId = change ? change.newVeliId : rel.veliSicilId;
-      const veli = this.allPersons.find((p) => p.id === veliId);
+      const linkedId = change ? change.newLinkedId : rel.linkedId;
+      const linked = this.allPersons.find((p) => p.id === linkedId);
 
       rows.push({
         relid: rel.relid,
-        veliSicilId: veliId,
-        veliName: veli ? veli.adsoyad : `Veli #${veliId}`,
-        sicilno: veli?.sicilno ?? '',
+        linkedId,
+        linkedName: linked ? linked.adsoyad : `${this.linkedKind} #${linkedId}`,
+        sicilno: linked?.sicilno ?? '',
         changed: !!change,
       });
     }
 
-    for (const veliId of this.pendingAdditions) {
-      const veli = this.allPersons.find((p) => p.id === veliId);
+    for (const linkedId of this.pendingAdditions) {
+      const linked = this.allPersons.find((p) => p.id === linkedId);
       rows.push({
         relid: 0,
-        veliSicilId: veliId,
-        veliName: veli ? veli.adsoyad : `Veli #${veliId}`,
-        sicilno: veli?.sicilno ?? '',
+        linkedId,
+        linkedName: linked ? linked.adsoyad : `${this.linkedKind} #${linkedId}`,
+        sicilno: linked?.sicilno ?? '',
         pending: true,
       });
     }
@@ -664,56 +737,60 @@ export class PersonFormComponent implements OnChanges, OnInit {
     return rows;
   }
 
-  /** @for track anahtarı — relid yoksa (bekleyen ekleme) veli id üzerinden tekil olur. */
+  /** @for track anahtarı — relid yoksa (bekleyen ekleme) ilişkili kişi id üzerinden tekil olur. */
   rowKey(row: RelationDisplayRow): string {
-    return row.relid ? `rel-${row.relid}` : `add-${row.veliSicilId}`;
+    return row.relid ? `rel-${row.relid}` : `add-${row.linkedId}`;
   }
 
-  /** Eklenmek üzere seçilen mevcut veliyi bekleyen eklemelere alır (edit modundaki "Veliyi Ekle"). */
-  addSelectedVeli(): void {
-    const veliId = this.form.value.veliSicilId ? Number(this.form.value.veliSicilId) : null;
-    if (!veliId) return;
-    this.addPendingVeli(veliId);
-    this.form.patchValue({ veliSicilId: null });
+  /** Eklenmek üzere seçilen mevcut kişiyi bekleyen eklemelere alır (edit modundaki "Ekle" butonu). */
+  addSelectedLinked(): void {
+    const linkedId = this.form.value.linkedPersonId
+      ? Number(this.form.value.linkedPersonId)
+      : null;
+    if (!linkedId) return;
+    this.addPendingLinked(linkedId);
+    this.form.patchValue({ linkedPersonId: null });
     this.cdr.markForCheck();
   }
 
-  private addPendingVeli(veliId: number): void {
-    if (this.pendingAdditions.includes(veliId)) return;
-    this.pendingAdditions.push(veliId);
+  private addPendingLinked(linkedId: number): void {
+    if (this.pendingAdditions.includes(linkedId)) return;
+    this.pendingAdditions.push(linkedId);
   }
 
-  /** Satırı "Değiştir" moduna alır — dropdown ile yeni veli seçilir. */
+  /** Satırı "Değiştir" moduna alır — dropdown ile yeni ilişkili kişi seçilir. */
   startChange(row: RelationDisplayRow): void {
     if (!row.relid) return;
     this.changingRelid = row.relid;
-    this.form.patchValue({ changeVeliId: null });
+    this.form.patchValue({ changeLinkedId: null });
     this.cdr.markForCheck();
   }
 
   cancelChange(): void {
     this.changingRelid = null;
-    this.form.patchValue({ changeVeliId: null });
+    this.form.patchValue({ changeLinkedId: null });
     this.cdr.markForCheck();
   }
 
-  /** "Değiştir" modunda seçilen yeni veliyi onaylar → kayıtta sp_velicampus_u (relid ile) uygulanır. */
+  /** "Değiştir" modunda seçilen yeni kişiyi onaylar → kayıtta sp_velicampus_u (relid ile) uygulanır. */
   confirmChange(): void {
-    const veliId = this.form.value.changeVeliId ? Number(this.form.value.changeVeliId) : null;
-    if (!veliId || !this.changingRelid) return;
+    const linkedId = this.form.value.changeLinkedId
+      ? Number(this.form.value.changeLinkedId)
+      : null;
+    if (!linkedId || !this.changingRelid) return;
 
     const relid = this.changingRelid;
     const idx = this.changedRelations.findIndex((c) => c.relid === relid);
     if (idx >= 0) {
-      this.changedRelations[idx] = { relid, newVeliId: veliId };
+      this.changedRelations[idx] = { relid, newLinkedId: linkedId };
     } else {
-      this.changedRelations.push({ relid, newVeliId: veliId });
+      this.changedRelations.push({ relid, newLinkedId: linkedId });
     }
     // Değiştirilen satır aynı zamanda silinmemeli
     this.removedRelIds = this.removedRelIds.filter((id) => id !== relid);
 
     this.changingRelid = null;
-    this.form.patchValue({ changeVeliId: null });
+    this.form.patchValue({ changeLinkedId: null });
     this.cdr.markForCheck();
   }
 
@@ -740,7 +817,7 @@ export class PersonFormComponent implements OnChanges, OnInit {
       this.removedRelIds.push(row.relid);
       this.changedRelations = this.changedRelations.filter((c) => c.relid !== row.relid);
     } else {
-      this.pendingAdditions = this.pendingAdditions.filter((id) => id !== row.veliSicilId);
+      this.pendingAdditions = this.pendingAdditions.filter((id) => id !== row.linkedId);
     }
     if (this.changingRelid === row.relid) this.changingRelid = null;
     this.cdr.markForCheck();

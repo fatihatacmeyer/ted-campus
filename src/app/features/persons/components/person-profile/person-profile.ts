@@ -20,6 +20,7 @@ export class PersonProfileComponent {
   @Input() visible = false;
   @Input() person: Person | null = null;
   @Input() allPersons: Person[] = [];
+  @Input() childrenMap: Map<number, Person[]> = new Map();
   @Input() userdefContext = UserDef.Ogrenci;
 
   @Output() visibleChange = new EventEmitter<boolean>();
@@ -29,19 +30,31 @@ export class PersonProfileComponent {
   @Output() restoreRequest = new EventEmitter<Person>();
 
   get linkedPersons(): LinkedPerson[] {
-    // 1. Kişi yoksa veya backend'den veliSicilId gelmemişse boş liste dön.
-    if (!this.person || !this.person.veliSicilId) return [];
+    if (!this.person) return [];
+
+    const ctx = this.person.userdef ?? this.userdefContext;
+
+    // Veli profili → çocuklar; childrenMap (sp_relationcampus_s tip=0) üzerinden çözülür.
+    // NOT: veli satırlarında VeliSicilId null gelir (yalnızca öğrenci satırlarında dolu),
+    // o yüzden veli dalı childrenMap'e bakmak zorundadır.
+    if (ctx === UserDef.Veli) {
+      const kids = this.childrenMap.get(this.person.id) ?? [];
+      return kids.map((k) => ({ id: k.id, name: k.adsoyad, sicilno: k.sicilno }));
+    }
+
+    // Öğrenci profili → veliSicilId üzerinden (sp_sicilcampus_s TOP(1) sonucu).
+    if (!this.person.veliSicilId) return [];
 
     const veliId = Number(this.person.veliSicilId);
 
-    // 2. Tıklanabilir (link) yapabilmek için, bu veliyi allPersons (tüm kişiler) listesinde arıyoruz.
+    // Tıklanabilir (link) yapabilmek için, bu veliyi allPersons (tüm kişiler) listesinde arıyoruz.
     const found = this.allPersons.find((p) => p.id === veliId);
 
     if (found) {
       return [{ id: found.id, name: found.adsoyad, sicilno: found.sicilno }];
     }
 
-    // 3. Eğer allPersons içinde bulamazsa (ya da liste yüklenmemişse), backend'in doğrudan verdiği VeliAdSoyad metnini göster.
+    // Eğer allPersons içinde bulamazsa (ya da liste yüklenmemişse), backend'in doğrudan verdiği VeliAdSoyad metnini göster.
     return [
       {
         id: veliId,
