@@ -1,0 +1,76 @@
+/* ── PDKS listesi: dönem araç çubuğu ────────────────────────── */
+.period-toolbar {
+  .range-label {
+    min-width: 170px;
+    text-align: center;
+  }
+}
+
+/* Dönem segment butonları (Gün/Hafta/Ay) */
+.period-segment {
+  border: 1px solid #dee2e6;
+  border-radius: 6px;
+  overflow: hidden;
+
+  .p-button {
+    border: 0;
+    border-radius: 0;
+    border-right: 1px solid #dee2e6;
+
+    &:last-child {
+      border-right: 0;
+    }
+
+    &.active {
+      background-color: #dc2134;
+      border-color: #dc2134;
+      color: #fff;
+    }
+  }
+}
+
+/* Liste sekme butonları (Genel / İzinliler / Erken Çıkanlar / Geç Gelenler) */
+.filter-tabs {
+  .p-button.active {
+    background-color: #dc2134;
+    border-color: #dc2134;
+    color: #fff;
+  }
+}
+
+/* Geç gelen / erken çıkan uyarı hücresi */
+.cell-red {
+  color: #dc2134;
+  font-weight: 600;
+}
+
+/* İzinli etiketi */
+.izinli-tag {
+  white-space: nowrap;
+}
+
+/* ── Sayfa düzeni: tablo + sağ yan panel ───────────────────── */
+.attendance-layout {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 1rem;
+
+  .attendance-table-card {
+    flex: 1 1 0;
+    min-width: 0;
+  }
+
+  .izinlerim-panel {
+    flex: 0 0 380px;
+    width: 380px;
+  }
+}
+
+/* Dar ekranlarda yan panel listenin altına iner */
+@media (max-width: 1200px) {
+  .attendance-layout .izinlerim-panel {
+    flex-basis: 100%;
+    width: 100%;
+  }
+}

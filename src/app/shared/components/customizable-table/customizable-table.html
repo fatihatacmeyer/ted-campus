@@ -159,6 +159,13 @@
 >
   <ng-template pTemplate="header">
     <tr>
+      @if (selectionMode) {
+        <th class="col-select" [style.width]="'48px'">
+          @if (selectionMode === 'multiple') {
+            <p-checkbox [binary]="true" [ngModel]="isAllRowsSelected()" (ngModelChange)="toggleAllRows()"></p-checkbox>
+          }
+        </th>
+      }
       @if (showRowNumbers) {
         <th pResizableColumn class="col-row-number">{{ rowNumberHeader }}</th>
       }
@@ -229,6 +236,11 @@
 
   <ng-template pTemplate="body" let-row let-index="rowIndex">
     <tr (click)="rowClick.emit(row)" [style.cursor]="rowClickable ? 'pointer' : 'default'">
+      @if (selectionMode) {
+        <td class="col-select" (click)="$event.stopPropagation()">
+          <p-checkbox [binary]="true" [ngModel]="isRowSelected(row)" (ngModelChange)="onRowSelectionChange(row, $event)"></p-checkbox>
+        </td>
+      }
       @if (showRowNumbers) {
         <td class="col-row-number">{{ rowNumberFor(index) }}</td>
       }
@@ -253,7 +265,10 @@
     <tr>
       <td
         [attr.colspan]="
-          visibleColumns.length + (actionsTemplate ? 1 : 0) + (showRowNumbers ? 1 : 0)
+          visibleColumns.length +
+            (actionsTemplate ? 1 : 0) +
+            (showRowNumbers ? 1 : 0) +
+            (selectionMode ? 1 : 0)
         "
       >
         <div class="d-flex flex-column align-items-center py-5">

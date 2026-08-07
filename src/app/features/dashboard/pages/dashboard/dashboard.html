@@ -43,53 +43,63 @@
 
   @if (!isLoading && !errorMessage) {
     <!-- ════════════════════════════════════════════════════ -->
-    <!-- Row 1 — Stat Cards (4 sütun)                        -->
+    <!-- Row 1 — Stat Cards (3 sütun, sp_DashboardCampus_s)   -->
+    <!-- Kartlar: Kayıtlı / Okulda sayılarını gösterir.       -->
     <!-- ════════════════════════════════════════════════════ -->
     <div class="stat-grid">
-      <!-- İçerdeki Öğrenci -->
-      <div class="stat-card stat-student" (click)="navigateTo('students')" (keyup.enter)="navigateTo('students')" tabindex="0" role="button">
+      <!-- Öğrenci — Kayıtlı / Okulda -->
+      <div
+        class="stat-card stat-student"
+        (click)="navigateTo('students')"
+        (keyup.enter)="navigateTo('students')"
+        tabindex="0"
+        role="button"
+      >
         <div class="stat-icon icon-emerald">
           <span class="material-symbols-outlined">school</span>
         </div>
         <div class="stat-info">
-          <span class="stat-count">{{ studentCount }}</span>
-          <span class="stat-label">Öğrenci</span>
+          <span class="stat-count">
+            {{ stats.studentCount }}<span class="stat-slash">/</span
+            ><span class="stat-inside">{{ stats.studentInsideCount }}</span>
+          </span>
+          <span class="stat-label">Öğrenci &middot; Kayıtlı / Okulda</span>
         </div>
         <span class="material-symbols-outlined stat-arrow">arrow_forward</span>
       </div>
 
-      <!-- İçerdeki Öğretmen -->
-      <div class="stat-card stat-teacher" (click)="navigateTo('teachers')" (keyup.enter)="navigateTo('teachers')" tabindex="0" role="button">
-        <div class="stat-icon icon-blue">
-          <span class="material-symbols-outlined">co_present</span>
-        </div>
-        <div class="stat-info">
-          <span class="stat-count">{{ teacherCount }}</span>
-          <span class="stat-label">Öğretmen</span>
-        </div>
-        <span class="material-symbols-outlined stat-arrow">arrow_forward</span>
-      </div>
-
-      <!-- Ziyaretçi (Veli) -->
-      <div class="stat-card stat-parent" (click)="navigateTo('parents')" (keyup.enter)="navigateTo('parents')" tabindex="0" role="button">
+      <!-- Veli — Kayıtlı / Okulda -->
+      <div
+        class="stat-card stat-parent"
+        (click)="navigateTo('parents')"
+        (keyup.enter)="navigateTo('parents')"
+        tabindex="0"
+        role="button"
+      >
         <div class="stat-icon icon-orange">
           <span class="material-symbols-outlined">groups</span>
         </div>
         <div class="stat-info">
-          <span class="stat-count">{{ parentCount }}</span>
-          <span class="stat-label">Veli</span>
+          <span class="stat-count">
+            {{ stats.parentCount }}<span class="stat-slash">/</span
+            ><span class="stat-inside">{{ stats.parentInsideCount }}</span>
+          </span>
+          <span class="stat-label">Veli &middot; Kayıtlı / Okulda</span>
         </div>
         <span class="material-symbols-outlined stat-arrow">arrow_forward</span>
       </div>
 
-      <!-- Toplam Kayıtlı Kişi -->
+      <!-- Toplam Kayıtlı — Kayıtlı / Okulda -->
       <div class="stat-card stat-total">
         <div class="stat-icon icon-purple">
           <span class="material-symbols-outlined">badge</span>
         </div>
         <div class="stat-info">
-          <span class="stat-count">{{ totalCount }}</span>
-          <span class="stat-label">Toplam Kayıtlı</span>
+          <span class="stat-count">
+            {{ stats.totalRegisteredCount }}<span class="stat-slash">/</span
+            ><span class="stat-inside">{{ stats.totalInsideCount }}</span>
+          </span>
+          <span class="stat-label">Toplam &middot; Kayıtlı / Okulda</span>
         </div>
         <span class="material-symbols-outlined stat-arrow">arrow_forward</span>
       </div>
@@ -128,27 +138,54 @@
             </div>
           } @else {
             <div class="person-list">
-              @for (person of earlyLeavers.slice(0, 5); track person.id) {
-                <div class="person-row">
-                  <div
-                    class="person-avatar"
-                    [class]="person.userdef === UserDef.Ogretmen ? 'avatar-teacher' : 'avatar-student'"
-                  >
-                    {{ person.ad.charAt(0) }}{{ person.soyad.charAt(0) }}
+              @for (person of earlyLeavers.slice(0, 5); track $index) {
+                <!-- <div class="person-row">
+                  <div class="person-avatar avatar-student">
+                    {{ person.fullName.charAt(0) }}
                   </div>
                   <div class="person-info">
-                    <span class="person-name">{{ person.adsoyad }}</span>
-                    <span class="person-meta"
-                      >No: {{ person.sicilno }} &middot; {{ person.userdefad }}</span
-                    >
+                    <span class="person-name">{{ person.fullName }}</span>
+                    <span class="person-meta">
+                      {{ person.className }} &middot; {{ person.schoolName }} &middot; Beklenen:
+                      {{ person.expectedExitTime }}
+                    </span>
                   </div>
-                  <span class="person-badge" [class]="getUserdefBadgeClass(person.userdef)">
-                    {{ getUserdefBadge(person.userdef) }}
-                  </span>
+                  <span class="person-badge badge-student">Öğrenci</span>
                   <span class="person-exit-time">
                     <span class="material-symbols-outlined">schedule</span>
-                    {{ person.cikistarih }}
+                    {{ person.exitTime | date: 'HH:mm:ss' }}
                   </span>
+                </div> -->
+                <div class="person-row">
+                  <div class="person-avatar avatar-student">
+                    {{ person.fullName.charAt(0) }}
+                  </div>
+
+                  <div class="person-info">
+                    <span class="person-name">{{ person.fullName }}</span>
+                    <!-- person-meta alanını eski temiz haline geri döndürdük -->
+                    <span class="person-meta"
+                      >{{ person.className }} &middot; {{ person.schoolName }}</span
+                    >
+                  </div>
+
+                  <span class="person-badge badge-student">Öğrenci</span>
+
+                  <!-- Saatleri sağa dayalı olarak kendi içinde grupladık -->
+                  <div
+                    class="d-flex flex-column align-items-end justify-content-center"
+                    style="gap: 2px"
+                  >
+                    <!-- Gerçekleşen Çıkış Saati (Vurgulu ve Kırmızı) -->
+                    <span class="person-exit-time" style="color: #dc2134; font-weight: 600">
+                      <span class="material-symbols-outlined" style="font-size: 16px">logout</span>
+                      {{ person.exitTime | date: 'HH:mm:ss' }}
+                    </span>
+                    <!-- Beklenen Çıkış Saati (Daha küçük ve gri) -->
+                    <span style="font-size: 0.7rem; color: #6b7280; white-space: nowrap">
+                      Beklenen: {{ person.expectedExitTime }}
+                    </span>
+                  </div>
                 </div>
               }
             </div>
@@ -190,24 +227,103 @@
             </div>
           } @else {
             <div class="person-list">
-              @for (late of lateArrivals.slice(0, 5); track late.sicilno) {
+              @for (late of lateArrivals.slice(0, 5); track $index) {
                 <div class="person-row">
                   <div class="person-avatar avatar-late">
-                    <span class="material-symbols-outlined">person_add</span>
+                    {{ late.fullName ? late.fullName.charAt(0) : '?' }}
                   </div>
+
                   <div class="person-info">
-                    <span class="person-name">{{ late.name }}</span>
+                    <span class="person-name">{{ late.fullName }}</span>
                     <span class="person-meta"
-                      >No: {{ late.sicilno }} &middot; Beklenen: {{ late.expected }}</span
+                      >{{ late.className }} &middot; {{ late.schoolName }}</span
                     >
                   </div>
-                  <span class="person-delay-badge">
-                    <span class="material-symbols-outlined">timer</span>
-                    {{ late.delay }} geç
-                  </span>
+
+                  <span class="person-badge badge-student">Öğrenci</span>
+
+                  <!-- Saatleri sağa dayalı olarak kendi içinde grupladık -->
+                  <div
+                    class="d-flex flex-column align-items-end justify-content-center"
+                    style="gap: 2px"
+                  >
+                    <span class="person-exit-time" style="color: #ea580c; font-weight: 600">
+                      <span class="material-symbols-outlined" style="font-size: 16px">login</span>
+                      {{ late.entryTime | date: 'HH:mm:ss' }}
+                    </span>
+                    <span style="font-size: 0.7rem; color: #6b7280; white-space: nowrap">
+                      Beklenen: {{ late.expectedEntryTime }}
+                    </span>
+                  </div>
                 </div>
               }
             </div>
+          }
+        </div>
+      </div>
+
+      <!-- Hiç Gelmeyenler -->
+      <div class="detail-card">
+        <div class="detail-card-header">
+          <div class="detail-card-title">
+            <div class="detail-icon icon-slate">
+              <span class="material-symbols-outlined">person_off</span>
+            </div>
+            <div>
+              <h3>Hiç Gelmeyenler</h3>
+              <span class="detail-subtitle">{{ absentees.length }} kişi</span>
+            </div>
+          </div>
+          <button
+            pButton
+            class="p-button-text p-button-sm p-button-rounded"
+            icon="pi pi-expand"
+            pTooltip="Tam Ekranda Gör"
+            aria-label="Tam Ekranda Gör"
+            (click)="absentDialogVisible = true"
+          ></button>
+        </div>
+        <div class="detail-card-body">
+          @if (absentees.length === 0) {
+            <div class="empty-state">
+              <span class="material-symbols-outlined">check_circle</span>
+              <p>Bugün gelmeyen öğrenci yok.</p>
+            </div>
+          } @else {
+            <div class="person-list">
+              @for (absent of absentees.slice(0, 5); track $index) {
+                <div class="person-row">
+                  <div class="person-avatar avatar-student">
+                    {{ absent.fullName ? absent.fullName.charAt(0) : '?' }}
+                  </div>
+
+                  <div class="person-info">
+                    <span class="person-name">{{ absent.fullName }}</span>
+                    <span class="person-meta"
+                      >{{ absent.className }} &middot; {{ absent.schoolName }}</span
+                    >
+                  </div>
+
+                  <span class="person-badge badge-student">Öğrenci</span>
+
+                  <!-- Sağ tarafa dayalı gösterim -->
+                  <div
+                    class="d-flex flex-column align-items-end justify-content-center"
+                    style="gap: 2px"
+                  >
+                    <span class="person-exit-time" style="color: #6b7280; font-weight: 600">
+                      <span class="material-symbols-outlined" style="font-size: 16px">close</span>
+                      Giriş Yok
+                    </span>
+                  </div>
+                </div>
+              }
+            </div>
+            @if (absentees.length > 5) {
+              <button class="show-more-btn" (click)="absentDialogVisible = true">
+                +{{ absentees.length - 5 }} kişi daha &hellip;
+              </button>
+            }
           }
         </div>
       </div>
@@ -429,6 +545,7 @@
 </p-dialog>
 
 <!-- Erken Çıkanlar Dialog -->
+<!-- Erken Çıkanlar Dialog -->
 <p-dialog
   header="Erken Çıkanlar"
   [(visible)]="earlyLeaverDialogVisible"
@@ -439,30 +556,36 @@
   styleClass="dashboard-dialog"
 >
   <div class="person-list dialog-list">
-    @for (person of earlyLeavers; track person.id) {
+    @for (person of earlyLeavers; track $index) {
       <div class="person-row">
-        <div
-          class="person-avatar"
-          [class]="person.userdef === UserDef.Ogretmen ? 'avatar-teacher' : 'avatar-student'"
-        >
-          {{ person.ad.charAt(0) }}{{ person.soyad.charAt(0) }}
+        <div class="person-avatar avatar-student">
+          {{ person.fullName.charAt(0) }}
         </div>
+
         <div class="person-info">
-          <span class="person-name">{{ person.adsoyad }}</span>
-          <span class="person-meta">No: {{ person.sicilno }} &middot; {{ person.userdefad }}</span>
+          <span class="person-name">{{ person.fullName }}</span>
+          <!-- Bilgileri temizledik, sadece Sınıf ve Okul kaldı -->
+          <span class="person-meta">{{ person.className }} &middot; {{ person.schoolName }}</span>
         </div>
-        <span class="person-badge" [class]="getUserdefBadgeClass(person.userdef)">
-          {{ getUserdefBadge(person.userdef) }}
-        </span>
-        <span class="person-exit-time">
-          <span class="material-symbols-outlined">schedule</span>
-          {{ person.cikistarih }}
-        </span>
+
+        <span class="person-badge badge-student">Öğrenci</span>
+
+        <!-- Saatleri sağ tarafa alt alta aldık -->
+        <div class="d-flex flex-column align-items-end justify-content-center" style="gap: 2px">
+          <span class="person-exit-time" style="color: #dc2134; font-weight: 600">
+            <span class="material-symbols-outlined" style="font-size: 16px">logout</span>
+            {{ person.exitTime | date: 'HH:mm:ss' }}
+          </span>
+          <span style="font-size: 0.7rem; color: #6b7280; white-space: nowrap">
+            Beklenen: {{ person.expectedExitTime }}
+          </span>
+        </div>
       </div>
     }
   </div>
 </p-dialog>
 
+<!-- Geç Kalanlar Dialog -->
 <!-- Geç Kalanlar Dialog -->
 <p-dialog
   header="Geç Kalan Kişiler"
@@ -474,21 +597,29 @@
   styleClass="dashboard-dialog"
 >
   <div class="person-list dialog-list">
-    @for (late of lateArrivals; track late.sicilno) {
+    @for (late of lateArrivals; track $index) {
       <div class="person-row">
         <div class="person-avatar avatar-late">
-          <span class="material-symbols-outlined">alarm</span>
+          {{ late.fullName ? late.fullName.charAt(0) : '?' }}
         </div>
+
         <div class="person-info">
-          <span class="person-name">{{ late.name }}</span>
-          <span class="person-meta"
-            >No: {{ late.sicilno }} &middot; Beklenen: {{ late.expected }}</span
-          >
+          <span class="person-name">{{ late.fullName }}</span>
+          <span class="person-meta">{{ late.className }} &middot; {{ late.schoolName }}</span>
         </div>
-        <span class="person-delay-badge">
-          <span class="material-symbols-outlined">timer</span>
-          {{ late.delay }} geç
-        </span>
+
+        <span class="person-badge badge-student">Öğrenci</span>
+
+        <!-- Saatleri sağ tarafa alt alta aldık -->
+        <div class="d-flex flex-column align-items-end justify-content-center" style="gap: 2px">
+          <span class="person-exit-time" style="color: #ea580c; font-weight: 600">
+            <span class="material-symbols-outlined" style="font-size: 16px">login</span>
+            {{ late.entryTime | date: 'HH:mm:ss' }}
+          </span>
+          <span style="font-size: 0.7rem; color: #6b7280; white-space: nowrap">
+            Beklenen: {{ late.expectedEntryTime }}
+          </span>
+        </div>
       </div>
     }
   </div>

@@ -1,0 +1,212 @@
+<div class="admin-wrapper">
+  <!-- Başlık satırı: başlık solda, dönem/tarih filtresi sağda -->
+  <div class="admin-card mb-3">
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2">
+      <h4 class="fw-bold mb-0" style="color: #dc2134">PDKS — Personel Devam Kontrol</h4>
+      <div class="d-flex flex-wrap align-items-center gap-2 period-toolbar">
+        <div class="d-flex align-items-center period-segment">
+          <button pButton type="button" label="Gün" size="small" [class.active]="period() === 'gun'" (click)="setPeriod('gun')"></button>
+          <button pButton type="button" label="Hafta" size="small" [class.active]="period() === 'hafta'" (click)="setPeriod('hafta')"></button>
+          <button pButton type="button" label="Ay" size="small" [class.active]="period() === 'ay'" (click)="setPeriod('ay')"></button>
+        </div>
+        <button pButton type="button" icon="pi pi-chevron-left" size="small" text="true" rounded="true" pTooltip="Önceki dönem" (click)="prevPeriod()"></button>
+        <span class="range-label fw-semibold">{{ rangeLabel() }}</span>
+        <button pButton type="button" icon="pi pi-chevron-right" size="small" text="true" rounded="true" pTooltip="Sonraki dönem" (click)="nextPeriod()"></button>
+        <button pButton type="button" label="Bugün" size="small" outlined="true" severity="secondary" (click)="goToday()"></button>
+      </div>
+    </div>
+  </div>
+
+  <div class="attendance-layout">
+    <div class="admin-card attendance-table-card">
+      <!-- Liste sekmeleri + seçim sayacı -->
+      <div class="d-flex flex-wrap align-items-center gap-2 mb-3 filter-tabs">
+        @for (tab of tabOptions; track tab.tip) {
+          <button pButton type="button" [label]="tab.label" size="small" [class.active]="activeTab() === tab.tip" (click)="onTabChange(tab.tip)"></button>
+        }
+        @if (selectedRows().length > 0) {
+          <div class="d-flex align-items-center gap-2 ms-auto">
+            <span class="fw-semibold">{{ selectedRows().length }} personel seçildi</span>
+            <button pButton type="button" icon="pi pi-times" label="Seçimi Temizle" size="small" text="true" severity="secondary" (click)="clearSelection()"></button>
+          </div>
+        }
+      </div>
+
+    <app-customizable-table
+      [rows]="rows()"
+      [columns]="attendanceColumns"
+      [loading]="isLoading()"
+      tableId="attendance_grid"
+      [defaultFields]="defaultAttendanceFields"
+      emptyMessage="Kayıt bulunamadı."
+      exportFilename="attendance_listesi"
+      [showRowNumbers]="true"
+      selectionMode="multiple"
+      [selectedRows]="selectedRows()"
+      (selectedRowsChange)="onSelectionChange($event)"
+      [actionsTemplate]="actionsTpl"
+    >
+      <ng-template appColumnCell="giris" let-row>
+        <span [class.cell-red]="row.gecKalma > 0">{{ formatTime(row.giris) || emptyCellValue }}</span>
+      </ng-template>
+
+      <ng-template appColumnCell="cikis" let-row>
+        <span [class.cell-red]="row.erkenCikma > 0">{{ formatTime(row.cikis) || emptyCellValue }}</span>
+      </ng-template>
+
+      <ng-template appColumnCell="izinSuresi" let-row>
+        @if (row.izinSuresi > 0) {
+          <div class="d-flex align-items-center gap-2 izinli-tag">
+            <p-tag value="İzinli" icon="pi pi-calendar-plus" severity="info"></p-tag>
+            <span class="small text-muted">{{ row.izinSuresi }} dk</span>
+          </div>
+        } @else {
+          <span>{{ emptyCellValue }}</span>
+        }
+      </ng-template>
+
+      <ng-template #actionsTpl let-row>
+        <div class="d-flex justify-content-center gap-1">
+          <button pButton type="button" icon="pi pi-calendar" label="İzin" size="small" outlined="true" severity="primary" pTooltip="İzin Talep Et" (click)="openLeaveDialog(row)"></button>
+        </div>
+      </ng-template>
+    </app-customizable-table>
+    </div>
+
+    <!-- İzinlerim — sağ yan panel -->
+    <div class="admin-card izinlerim-panel">
+    <div class="table-toolbar mb-3">
+      <h5 class="fw-bold mb-0" style="color: #dc2134">İzinlerim</h5>
+    </div>
+    <div class="table-responsive">
+      <table class="table table-sm align-middle mb-0">
+        <thead>
+          <tr>
+            <th scope="col">İzin Tipi</th>
+            <th scope="col">Başlangıç</th>
+            <th scope="col">Bitiş</th>
+            <th scope="col">Durum</th>
+            <th scope="col" class="text-end">İşlem</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (rec of leaves(); track rec.id) {
+            <tr>
+              <td>{{ rec.izinTipi }}</td>
+              <td>{{ rec.bastarih.split('-').reverse().join('-') }}</td>
+              <td>{{ rec.bittarih.split('-').reverse().join('-') }}</td>
+              <td><p-tag [value]="rec.durum" [severity]="getLeaveSeverity(rec.durum)"></p-tag></td>
+              <td class="text-end">
+                <button pButton type="button" icon="pi pi-times" label="İptal" size="small" severity="danger" text="true" [disabled]="rec.durum === 'Onaylandı'" pTooltip="İzin talebini iptal et" (click)="cancelLeave(rec)"></button>
+              </td>
+            </tr>
+          } @empty {
+            <tr>
+              <td colspan="5" class="text-center text-muted py-3">Henüz izin talebiniz bulunmuyor.</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+    </div>
+  </div>
+</div>
+
+<!-- İzin Talep Dialogu -->
+<p-dialog
+  [header]="(selectedRow()?.adSoyad ?? '') + ' — İzin Talep'"
+  [(visible)]="leaveDialogVisible"
+  [modal]="true"
+  [style]="{ width: '750px', maxHeight: '90vh' }"
+  [draggable]="false"
+  (onHide)="closeLeaveDialog()"
+>
+  <form [formGroup]="leaveForm" class="mt-3 d-flex flex-column gap-4 pb-3">
+    <!-- GENEL BİLGİLER -->
+    <div>
+      <h6 class="text-primary fw-bold mb-3 border-bottom pb-2">Genel Bilgiler</h6>
+      <div class="d-flex gap-3 mb-3">
+        <div class="w-100 d-flex flex-column gap-1">
+          <label for="izintip" class="fw-semibold small text-muted">İzin Tipi <span class="text-primary">*</span></label>
+          <p-select id="izintip" formControlName="izintip" [options]="leaveTypes()" optionLabel="ad" optionValue="id" placeholder="İzin tipi seçin" appendTo="body" styleClass="w-100"></p-select>
+        </div>
+        <div class="w-100 d-flex flex-column gap-1">
+          <label for="kalan" class="fw-semibold small text-muted">Kalan İzin</label>
+          <input pInputText id="kalan" formControlName="kalan" />
+        </div>
+      </div>
+      <div class="d-flex gap-3">
+        <div class="d-flex align-items-center gap-2">
+          <p-checkbox formControlName="saatlik" [binary]="true" inputId="saatlik"></p-checkbox>
+          <label for="saatlik" class="fw-semibold small text-muted mb-0">Saatlik İzin</label>
+        </div>
+        <div class="d-flex align-items-center gap-2">
+          <p-checkbox formControlName="ucretli" [binary]="true" inputId="ucretli"></p-checkbox>
+          <label for="ucretli" class="fw-semibold small text-muted mb-0">Ücretli</label>
+        </div>
+      </div>
+    </div>
+
+    <!-- TARİH BİLGİLERİ -->
+    <div>
+      <h6 class="text-primary fw-bold mb-3 border-bottom pb-2">Tarih Bilgileri</h6>
+      <div class="d-flex gap-3 mb-3">
+        <div class="w-100 d-flex flex-column gap-1">
+          <label for="baslangic" class="fw-semibold small text-muted">Başlangıç Tarihi <span class="text-primary">*</span></label>
+          <p-datepicker id="baslangic" formControlName="baslangic" dateFormat="dd-mm-yy" appendTo="body" styleClass="w-100" [showIcon]="true"></p-datepicker>
+        </div>
+        <div class="w-100 d-flex flex-column gap-1">
+          <label for="bitis" class="fw-semibold small text-muted">Bitiş Tarihi <span class="text-primary">*</span></label>
+          <p-datepicker id="bitis" formControlName="bitis" dateFormat="dd-mm-yy" appendTo="body" styleClass="w-100" [showIcon]="true"></p-datepicker>
+        </div>
+      </div>
+      @if (hourlyLeave()) {
+        <div class="d-flex gap-3 mb-3">
+          <div class="w-100 d-flex flex-column gap-1">
+            <label for="baslangicSaat" class="fw-semibold small text-muted">Başlangıç Saati</label>
+            <input pInputText id="baslangicSaat" type="time" formControlName="baslangicSaat" />
+          </div>
+          <div class="w-100 d-flex flex-column gap-1">
+            <label for="bitisSaat" class="fw-semibold small text-muted">Bitiş Saati</label>
+            <input pInputText id="bitisSaat" type="time" formControlName="bitisSaat" />
+          </div>
+        </div>
+      }
+      <div class="d-flex gap-3 mb-3">
+        <div class="w-100 d-flex flex-column gap-1">
+          <label for="adres" class="fw-semibold small text-muted">İzin Adresi</label>
+          <input pInputText id="adres" formControlName="adres" />
+        </div>
+      </div>
+      <div class="d-flex gap-3">
+        <div class="w-100 d-flex flex-column gap-1">
+          <label for="aciklama" class="fw-semibold small text-muted">Açıklama</label>
+          <textarea pTextarea id="aciklama" formControlName="aciklama" rows="3" styleClass="w-100"></textarea>
+        </div>
+      </div>
+    </div>
+  </form>
+
+  <div class="d-flex justify-content-end gap-2 pt-3 border-top">
+    <button pButton type="button" label="İptal" severity="secondary" text="true" (click)="closeLeaveDialog()"></button>
+    <button pButton type="button" label="Talep" icon="pi pi-check" [disabled]="leaveForm.invalid || saving()" (click)="saveLeave()"></button>
+  </div>
+</p-dialog>
+
+<!-- İzin İptal Onay Dialogu -->
+<p-dialog
+  header="İzin Talebi İptali"
+  [(visible)]="confirmCancelVisible"
+  [modal]="true"
+  [style]="{ width: '400px' }"
+  [draggable]="false"
+  (onHide)="closeCancelConfirm()"
+>
+  <p class="mb-0">
+    <strong>{{ confirmCancelRec()?.izinTipi }}</strong> izin talebiniz iptal edilecek. Emin misiniz?
+  </p>
+  <div class="d-flex justify-content-end gap-2 pt-3">
+    <button pButton type="button" label="Vazgeç" severity="secondary" text="true" (click)="closeCancelConfirm()"></button>
+    <button pButton type="button" label="Evet, İptal Et" icon="pi pi-times" severity="danger" (click)="confirmCancelLeave()"></button>
+  </div>
+</p-dialog>

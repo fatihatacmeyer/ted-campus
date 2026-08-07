@@ -60,6 +60,13 @@ export const routes: Routes = [
             (m) => m.ActivitiesComponent,
           ),
       },
+      {
+        path: 'attendance',
+        loadComponent: () =>
+          import('./features/attendance/pages/attendance-list/attendance-list').then(
+            (m) => m.AttendanceListComponent,
+          ),
+      },
     ],
   },
   {

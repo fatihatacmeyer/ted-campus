@@ -27,5 +27,6 @@ export class SidebarComponent {
     { label: 'Öğretmenler', route: '/home/teachers', icon: 'badge' },
     { label: 'Servis', route: '/home/transport', icon: 'directions_bus' },
     { label: 'Etkinlikler', route: '/home/activities', icon: 'event' },
+    { label: 'PDKS', route: '/home/attendance', icon: 'schedule' },
   ];
 }

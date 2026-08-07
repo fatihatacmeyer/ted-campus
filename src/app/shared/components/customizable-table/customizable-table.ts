@@ -26,6 +26,7 @@ import { InputIconModule } from 'primeng/inputicon';
 import { TooltipModule } from 'primeng/tooltip';
 import { ButtonModule } from 'primeng/button';
 import { SelectModule } from 'primeng/select';
+import { CheckboxModule } from 'primeng/checkbox';
 import { formatDate } from '../../utils/date.utils';
 import { exportToExcel } from '../../utils/table-export.utils';
 
@@ -81,6 +82,7 @@ export class ColumnCellDirective {
     TooltipModule,
   ButtonModule,
   SelectModule,
+  CheckboxModule,
   ],
   templateUrl: './customizable-table.html',
   styleUrl: './customizable-table.scss',
@@ -105,6 +107,12 @@ export class CustomizableTableComponent<T extends object = Record<string, unknow
   /** Tablonun başına görünür satır numarası sütunu ekler */
   @Input() showRowNumbers = false;
   @Input() rowNumberHeader = '#'; // satır numarası sütun başlığı
+  /** Satır seçim modu — null ise seçim kapalı, 'multiple' çoklu seçim (checkbox) sağlar */
+  @Input() selectionMode: 'single' | 'multiple' | null = null;
+  /** Seçili satırlar (parent bileşen tutar) */
+  @Input() selectedRows: T[] = [];
+  /** Seçim değiştiğinde parent'a yeni seçim listesini bildirir */
+  @Output() selectedRowsChange = new EventEmitter<T[]>();
   @Output() rowClick = new EventEmitter<T>();
 
   @ContentChildren(ColumnCellDirective) cellDirectives!: QueryList<ColumnCellDirective>;
@@ -208,6 +216,48 @@ export class CustomizableTableComponent<T extends object = Record<string, unknow
 
   get hiddenColumns(): string[] {
     return this.allColumnFields.filter((field) => !this.selectedColumnFields.includes(field));
+  }
+
+  /** Seçim kaynağı — filtre uygulanmış satırlar, yoksa tüm satırlar */
+  private selectionSource(): T[] {
+    return (this.dt?.filteredValue?.length ? (this.dt.filteredValue as T[]) : this.rows) ?? [];
+  }
+
+  /** Satır seçili mi? (referans karşılaştırması) */
+  isRowSelected(row: T): boolean {
+    return this.selectedRows.includes(row);
+  }
+
+  /** Tek bir satırın seçimini değiştirir */
+  onRowSelectionChange(row: T, checked: boolean): void {
+    let next: T[];
+    if (checked) {
+      next = this.selectionMode === 'single' ? [row] : [...this.selectedRows, row];
+    } else {
+      next = this.selectedRows.filter((r) => r !== row);
+    }
+    this.selectedRowsChange.emit(next);
+  }
+
+  /** Filtrelenmiş satırların tamamı seçili mi? */
+  isAllRowsSelected(): boolean {
+    const source = this.selectionSource();
+    return source.length > 0 && source.every((r) => this.selectedRows.includes(r));
+  }
+
+  /** Tüm (filtrelenmiş) satırları seçer / seçimi kaldırır */
+  toggleAllRows(): void {
+    const source = this.selectionSource();
+    const selectAll = !this.isAllRowsSelected();
+    let next = [...this.selectedRows];
+    if (selectAll) {
+      for (const r of source) {
+        if (!next.includes(r)) next.push(r);
+      }
+    } else {
+      next = next.filter((r) => !source.includes(r));
+    }
+    this.selectedRowsChange.emit(next);
   }
 
   getColHeader(field: string): string {

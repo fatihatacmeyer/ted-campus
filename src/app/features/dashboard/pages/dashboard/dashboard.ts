@@ -9,13 +9,27 @@ import {
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Router } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
+import { forkJoin } from 'rxjs';
 import { PersonService } from '../../../persons/services/person.service';
-import { Person, UserDef, getUserDefLabel, getUserDefBadgeClass } from '../../../../core/models/person.model';
+import {
+  Person,
+  UserDef,
+  getUserDefLabel,
+  getUserDefBadgeClass,
+} from '../../../../core/models/person.model';
 import { AuthService } from '../../../../core/services/auth.service';
+import {
+  DashboardService,
+  DashboardCampusStats,
+  EarlyLeaver,
+  LateArrival,
+  Absentee,
+} from '../../services/dashboard.service';
 import { ButtonModule } from 'primeng/button';
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
 import { DialogModule } from 'primeng/dialog';
 import { TooltipModule } from 'primeng/tooltip';
+import { CommonModule } from '@angular/common';
 
 /** Geçiş cihazı işlem satırı模拟类型 — gerçek API bağlandığında Person veya ayrı bir interface ile değiştirilecek. */
 export interface AccessTransaction {
@@ -35,7 +49,7 @@ export interface AccessTransaction {
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [ButtonModule, ProgressSpinnerModule, DialogModule, TooltipModule],
+  imports: [ButtonModule, ProgressSpinnerModule, DialogModule, TooltipModule, CommonModule],
   templateUrl: './dashboard.html',
   styleUrl: './dashboard.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -52,26 +66,23 @@ export class DashboardComponent implements OnInit {
   teachers: Person[] = [];
   parents: Person[] = [];
 
-  studentCount = 0;
-  teacherCount = 0;
-  parentCount = 0;
+  /** sp_DashboardCampus_s'ten gelen özet sayılar (Kayıtlı / Okulda) */
+  stats: DashboardCampusStats = {
+    studentCount: 0,
+    parentCount: 0,
+    totalRegisteredCount: 0,
+    studentInsideCount: 0,
+    parentInsideCount: 0,
+    totalInsideCount: 0,
+  };
 
   /** Oturum başına bir kez hesaplanan değerler */
   greeting = '';
   userName = '';
-  totalCount = 0;
 
-  /** İçerideki personel = öğrenci + öğretmen */
-  get insiderCount(): number {
-    return this.studentCount + this.teacherCount;
-  }
-
-  /** Erken çıkan kişiler — öğrenci + öğretmen (cikistarih dolu) */
-  earlyLeavers: Person[] = [];
-
-  /** Geç kalan kişiler (mock veri) */
-  lateArrivals: { name: string; sicilno: string; time: string; expected: string; delay: string }[] =
-    [];
+  earlyLeavers: EarlyLeaver[] = [];
+  lateArrivals: LateArrival[] = [];
+  absentees: Absentee[] = [];
 
   /** Son 100 işlem mock */
   recentTransactions: AccessTransaction[] = [];
@@ -93,9 +104,11 @@ export class DashboardComponent implements OnInit {
   earlyLeaverDialogVisible = false;
   lateDialogVisible = false;
   eventDialogVisible = false;
+  absentDialogVisible = false;
 
   /* ── Inject ────────────────────────────────────────────── */
   private personService = inject(PersonService);
+  private dashboardService = inject(DashboardService);
   private authService = inject(AuthService);
   private router = inject(Router);
   private cdr = inject(ChangeDetectorRef);
@@ -116,68 +129,47 @@ export class DashboardComponent implements OnInit {
     this.isLoading = true;
     this.errorMessage = '';
 
-    this.personService.getPersonListCampus()
+    // Kartlar sp_DashboardCampus_s'ten, alt paneller ise sicil listesinden beslenir.
+    forkJoin({
+      stats: this.dashboardService.getDashboardStats(),
+      persons: this.personService.getPersonListCampus(),
+      earlyLeaversData: this.dashboardService.getEarlyLeavers(),
+      lateArrivalsData: this.dashboardService.getLateArrivals(),
+      absenteeData: this.dashboardService.getAbsentees(),
+    })
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
-      next: (data: Person[]) => {
-        this.allPersons = data;
+        next: ({ stats, persons, earlyLeaversData, lateArrivalsData, absenteeData }) => {
+          this.stats = stats;
+          this.allPersons = persons;
 
-        // Gerçek veriye dayalı sayılar
-        this.students = data.filter((p) => p.userdef === UserDef.Ogrenci);
-        this.teachers = data.filter((p) => p.userdef === UserDef.Ogretmen);
-        this.parents = data.filter((p) => p.userdef === UserDef.Veli);
+          // Gerçek veriye dayalı listeler (erken çıkanlar ve mock paneller için)
+          this.students = persons.filter((p) => p.userdef === UserDef.Ogrenci);
+          this.teachers = persons.filter((p) => p.userdef === UserDef.Ogretmen);
+          this.parents = persons.filter((p) => p.userdef === UserDef.Veli);
 
-        this.studentCount = this.students.length;
-        this.teacherCount = this.teachers.length;
-        this.parentCount = this.parents.length;
-        this.totalCount = this.studentCount + this.parentCount + this.teacherCount;
+          this.earlyLeavers = earlyLeaversData;
 
-        // Erken çıkan kişiler — öğrenci ve öğretmen, cikistarih dolu olanlar
-        this.earlyLeavers = [...this.students, ...this.teachers].filter(
-          (p) => p.cikistarih && p.cikistarih !== '0' && p.cikistarih.trim() !== '',
-        );
+          this.lateArrivals = lateArrivalsData;
 
-        // Geç kalan mock veri (öğrencilerden rastgele 5 tanesi)
-        this.generateMockLateArrivals();
+          this.absentees = absenteeData;
 
-        // İşlem listesi mock
-        this.generateMockTransactions();
+          // İşlem listesi mock
+          this.generateMockTransactions();
 
-        // Etkinlik listesi mock
-        this.generateMockEventList();
+          // Etkinlik listesi mock
+          this.generateMockEventList();
 
-        this.isLoading = false;
-        this.cdr.markForCheck();
-      },
-      error: (err: HttpErrorResponse) => {
-        console.error('Dashboard veri yükleme hatası:', err);
-        this.errorMessage = 'Sistem hatası: Veriler yüklenemedi.';
-        this.isLoading = false;
-        this.cdr.markForCheck();
-      },
-    });
-  }
-
-  /* ── Mock veri üreticileri (gerçek API bağlandığında kaldırılacak) ── */
-
-  private generateMockLateArrivals(): void {
-    const source = this.students.length > 0 ? this.students : this.teachers;
-    const shuffled = [...source].sort(() => 0.5 - Math.random());
-    const count = Math.min(5, shuffled.length);
-
-    this.lateArrivals = shuffled.slice(0, count).map((p) => {
-      const delayMinutes = Math.floor(Math.random() * 45) + 5;
-      const expectedHour = 8;
-      const actualMinutes = delayMinutes;
-      const h = String(expectedHour).padStart(2, '0');
-      return {
-        name: p.adsoyad,
-        sicilno: p.sicilno,
-        time: `08:${String(actualMinutes).padStart(2, '0')}`,
-        expected: `${h}:00`,
-        delay: `${delayMinutes} dk`,
-      };
-    });
+          this.isLoading = false;
+          this.cdr.markForCheck();
+        },
+        error: (err: HttpErrorResponse) => {
+          console.error('Dashboard veri yükleme hatası:', err);
+          this.errorMessage = 'Sistem hatası: Veriler yüklenemedi.';
+          this.isLoading = false;
+          this.cdr.markForCheck();
+        },
+      });
   }
 
   private generateMockTransactions(): void {
