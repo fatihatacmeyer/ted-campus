@@ -1,6 +1,6 @@
-import { provideAppInitializer, ApplicationConfig } from '@angular/core';
+import { provideAppInitializer, ApplicationConfig, importProvidersFrom } from '@angular/core';
 import { provideRouter } from '@angular/router';
-import { provideHttpClient, withInterceptors } from '@angular/common/http';
+import { HttpClient, provideHttpClient, withInterceptors } from '@angular/common/http';
 import { routes } from './app.routes';
 import {
   APP_CONFIG,
@@ -16,6 +16,11 @@ import MyPreset from './core/primeng/mypreset';
 
 import { PRIME_NG_TR } from './core/primeng/primeng-locales';
 
+import { provideTranslateService } from '@ngx-translate/core';
+import { provideTranslateHttpLoader } from '@ngx-translate/http-loader';
+import { ErrorHandler } from '@angular/core';
+import { GlobalErrorHandler } from './core/error/global-error-handler';
+
 export const appConfig: ApplicationConfig = {
   providers: [
     provideRouter(routes),
@@ -30,8 +35,17 @@ export const appConfig: ApplicationConfig = {
       },
     }),
     MessageService,
+    { provide: ErrorHandler, useClass: GlobalErrorHandler },
     provideHttpClient(withInterceptors([authInterceptor])),
     provideAppInitializer(() => loadRuntimeConfig()),
     { provide: APP_CONFIG, useFactory: appConfigFactory },
+    provideTranslateService({
+      fallbackLang: 'tr',
+      lang: 'tr',
+    }),
+    provideTranslateHttpLoader({
+      prefix: '/assets/i18n/',
+      suffix: '.json',
+    }),
   ],
 };

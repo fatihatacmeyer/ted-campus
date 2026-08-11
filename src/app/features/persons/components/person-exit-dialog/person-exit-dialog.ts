@@ -20,6 +20,7 @@ import { SelectModule } from 'primeng/select';
 import { Person, ExitReason, OperationResultResponse } from '../../../../core/models/person.model';
 import { PersonService } from '../../services/person.service';
 import { unwrapResponse, isSuccessResult } from '../../../../shared/utils/response.utils';
+import { NotificationService } from '../../../../core/services/notification.service';
 
 @Component({
   selector: 'app-person-exit-dialog',
@@ -39,6 +40,7 @@ export class PersonExitDialogComponent implements OnChanges {
   private personService = inject(PersonService);
   private cdr = inject(ChangeDetectorRef);
   private readonly destroyRef = inject(DestroyRef);
+  private notification = inject(NotificationService);
 
   displayTitle = '';
   selectedDate: Date | null = null;
@@ -122,6 +124,7 @@ export class PersonExitDialogComponent implements OnChanges {
               response as OperationResultResponse | OperationResultResponse[] | null | undefined,
             );
             if (isSuccessResult(result)) {
+              this.notification.success('NOTIFICATIONS.MESSAGES.RECORD_EXITED');
               this.confirmed.emit();
               this.close();
             } else {
@@ -144,6 +147,7 @@ export class PersonExitDialogComponent implements OnChanges {
               response as OperationResultResponse | OperationResultResponse[] | null | undefined,
             );
             if (isSuccessResult(result)) {
+              this.notification.success('NOTIFICATIONS.MESSAGES.RECORD_RESTORED');
               this.confirmed.emit();
               this.close();
             } else {

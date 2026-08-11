@@ -18,7 +18,7 @@ import { DatePickerModule } from 'primeng/datepicker';
 import { TagModule } from 'primeng/tag';
 import { TooltipModule } from 'primeng/tooltip';
 import { CheckboxModule } from 'primeng/checkbox';
-import { MessageService } from 'primeng/api';
+import { NotificationService } from '../../../../core/services/notification.service';
 import { forkJoin, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import {
@@ -75,7 +75,7 @@ interface TabOption {
 export class AttendanceListComponent {
   private fb = inject(FormBuilder);
   private attendanceService = inject(AttendanceService);
-  private messageService = inject(MessageService);
+  private notification = inject(NotificationService);
   private destroyRef = inject(DestroyRef);
 
   /** Attendance rows for the active tab + period range. */
@@ -357,22 +357,12 @@ export class AttendanceListComponent {
           this.saving.set(false);
           this.closeLeaveDialog();
           this.loadLeaves();
-          this.messageService.add({
-            severity: 'success',
-            summary: 'Başarılı',
-            detail: 'İzin talebiniz oluşturuldu.',
-            life: 3000,
-          });
+          this.notification.success('NOTIFICATIONS.MESSAGES.LEAVE_ASSIGNED');
         },
         error: (err) => {
           console.error('[AttendanceListComponent] saveLeave error:', err);
           this.saving.set(false);
-          this.messageService.add({
-            severity: 'error',
-            summary: 'Hata',
-            detail: 'İzin talebi gönderilemedi.',
-            life: 3000,
-          });
+          this.notification.error('NOTIFICATIONS.MESSAGES.LEAVE_REQUEST_FAILED');
         },
       });
   }
@@ -414,21 +404,11 @@ export class AttendanceListComponent {
         next: () => {
           this.closeCancelConfirm();
           this.loadLeaves();
-          this.messageService.add({
-            severity: 'success',
-            summary: 'Başarılı',
-            detail: 'İzin talebi iptal edildi.',
-            life: 3000,
-          });
+          this.notification.success('NOTIFICATIONS.MESSAGES.LEAVE_CANCELLED');
         },
         error: (err) => {
           console.error('[AttendanceListComponent] confirmCancelLeave error:', err);
-          this.messageService.add({
-            severity: 'error',
-            summary: 'Hata',
-            detail: 'İzin talebi iptal edilemedi.',
-            life: 3000,
-          });
+          this.notification.error('NOTIFICATIONS.MESSAGES.LEAVE_CANCEL_FAILED');
         },
       });
   }

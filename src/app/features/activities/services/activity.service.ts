@@ -159,7 +159,7 @@ export class ActivityService {
     islemtipi: 'i' | 'u',
     id?: number,
   ): Record<string, string | number> {
-    return {
+    const params: Record<string, string | number> = {
       islemtipi,
       ...(id !== undefined ? { Id: id } : {}),
       Ad: (activity.name as string) || '',
@@ -196,6 +196,19 @@ export class ActivityService {
       Okod4: activity.oKod4 || '',
       Okod5: activity.oKod5 || '',
     };
+
+    // Boş tarih parametreleri wire string'de `BasTarih=` (boş string) olur ve
+    // backend'de DATETIME2 parametresine çevrilemediği için insert'i patlatır.
+    // Anahtarı payload'dan tamamen çıkarmak, SP'deki @... DATETIME2 = NULL
+    // default'unun devreye girmesini sağlar (buildParamString null'ı da '' yapar,
+    // bu yüzden sadece null göndermek yetmez).
+    for (const key of ['BasTarih', 'BitTarih', 'TalepBas', 'TalepBit'] as const) {
+      if (!params[key]) {
+        delete params[key];
+      }
+    }
+
+    return params;
   }
 
   /**

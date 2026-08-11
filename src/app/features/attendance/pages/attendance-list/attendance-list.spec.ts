@@ -1,6 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { MessageService } from 'primeng/api';
+import { TranslateService } from '@ngx-translate/core';
 import { of } from 'rxjs';
 import { vi } from 'vitest';
 
@@ -77,6 +78,10 @@ describe('AttendanceListComponent', () => {
       providers: [
         provideHttpClient(),
         MessageService,
+        {
+          provide: TranslateService,
+          useValue: { instant: (key: string) => key },
+        },
         { provide: AttendanceService, useValue: service },
       ],
     }).compileComponents();

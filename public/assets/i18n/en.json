@@ -1,0 +1,23 @@
+{
+  "NOTIFICATIONS": {
+    "SUCCESS": "Success",
+    "ERROR": "Error",
+    "INFO": "Information",
+    "WARNING": "Warning",
+    "MESSAGES": {
+      "RECORD_ADDED": "Record successfully added.",
+      "RECORD_UPDATED": "Record successfully updated.",
+      "RECORD_DELETED": "Record successfully deleted.",
+      "RECORD_EXITED": "Record successfully terminated.",
+      "RECORD_RESTORED": "Record successfully restored.",
+      "LEAVE_ASSIGNED": "Leave request successfully created.",
+      "LEAVE_CANCELLED": "Leave request successfully cancelled.",
+      "LEAVE_REQUEST_FAILED": "Leave request could not be sent.",
+      "LEAVE_CANCEL_FAILED": "Leave request could not be cancelled.",
+      "SAVE_FAILED": "An error occurred while saving the record.",
+      "NETWORK_ERROR": "Could not connect to the server. Please check your internet connection.",
+      "SYSTEM_ERROR": "A system error occurred. Please try again later.",
+      "UNAUTHORIZED": "You are not authorized to perform this action."
+    }
+  }
+}

@@ -32,6 +32,7 @@ import {
   RelationCampusRow,
 } from '../../../../core/models/person.model';
 import { TypesService, DropdownItem } from '../../services/types.service';
+import { NotificationService } from '../../../../core/services/notification.service';
 import { formatDate, parseDate } from '../../../../shared/utils/date.utils';
 import {
   unwrapResponse,
@@ -137,11 +138,24 @@ export class PersonFormComponent implements OnChanges, OnInit {
   changingRelid: number | null = null; // "Değiştir" modundaki satırın relid'si
   confirmRemoveKey: string | null = null; // "Kaldır" onayı bekleyen satır
 
+  /**
+   * linkedPersonOptions cache'i — getter her change detection'da çağrıldığı için
+   * binlerce kayıtlık allPersons listesini her seferinde yeniden filtreleyip
+   * map'lememek adına, girdiler (allPersons/ilişki durumu/userdef) değişmedikçe
+   * sonuç burada tutulur. Geçersiz kılma: invalidateLinkedOptions().
+   */
+  private cachedLinkedOptions: { label: string; value: number }[] | null = null;
+
+  private invalidateLinkedOptions(): void {
+    this.cachedLinkedOptions = null;
+  }
+
   private fb = inject(FormBuilder);
   private personService = inject(PersonService);
   private typesService = inject(TypesService);
   private destroyRef = inject(DestroyRef);
   private cdr = inject(ChangeDetectorRef);
+  private notification = inject(NotificationService);
 
   form: FormGroup = this.fb.group(this.buildFormControls());
 
@@ -278,6 +292,10 @@ export class PersonFormComponent implements OnChanges, OnInit {
   }
 
   ngOnChanges(changes: SimpleChanges): void {
+    // linkedPersonOptions girdileri değişti → cache'i tazele
+    if (changes['allPersons'] || changes['userdef']) {
+      this.invalidateLinkedOptions();
+    }
     if (changes['editPerson']) {
       this.isEditMode = this.editPerson !== null;
       this.resetRelationState();
@@ -408,7 +426,14 @@ export class PersonFormComponent implements OnChanges, OnInit {
     return this.userdef === UserDef.Veli ? 'Çocuk atanmamış' : 'Veli atanmamış';
   }
 
+  /** Dropdown içindeki arama kutusu placeholder'ı: "Veli ara..." / "Öğrenci ara...". */
+  get linkedFilterPlaceholder(): string {
+    return `${this.linkedKind} ara...`;
+  }
+
   get linkedPersonOptions(): { label: string; value: number }[] {
+    if (this.cachedLinkedOptions) return this.cachedLinkedOptions;
+
     // userdef=Ogrenci → show userdef=Veli, userdef=Veli → show userdef=Ogrenci
     const targetUserdef = this.userdef === UserDef.Ogrenci ? UserDef.Veli : UserDef.Ogrenci;
 
@@ -421,12 +446,11 @@ export class PersonFormComponent implements OnChanges, OnInit {
     }
     for (const linkedId of this.pendingAdditions) excludedIds.add(linkedId);
 
-    return (
-      this.allPersons
-        .filter((p) => p.userdef === targetUserdef && !excludedIds.has(p.id))
-        // .map((p) => ({ label: `${p.adsoyad} (${p.sicilno})`, value: p.id }));
-        .map((p) => ({ label: `${p.adsoyad} (${p.sicilno ? p.sicilno : p.id})`, value: p.id }))
-    );
+    this.cachedLinkedOptions = this.allPersons
+      .filter((p) => p.userdef === targetUserdef && !excludedIds.has(p.id))
+      // .map((p) => ({ label: `${p.adsoyad} (${p.sicilno})`, value: p.id }));
+      .map((p) => ({ label: `${p.adsoyad} (${p.sicilno ? p.sicilno : p.id})`, value: p.id }));
+    return this.cachedLinkedOptions;
   }
 
   submit(): void {
@@ -570,6 +594,13 @@ export class PersonFormComponent implements OnChanges, OnInit {
 
   private finishSave(stdRes: unknown): void {
     this.isSaving = false;
+
+    if (this.isEditMode) {
+      this.notification.notifyUpdated();
+    } else {
+      this.notification.notifyAdded();
+    }
+
     this.saved.emit(stdRes);
     this.close();
   }
@@ -616,11 +647,13 @@ export class PersonFormComponent implements OnChanges, OnInit {
             sicilno: linked?.sicilno ?? '',
           };
         });
+        this.invalidateLinkedOptions();
         this.cdr.markForCheck();
       },
       error: (err) => {
         console.error('[PersonForm] Mevcut ilişkiler yüklenemedi:', err);
         this.existingRelations = [];
+        this.invalidateLinkedOptions();
         this.cdr.markForCheck();
       },
     });
@@ -634,6 +667,7 @@ export class PersonFormComponent implements OnChanges, OnInit {
     this.changingRelid = null;
     this.confirmRemoveKey = null;
     this.isCreatingNewLinked = false;
+    this.invalidateLinkedOptions();
   }
 
   /** Şablonda listelenen birleşik satırlar: mevcut (değişenler güncel isimle) + bekleyen eklemeler. */
@@ -687,6 +721,7 @@ export class PersonFormComponent implements OnChanges, OnInit {
   private addPendingLinked(linkedId: number): void {
     if (this.pendingAdditions.includes(linkedId)) return;
     this.pendingAdditions.push(linkedId);
+    this.invalidateLinkedOptions();
   }
 
   /** Satırı "Değiştir" moduna alır — dropdown ile yeni ilişkili kişi seçilir. */
@@ -717,6 +752,7 @@ export class PersonFormComponent implements OnChanges, OnInit {
     }
     // Değiştirilen satır aynı zamanda silinmemeli
     this.removedRelIds = this.removedRelIds.filter((id) => id !== relid);
+    this.invalidateLinkedOptions();
 
     this.changingRelid = null;
     this.form.patchValue({ changeLinkedId: null });
@@ -749,6 +785,7 @@ export class PersonFormComponent implements OnChanges, OnInit {
       this.pendingAdditions = this.pendingAdditions.filter((id) => id !== row.linkedId);
     }
     if (this.changingRelid === row.relid) this.changingRelid = null;
+    this.invalidateLinkedOptions();
     this.cdr.markForCheck();
   }
 

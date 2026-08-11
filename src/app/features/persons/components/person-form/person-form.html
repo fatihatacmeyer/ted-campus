@@ -231,6 +231,11 @@
                       optionValue="value"
                       styleClass="w-100"
                       appendTo="body"
+                      [filter]="true"
+                      filterBy="label"
+                      [filterPlaceholder]="linkedFilterPlaceholder"
+                      [virtualScroll]="true"
+                      [virtualScrollItemSize]="38"
                     />
                     <div class="relation-change-actions">
                       <button
@@ -311,6 +316,11 @@
               styleClass="w-100"
               [showClear]="true"
               appendTo="body"
+              [filter]="true"
+              filterBy="label"
+              [filterPlaceholder]="linkedFilterPlaceholder"
+              [virtualScroll]="true"
+              [virtualScrollItemSize]="38"
             />
           </div>
           @if (isEditMode) {

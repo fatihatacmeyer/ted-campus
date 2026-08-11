@@ -1,0 +1,23 @@
+{
+  "NOTIFICATIONS": {
+    "SUCCESS": "Başarılı",
+    "ERROR": "Hata",
+    "INFO": "Bilgi",
+    "WARNING": "Uyarı",
+    "MESSAGES": {
+      "RECORD_ADDED": "Kayıt başarıyla eklendi.",
+      "RECORD_UPDATED": "Kayıt başarıyla güncellendi.",
+      "RECORD_DELETED": "Kayıt başarıyla silindi.",
+      "RECORD_EXITED": "Kayıt başarıyla çıkarıldı.",
+      "RECORD_RESTORED": "Kayıt başarıyla geri alındı.",
+      "LEAVE_ASSIGNED": "İzin talebi başarıyla oluşturuldu.",
+      "LEAVE_CANCELLED": "İzin talebi başarıyla iptal edildi.",
+      "LEAVE_REQUEST_FAILED": "İzin talebi gönderilemedi.",
+      "LEAVE_CANCEL_FAILED": "İzin talebi iptal edilemedi.",
+      "SAVE_FAILED": "Kayıt işlemi sırasında bir hata oluştu.",
+      "NETWORK_ERROR": "Sunucuya bağlanılamadı. Lütfen internet bağlantınızı kontrol edin.",
+      "SYSTEM_ERROR": "Sistem hatası oluştu. Lütfen daha sonra tekrar deneyin.",
+      "UNAUTHORIZED": "Bu işlemi yapmak için yetkiniz bulunmamaktadır."
+    }
+  }
+}

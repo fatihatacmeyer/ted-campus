@@ -31,8 +31,7 @@ import { PersonProfileComponent } from '../../components/person-profile/person-p
 import { ButtonModule } from 'primeng/button';
 import { TooltipModule } from 'primeng/tooltip';
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
-import { MessageService } from 'primeng/api';
-import { ToastModule } from 'primeng/toast';
+import { NotificationService } from '../../../../core/services/notification.service';
 
 @Component({
   selector: 'app-person-crud',
@@ -47,7 +46,6 @@ import { ToastModule } from 'primeng/toast';
     ButtonModule,
     TooltipModule,
     ProgressSpinnerModule,
-    ToastModule,
   ],
   templateUrl: './person-crud.html',
   styleUrl: './person-crud.scss',
@@ -87,7 +85,7 @@ export class PersonCrudComponent implements OnInit {
   private personService = inject(PersonService);
   private cdr = inject(ChangeDetectorRef);
   private route = inject(ActivatedRoute);
-  private messageService = inject(MessageService);
+  private notification = inject(NotificationService);
   private readonly destroyRef = inject(DestroyRef);
 
   constructor() {
@@ -336,12 +334,7 @@ export class PersonCrudComponent implements OnInit {
   onLeaveConfirmed(message: string): void {
     this.leavePerson = null;
 
-    this.messageService.add({
-      severity: 'success',
-      summary: 'Başarılı',
-      detail: message,
-      life: 3000,
-    });
+    this.notification.success(message);
 
     this.fetchPersonList();
   }

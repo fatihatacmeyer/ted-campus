@@ -29,6 +29,7 @@ import {
   MockActivityParticipant,
 } from '../../mocks/activity-participants.mock';
 import { formatDate, parseDate } from '../../../../shared/utils/date.utils';
+import { NotificationService } from '../../../../core/services/notification.service';
 
 /** Katılımcı durum filtreleri — dashboard kartlarıyla eşleşir. */
 type ParticipantFilter = 'Tümü' | MockActivityParticipant['durum'];
@@ -66,6 +67,7 @@ export class ActivitiesComponent {
   private activityService = inject(ActivityService);
   private typesService = inject(TypesService);
   private destroyRef = inject(DestroyRef);
+  private notification = inject(NotificationService);
 
   activities = signal<ActivityInterface[]>([]);
   isLoading = signal(false);
@@ -533,6 +535,13 @@ export class ActivitiesComponent {
     const selectedClasses = this.classroomOptions.filter((o) =>
       (formValues.classroom as string[]).includes(o.ad),
     );
+    // "Tüm Sınıflar" seçildiğinde (classroom boş) hiç sınıf id'si gönderilmiyordu;
+    // bu yüzden SP'nin EtkinlikDurumCampus kayıtları hiç oluşmuyordu. Tüm sınıf
+    // id'lerini ';' ile birleştirerek gönderiyoruz → tüm sınıflardaki öğrencilere
+    // katılımcı kaydı oluşturulur.
+    const classIdList = hasClassroom
+      ? selectedClasses.map((c) => c.id)
+      : this.classroomOptions.map((c) => c.id);
     const selectedEducationLevel = this.educationLevelOptions.find(
       (o) => o.ad === formValues.educationLevel,
     );
@@ -544,7 +553,7 @@ export class ActivitiesComponent {
       fee: formValues.isPaid ? formValues.fee : null,
       turId: selectedType?.id ?? '',
       ulasimId: selectedTransportation?.id ?? '',
-      sinifId: selectedClasses.map((c) => c.id).join(';'),
+      sinifId: classIdList.join(';'),
       egitimDuzeyiId: selectedEducationLevel?.id ?? '',
       oKod1: '',
       oKod2: '',
@@ -580,10 +589,17 @@ export class ActivitiesComponent {
         this.isSaving.set(false);
         this.closeDialog();
         this.loadActivities(); // sunucudaki güncel/otoriter listeyi tekrar çek
+
+        if (currentActivity) {
+          this.notification.notifyUpdated();
+        } else {
+          this.notification.notifyAdded();
+        }
       },
       error: (err) => {
         console.error('[ActivitiesComponent] save error:', err);
         this.errorMessage.set('Etkinlik kaydedilirken bir hata oluştu.');
+        this.notification.error('NOTIFICATIONS.MESSAGES.SAVE_FAILED');
         this.isSaving.set(false);
       },
     });
@@ -612,10 +628,14 @@ export class ActivitiesComponent {
       .deleteActivity(id)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
-        next: () => this.loadActivities(),
+        next: () => {
+          this.loadActivities();
+          this.notification.notifyDeleted();
+        },
         error: (err) => {
           console.error('[ActivitiesComponent] delete error:', err);
           this.errorMessage.set('Etkinlik silinirken bir hata oluştu.');
+          this.notification.error('NOTIFICATIONS.MESSAGES.SAVE_FAILED');
         },
       });
   }
