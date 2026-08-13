@@ -12,6 +12,8 @@
 app-sidebar {
   flex: 0 0 220px;
   flex-shrink: 0;
+  transition: flex-basis 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  overflow: hidden;
 }
 
 .layout-body.sidebar-closed app-sidebar {

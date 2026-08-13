@@ -18,9 +18,7 @@
 
 <nav class="sidebar" [class.closed]="!isOpen">
   <div class="sidebar-header">
-    @if (isOpen) {
-      <span class="header-title">{{ 'HEADER.MENU' | translate }}</span>
-    }
+    <span class="header-title">{{ 'HEADER.MENU' | translate }}</span>
 
     <button
       class="toggle-btn"
@@ -41,10 +39,7 @@
           [title]="!isOpen ? (item.labelKey | translate) : ''"
         >
           <span class="material-symbols-outlined">{{ item.icon }}</span>
-
-          @if (isOpen) {
-            <span class="nav-label">{{ item.labelKey | translate }}</span>
-          }
+          <span class="nav-label">{{ item.labelKey | translate }}</span>
         </a>
       </li>
     }
