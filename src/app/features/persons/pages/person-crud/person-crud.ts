@@ -14,6 +14,7 @@ import {
   Person,
   UserDef,
   getUserDefLabel,
+  getUserDefLabelKey,
 } from '../../../../core/models/person.model';
 import {
   CustomizableTableComponent,
@@ -32,6 +33,7 @@ import { ButtonModule } from 'primeng/button';
 import { TooltipModule } from 'primeng/tooltip';
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
 import { NotificationService } from '../../../../core/services/notification.service';
+import { TranslatePipe } from '@ngx-translate/core';
 
 @Component({
   selector: 'app-person-crud',
@@ -46,6 +48,7 @@ import { NotificationService } from '../../../../core/services/notification.serv
     ButtonModule,
     TooltipModule,
     ProgressSpinnerModule,
+    TranslatePipe,
   ],
   templateUrl: './person-crud.html',
   styleUrl: './person-crud.scss',
@@ -94,25 +97,22 @@ export class PersonCrudComponent implements OnInit {
 
   // ─── Derived labels ───
 
-  get pageTitle(): string {
-    return getUserDefLabel(this.USERDEF) + 'ler';
+  get pageTitleKey(): string {
+    return getUserDefLabelKey(this.USERDEF) + '_PLURAL';
   }
 
-  get addLabel(): string {
-    return getUserDefLabel(this.USERDEF) + ' Ekle';
+  get addLabelKey(): string {
+    return 'PERSON.ADD_' + getUserDefLabelKey(this.USERDEF).split('.')[1];
   }
 
-  get formTitle(): string {
+  get formTitleKey(): string {
     return this.editPerson
-      ? getUserDefLabel(this.USERDEF) + ' Düzenle'
-      : 'Yeni ' + getUserDefLabel(this.USERDEF) + ' Ekle';
+      ? 'PERSON.EDIT_' + getUserDefLabelKey(this.USERDEF).split('.')[1]
+      : 'PERSON.ADD_' + getUserDefLabelKey(this.USERDEF).split('.')[1];
   }
 
-  get descriptionText(): string {
-    return (
-      getUserDefLabel(this.USERDEF) +
-      ' listesini buradan görüntüleyebilir ve yeni kayıt ekleyebilirsiniz.'
-    );
+  get descriptionTextKey(): string {
+    return 'PERSON.LIST_DESCRIPTION';
   }
 
   /** Tüm personel tiplerinde profil modalı gösterilir. */

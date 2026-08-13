@@ -11,19 +11,19 @@
           autocomplete="off"
         />
       </p-iconfield>
-      <label [for]="'customizable_table_search_' + tableId">{{ searchPlaceholder }}</label>
+      <label [for]="'customizable_table_search_' + tableId">{{ searchPlaceholder | translate }}</label>
     </p-floatlabel>
   }
 
   <div class="table-toolbar-actions">
     @if (exportable && rows.length) {
       <p-button
-        label="Excel'e Aktar"
+        [label]="'COMMON.EXPORT' | translate"
         icon="pi pi-file-excel"
         size="small"
         text="true"
         (onClick)="onExportExcel()"
-        pTooltip="Excel'e Aktar"
+        [pTooltip]="'COMMON.EXPORT' | translate"
         tooltipPosition="bottom"
         styleClass="table-export-btn"
       ></p-button>
@@ -35,8 +35,8 @@
         size="small"
         text="true"
         (onClick)="clearColumnFilters()"
-        pTooltip="Filtreleri Temizle"
-        aria-label="Filtreleri Temizle"
+        [pTooltip]="'COMMON.CLEAR_FILTERS' | translate"
+        [attr.aria-label]="'COMMON.CLEAR_FILTERS' | translate"
         tooltipPosition="bottom"
         styleClass="table-clear-filters-btn"
       ></p-button>
@@ -47,8 +47,8 @@
         pButton
         icon="pi pi-list"
         class="p-button-text p-button-xl col-toggle-btn"
-        pTooltip="Sütunlar"
-        aria-label="Sütunlar"
+        [pTooltip]="'COMMON.COLUMNS' | translate"
+        [attr.aria-label]="'COMMON.COLUMNS' | translate"
         tooltipPosition="bottom"
         (click)="showColumnPanel = !showColumnPanel; $event.stopPropagation()"
       ></button>
@@ -62,13 +62,13 @@
           (keyup.enter)="$event.stopPropagation()"
         >
           <div class="col-panel-header">
-            <span class="col-panel-title">Sütunlar</span>
+            <span class="col-panel-title">{{ 'COMMON.COLUMNS' | translate }}</span>
             <button
               pButton
               icon="pi pi-refresh"
               class="p-button-text p-button-sm p-button-rounded"
-              pTooltip="Varsayılana Sıfırla"
-              aria-label="Varsayılana Sıfırla"
+              [pTooltip]="'COMMON.RESET_DEFAULT' | translate"
+              [attr.aria-label]="'COMMON.RESET_DEFAULT' | translate"
               tooltipPosition="left"
               (click)="onClearColumns()"
             ></button>
@@ -90,7 +90,7 @@
                   (dragend)="onDragEnd()"
                 >
                   <span class="drag-handle">⠿</span>
-                  <span class="col-label">{{ getColHeader(field) }}</span>
+                  <span class="col-label">{{ getColHeader(field) | translate }}</span>
                   @if (isAlwaysVisible(field)) {
                     <span class="col-locked">
                       <i class="pi pi-lock" style="font-size: 10px"></i>
@@ -116,7 +116,7 @@
                 @for (field of hiddenColumns; track field) {
                   <div class="col-panel-item col-panel-item--off">
                     <span class="drag-handle drag-handle--placeholder"></span>
-                    <span class="col-label col-label--dim">{{ getColHeader(field) }}</span>
+                    <span class="col-label col-label--dim">{{ getColHeader(field) | translate }}</span>
                     <label
                       class="col-toggle"
                       role="button"
@@ -179,7 +179,7 @@
             [style.width]="getColumnWidth(col.field)"
           >
             <div class="col-head">
-              <span class="col-head-label">{{ col.header }}</span>
+              <span class="col-head-label">{{ col.header | translate }}</span>
               <div class="col-head-actions">
                 <p-sortIcon [field]="col.field" />
                 <button
@@ -192,8 +192,8 @@
                   class="col-filter-btn"
                   [class.is-active]="hasFilterOn(col.field)"
                   (click)="onFilterBtnClick($event, col)"
-                  [attr.aria-label]="'Filtrele: ' + col.header"
-                  pTooltip="Filtrele"
+                  [attr.aria-label]="('COMMON.FILTER_FOR' | translate: { value: col.header | translate })"
+                  [pTooltip]="'COMMON.FILTER' | translate"
                   tooltipPosition="top"
                 ></button>
               </div>
@@ -207,7 +207,7 @@
             [style.width]="getColumnWidth(col.field)"
           >
             <div class="col-head">
-              <span class="col-head-label">{{ col.header }}</span>
+              <span class="col-head-label">{{ col.header | translate }}</span>
               <div class="col-head-actions">
                 <button
                   pButton
@@ -219,8 +219,8 @@
                   class="col-filter-btn"
                   [class.is-active]="hasFilterOn(col.field)"
                   (click)="onFilterBtnClick($event, col)"
-                  [attr.aria-label]="'Filtrele: ' + col.header"
-                  pTooltip="Filtrele"
+                  [attr.aria-label]="('COMMON.FILTER_FOR' | translate: { value: col.header | translate })"
+                  [pTooltip]="'COMMON.FILTER' | translate"
                   tooltipPosition="top"
                 ></button>
               </div>
@@ -229,7 +229,7 @@
         }
       }
       @if (actionsTemplate) {
-        <th class="col-actions">İşlem</th>
+        <th class="col-actions">{{ 'COMMON.ACTIONS' | translate }}</th>
       }
     </tr>
   </ng-template>
@@ -273,7 +273,7 @@
       >
         <div class="d-flex flex-column align-items-center py-5">
           <i class="pi pi-inbox text-4xl text-muted mb-3"></i>
-          <span class="text-muted">{{ emptyMessage }}</span>
+          <span class="text-muted">{{ emptyMessage | translate }}</span>
         </div>
       </td>
     </tr>
@@ -285,10 +285,10 @@
     class="col-filter-popup"
     [style]="{ left: popup.x + 'px', top: popup.y + 'px' }"
     role="dialog"
-    [attr.aria-label]="'Filtre: ' + popup.col.header"
+    [attr.aria-label]="('COMMON.FILTER_POPUP_FOR' | translate: { value: popup.col.header | translate })"
   >
     <div class="col-filter-popup-header">
-      <span>{{ popup.col.header }}</span>
+      <span>{{ popup.col.header | translate }}</span>
       <button
         pButton
         type="button"
@@ -297,7 +297,7 @@
         text="true"
         rounded="true"
         (click)="closeFilterPopup()"
-        [attr.aria-label]="'Kapat'"
+        [attr.aria-label]="'COMMON.CLOSE' | translate"
       ></button>
     </div>
     @if (getColumnFilterType(popup.col) === 'select') {
@@ -307,7 +307,7 @@
         optionValue="value"
         [ngModel]="getColumnFilterValue(popup.col.field)"
         (ngModelChange)="onColumnFilterChange(popup.col, $event)"
-        placeholder="Tümü"
+        [placeholder]="'COMMON.ALL' | translate"
         showClear="true"
         class="col-filter-select"
       />
@@ -316,7 +316,7 @@
         pInputText
         [ngModel]="getColumnFilterValue(popup.col.field)"
         (ngModelChange)="onColumnFilterChange(popup.col, $event)"
-        placeholder="Ara..."
+        [placeholder]="'COMMON.SEARCH' | translate"
         autocomplete="off"
         class="col-filter-input"
       />
@@ -324,7 +324,7 @@
     <button
       pButton
       type="button"
-      label="Temizle"
+      [label]="'COMMON.CLEAR' | translate"
       icon="pi pi-filter-slash"
       size="small"
       text="true"

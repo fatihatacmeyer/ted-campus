@@ -1,20 +1,20 @@
 <div class="admin-wrapper">
   <div class="admin-card">
     <div class="d-flex justify-content-between align-items-center mb-3 gap-2 flex-wrap">
-      <h4 class="fw-bold mb-0" style="color: #dc2134">{{ pageTitle }}</h4>
+      <h4 class="fw-bold mb-0" style="color: #dc2134">{{ pageTitleKey | translate }}</h4>
 
       <button
         pButton
         class="p-button-sm"
         icon="pi pi-plus"
-        [label]="addLabel"
-        [attr.aria-label]="addLabel"
+        [label]="addLabelKey | translate"
+        [attr.aria-label]="addLabelKey | translate"
         (click)="openAddDialog()"
       ></button>
     </div>
 
     <div class="small text-muted mb-3">
-      {{ descriptionText }}
+      {{ descriptionTextKey | translate }}
     </div>
 
     @if (isLoading) {
@@ -24,7 +24,7 @@
           fill="transparent"
           animationDuration=".8s"
         ></p-progressSpinner>
-        <span class="loading-text">Yükleniyor...</span>
+        <span class="loading-text">{{ 'COMMON.LOADING' | translate }}</span>
       </div>
     }
 
@@ -70,8 +70,8 @@
             type="button"
             icon="pi pi-calendar-plus"
             class="p-button-text p-button-sm p-button-success"
-            pTooltip="İzin Ata"
-            aria-label="İzin Ata"
+            [pTooltip]="'PERSON.LEAVE_REQUEST' | translate"
+            [attr.aria-label]="'PERSON.LEAVE_REQUEST' | translate"
             (click)="onLeaveRequest($event, person)"
           ></button>
         </ng-template>
@@ -100,7 +100,7 @@
   [userdef]="USERDEF"
   [editPerson]="editPerson"
   [allPersons]="allPersons"
-  [title]="formTitle"
+  [titleKey]="formTitleKey"
   (visibleChange)="onEditDialogClose()"
   (saved)="onPersonSaved($event)"
 ></app-person-form>

@@ -3,9 +3,17 @@
     <span class="logo">TED</span>
   </div>
   <div class="header-right">
+    <p-selectButton
+      [options]="langOptions"
+      [(ngModel)]="currentLang"
+      optionLabel="label"
+      optionValue="value"
+      (onChange)="onLangChange($event.value)"
+      [attr.aria-label]="'HEADER.LANG_LABEL' | translate"
+    />
     <button class="logout-btn" (click)="logout()">
       <span class="material-symbols-outlined">logout</span>
-      Çıkış Yap
+      {{ 'HEADER.LOGOUT' | translate }}
     </button>
   </div>
 </div>

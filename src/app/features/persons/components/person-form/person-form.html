@@ -4,24 +4,24 @@
   [style]="{ width: '600px' }"
   [draggable]="false"
   (onHide)="close()"
-  [header]="title"
+  [header]="titleKey | translate"
   [baseZIndex]="10000"
 >
   <form [formGroup]="form" (ngSubmit)="submit()" class="person-form">
     <!-- Fotoğraf -->
     <div class="form-section">
-      <h5>Fotoğraf</h5>
+      <h5>{{ 'PERSON.PHOTO' | translate }}</h5>
       @if (selectedPhoto) {
         <div class="photo-preview">
-          <img [src]="selectedPhoto" alt="Ön izleme" />
+          <img [src]="selectedPhoto" [attr.alt]="'PERSON.PHOTO_PREVIEW' | translate" />
           <button
             pButton
             type="button"
             icon="pi pi-times"
             class="p-button-danger p-button-rounded p-button-sm remove-photo"
-            aria-label="Fotoğrafı kaldır"
+            [attr.aria-label]="'PERSON.REMOVE_PHOTO' | translate"
             (click)="removePhoto()"
-            pTooltip="Fotoğrafı kaldır"
+            [pTooltip]="'PERSON.REMOVE_PHOTO' | translate"
             tooltipPosition="top"
           ></button>
         </div>
@@ -29,8 +29,8 @@
       } @else {
         <label class="photo-upload-area" for="photoInput">
           <i class="pi pi-camera"></i>
-          <span>Fotoğraf yüklemek için tıklayın</span>
-          <span class="photo-hint">JPG, PNG — Max 5MB</span>
+          <span>{{ 'PERSON.UPLOAD_PHOTO' | translate }}</span>
+          <span class="photo-hint">{{ 'PERSON.PHOTO_HINT' | translate }}</span>
           <input
             type="file"
             id="photoInput"
@@ -43,26 +43,30 @@
     </div>
     <!-- Kişisel Bilgiler -->
     <div class="form-section">
-      <h5>Kişisel Bilgiler</h5>
+      <h5>{{ 'PERSON.PERSONAL_INFO' | translate }}</h5>
       <div class="field-row">
         <div class="field">
-          <label for="ad">Ad <span class="required">*</span></label>
-          <input pInputText id="ad" formControlName="ad" placeholder="Ad giriniz" />
+          <label for="ad">{{ 'PERSON.FIRST_NAME' | translate }} <span class="required">*</span></label>
+          <input pInputText id="ad" formControlName="ad" [placeholder]="'PERSON.FIRST_NAME_PLACEHOLDER' | translate" />
           @if (form.get('ad')?.invalid && form.get('ad')?.touched) {
-            <small class="field-error">Ad zorunludur.</small>
+            <small class="field-error">{{ 'PERSON.ERROR_FIRST_NAME_REQUIRED' | translate }}</small>
+          }
+        </div>
+          @if (form.get('ad')?.invalid && form.get('ad')?.touched) {
+            <small class="field-error">{{ 'PERSON.ERROR_FIRST_NAME_REQUIRED' | translate }}</small>
           }
         </div>
         <div class="field">
-          <label for="soyad">Soyad <span class="required">*</span></label>
-          <input pInputText id="soyad" formControlName="soyad" placeholder="Soyad giriniz" />
+          <label for="soyad">{{ 'PERSON.LAST_NAME' | translate }} <span class="required">*</span></label>
+          <input pInputText id="soyad" formControlName="soyad" [placeholder]="'PERSON.LAST_NAME_PLACEHOLDER' | translate" />
           @if (form.get('soyad')?.invalid && form.get('soyad')?.touched) {
-            <small class="field-error">Soyad zorunludur.</small>
+            <small class="field-error">{{ 'PERSON.ERROR_LAST_NAME_REQUIRED' | translate }}</small>
           }
         </div>
       </div>
       <div class="field-row">
         <div class="field">
-          <label for="dogumtarih">Doğum Tarihi</label>
+          <label for="dogumtarih">{{ 'PERSON.BIRTH_DATE' | translate }}</label>
           <p-datepicker
             id="dogumtarih"
             formControlName="dogumtarih"
@@ -70,42 +74,48 @@
             dateFormat="dd.mm.yy"
             [showOnFocus]="false"
             appendTo="body"
-            placeholder="Tarih seçiniz"
+            [placeholder]="'PERSON.BIRTH_DATE_PLACEHOLDER' | translate"
             styleClass="w-100"
           />
         </div>
         <div class="field-row-half">
           <div class="field">
-            <label for="cinsiyet">Cinsiyet</label>
+            <label for="cinsiyet">{{ 'PERSON.GENDER' | translate }}</label>
             <p-select
               id="cinsiyet"
               formControlName="cinsiyet"
               [options]="genderOptions"
               optionLabel="label"
               optionValue="value"
-              placeholder="Seçiniz"
+              [placeholder]="'PERSON.SELECT' | translate"
               styleClass="w-100"
-            />
+            >
+              <ng-template pTemplate="selectedItem" let-option>
+                <span>{{ option.label | translate }}</span>
+              </ng-template>
+              <ng-template pTemplate="item" let-option>
+                <span>{{ option.label | translate }}</span>
+              </ng-template>
+            </p-select>
           </div>
           <div class="field">
-            <label for="kangrubu">Kan Grubu</label>
+            <label for="kangrubu">{{ 'PERSON.BLOOD_TYPE' | translate }}</label>
             <p-select
               id="kangrubu"
               formControlName="kangrubu"
               [options]="bloodTypeOptions"
               optionLabel="label"
               optionValue="value"
-              placeholder="Seçiniz"
+              [placeholder]="'PERSON.SELECT' | translate"
               styleClass="w-100"
             />
           </div>
         </div>
       </div>
-    </div>
 
     <!-- Kimlik Bilgileri -->
     <div class="form-section">
-      <h5>Kimlik Bilgileri</h5>
+      <h5>{{ 'PERSON.IDENTITY_INFO' | translate }}</h5>
       <!-- <div class="field-row">
         <div class="field">
           <label for="sicilno">Sicil No</label>
@@ -122,17 +132,17 @@
         </div>
       </div> -->
       <div class="field">
-        <label for="cardid">Kart ID</label>
-        <input pInputText id="cardid" formControlName="cardid" placeholder="Kart numarası" />
+        <label for="cardid">{{ 'PERSON.CARDID' | translate }}</label>
+        <input pInputText id="cardid" formControlName="cardid" [placeholder]="'PERSON.CARDID_PLACEHOLDER' | translate" />
       </div>
     </div>
 
     <!-- İletişim -->
     <div class="form-section">
-      <h5>İletişim</h5>
+      <h5>{{ 'PERSON.CONTACT_INFO' | translate }}</h5>
       <div class="field-row">
         <div class="field">
-          <label for="ceptelefon">Cep Telefonu</label>
+          <label for="ceptelefon">{{ 'PERSON.PHONE' | translate }}</label>
           <input
             pInputText
             id="ceptelefon"
@@ -151,7 +161,7 @@
         </div> -->
       </div>
       <div class="field">
-        <label for="email">E-posta</label>
+        <label for="email">{{ 'PERSON.EMAIL' | translate }}</label>
         <input
           pInputText
           id="email"
@@ -164,26 +174,26 @@
 
     <!-- Adres -->
     <div class="form-section">
-      <h5>Adres</h5>
+      <h5>{{ 'PERSON.ADDRESS' | translate }}</h5>
       <div class="field">
-        <label for="adres">Adres</label>
+        <label for="adres">{{ 'PERSON.ADDRESS' | translate }}</label>
         <textarea
           pTextarea
           id="adres"
           formControlName="adres"
           rows="2"
-          placeholder="Açık adres"
+          [placeholder]="'PERSON.ADDRESS_PLACEHOLDER' | translate"
           style="resize: vertical"
         ></textarea>
       </div>
       <div class="field-row">
         <div class="field">
-          <label for="il">İl</label>
-          <input pInputText id="il" formControlName="il" placeholder="İl" />
+          <label for="il">{{ 'PERSON.CITY' | translate }}</label>
+          <input pInputText id="il" formControlName="il" [placeholder]="'PERSON.CITY_PLACEHOLDER' | translate" />
         </div>
         <div class="field">
-          <label for="ilce">İlçe</label>
-          <input pInputText id="ilce" formControlName="ilce" placeholder="İlçe" />
+          <label for="ilce">{{ 'PERSON.DISTRICT' | translate }}</label>
+          <input pInputText id="ilce" formControlName="ilce" [placeholder]="'PERSON.DISTRICT_PLACEHOLDER' | translate" />
         </div>
       </div>
     </div>
@@ -213,10 +223,10 @@
                     <small class="relation-sicilno">({{ row.sicilno }})</small>
                   }
                   @if (row.changed) {
-                    <span class="relation-badge relation-badge-change">Değişecek</span>
+                    <span class="relation-badge relation-badge-change">{{ 'PERSON.WILL_CHANGE' | translate }}</span>
                   }
                   @if (row.pending) {
-                    <span class="relation-badge relation-badge-add">Eklenecek</span>
+                    <span class="relation-badge relation-badge-add">{{ 'PERSON.WILL_ADD' | translate }}</span>
                   }
                 </div>
 
@@ -243,7 +253,7 @@
                         type="button"
                         icon="pi pi-check"
                         class="p-button-sm p-button-success"
-                        pTooltip="Değişikliği onayla"
+                        [pTooltip]="'PERSON.CONFIRM_CHANGE' | translate"
                         (click)="confirmChange()"
                       ></button>
                       <button
@@ -251,7 +261,7 @@
                         type="button"
                         icon="pi pi-times"
                         class="p-button-sm p-button-text"
-                        pTooltip="Vazgeç"
+                        [pTooltip]="'PERSON.ABORT' | translate"
                         (click)="cancelChange()"
                       ></button>
                     </div>
@@ -259,13 +269,13 @@
                 } @else if (confirmRemoveKey === rowKey(row)) {
                   <!-- İki aşamalı silme onayı -->
                   <div class="relation-actions relation-confirm">
-                    <span class="relation-confirm-text">Kaldırılsın mı?</span>
+                    <span class="relation-confirm-text">{{ 'PERSON.REMOVE_QUESTION' | translate }}</span>
                     <button
                       pButton
                       type="button"
                       icon="pi pi-check"
                       class="p-button-sm p-button-danger"
-                      pTooltip="Onayla"
+                      [pTooltip]="'COMMON.CONFIRM' | translate"
                       (click)="confirmRemove(row)"
                     ></button>
                     <button
@@ -273,7 +283,7 @@
                       type="button"
                       icon="pi pi-times"
                       class="p-button-sm p-button-text"
-                      pTooltip="Vazgeç"
+                      [pTooltip]="'PERSON.ABORT' | translate"
                       (click)="cancelRemove()"
                     ></button>
                   </div>
@@ -340,16 +350,16 @@
           <div class="p-3 border rounded bg-light">
             <div class="field-row mb-2">
               <div class="field">
-                <label>{{ linkedKind }} Adı <span class="required">*</span></label>
-                <input pInputText formControlName="yeniLinkedAd" [placeholder]="linkedKind + ' Adı'" />
+                <label>{{ 'PERSON.LINKED_NAME' | translate: { kind: (linkedKind | translate) } }} <span class="required">*</span></label>
+                <input pInputText formControlName="yeniLinkedAd" [placeholder]="'PERSON.LINKED_NAME' | translate: { kind: (linkedKind | translate) }" />
               </div>
               <div class="field">
-                <label>{{ linkedKind }} Soyadı <span class="required">*</span></label>
-                <input pInputText formControlName="yeniLinkedSoyad" [placeholder]="linkedKind + ' Soyadı'" />
+                <label>{{ 'PERSON.LINKED_SURNAME' | translate: { kind: (linkedKind | translate) } }} <span class="required">*</span></label>
+                <input pInputText formControlName="yeniLinkedSoyad" [placeholder]="'PERSON.LINKED_SURNAME' | translate: { kind: (linkedKind | translate) }" />
               </div>
             </div>
             <div class="field">
-              <label>{{ linkedKind }} Telefonu</label>
+              <label>{{ 'PERSON.LINKED_PHONE' | translate: { kind: (linkedKind | translate) } }}</label>
               <input pInputText formControlName="yeniLinkedTelefon" placeholder="05XX XXX XX XX" />
             </div>
           </div>
@@ -361,14 +371,14 @@
     <div class="form-section">
       <!-- <h5>Kurumsal Bilgiler</h5> -->
       <div class="field">
-        <label for="firma">Firma</label>
+        <label for="firma">{{ 'PERSON.COMPANY' | translate }}</label>
         <p-select
           id="firma"
           formControlName="firma"
           [options]="firmaOptions"
           optionLabel="ad"
           optionValue="id"
-          placeholder="Firma seçiniz"
+          [placeholder]="'PERSON.COMPANY_PLACEHOLDER' | translate"
           [showClear]="true"
           appendTo="body"
           styleClass="w-100"
@@ -376,28 +386,28 @@
       </div>
       <div class="field-row">
         <div class="field">
-          <label for="bolum">Bölüm</label>
+          <label for="bolum">{{ 'PERSON.DEPARTMENT' | translate }}</label>
           <p-select
             id="bolum"
             formControlName="bolum"
             [options]="bolumOptions"
             optionLabel="ad"
             optionValue="id"
-            placeholder="Bölüm seçiniz"
+            [placeholder]="'PERSON.DEPARTMENT_PLACEHOLDER' | translate"
             [showClear]="true"
             appendTo="body"
             styleClass="w-100"
           />
         </div>
         <div class="field">
-          <label for="pozisyon">Pozisyon</label>
+          <label for="pozisyon">{{ 'PERSON.POSITION' | translate }}</label>
           <p-select
             id="pozisyon"
             formControlName="pozisyon"
             [options]="pozisyonOptions"
             optionLabel="ad"
             optionValue="id"
-            placeholder="Pozisyon seçiniz"
+            [placeholder]="'PERSON.POSITION_PLACEHOLDER' | translate"
             [showClear]="true"
             appendTo="body"
             styleClass="w-100"
@@ -405,14 +415,14 @@
         </div>
       </div>
       <div class="field">
-        <label for="gorev">Görev</label>
+        <label for="gorev">{{ 'PERSON.TASK' | translate }}</label>
         <p-select
           id="gorev"
           formControlName="gorev"
           [options]="gorevOptions"
           optionLabel="ad"
           optionValue="id"
-          placeholder="Görev seçiniz"
+          [placeholder]="'PERSON.TASK_PLACEHOLDER' | translate"
           [showClear]="true"
           appendTo="body"
           styleClass="w-100"
@@ -420,28 +430,28 @@
       </div>
       <div class="field-row">
         <div class="field">
-          <label for="altfirma">Alt Firma</label>
+          <label for="altfirma">{{ 'PERSON.SUB_COMPANY' | translate }}</label>
           <p-select
             id="altfirma"
             formControlName="altfirma"
             [options]="altfirmaOptions"
             optionLabel="ad"
             optionValue="id"
-            placeholder="Alt firma seçiniz"
+            [placeholder]="'PERSON.SUB_COMPANY_PLACEHOLDER' | translate"
             [showClear]="true"
             appendTo="body"
             styleClass="w-100"
           />
         </div>
         <div class="field">
-          <label for="direktorluk">Direktörlük</label>
+          <label for="direktorluk">{{ 'PERSON.DIRECTORATE' | translate }}</label>
           <p-select
             id="direktorluk"
             formControlName="direktorluk"
             [options]="direktorlukOptions"
             optionLabel="ad"
             optionValue="id"
-            placeholder="Direktörlük seçiniz"
+            [placeholder]="'PERSON.DIRECTORATE_PLACEHOLDER' | translate"
             [showClear]="true"
             appendTo="body"
             styleClass="w-100"
@@ -465,7 +475,7 @@
 
     @if (errorMessage) {
       <div class="error-box">
-        <p>{{ errorMessage }}</p>
+        <p>{{ errorMessage | translate }}</p>
       </div>
     }
 
@@ -473,18 +483,18 @@
       <button
         pButton
         type="button"
-        label="Vazgeç"
+        [label]="'PERSON.ABORT' | translate"
         class="p-button-text"
-        aria-label="Vazgeç"
+        [attr.aria-label]="'PERSON.ABORT' | translate"
         (click)="close()"
       ></button>
       <button
         pButton
         type="submit"
-        [label]="isSaving ? 'Kaydediliyor...' : isEditMode ? 'Güncelle' : 'Kaydet'"
+        [label]="isSaving ? ('PERSON.SAVING' | translate) : isEditMode ? ('PERSON.UPDATE' | translate) : ('PERSON.SAVE' | translate)"
         [disabled]="isSaving"
         icon="pi pi-check"
-        aria-label="Kaydet"
+        [attr.aria-label]="'PERSON.SAVE' | translate"
       ></button>
     </div>
   </form>

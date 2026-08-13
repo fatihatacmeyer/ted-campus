@@ -16,6 +16,7 @@ import {
   UserDef,
   getUserDefLabel,
   getUserDefBadgeClass,
+  getUserDefLabelKey,
 } from '../../../../core/models/person.model';
 import { AuthService } from '../../../../core/services/auth.service';
 import {
@@ -30,6 +31,8 @@ import { ProgressSpinnerModule } from 'primeng/progressspinner';
 import { DialogModule } from 'primeng/dialog';
 import { TooltipModule } from 'primeng/tooltip';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 
 /** Geçiş cihazı işlem satırı模拟类型 — gerçek API bağlandığında Person veya ayrı bir interface ile değiştirilecek. */
 export interface AccessTransaction {
@@ -41,15 +44,15 @@ export interface AccessTransaction {
   badgeLabel: string;
   cardid: string;
   time: string;
-  direction: 'Giriş' | 'Çıkış';
+  direction: string;
   device: string;
-  result: 'Başarılı' | 'Başarısız';
+  result: string;
 }
 
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [ButtonModule, ProgressSpinnerModule, DialogModule, TooltipModule, CommonModule],
+  imports: [ButtonModule, ProgressSpinnerModule, DialogModule, TooltipModule, CommonModule, FormsModule, TranslatePipe],
   templateUrl: './dashboard.html',
   styleUrl: './dashboard.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -99,6 +102,8 @@ export class DashboardComponent implements OnInit {
     statusClass: string;
   }[] = [];
 
+  absenteeForm = { className: '', schoolName: '', reason: '' };
+
   /* ── Dialog states ─────────────────────────────────────── */
   txnDialogVisible = false;
   earlyLeaverDialogVisible = false;
@@ -113,6 +118,7 @@ export class DashboardComponent implements OnInit {
   private router = inject(Router);
   private cdr = inject(ChangeDetectorRef);
   private destroyRef = inject(DestroyRef);
+  private translate = inject(TranslateService);
 
   /* ── Lifecycle ─────────────────────────────────────────── */
   ngOnInit(): void {
@@ -120,7 +126,7 @@ export class DashboardComponent implements OnInit {
     this.userName =
       this.authService.currentUserValue?.fullname ||
       this.authService.currentUserValue?.loginname ||
-      'Kullanıcı';
+      this.translate.instant('DASHBOARD.USER');
     this.fetchData();
   }
 
@@ -165,7 +171,7 @@ export class DashboardComponent implements OnInit {
         },
         error: (err: HttpErrorResponse) => {
           console.error('Dashboard veri yükleme hatası:', err);
-          this.errorMessage = 'Sistem hatası: Veriler yüklenemedi.';
+          this.errorMessage = 'DASHBOARD.LOAD_ERROR';
           this.isLoading = false;
           this.cdr.markForCheck();
         },
@@ -174,26 +180,31 @@ export class DashboardComponent implements OnInit {
 
   private generateMockTransactions(): void {
     const names = [...this.students, ...this.teachers, ...this.parents];
-    const devices = ['Ana Giriş', 'Yan Giriş', 'Bahçe Kapısı', 'Otopark', 'VIP Giriş'];
+    const devices = [
+      'DASHBOARD.DEVICE_MAIN_ENTRANCE',
+      'DASHBOARD.DEVICE_SIDE_ENTRANCE',
+      'DASHBOARD.DEVICE_GARDEN_GATE',
+      'DASHBOARD.DEVICE_PARKING',
+      'DASHBOARD.DEVICE_VIP_ENTRANCE',
+    ];
     const base = new Date();
 
     this.recentTransactions = Array.from({ length: 100 }, (_, i) => {
       const person = names[Math.floor(Math.random() * names.length)];
-      const dir = Math.random() > 0.5 ? 'Giriş' : 'Çıkış';
       const t = new Date(base.getTime() - i * 120000 + Math.floor(Math.random() * 60000));
       const userdef = person?.userdef ?? 0;
       return {
         id: i + 1,
-        personName: person?.adsoyad ?? 'Bilinmeyen',
+        personName: person?.adsoyad ?? this.translate.instant('DASHBOARD.UNKNOWN'),
         sicilno: person?.sicilno ?? '',
         userdef,
         badgeClass: getUserDefBadgeClass(userdef),
-        badgeLabel: getUserDefLabel(userdef),
+        badgeLabel: getUserDefLabelKey(userdef),
         cardid: person?.cardid ?? '',
         time: `${String(t.getHours()).padStart(2, '0')}:${String(t.getMinutes()).padStart(2, '0')}:${String(t.getSeconds()).padStart(2, '0')}`,
-        direction: dir,
+        direction: Math.random() > 0.5 ? 'in' : 'out',
         device: devices[Math.floor(Math.random() * devices.length)],
-        result: Math.random() > 0.05 ? 'Başarılı' : 'Başarısız',
+        result: Math.random() > 0.05 ? 'success' : 'failed',
       };
     });
 
@@ -201,9 +212,15 @@ export class DashboardComponent implements OnInit {
   }
 
   private generateMockEventList(): void {
-    const roles = ['Öğrenci', 'Öğretmen', 'Veli', 'Görevli'];
-    const tasks = ['Sunum', 'Organizasyon', 'Katılımcı', 'Koordinatör', 'Judelik'];
-    const statuses = ['Onaylandı', 'Beklemede', 'Tamamlandı'];
+    const roles = ['USERDEF.STUDENT', 'USERDEF.TEACHER', 'USERDEF.PARENT', 'USERDEF.STAFF'];
+    const tasks = [
+      'DASHBOARD.TASK_PRESENTATION',
+      'DASHBOARD.TASK_ORGANIZATION',
+      'DASHBOARD.TASK_PARTICIPANT',
+      'DASHBOARD.TASK_COORDINATOR',
+      'DASHBOARD.TASK_JURY',
+    ];
+    const statuses = ['approved', 'pending', 'completed'];
 
     const source = [...this.students, ...this.teachers, ...this.parents];
     const shuffled = [...source].sort(() => 0.5 - Math.random());
@@ -221,11 +238,11 @@ export class DashboardComponent implements OnInit {
           .map((n) => n.charAt(0))
           .join(''),
         statusClass:
-          status === 'Onaylandı'
+          status === 'approved'
             ? 'status-approved'
-            : status === 'Beklemede'
+            : status === 'pending'
               ? 'status-pending'
-              : status === 'Tamamlandı'
+              : status === 'completed'
                 ? 'status-done'
                 : '',
       };
@@ -246,16 +263,36 @@ export class DashboardComponent implements OnInit {
 
   private buildGreeting(): string {
     const hour = new Date().getHours();
-    if (hour < 12) return 'Günaydın';
-    if (hour < 18) return 'İyi Günler';
-    return 'İyi Akşamlar';
+    if (hour < 12) return 'DASHBOARD.GREETING_MORNING';
+    if (hour < 18) return 'DASHBOARD.GREETING_AFTERNOON';
+    return 'DASHBOARD.GREETING_EVENING';
+  }
+
+  directionLabel(direction: string): string {
+    return direction === 'in' ? 'DASHBOARD.DIRECTION_IN' : 'DASHBOARD.DIRECTION_OUT';
+  }
+
+  resultLabel(result: string): string {
+    return result === 'success' ? 'DASHBOARD.RESULT_SUCCESS' : 'DASHBOARD.RESULT_FAILED';
+  }
+
+  statusLabel(status: string): string {
+    if (status === 'approved') return 'DASHBOARD.STATUS_APPROVED';
+    if (status === 'pending') return 'DASHBOARD.STATUS_PENDING';
+    return 'DASHBOARD.STATUS_COMPLETED';
   }
 
   getUserdefBadge(userdef: number): string {
-    return getUserDefLabel(userdef);
+    return getUserDefLabelKey(userdef);
   }
 
   getUserdefBadgeClass(userdef: number): string {
     return getUserDefBadgeClass(userdef);
+  }
+
+  saveAbsentee(): void {
+    // TODO: Implement save absentee logic
+    this.absentDialogVisible = false;
+    this.absenteeForm = { className: '', schoolName: '', reason: '' };
   }
 }

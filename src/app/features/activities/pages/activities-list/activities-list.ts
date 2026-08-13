@@ -30,14 +30,15 @@ import {
 } from '../../mocks/activity-participants.mock';
 import { formatDate, parseDate } from '../../../../shared/utils/date.utils';
 import { NotificationService } from '../../../../core/services/notification.service';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 
 /** Katılımcı durum filtreleri — dashboard kartlarıyla eşleşir. */
 type ParticipantFilter = 'Tümü' | MockActivityParticipant['durum'];
 
 /** Boole sütun filtreleri için Evet/Hayır seçenekleri */
 const BOOLEAN_FILTER_OPTIONS: FilterOption[] = [
-  { label: 'Evet', value: true },
-  { label: 'Hayır', value: false },
+  { label: 'COMMON.YES', value: true },
+  { label: 'COMMON.NO', value: false },
 ];
 
 @Component({
@@ -57,6 +58,7 @@ const BOOLEAN_FILTER_OPTIONS: FilterOption[] = [
     CheckboxModule,
     MultiSelectModule,
     TooltipModule,
+    TranslatePipe,
   ],
   templateUrl: './activities-list.html',
   styleUrls: ['./activities-list.scss'],
@@ -68,6 +70,7 @@ export class ActivitiesComponent {
   private typesService = inject(TypesService);
   private destroyRef = inject(DestroyRef);
   private notification = inject(NotificationService);
+  private translate = inject(TranslateService);
 
   activities = signal<ActivityInterface[]>([]);
   isLoading = signal(false);
@@ -97,52 +100,52 @@ export class ActivitiesComponent {
 
   activityColumns: ColumnDef<ActivityInterface>[] = [
     { field: 'id', header: 'ID', sortable: true, width: '70px' },
-    { field: 'name', header: 'Etkinlik Adı', sortable: true },
+    { field: 'name', header: 'ACTIVITIES.NAME', sortable: true },
     {
       field: 'activityType',
-      header: 'Türü',
+      header: 'ACTIVITIES.TYPE',
       sortable: true,
       filterType: 'select',
       filterOptions: (rows) => uniqueFilterOptions(rows, 'activityType'),
     },
-    { field: 'startDate', header: 'Tarih', sortable: true, width: '110px' },
-    { field: 'endDate', header: 'Bitiş Tarihi', sortable: true, width: '110px' },
-    { field: 'eventManager', header: 'Yönetici' },
-    { field: 'classroom', header: 'Sınıf / Kapsam' },
+    { field: 'startDate', header: 'ACTIVITIES.DATE', sortable: true, width: '110px' },
+    { field: 'endDate', header: 'ACTIVITIES.COLUMN_END_DATE', sortable: true, width: '110px' },
+    { field: 'eventManager', header: 'ACTIVITIES.COLUMN_MANAGER' },
+    { field: 'classroom', header: 'ACTIVITIES.COLUMN_CLASSROOM' },
     {
       field: 'status',
-      header: 'Durum',
+      header: 'ACTIVITIES.STATUS',
       sortable: true,
       width: '100px',
       filterType: 'select',
       filterOptions: (rows) => uniqueFilterOptions(rows, 'status'),
     },
-    { field: 'requestStartDate', header: 'Başvuru Başlangıcı', sortable: true, width: '130px' },
-    { field: 'requestEndDate', header: 'Başvuru Bitişi', sortable: true, width: '130px' },
-    { field: 'maxStudentCount', header: 'Max Öğrenci', sortable: true },
-    { field: 'studentParentCount', header: 'Veli Sayısı' },
+    { field: 'requestStartDate', header: 'ACTIVITIES.COLUMN_REQUEST_START', sortable: true, width: '130px' },
+    { field: 'requestEndDate', header: 'ACTIVITIES.COLUMN_REQUEST_END', sortable: true, width: '130px' },
+    { field: 'maxStudentCount', header: 'ACTIVITIES.COLUMN_MAX_STUDENT', sortable: true },
+    { field: 'studentParentCount', header: 'ACTIVITIES.COLUMN_PARENT_COUNT' },
     {
       field: 'isPaid',
-      header: 'Ücretli',
+      header: 'ACTIVITIES.COLUMN_PAID',
       filterType: 'select',
       filterOptions: BOOLEAN_FILTER_OPTIONS,
     },
-    { field: 'fee', header: 'Ücret' },
+    { field: 'fee', header: 'ACTIVITIES.COLUMN_FEE' },
     {
       field: 'isParentRequired',
-      header: 'Veli Zorunlu',
+      header: 'ACTIVITIES.COLUMN_PARENT_REQUIRED',
       filterType: 'select',
       filterOptions: BOOLEAN_FILTER_OPTIONS,
     },
-    { field: 'transportation', header: 'Ulaşım' },
-    { field: 'description', header: 'Açıklama' },
+    { field: 'transportation', header: 'ACTIVITIES.COLUMN_TRANSPORTATION' },
+    { field: 'description', header: 'ACTIVITIES.DESCRIPTION' },
     {
       field: 'isPrivate',
-      header: 'Özel Etkinlik',
+      header: 'ACTIVITIES.COLUMN_PRIVATE',
       filterType: 'select',
       filterOptions: BOOLEAN_FILTER_OPTIONS,
     },
-    { field: 'createdAt', header: 'Oluşturulma Tarihi' },
+    { field: 'createdAt', header: 'ACTIVITIES.COLUMN_CREATED_AT' },
   ];
   defaultActivityFields = [
     'id',
@@ -206,7 +209,7 @@ export class ActivitiesComponent {
         },
         error: (err) => {
           console.error('[ActivitiesComponent] loadActivities error:', err);
-          this.errorMessage.set('Etkinlikler yüklenirken bir hata oluştu.');
+          this.errorMessage.set(this.translate.instant('ACTIVITIES.ERROR_LOAD'));
           this.isLoading.set(false);
         },
       });
@@ -264,7 +267,9 @@ export class ActivitiesComponent {
     const groups = new Map<string, { label: string; value: string }[]>();
     for (const item of items) {
       const gradeMatch = item.ad.trim().match(/^(\d+)/);
-      const groupLabel = gradeMatch ? `${gradeMatch[1]}. Sınıflar` : 'Diğer';
+      const groupLabel = gradeMatch
+        ? this.translate.instant('ACTIVITIES.GRADE_CLASSES', { grade: gradeMatch[1] })
+        : this.translate.instant('ACTIVITIES.OTHERS');
       if (!groups.has(groupLabel)) {
         groups.set(groupLabel, []);
       }
@@ -282,9 +287,9 @@ export class ActivitiesComponent {
   }
 
   statusOptions = [
-    { label: 'Aktif', value: 'Aktif' },
-    { label: 'Pasif', value: 'Pasif' },
-    { label: 'İptal', value: 'İptal' },
+    { label: 'ACTIVITIES.STATUS_ACTIVE', value: 'Aktif' },
+    { label: 'ACTIVITIES.STATUS_INACTIVE', value: 'Pasif' },
+    { label: 'ACTIVITIES.CANCELLED', value: 'İptal' },
   ];
 
   /** Etkinlik türleri — TurCampus lookup'undan doldurulur. */
@@ -354,7 +359,9 @@ export class ActivitiesComponent {
     const selected: string[] = this.activityForm.get('classroom')?.value || [];
     if (selected.length === 0) return '';
     if (this.isAllClassesSelected) {
-      return `Tüm sınıflar seçili (${this.allClassesCount} şube)`;
+      return this.translate.instant('ACTIVITIES.ALL_CLASSES_SELECTED', {
+        count: this.allClassesCount,
+      });
     }
 
     const parts: string[] = [];
@@ -379,7 +386,8 @@ export class ActivitiesComponent {
 
   /** Tablodaki sınıf hücresi için gruplanmış özet string */
   getTableClassroomSummary(classroom: string): string {
-    if (!classroom || classroom === 'Tüm Sınıflar') return 'Tüm Sınıflar';
+    if (!classroom || classroom === 'Tüm Sınıflar')
+      return this.translate.instant('ACTIVITIES.ALL_CLASSES');
 
     const classes = classroom.split(', ');
     const counts = new Map<string, number>();
@@ -399,7 +407,8 @@ export class ActivitiesComponent {
 
   /** Tablodaki tooltip için tam liste */
   getTableClassroomFull(classroom: string): string {
-    if (!classroom || classroom === 'Tüm Sınıflar') return 'Tüm Sınıflar';
+    if (!classroom || classroom === 'Tüm Sınıflar')
+      return this.translate.instant('ACTIVITIES.ALL_CLASSES');
     return classroom;
   }
 
@@ -420,7 +429,9 @@ export class ActivitiesComponent {
   }
 
   get dialogTitle(): string {
-    return this.editingActivity() ? 'Etkinlik Düzenle' : 'Yeni Etkinlik Ekle';
+    return this.editingActivity()
+      ? this.translate.instant('ACTIVITIES.EDIT')
+      : this.translate.instant('ACTIVITIES.ADD');
   }
 
   openAddDialog() {
@@ -491,7 +502,7 @@ export class ActivitiesComponent {
         },
         error: (err) => {
           console.error('[ActivitiesComponent] getApprovalStats error:', err);
-          this.approvalError.set('Onay istatistikleri yüklenirken bir hata oluştu.');
+          this.approvalError.set(this.translate.instant('ACTIVITIES.ERROR_LOAD_APPROVAL'));
           this.isLoadingStats.set(false);
         },
       });
@@ -598,7 +609,7 @@ export class ActivitiesComponent {
       },
       error: (err) => {
         console.error('[ActivitiesComponent] save error:', err);
-        this.errorMessage.set('Etkinlik kaydedilirken bir hata oluştu.');
+        this.errorMessage.set(this.translate.instant('ACTIVITIES.ERROR_SAVE'));
         this.notification.error('NOTIFICATIONS.MESSAGES.SAVE_FAILED');
         this.isSaving.set(false);
       },
@@ -634,7 +645,7 @@ export class ActivitiesComponent {
         },
         error: (err) => {
           console.error('[ActivitiesComponent] delete error:', err);
-          this.errorMessage.set('Etkinlik silinirken bir hata oluştu.');
+          this.errorMessage.set(this.translate.instant('ACTIVITIES.ERROR_DELETE'));
           this.notification.error('NOTIFICATIONS.MESSAGES.SAVE_FAILED');
         },
       });

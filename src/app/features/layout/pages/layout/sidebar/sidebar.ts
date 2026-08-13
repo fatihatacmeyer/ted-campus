@@ -1,8 +1,9 @@
 import { Component, ChangeDetectionStrategy, Input, Output, EventEmitter } from '@angular/core';
 import { RouterLink, RouterLinkActive } from '@angular/router';
+import { TranslatePipe } from '@ngx-translate/core';
 
 interface NavItem {
-  label: string;
+  labelKey: string;
   route: string;
   icon: string;
 }
@@ -10,7 +11,7 @@ interface NavItem {
 @Component({
   selector: 'app-sidebar',
   standalone: true,
-  imports: [RouterLink, RouterLinkActive],
+  imports: [RouterLink, RouterLinkActive, TranslatePipe],
   templateUrl: './sidebar.html',
   styleUrl: './sidebar.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -21,12 +22,12 @@ export class SidebarComponent {
   @Output() sidebarToggle = new EventEmitter<void>();
 
   protected readonly navItems: NavItem[] = [
-    { label: 'Anasayfa', route: '/home', icon: 'dashboard' },
-    { label: 'Öğrenciler', route: '/home/students', icon: 'school' },
-    { label: 'Veliler', route: '/home/parents', icon: 'group' },
-    { label: 'Öğretmenler', route: '/home/teachers', icon: 'badge' },
-    { label: 'Servis', route: '/home/transport', icon: 'directions_bus' },
-    { label: 'Etkinlikler', route: '/home/activities', icon: 'event' },
-    { label: 'PDKS', route: '/home/attendance', icon: 'schedule' },
+    { labelKey: 'MENU.HOME', route: '/home', icon: 'dashboard' },
+    { labelKey: 'MENU.STUDENTS', route: '/home/students', icon: 'school' },
+    { labelKey: 'MENU.PARENTS', route: '/home/parents', icon: 'group' },
+    { labelKey: 'MENU.TEACHERS', route: '/home/teachers', icon: 'badge' },
+    { labelKey: 'MENU.TRANSPORT', route: '/home/transport', icon: 'directions_bus' },
+    { labelKey: 'MENU.ACTIVITIES', route: '/home/activities', icon: 'event' },
+    { labelKey: 'MENU.ATTENDANCE', route: '/home/attendance', icon: 'schedule' },
   ];
 }

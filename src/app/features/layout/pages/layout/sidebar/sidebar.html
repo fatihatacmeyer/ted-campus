@@ -19,31 +19,31 @@
 <nav class="sidebar" [class.closed]="!isOpen">
   <div class="sidebar-header">
     @if (isOpen) {
-      <span class="header-title">MENÜ</span>
+      <span class="header-title">{{ 'HEADER.MENU' | translate }}</span>
     }
 
     <button
       class="toggle-btn"
       (click)="sidebarToggle.emit()"
-      [title]="isOpen ? 'Menüyü Daralt' : 'Menüyü Genişlet'"
+      [title]="(isOpen ? 'HEADER.COLLAPSE' : 'HEADER.EXPAND') | translate"
     >
       <span class="material-symbols-outlined">{{ isOpen ? 'menu_open' : 'menu' }}</span>
     </button>
   </div>
 
   <ul class="nav-list">
-    @for (item of navItems; track item.label) {
+    @for (item of navItems; track item.labelKey) {
       <li>
         <a
           [routerLink]="item.route"
           routerLinkActive="active"
           [routerLinkActiveOptions]="{ exact: item.route === '/home' }"
-          [title]="!isOpen ? item.label : ''"
+          [title]="!isOpen ? (item.labelKey | translate) : ''"
         >
           <span class="material-symbols-outlined">{{ item.icon }}</span>
 
           @if (isOpen) {
-            <span class="nav-label">{{ item.label }}</span>
+            <span class="nav-label">{{ item.labelKey | translate }}</span>
           }
         </a>
       </li>

@@ -8,9 +8,8 @@
   <!-- ── Welcome Banner ──────────────────────────────────── -->
   <div class="welcome-banner">
     <div class="welcome-content">
-      <h1>{{ greeting }}, {{ userName }}!</h1>
-      <!-- <p>TED Yönetim Paneli &mdash; bugünün özeti aşağıda.</p> -->
-      <p>TED Dashboard Paneli &mdash; bugünün özeti aşağıda.</p>
+      <h1>{{ greeting | translate }}, {{ userName }}!</h1>
+      <p>{{ 'DASHBOARD.WELCOME_HINT' | translate }}</p>
     </div>
     <div class="welcome-decoration">
       <span class="material-symbols-outlined">dashboard</span>
@@ -21,7 +20,7 @@
   @if (isLoading) {
     <div class="loading-container">
       <p-progressSpinner strokeWidth="4" animationDuration=".8s" />
-      <p class="loading-text">Veriler yükleniyor...</p>
+      <p class="loading-text">{{ 'DASHBOARD.LOADING_DATA' | translate }}</p>
     </div>
   }
 
@@ -29,11 +28,11 @@
   @if (errorMessage && !isLoading) {
     <div class="error-banner">
       <span class="material-symbols-outlined">error</span>
-      <span>{{ errorMessage }}</span>
+      <span>{{ errorMessage | translate }}</span>
       <button
         pButton
-        aria-label="Yeniden Dene"
-        label="Yeniden Dene"
+        aria-label="{{ 'COMMON.RETRY' | translate }}"
+        label="{{ 'COMMON.RETRY' | translate }}"
         icon="pi pi-refresh"
         class="p-button-sm p-button-text"
         (click)="fetchData()"
@@ -63,7 +62,10 @@
             {{ stats.studentCount }}<span class="stat-slash">/</span
             ><span class="stat-inside">{{ stats.studentInsideCount }}</span>
           </span>
-          <span class="stat-label">Öğrenci &middot; Kayıtlı / Okulda</span>
+          <span class="stat-label"
+            >{{ 'USERDEF.STUDENT' | translate }} &middot;
+            {{ 'DASHBOARD.REGISTERED_INSIDE' | translate }}</span
+          >
         </div>
         <span class="material-symbols-outlined stat-arrow">arrow_forward</span>
       </div>
@@ -84,7 +86,10 @@
             {{ stats.parentCount }}<span class="stat-slash">/</span
             ><span class="stat-inside">{{ stats.parentInsideCount }}</span>
           </span>
-          <span class="stat-label">Veli &middot; Kayıtlı / Okulda</span>
+          <span class="stat-label"
+            >{{ 'USERDEF.PARENT' | translate }} &middot;
+            {{ 'DASHBOARD.REGISTERED_INSIDE' | translate }}</span
+          >
         </div>
         <span class="material-symbols-outlined stat-arrow">arrow_forward</span>
       </div>
@@ -99,7 +104,10 @@
             {{ stats.totalRegisteredCount }}<span class="stat-slash">/</span
             ><span class="stat-inside">{{ stats.totalInsideCount }}</span>
           </span>
-          <span class="stat-label">Toplam &middot; Kayıtlı / Okulda</span>
+          <span class="stat-label"
+            >{{ 'DASHBOARD.TOTAL' | translate }} &middot;
+            {{ 'DASHBOARD.REGISTERED_INSIDE' | translate }}</span
+          >
         </div>
         <span class="material-symbols-outlined stat-arrow">arrow_forward</span>
       </div>
@@ -117,16 +125,18 @@
               <span class="material-symbols-outlined">logout</span>
             </div>
             <div>
-              <h3>Erken Çıkanlar</h3>
-              <span class="detail-subtitle">{{ earlyLeavers.length }} kişi</span>
+              <h3>{{ 'DASHBOARD.EARLY_LEAVERS' | translate }}</h3>
+              <span class="detail-subtitle"
+                >{{ earlyLeavers.length }} {{ 'COMMON.PERSON' | translate }}</span
+              >
             </div>
           </div>
           <button
             pButton
             class="p-button-text p-button-sm p-button-rounded"
             icon="pi pi-expand"
-            pTooltip="Tam Ekranda Gör"
-            aria-label="Tam Ekranda Gör"
+            pTooltip="{{ 'COMMON.VIEW_FULL' | translate }}"
+            aria-label="{{ 'COMMON.VIEW_FULL' | translate }}"
             (click)="earlyLeaverDialogVisible = true"
           ></button>
         </div>
@@ -134,7 +144,7 @@
           @if (earlyLeavers.length === 0) {
             <div class="empty-state">
               <span class="material-symbols-outlined">check_circle</span>
-              <p>Bugün erken çıkan kişi yok.</p>
+              <p>{{ 'DASHBOARD.NO_EARLY_LEAVERS' | translate }}</p>
             </div>
           } @else {
             <div class="person-list">
@@ -169,7 +179,9 @@
                     >
                   </div>
 
-                  <span class="person-badge badge-student">Öğrenci</span>
+                  <span class="person-badge badge-student">{{
+                    'USERDEF.STUDENT' | translate
+                  }}</span>
 
                   <!-- Saatleri sağa dayalı olarak kendi içinde grupladık -->
                   <div
@@ -183,7 +195,7 @@
                     </span>
                     <!-- Beklenen Çıkış Saati (Daha küçük ve gri) -->
                     <span style="font-size: 0.7rem; color: #6b7280; white-space: nowrap">
-                      Beklenen: {{ person.expectedExitTime }}
+                      {{ 'DASHBOARD.EXPECTED' | translate }}: {{ person.expectedExitTime }}
                     </span>
                   </div>
                 </div>
@@ -191,7 +203,7 @@
             </div>
             @if (earlyLeavers.length > 5) {
               <button class="show-more-btn" (click)="earlyLeaverDialogVisible = true">
-                +{{ earlyLeavers.length - 5 }} kişi daha &hellip;
+                +{{ earlyLeavers.length - 5 }} {{ 'DASHBOARD.MORE_PEOPLE' | translate }} &hellip;
               </button>
             }
           }
@@ -206,16 +218,18 @@
               <span class="material-symbols-outlined">alarm</span>
             </div>
             <div>
-              <h3>Geç Kalan Kişiler</h3>
-              <span class="detail-subtitle">{{ lateArrivals.length }} kişi</span>
+              <h3>{{ 'DASHBOARD.LATE_ARRIVALS' | translate }}</h3>
+              <span class="detail-subtitle"
+                >{{ lateArrivals.length }} {{ 'COMMON.PERSON' | translate }}</span
+              >
             </div>
           </div>
           <button
             pButton
             class="p-button-text p-button-sm p-button-rounded"
             icon="pi pi-expand"
-            pTooltip="Tam Ekranda Gör"
-            aria-label="Tam Ekranda Gör"
+            pTooltip="{{ 'COMMON.VIEW_FULL' | translate }}"
+            aria-label="{{ 'COMMON.VIEW_FULL' | translate }}"
             (click)="lateDialogVisible = true"
           ></button>
         </div>
@@ -223,7 +237,7 @@
           @if (lateArrivals.length === 0) {
             <div class="empty-state">
               <span class="material-symbols-outlined">check_circle</span>
-              <p>Bugün geç kalan kişi yok.</p>
+              <p>{{ 'DASHBOARD.NO_LATE_ARRIVALS' | translate }}</p>
             </div>
           } @else {
             <div class="person-list">
@@ -240,7 +254,9 @@
                     >
                   </div>
 
-                  <span class="person-badge badge-student">Öğrenci</span>
+                  <span class="person-badge badge-student">{{
+                    'USERDEF.STUDENT' | translate
+                  }}</span>
 
                   <!-- Saatleri sağa dayalı olarak kendi içinde grupladık -->
                   <div
@@ -252,7 +268,7 @@
                       {{ late.entryTime | date: 'HH:mm:ss' }}
                     </span>
                     <span style="font-size: 0.7rem; color: #6b7280; white-space: nowrap">
-                      Beklenen: {{ late.expectedEntryTime }}
+                      {{ 'DASHBOARD.MORE_PEOPLE' | translate }}: {{ late.expectedEntryTime }}
                     </span>
                   </div>
                 </div>
@@ -270,16 +286,16 @@
               <span class="material-symbols-outlined">person_off</span>
             </div>
             <div>
-              <h3>Hiç Gelmeyenler</h3>
-              <span class="detail-subtitle">{{ absentees.length }} kişi</span>
+              <h3>{{ 'DASHBOARD.ABSENTEES' | translate }}</h3>
+              <span class="detail-subtitle">{{ absentees.length }} {{ 'COMMON.PERSON' | translate }}</span>
             </div>
           </div>
           <button
             pButton
             class="p-button-text p-button-sm p-button-rounded"
             icon="pi pi-expand"
-            pTooltip="Tam Ekranda Gör"
-            aria-label="Tam Ekranda Gör"
+            pTooltip="{{ 'COMMON.VIEW_FULL' | translate }}"
+            aria-label="{{ 'COMMON.VIEW_FULL' | translate }}"
             (click)="absentDialogVisible = true"
           ></button>
         </div>
@@ -287,7 +303,7 @@
           @if (absentees.length === 0) {
             <div class="empty-state">
               <span class="material-symbols-outlined">check_circle</span>
-              <p>Bugün gelmeyen öğrenci yok.</p>
+              <p>{{ 'DASHBOARD.NO_ABSENTEES' | translate }}</p>
             </div>
           } @else {
             <div class="person-list">
@@ -304,7 +320,9 @@
                     >
                   </div>
 
-                  <span class="person-badge badge-student">Öğrenci</span>
+                  <span class="person-badge badge-student">{{
+                    'USERDEF.STUDENT' | translate
+                  }}</span>
 
                   <!-- Sağ tarafa dayalı gösterim -->
                   <div
@@ -313,7 +331,7 @@
                   >
                     <span class="person-exit-time" style="color: #6b7280; font-weight: 600">
                       <span class="material-symbols-outlined" style="font-size: 16px">close</span>
-                      Giriş Yok
+                      {{ 'DASHBOARD.NO_ENTRY' | translate }}
                     </span>
                   </div>
                 </div>
@@ -321,7 +339,7 @@
             </div>
             @if (absentees.length > 5) {
               <button class="show-more-btn" (click)="absentDialogVisible = true">
-                +{{ absentees.length - 5 }} kişi daha &hellip;
+                +{{ absentees.length - 5 }} {{ 'DASHBOARD.MORE_PEOPLE' | translate }} &hellip;
               </button>
             }
           }
@@ -339,15 +357,15 @@
             <span class="material-symbols-outlined">receipt_long</span>
           </div>
           <div>
-            <h3>Geçiş Cihazı &mdash; Son İşlemler</h3>
-            <span class="detail-subtitle">Son {{ showAllTransactions ? '100' : '10' }} işlem</span>
+            <h3>{{ 'DASHBOARD.RECENT_TRANSACTIONS' | translate }}</h3>
+            <span class="detail-subtitle">{{ 'DASHBOARD.LAST_TRANSACTIONS' | translate: { count: showAllTransactions ? '100' : '10' } }}</span>
           </div>
         </div>
         <div class="header-actions">
           <button
             pButton
-            [label]="showAllTransactions ? 'Küçült' : 'Tümünü Göster'"
-            [attr.aria-label]="showAllTransactions ? 'Küçült' : 'Tümünü Göster'"
+            [label]="showAllTransactions ? ('DASHBOARD.COLLAPSE' | translate) : ('DASHBOARD.SHOW_ALL' | translate)"
+            [attr.aria-label]="showAllTransactions ? ('DASHBOARD.COLLAPSE' | translate) : ('DASHBOARD.SHOW_ALL' | translate)"
             class="p-button-outlined p-button-sm"
             (click)="toggleAllTransactions()"
           ></button>
@@ -355,8 +373,8 @@
             pButton
             class="p-button-text p-button-sm p-button-rounded"
             icon="pi pi-expand"
-            pTooltip="Tam Ekranda Gör"
-            aria-label="Tam Ekranda Gör"
+            pTooltip="{{ 'COMMON.VIEW_FULL' | translate }}"
+            aria-label="{{ 'COMMON.VIEW_FULL' | translate }}"
             (click)="txnDialogVisible = true"
           ></button>
         </div>
@@ -366,23 +384,23 @@
           <thead>
             <tr>
               <th>#</th>
-              <th>Kişi</th>
-              <th>Sicil No</th>
-              <th>Kart</th>
-              <th>Yön</th>
-              <th>Cihaz</th>
-              <th>Saat</th>
-              <th>Sonuç</th>
+              <th>{{ 'DASHBOARD.COLUMN_NAME' | translate }}</th>
+              <th>{{ 'DASHBOARD.COLUMN_SICIL' | translate }}</th>
+              <th>{{ 'DASHBOARD.COLUMN_CARD' | translate }}</th>
+              <th>{{ 'DASHBOARD.COLUMN_DIRECTION' | translate }}</th>
+              <th>{{ 'DASHBOARD.COLUMN_DEVICE' | translate }}</th>
+              <th>{{ 'DASHBOARD.COLUMN_TIME' | translate }}</th>
+              <th>{{ 'DASHBOARD.COLUMN_RESULT' | translate }}</th>
             </tr>
           </thead>
           <tbody>
             @for (txn of displayedTransactions; track txn.id) {
-              <tr [class.txn-failed]="txn.result === 'Başarısız'">
+              <tr [class.txn-failed]="txn.result === 'failed'">
                 <td class="txn-id">{{ txn.id }}</td>
                 <td>
                   <div class="txn-person">
                     <span class="person-badge" [class]="txn.badgeClass">
-                      {{ txn.badgeLabel }}
+                      {{ txn.badgeLabel | translate }}
                     </span>
                     {{ txn.personName }}
                   </div>
@@ -392,24 +410,24 @@
                 <td>
                   <span
                     class="txn-direction"
-                    [class.direction-in]="txn.direction === 'Giriş'"
-                    [class.direction-out]="txn.direction === 'Çıkış'"
+                    [class.direction-in]="txn.direction === 'in'"
+                    [class.direction-out]="txn.direction === 'out'"
                   >
                     <span class="material-symbols-outlined">{{
-                      txn.direction === 'Giriş' ? 'login' : 'logout'
+                      txn.direction === 'in' ? 'login' : 'logout'
                     }}</span>
-                    {{ txn.direction }}
+                    {{ directionLabel(txn.direction) | translate }}
                   </span>
                 </td>
-                <td>{{ txn.device }}</td>
+                <td>{{ txn.device | translate }}</td>
                 <td class="txn-time">{{ txn.time }}</td>
                 <td>
                   <span
                     class="txn-result"
-                    [class.result-ok]="txn.result === 'Başarılı'"
-                    [class.result-fail]="txn.result === 'Başarısız'"
+                    [class.result-ok]="txn.result === 'success'"
+                    [class.result-fail]="txn.result === 'failed'"
                   >
-                    {{ txn.result }}
+                    {{ resultLabel(txn.result) | translate }}
                   </span>
                 </td>
               </tr>
@@ -429,16 +447,16 @@
             <span class="material-symbols-outlined">event_available</span>
           </div>
           <div>
-            <h3>Etkinlik Kişi Listesi</h3>
-            <span class="detail-subtitle">{{ eventPersons.length }} katılımcı</span>
+            <h3>{{ 'DASHBOARD.EVENT_PARTICIPANTS' | translate }}</h3>
+            <span class="detail-subtitle">{{ eventPersons.length }} {{ 'DASHBOARD.PARTICIPANT' | translate }}</span>
           </div>
         </div>
         <button
           pButton
           class="p-button-text p-button-sm p-button-rounded"
           icon="pi pi-expand"
-          pTooltip="Tam Ekranda Gör"
-          aria-label="Tam Ekranda Gör"
+          pTooltip="{{ 'COMMON.VIEW_FULL' | translate }}"
+          aria-label="{{ 'COMMON.VIEW_FULL' | translate }}"
           (click)="eventDialogVisible = true"
         ></button>
       </div>
@@ -446,7 +464,7 @@
         @if (eventPersons.length === 0) {
           <div class="empty-state">
             <span class="material-symbols-outlined">info</span>
-            <p>Etkinlik katılımcısı bulunamadı.</p>
+            <p>{{ 'DASHBOARD.NO_EVENT_PARTICIPANTS' | translate }}</p>
           </div>
         } @else {
           <div class="event-grid">
@@ -457,11 +475,11 @@
                 </div>
                 <div class="event-person-info">
                   <span class="person-name">{{ ep.name }}</span>
-                  <span class="person-meta">{{ ep.role }}</span>
+                  <span class="person-meta">{{ ep.role | translate }}</span>
                 </div>
-                <div class="event-person-task">{{ ep.task }}</div>
+                <div class="event-person-task">{{ ep.task | translate }}</div>
                 <span class="event-status-badge" [class]="ep.statusClass">
-                  {{ ep.status }}
+                  {{ statusLabel(ep.status) | translate }}
                 </span>
               </div>
             }
@@ -478,7 +496,7 @@
 
 <!-- İşlemler Dialog -->
 <p-dialog
-  header="Geçiş Cihazı — Son 100 İşlem"
+  header="{{ 'DASHBOARD.TRANSACTION_HISTORY' | translate }}"
   [(visible)]="txnDialogVisible"
   [modal]="true"
   [style]="{ width: '90vw', maxHeight: '85vh' }"
@@ -491,23 +509,23 @@
       <thead>
         <tr>
           <th>#</th>
-          <th>Kişi</th>
-          <th>Sicil No</th>
-          <th>Kart</th>
-          <th>Yön</th>
-          <th>Cihaz</th>
-          <th>Saat</th>
-          <th>Sonuç</th>
+          <th>{{ 'DASHBOARD.COLUMN_NAME' | translate }}</th>
+          <th>{{ 'DASHBOARD.COLUMN_SICIL' | translate }}</th>
+          <th>{{ 'DASHBOARD.COLUMN_CARD' | translate }}</th>
+          <th>{{ 'DASHBOARD.COLUMN_DIRECTION' | translate }}</th>
+          <th>{{ 'DASHBOARD.COLUMN_DEVICE' | translate }}</th>
+          <th>{{ 'DASHBOARD.COLUMN_TIME' | translate }}</th>
+          <th>{{ 'DASHBOARD.COLUMN_RESULT' | translate }}</th>
         </tr>
       </thead>
       <tbody>
         @for (txn of recentTransactions; track txn.id) {
-          <tr [class.txn-failed]="txn.result === 'Başarısız'">
+          <tr [class.txn-failed]="txn.result === 'failed'">
             <td class="txn-id">{{ txn.id }}</td>
             <td>
               <div class="txn-person">
                 <span class="person-badge" [class]="txn.badgeClass">
-                  {{ txn.badgeLabel }}
+                  {{ txn.badgeLabel | translate }}
                 </span>
                 {{ txn.personName }}
               </div>
@@ -517,24 +535,24 @@
             <td>
               <span
                 class="txn-direction"
-                [class.direction-in]="txn.direction === 'Giriş'"
-                [class.direction-out]="txn.direction === 'Çıkış'"
+                [class.direction-in]="txn.direction === 'in'"
+                [class.direction-out]="txn.direction === 'out'"
               >
                 <span class="material-symbols-outlined">{{
-                  txn.direction === 'Giriş' ? 'login' : 'logout'
+                  txn.direction === 'in' ? 'login' : 'logout'
                 }}</span>
-                {{ txn.direction }}
+                {{ directionLabel(txn.direction) | translate }}
               </span>
             </td>
-            <td>{{ txn.device }}</td>
+            <td>{{ txn.device | translate }}</td>
             <td class="txn-time">{{ txn.time }}</td>
             <td>
               <span
                 class="txn-result"
-                [class.result-ok]="txn.result === 'Başarılı'"
-                [class.result-fail]="txn.result === 'Başarısız'"
+                [class.result-ok]="txn.result === 'success'"
+                [class.result-fail]="txn.result === 'failed'"
               >
-                {{ txn.result }}
+                {{ resultLabel(txn.result) | translate }}
               </span>
             </td>
           </tr>
@@ -547,7 +565,7 @@
 <!-- Erken Çıkanlar Dialog -->
 <!-- Erken Çıkanlar Dialog -->
 <p-dialog
-  header="Erken Çıkanlar"
+  header="{{ 'DASHBOARD.EARLY_LEAVERS' | translate }}"
   [(visible)]="earlyLeaverDialogVisible"
   [modal]="true"
   [style]="{ width: '60vw', maxHeight: '80vh' }"
@@ -568,7 +586,9 @@
           <span class="person-meta">{{ person.className }} &middot; {{ person.schoolName }}</span>
         </div>
 
-        <span class="person-badge badge-student">Öğrenci</span>
+        <span class="person-badge badge-student">{{
+          'USERDEF.STUDENT' | translate
+        }}</span>
 
         <!-- Saatleri sağ tarafa alt alta aldık -->
         <div class="d-flex flex-column align-items-end justify-content-center" style="gap: 2px">
@@ -588,7 +608,7 @@
 <!-- Geç Kalanlar Dialog -->
 <!-- Geç Kalanlar Dialog -->
 <p-dialog
-  header="Geç Kalan Kişiler"
+  header="{{ 'DASHBOARD.LATE_ARRIVALS' | translate }}"
   [(visible)]="lateDialogVisible"
   [modal]="true"
   [style]="{ width: '60vw', maxHeight: '80vh' }"
@@ -608,7 +628,9 @@
           <span class="person-meta">{{ late.className }} &middot; {{ late.schoolName }}</span>
         </div>
 
-        <span class="person-badge badge-student">Öğrenci</span>
+        <span class="person-badge badge-student">{{
+          'USERDEF.STUDENT' | translate
+        }}</span>
 
         <!-- Saatleri sağ tarafa alt alta aldık -->
         <div class="d-flex flex-column align-items-end justify-content-center" style="gap: 2px">
@@ -627,7 +649,7 @@
 
 <!-- Etkinlik Listesi Dialog -->
 <p-dialog
-  header="Etkinlik Kişi Listesi"
+  header="{{ 'DASHBOARD.EVENT_PARTICIPANTS' | translate }}"
   [(visible)]="eventDialogVisible"
   [modal]="true"
   [style]="{ width: '60vw', maxHeight: '80vh' }"
@@ -643,10 +665,10 @@
         </div>
         <div class="person-info">
           <span class="person-name">{{ ep.name }}</span>
-          <span class="person-meta">{{ ep.role }} &middot; {{ ep.task }}</span>
+          <span class="person-meta">{{ ep.role | translate }} &middot; {{ ep.task | translate }}</span>
         </div>
         <span class="event-status-badge" [class]="ep.statusClass">
-          {{ ep.status }}
+          {{ statusLabel(ep.status) | translate }}
         </span>
       </div>
     }

@@ -18,6 +18,20 @@ export function getUserDefLabel(userdef: number): string {
   }
 }
 
+/** getUserDefLabel'in i18n anahtarı döndüren varyantı (template'lerde | translate ile). */
+export function getUserDefLabelKey(userdef: number): string {
+  switch (userdef) {
+    case UserDef.Ogrenci:
+      return 'USERDEF.STUDENT';
+    case UserDef.Ogretmen:
+      return 'USERDEF.TEACHER';
+    case UserDef.Veli:
+      return 'USERDEF.PARENT';
+    default:
+      return 'USERDEF.STAFF';
+  }
+}
+
 export function getUserDefBadgeClass(userdef: number): string {
   switch (userdef) {
     case UserDef.Ogrenci:

@@ -1,4 +1,4 @@
-import { provideAppInitializer, ApplicationConfig, importProvidersFrom } from '@angular/core';
+import { provideAppInitializer, ApplicationConfig, importProvidersFrom, inject } from '@angular/core';
 import { provideRouter } from '@angular/router';
 import { HttpClient, provideHttpClient, withInterceptors } from '@angular/common/http';
 import { routes } from './app.routes';
@@ -7,6 +7,7 @@ import {
   appConfigFactory,
   loadRuntimeConfig,
 } from './core/services/app-config.service';
+import { LanguageService } from './core/services/language.service';
 import { authInterceptor } from './core/interceptors/auth.interceptor';
 
 import { MessageService } from 'primeng/api';
@@ -38,14 +39,16 @@ export const appConfig: ApplicationConfig = {
     { provide: ErrorHandler, useClass: GlobalErrorHandler },
     provideHttpClient(withInterceptors([authInterceptor])),
     provideAppInitializer(() => loadRuntimeConfig()),
+    provideAppInitializer(() => inject(LanguageService).init()),
     { provide: APP_CONFIG, useFactory: appConfigFactory },
     provideTranslateService({
       fallbackLang: 'tr',
       lang: 'tr',
-    }),
-    provideTranslateHttpLoader({
-      prefix: '/assets/i18n/',
-      suffix: '.json',
+      loader: provideTranslateHttpLoader({
+        prefix: '/assets/i18n/',
+        suffix: '.json',
+        useHttpBackend: true,
+      }),
     }),
   ],
 };

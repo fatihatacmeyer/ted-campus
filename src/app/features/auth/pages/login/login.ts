@@ -5,10 +5,12 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { first } from 'rxjs/operators';
 import { AuthService } from '../../../../core/services/auth.service';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
+import { TranslatePipe } from '@ngx-translate/core';
+
 @Component({
   selector: 'app-login',
   standalone: true,
-  imports: [ReactiveFormsModule, RouterModule],
+  imports: [ReactiveFormsModule, RouterModule, TranslatePipe],
   templateUrl: './login.html',
   styleUrls: ['./login.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -104,19 +106,18 @@ export class LoginComponent implements OnInit, AfterViewInit {
   private parseAndSetError(err: HttpErrorResponse | Error): void {
     if (err instanceof HttpErrorResponse) {
       if (err.status === 0) {
-        this.errorMessage = 'Sunucuya bağlanılamadı. İnternet bağlantınızı kontrol edin.';
+        this.errorMessage = 'LOGIN.ERROR_NETWORK';
       } else if (err.status === 429) {
-        this.errorMessage =
-          'Çok fazla hatalı giriş denemesi yaptınız. Lütfen bir süre bekleyip tekrar deneyin.';
+        this.errorMessage = 'LOGIN.ERROR_TOO_MANY_ATTEMPTS';
       } else {
-        this.errorMessage = 'Sunucu hatası oluştu. Lütfen daha sonra tekrar deneyin.';
+        this.errorMessage = 'LOGIN.ERROR_SERVER';
       }
       this.errorType = 'network';
     } else if (err.message) {
       this.errorMessage = err.message;
       this.errorType = 'credential';
     } else {
-      this.errorMessage = 'Beklenmeyen bir hata oluştu.';
+      this.errorMessage = 'LOGIN.ERROR_UNEXPECTED';
       this.errorType = null;
     }
   }
@@ -134,7 +135,7 @@ export class LoginComponent implements OnInit, AfterViewInit {
     if (!control) return '';
 
     if (control.hasError('required')) {
-      return controlName === 'username' ? 'Kullanıcı adı gereklidir' : 'Şifre gereklidir';
+      return controlName === 'username' ? 'LOGIN.ERROR_USERNAME_REQUIRED' : 'LOGIN.ERROR_PASSWORD_REQUIRED';
     }
     return '';
   }

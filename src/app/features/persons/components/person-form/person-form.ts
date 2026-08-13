@@ -39,6 +39,7 @@ import {
   isSuccessResult,
   extractNewId,
 } from '../../../../shared/utils/response.utils';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 
 /** Form alanlarının tek kaynağı (single source of truth) — alan adları yalnızca burada tanımlanır. */
 interface PersonFormFieldMeta {
@@ -111,6 +112,7 @@ interface RelationDisplayRow extends ExistingRelation {
     DatePickerModule,
     SelectModule,
     TooltipModule,
+    TranslatePipe,
   ],
   templateUrl: './person-form.html',
   styleUrl: './person-form.scss',
@@ -119,7 +121,7 @@ interface RelationDisplayRow extends ExistingRelation {
 export class PersonFormComponent implements OnChanges, OnInit {
   @Input() visible = false;
   @Input({ required: true }) userdef!: number;
-  @Input() title = 'Yeni Kayıt Ekle';
+  @Input() titleKey = 'PERSON.ADD_STUDENT';
   @Input() editPerson: Person | null = null;
   @Input() allPersons: Person[] = [];
 
@@ -156,6 +158,7 @@ export class PersonFormComponent implements OnChanges, OnInit {
   private destroyRef = inject(DestroyRef);
   private cdr = inject(ChangeDetectorRef);
   private notification = inject(NotificationService);
+  private translate = inject(TranslateService);
 
   form: FormGroup = this.fb.group(this.buildFormControls());
 
@@ -196,8 +199,8 @@ export class PersonFormComponent implements OnChanges, OnInit {
   photoFileName = '';
 
   readonly genderOptions = [
-    { label: 'Erkek', value: 'E' },
-    { label: 'Kadın', value: 'K' },
+    { label: 'PERSON.GENDER_MALE', value: 'E' },
+    { label: 'PERSON.GENDER_FEMALE', value: 'K' },
   ];
 
   readonly bloodTypeOptions = [
@@ -381,54 +384,56 @@ export class PersonFormComponent implements OnChanges, OnInit {
     return this.userdef === UserDef.Ogrenci || this.userdef === UserDef.Veli;
   }
 
-  /** İlişkili kişinin tekil adı: öğrenci düzenlerken "Veli", veli düzenlerken "Öğrenci". */
+  /** İlişkili kişinin tekil adı (i18n anahtarı): öğrenci düzenlerken "Veli", veli düzenlerken "Öğrenci". */
   get linkedKind(): string {
-    return this.userdef === UserDef.Veli ? 'Öğrenci' : 'Veli';
+    return this.userdef === UserDef.Veli ? 'USERDEF.STUDENT' : 'USERDEF.PARENT';
   }
 
-  /** Bölüm başlığı: "Veli Bilgisi" / "Çocuk Bilgisi". */
+  /** Bölüm başlığı (i18n anahtarı): "Veli Bilgisi" / "Çocuk Bilgisi". */
   get linkedSectionTitle(): string {
-    return this.userdef === UserDef.Veli ? 'Çocuk Bilgisi' : 'Veli Bilgisi';
+    return this.userdef === UserDef.Veli ? 'PERSON.CHILD_INFO' : 'PERSON.PARENT_INFO';
   }
 
-  /** Toggle buton etiketi: "Listeden Seç" / "Yeni Veli Oluştur" / "Yeni Öğrenci Oluştur". */
+  /** Toggle buton etiketi (i18n anahtarı): "Listeden Seç" / "Yeni Veli Oluştur" / "Yeni Öğrenci Oluştur". */
   get newLinkedToggleLabel(): string {
-    return this.isCreatingNewLinked ? 'Listeden Seç' : `Yeni ${this.linkedKind} Oluştur`;
+    return this.isCreatingNewLinked ? 'PERSON.SELECT_FROM_LIST' : 'PERSON.CREATE_NEW_LINKED';
   }
 
-  /** "Veli seçin" / "Öğrenci seçin" placeholder'ı. */
+  /** "Veli seçin" / "Öğrenci seçin" placeholder'ı (i18n anahtarı). */
   get linkedSelectPlaceholder(): string {
-    return `${this.linkedKind} seçin`;
+    return 'PERSON.SELECT_LINKED';
   }
 
-  /** Değiştir dropdown'ı placeholder'ı: "Yeni veli seçin" / "Yeni öğrenci seçin". */
+  /** Değiştir dropdown'ı placeholder'ı (i18n anahtarı): "Yeni veli seçin" / "Yeni öğrenci seçin". */
   get changeLinkedPlaceholder(): string {
-    return `Yeni ${this.linkedKind.toLowerCase()} seçin`;
+    return 'PERSON.SELECT_NEW_LINKED';
   }
 
-  /** "Veli Ekle" / "Öğrenci Ekle" buton etiketi. */
+  /** "Veli Ekle" / "Öğrenci Ekle" buton etiketi (i18n anahtarı). */
   get addLinkedButtonLabel(): string {
-    return `${this.linkedKind} Ekle`;
+    return 'PERSON.ADD_LINKED';
   }
 
-  /** Değiştir tooltip'i: "Veliyi Değiştir" / "Öğrenciyi Değiştir". */
+  /** Değiştir tooltip'i (i18n anahtarı): "Veliyi Değiştir" / "Öğrenciyi Değiştir". */
   get changeLinkedTooltip(): string {
-    return this.userdef === UserDef.Veli ? 'Öğrenciyi Değiştir' : 'Veliyi Değiştir';
+    return this.userdef === UserDef.Veli ? 'PERSON.CHANGE_STUDENT' : 'PERSON.CHANGE_PARENT';
   }
 
-  /** Kaldır tooltip'i: "Veli İlişkisini Kaldır" / "Öğrenci İlişkisini Kaldır". */
+  /** Kaldır tooltip'i (i18n anahtarı): "Veli İlişkisini Kaldır" / "Öğrenci İlişkisini Kaldır". */
   get removeLinkedTooltip(): string {
-    return this.userdef === UserDef.Veli ? 'Öğrenci İlişkisini Kaldır' : 'Veli İlişkisini Kaldır';
+    return this.userdef === UserDef.Veli
+      ? 'PERSON.REMOVE_STUDENT_RELATION'
+      : 'PERSON.REMOVE_PARENT_RELATION';
   }
 
-  /** Boş liste metni: "Veli atanmamış" / "Çocuk atanmamış". */
+  /** Boş liste metni (i18n anahtarı): "Veli atanmamış" / "Çocuk atanmamış". */
   get noLinkedText(): string {
-    return this.userdef === UserDef.Veli ? 'Çocuk atanmamış' : 'Veli atanmamış';
+    return this.userdef === UserDef.Veli ? 'PERSON.NO_STUDENT' : 'PERSON.NO_PARENT';
   }
 
-  /** Dropdown içindeki arama kutusu placeholder'ı: "Veli ara..." / "Öğrenci ara...". */
+  /** Dropdown içindeki arama kutusu placeholder'ı (i18n anahtarı): "Veli ara..." / "Öğrenci ara...". */
   get linkedFilterPlaceholder(): string {
-    return `${this.linkedKind} ara...`;
+    return 'PERSON.SEARCH_LINKED';
   }
 
   get linkedPersonOptions(): { label: string; value: number }[] {
@@ -478,7 +483,11 @@ export class PersonFormComponent implements OnChanges, OnInit {
         next: (yeniRes) => {
           const yeniResult = unwrapResponse<Person>(yeniRes);
           if (!isSuccessResult(yeniResult)) {
-            this.errorMessage = yeniResult?.sunucucevap || `${this.linkedKind} oluşturulamadı.`;
+            this.errorMessage =
+              yeniResult?.sunucucevap ||
+              this.translate.instant('PERSON.CREATE_LINKED_FAILED', {
+                kind: this.translate.instant(this.linkedKind),
+              });
             this.isSaving = false;
             this.cdr.markForCheck();
             return;
@@ -486,7 +495,9 @@ export class PersonFormComponent implements OnChanges, OnInit {
           const yeniLinkedId = extractNewId(yeniResult);
 
           if (!yeniLinkedId) {
-            this.errorMessage = `${this.linkedKind} oluşturuldu ancak ID'si alınamadığı için bağlanamadı.`;
+            this.errorMessage = this.translate.instant('PERSON.CREATE_LINKED_NO_ID', {
+              kind: this.translate.instant(this.linkedKind),
+            });
             this.isSaving = false;
             this.cdr.markForCheck();
             return;
@@ -498,7 +509,7 @@ export class PersonFormComponent implements OnChanges, OnInit {
           this.savePersonAndLink();
         },
         error: () => {
-          this.errorMessage = 'Yeni Veli oluşturulurken hata meydana geldi.';
+          this.errorMessage = this.translate.instant('PERSON.CREATE_LINKED_ERROR');
           this.isSaving = false;
           this.cdr.markForCheck();
         },
@@ -531,7 +542,7 @@ export class PersonFormComponent implements OnChanges, OnInit {
       next: (stdRes) => {
         const stdResult = unwrapResponse<Person>(stdRes);
         if (!isSuccessResult(stdResult)) {
-          this.errorMessage = stdResult?.sunucucevap || 'Kayıt başarısız oldu.';
+          this.errorMessage = stdResult?.sunucucevap || this.translate.instant('PERSON.SAVE_FAILED');
           this.isSaving = false;
           this.cdr.markForCheck();
           return;

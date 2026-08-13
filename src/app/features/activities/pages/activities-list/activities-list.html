@@ -1,11 +1,11 @@
 <div class="admin-wrapper">
   <div class="admin-card">
     <div class="table-toolbar mb-3">
-      <h4 class="fw-bold mb-0" style="color: #dc2134">Etkinlik Yönetimi</h4>
+      <h4 class="fw-bold mb-0" style="color: #dc2134">{{ 'ACTIVITIES.TITLE' | translate }}</h4>
       <button
         pButton
-        label="Yeni Etkinlik Ekle"
-        aria-label="Yeni Etkinlik Ekle"
+        [label]="'ACTIVITIES.ADD' | translate"
+        [attr.aria-label]="'ACTIVITIES.ADD' | translate"
         icon="pi pi-plus"
         class="p-button p-button-sm p-component"
         (click)="openAddDialog()"
@@ -18,7 +18,7 @@
       [loading]="isLoading()"
       tableId="activities"
       [defaultFields]="defaultActivityFields"
-      emptyMessage="Henüz kayıtlı bir etkinlik bulunmuyor."
+      emptyMessage="{{ 'COMMON.NO_RECORDS' | translate }}"
       [showRowNumbers]="true"
       [actionsTemplate]="actionsTpl"
       [rowClickable]="true"
@@ -31,7 +31,7 @@
               {{ getTableClassroomSummary(activity.classroom) }}
             </span>
           } @else {
-            <span class="text-muted">Tüm Sınıflar</span>
+            <span class="text-muted">{{ 'ACTIVITIES.ALL_CLASSES' | translate }}</span>
           }
         </span>
       </ng-template>
@@ -47,16 +47,16 @@
             icon="pi pi-pencil"
             class="p-button-text p-button-warning p-button-sm"
             (click)="openEditDialog(activity); $event.stopPropagation()"
-            pTooltip="Düzenle"
-            aria-label="Düzenle"
+            [pTooltip]="'COMMON.EDIT' | translate"
+            [attr.aria-label]="'COMMON.EDIT' | translate"
           ></button>
           <button
             pButton
             icon="pi pi-trash"
             class="p-button-text p-button-danger p-button-sm"
             (click)="deleteActivity(activity.id); $event.stopPropagation()"
-            pTooltip="Sil"
-            aria-label="Sil"
+            [pTooltip]="'COMMON.DELETE' | translate"
+            [attr.aria-label]="'COMMON.DELETE' | translate"
           ></button>
         </div>
       </ng-template>
@@ -80,17 +80,19 @@
   >
     <!-- GENEL BİLGİLER -->
     <div>
-      <h6 class="text-primary fw-bold mb-3 border-bottom pb-2">Genel Bilgiler</h6>
+      <h6 class="text-primary fw-bold mb-3 border-bottom pb-2">
+        {{ 'ACTIVITIES.GENERAL_INFO' | translate }}
+      </h6>
       <div class="d-flex gap-3 mb-3">
         <div class="w-100 d-flex flex-column gap-1">
           <label for="activityName" class="fw-semibold small text-muted"
-            >Etkinlik Adı <span class="text-primary">*</span></label
+            >{{ 'ACTIVITIES.NAME' | translate }} <span class="text-primary">*</span></label
           >
           <input pInputText id="activityName" formControlName="name" />
         </div>
         <div class="w-100 d-flex flex-column gap-1">
           <label for="activityType" class="fw-semibold small text-muted"
-            >Türü <span class="text-primary">*</span></label
+            >{{ 'ACTIVITIES.TYPE' | translate }} <span class="text-primary">*</span></label
           >
           <p-select
             formControlName="activityType"
@@ -105,7 +107,9 @@
       </div>
       <div class="d-flex gap-3">
         <div class="w-100 d-flex flex-column gap-1">
-          <label for="eventManager" class="fw-semibold small text-muted">Yönetici (Sorumlu)</label>
+          <label for="eventManager" class="fw-semibold small text-muted"
+            >{{ 'ACTIVITIES.MANAGER_RESPONSIBLE' | translate }}</label
+          >
           <input pInputText id="eventManager" formControlName="eventManager" />
         </div>
         <!-- <div class="w-100 d-flex flex-column gap-1">
@@ -126,11 +130,13 @@
 
     <!-- TARİH BİLGİLERİ -->
     <div>
-      <h6 class="text-primary fw-bold mb-3 border-bottom pb-2">Tarih Bilgileri</h6>
+      <h6 class="text-primary fw-bold mb-3 border-bottom pb-2">
+        {{ 'ACTIVITIES.DATE_INFO' | translate }}
+      </h6>
       <div class="d-flex gap-3 mb-3">
         <div class="w-100 d-flex flex-column gap-1">
           <label for="startDate" class="fw-semibold small text-muted"
-            >Etkinlik Başlangıç <span class="text-primary">*</span></label
+            >{{ 'ACTIVITIES.START_DATE' | translate }} <span class="text-primary">*</span></label
           >
           <p-datepicker
             formControlName="startDate"
@@ -143,7 +149,7 @@
         </div>
         <div class="w-100 d-flex flex-column gap-1">
           <label for="endDate" class="fw-semibold small text-muted"
-            >Etkinlik Bitiş <span class="text-primary">*</span></label
+            >{{ 'ACTIVITIES.END_DATE' | translate }} <span class="text-primary">*</span></label
           >
           <p-datepicker
             formControlName="endDate"
@@ -158,7 +164,7 @@
       <div class="d-flex gap-3">
         <div class="w-100 d-flex flex-column gap-1">
           <label for="requestStartDate" class="fw-semibold small text-muted"
-            >Başvuru Başlangıç</label
+            >{{ 'ACTIVITIES.REQUEST_START' | translate }}</label
           >
           <p-datepicker
             formControlName="requestStartDate"
@@ -170,7 +176,9 @@
           ></p-datepicker>
         </div>
         <div class="w-100 d-flex flex-column gap-1">
-          <label for="requestEndDate" class="fw-semibold small text-muted">Başvuru Bitiş</label>
+          <label for="requestEndDate" class="fw-semibold small text-muted"
+            >{{ 'ACTIVITIES.REQUEST_END' | translate }}</label
+          >
           <p-datepicker
             formControlName="requestEndDate"
             inputId="requestEndDate"
@@ -185,7 +193,9 @@
 
     <!-- KAPASİTE VE FİNANS -->
     <div>
-      <h6 class="text-primary fw-bold mb-3 border-bottom pb-2">Kapasite, Veli & Finans</h6>
+      <h6 class="text-primary fw-bold mb-3 border-bottom pb-2">
+        {{ 'ACTIVITIES.CAPACITY_FINANCE' | translate }}
+      </h6>
       <div class="d-flex gap-3 mb-3 align-items-center">
         <div class="w-100 d-flex align-items-center gap-2">
           <p-checkbox
@@ -194,24 +204,26 @@
             inputId="parentReq"
           ></p-checkbox>
           <label for="parentReq" class="fw-semibold small text-muted mb-0"
-            >Veli Katılımı Zorunlu mu?</label
+            >{{ 'ACTIVITIES.PARENT_REQUIRED_QUESTION' | translate }}</label
           >
         </div>
         <div class="w-100 d-flex align-items-center gap-2">
           <p-checkbox formControlName="isPaid" [binary]="true" inputId="isPaidCheck"></p-checkbox>
           <label for="isPaidCheck" class="fw-semibold small text-muted mb-0"
-            >Ücretli Etkinlik</label
+            >{{ 'ACTIVITIES.PAID_ACTIVITY' | translate }}</label
           >
         </div>
       </div>
       <div class="d-flex gap-3 mb-3">
         <div class="w-100 d-flex flex-column gap-1">
-          <label for="maxStudentCount" class="fw-semibold small text-muted">Maks. Öğrenci</label>
+          <label for="maxStudentCount" class="fw-semibold small text-muted"
+            >{{ 'ACTIVITIES.MAX_STUDENT' | translate }}</label
+          >
           <input pInputText type="number" id="maxStudentCount" formControlName="maxStudentCount" />
         </div>
         <div class="w-100 d-flex flex-column gap-1">
           <label for="studentParentCount" class="fw-semibold small text-muted"
-            >Veli Kontenjanı (Kişi Başı)</label
+            >{{ 'ACTIVITIES.PARENT_QUOTA' | translate }}</label
           >
           <input
             pInputText
@@ -221,7 +233,7 @@
           />
         </div>
         <div class="w-100 d-flex flex-column gap-1">
-          <label for="fee" class="fw-semibold small text-muted">Ücret (₺)</label>
+          <label for="fee" class="fw-semibold small text-muted">{{ 'ACTIVITIES.FEE' | translate }}</label>
           <input
             pInputText
             type="number"
@@ -235,10 +247,14 @@
 
     <!-- ERİŞİM & DETAYLAR -->
     <div>
-      <h6 class="text-primary fw-bold mb-3 border-bottom pb-2">Ekstra Bilgiler</h6>
+      <h6 class="text-primary fw-bold mb-3 border-bottom pb-2">
+        {{ 'ACTIVITIES.EXTRA_INFO' | translate }}
+      </h6>
       <!-- Sınıf Kapsamı — quick-select但onları + MultiSelect -->
       <div class="d-flex flex-column gap-2 mb-3">
-        <label for="classroom" class="fw-semibold small text-muted">Sınıf Kapsamı</label>
+        <label for="classroom" class="fw-semibold small text-muted"
+          >{{ 'ACTIVITIES.CLASSROOM_SCOPE' | translate }}</label
+        >
 
         <!-- Üst aksiyon satırı: Tüm Şubeleri Seç / Seçimi Temizle -->
         <div class="d-flex align-items-center gap-3">
@@ -248,7 +264,7 @@
             style="color: var(--p-primary-color); text-decoration: underline; font-size: 0.8rem"
             (click)="selectAllClasses()"
           >
-            Tüm Şubeleri Seç
+            {{ 'ACTIVITIES.SELECT_ALL_BRANCHES' | translate }}
           </button>
           <button
             type="button"
@@ -256,7 +272,7 @@
             style="text-decoration: underline; font-size: 0.8rem"
             (click)="clearAllClasses()"
           >
-            Seçimi Temizle
+            {{ 'ACTIVITIES.CLEAR_SELECTION' | translate }}
           </button>
         </div>
 
@@ -276,8 +292,7 @@
               (click)="clearAllClasses()"
             >
               Temizle
-            </button>
-          </div>
+            </button>          </div>
         }
 
         <!-- MultiSelect — detaylı bireysel seçim için -->

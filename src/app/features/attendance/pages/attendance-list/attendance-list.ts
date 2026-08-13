@@ -41,6 +41,7 @@ import {
   formatDate,
   formatTime,
 } from '../../../../shared/utils/date.utils';
+import { TranslatePipe } from '@ngx-translate/core';
 
 /** Period type: gün / hafta / ay. */
 type Period = 'gun' | 'hafta' | 'ay';
@@ -67,6 +68,7 @@ interface TabOption {
     TagModule,
     TooltipModule,
     CheckboxModule,
+    TranslatePipe,
   ],
   templateUrl: './attendance-list.html',
   styleUrl: './attendance-list.scss',
@@ -116,10 +118,10 @@ export class AttendanceListComponent {
 
   /** Fixed options for the tab buttons. */
   tabOptions: TabOption[] = [
-    { label: 'Genel', tip: 0 },
-    { label: 'İzinliler', tip: 6 },
-    { label: 'Erken Çıkanlar', tip: 5 },
-    { label: 'Geç Gelenler', tip: 4 },
+    { label: 'ATTENDANCE.TAB_GENERAL', tip: 0 },
+    { label: 'ATTENDANCE.TAB_ON_LEAVE', tip: 6 },
+    { label: 'ATTENDANCE.TAB_EARLY_LEAVERS', tip: 5 },
+    { label: 'ATTENDANCE.TAB_LATE_ARRIVALS', tip: 4 },
   ];
 
   /** Empty cell rendering (used in custom cells). */
@@ -131,28 +133,28 @@ export class AttendanceListComponent {
   attendanceColumns: ColumnDef<AttendanceRow>[] = [
     {
       field: 'sicilNo',
-      header: 'Sicil No',
+      header: 'ATTENDANCE.COL_SICIL_NO',
       sortable: true,
       filterType: 'select',
       filterOptions: (rows) => uniqueFilterOptions(rows, 'sicilNo'),
     },
-    { field: 'adSoyad', header: 'Ad Soyad', sortable: true, alwaysVisible: true },
+    { field: 'adSoyad', header: 'ATTENDANCE.COL_AD_SOYAD', sortable: true, alwaysVisible: true },
     {
       field: 'bolumAd',
-      header: 'Bölüm',
+      header: 'ATTENDANCE.COL_BOLUM',
       sortable: true,
       filterType: 'select',
       filterOptions: (rows) => uniqueFilterOptions(rows, 'bolumAd'),
     },
-    { field: 'pozisyonAd', header: 'Pozisyon', sortable: true },
-    { field: 'mesaiTarih', header: 'Mesai Tarihi', sortable: true },
-    { field: 'giris', header: 'Giriş', sortable: true },
-    { field: 'cikis', header: 'Çıkış', sortable: true },
-    { field: 'gecKalma', header: 'Geç Kalma', sortable: true },
-    { field: 'erkenCikma', header: 'Erken Çıkma', sortable: true },
-    { field: 'izinSuresi', header: 'İzin Süresi', sortable: true },
-    { field: 'mesaiSuresi', header: 'Mesai Süresi', sortable: true },
-    { field: 'mesaiAciklama', header: 'Açıklama' },
+    { field: 'pozisyonAd', header: 'ATTENDANCE.COL_POZISYON', sortable: true },
+    { field: 'mesaiTarih', header: 'ATTENDANCE.COL_MESAI_TARIH', sortable: true },
+    { field: 'giris', header: 'ATTENDANCE.COL_GIRIS', sortable: true },
+    { field: 'cikis', header: 'ATTENDANCE.COL_CIKIS', sortable: true },
+    { field: 'gecKalma', header: 'ATTENDANCE.COL_GEC_KALMA', sortable: true },
+    { field: 'erkenCikma', header: 'ATTENDANCE.COL_ERKEN_CIKMA', sortable: true },
+    { field: 'izinSuresi', header: 'ATTENDANCE.COL_IZIN_SURESI', sortable: true },
+    { field: 'mesaiSuresi', header: 'ATTENDANCE.COL_MESAI_SURESI', sortable: true },
+    { field: 'mesaiAciklama', header: 'ATTENDANCE.COL_ACIKLAMA' },
   ];
   defaultAttendanceFields = [
     'sicilNo',
@@ -418,6 +420,13 @@ export class AttendanceListComponent {
     if (durum === 'Onaylandı') return 'success';
     if (durum === 'Reddedildi') return 'danger';
     return 'warn';
+  }
+
+  /** Maps a leave status data value to its i18n key (for rendered cell text). */
+  getLeaveStatusLabel(durum: string): string {
+    if (durum === 'Onaylandı') return 'ATTENDANCE.STATUS_APPROVED';
+    if (durum === 'Reddedildi') return 'ATTENDANCE.STATUS_REJECTED';
+    return 'ATTENDANCE.STATUS_PENDING';
   }
 
   /** Preloads the leave type dropdown on init. */

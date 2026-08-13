@@ -5,8 +5,8 @@ import { UserDef } from './core/models/person.model';
 export const routes: Routes = [
   {
     path: 'login',
-    loadComponent: () =>
-      import('./features/auth/pages/login/login').then((m) => m.LoginComponent),
+    //data: { titleKey: 'LOGIN.TITLE' },
+    loadComponent: () => import('./features/auth/pages/login/login').then((m) => m.LoginComponent),
   },
   {
     path: 'home',
@@ -17,6 +17,7 @@ export const routes: Routes = [
       //{ path: '', redirectTo: 'anasayfa', pathMatch: 'full' },
       {
         path: '',
+        //data: { titleKey: 'DASHBOARD.TITLE' },
         loadComponent: () =>
           import('./features/dashboard/pages/dashboard/dashboard').then(
             (m) => m.DashboardComponent,
@@ -24,7 +25,7 @@ export const routes: Routes = [
       },
       {
         path: 'students',
-        data: { userDef: UserDef.Ogrenci },
+        data: { userDef: UserDef.Ogrenci, titleKey: 'MENU.STUDENTS' },
         loadComponent: () =>
           import('./features/persons/pages/person-crud/person-crud').then(
             (m) => m.PersonCrudComponent,
@@ -32,7 +33,7 @@ export const routes: Routes = [
       },
       {
         path: 'teachers',
-        data: { userDef: UserDef.Ogretmen },
+        data: { userDef: UserDef.Ogretmen, titleKey: 'MENU.TEACHERS' },
         loadComponent: () =>
           import('./features/persons/pages/person-crud/person-crud').then(
             (m) => m.PersonCrudComponent,
@@ -40,7 +41,7 @@ export const routes: Routes = [
       },
       {
         path: 'parents',
-        data: { userDef: UserDef.Veli },
+        data: { userDef: UserDef.Veli, titleKey: 'MENU.PARENTS' },
         loadComponent: () =>
           import('./features/persons/pages/person-crud/person-crud').then(
             (m) => m.PersonCrudComponent,
@@ -48,6 +49,7 @@ export const routes: Routes = [
       },
       {
         path: 'transport',
+        data: { titleKey: 'MENU.TRANSPORT' },
         loadComponent: () =>
           import('./features/transport/pages/school-bus/school-bus').then(
             (m) => m.SchoolBusComponent,
@@ -55,6 +57,7 @@ export const routes: Routes = [
       },
       {
         path: 'activities',
+        data: { titleKey: 'MENU.ACTIVITIES' },
         loadComponent: () =>
           import('./features/activities/pages/activities-list/activities-list').then(
             (m) => m.ActivitiesComponent,
@@ -62,6 +65,7 @@ export const routes: Routes = [
       },
       {
         path: 'attendance',
+        data: { titleKey: 'MENU.ATTENDANCE' },
         loadComponent: () =>
           import('./features/attendance/pages/attendance-list/attendance-list').then(
             (m) => m.AttendanceListComponent,

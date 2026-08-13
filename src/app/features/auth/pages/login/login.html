@@ -5,8 +5,8 @@
         <div class="login-header">
           <img src="logo.png" alt="TED Atakent Koleji Logo" class="logo" />
 
-          <h1>TED Atakent Koleji</h1>
-          <p>Giriş yapmak için bilgilerinizi kullanın</p>
+          <h1>{{ 'LOGIN.TITLE' | translate }}</h1>
+          <p>{{ 'LOGIN.SUBTITLE' | translate }}</p>
         </div>
 
         @if (errorMessage) {
@@ -23,7 +23,7 @@
           novalidate
         >
           <div class="form-group">
-            <label for="username">Kullanıcı Adı</label>
+            <label for="username">{{ 'LOGIN.USERNAME' | translate }}</label>
             <div class="input-wrapper">
               <span class="material-symbols-outlined icon" aria-hidden="true">person</span>
               <input
@@ -35,7 +35,7 @@
                 [class.is-invalid]="
                   loginForm.get('username')?.invalid && loginForm.get('username')?.touched
                 "
-                placeholder="Kullanıcı adınız"
+                [placeholder]="'LOGIN.USERNAME_PLACEHOLDER' | translate"
                 autocomplete="off"
                 aria-required="true"
                 aria-describedby="username-error"
@@ -50,7 +50,7 @@
           </div>
 
           <div class="form-group">
-            <label for="password">Şifre</label>
+            <label for="password">{{ 'LOGIN.PASSWORD' | translate }}</label>
             <div class="input-wrapper">
               <span class="material-symbols-outlined icon" aria-hidden="true">lock</span>
               <input
@@ -61,7 +61,7 @@
                 [class.is-invalid]="
                   loginForm.get('password')?.invalid && loginForm.get('password')?.touched
                 "
-                placeholder="••••••••"
+                [placeholder]="'LOGIN.PASSWORD_PLACEHOLDER' | translate"
                 autocomplete="new-password"
                 aria-required="true"
                 aria-describedby="password-error capslock-warning"
@@ -72,7 +72,7 @@
                 type="button"
                 class="password-toggle"
                 (click)="togglePasswordVisibility()"
-                [attr.aria-label]="showPassword ? 'Şifreyi gizle' : 'Şifreyi göster'"
+                [attr.aria-label]="(showPassword ? 'LOGIN.HIDE_PASSWORD' : 'LOGIN.SHOW_PASSWORD') | translate"
                 aria-controls="password"
               >
                 <span class="material-symbols-outlined">
@@ -83,7 +83,7 @@
             @if (capsLockOn) {
               <div class="capslock-warning" id="capslock-warning" role="alert">
                 <span class="material-symbols-outlined capslock-icon" aria-hidden="true">warning</span>
-                Caps Lock açık!
+                {{ 'LOGIN.CAPS_LOCK_WARNING' | translate }}
               </div>
             }
             @if (loginForm.get('password')?.invalid && loginForm.get('password')?.touched) {
@@ -103,7 +103,7 @@
             @if (isLoading) {
               <span class="spinner" aria-hidden="true"></span>
             } @else {
-              <span>Giriş Yap</span>
+              <span>{{ 'LOGIN.SUBMIT' | translate }}</span>
               <span class="material-symbols-outlined btn-icon" aria-hidden="true">arrow_forward</span>
             }
           </button>

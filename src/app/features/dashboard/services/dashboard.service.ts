@@ -30,6 +30,7 @@ interface EarlyLeaverRaw {
   Okul: string;
   CikisSaati: string;
   BeklenenCikisSaati: string;
+  UserDef: number;
 }
 
 interface LateArrivalRaw {
@@ -39,6 +40,7 @@ interface LateArrivalRaw {
   Okul: string;
   GirisSaati: string;
   BeklenenGirisSaati: string;
+  UserDef: number;
 }
 
 interface AbsenteeRaw {
@@ -65,6 +67,7 @@ export interface EarlyLeaver {
   schoolName: string;
   exitTime: string;
   expectedExitTime: string;
+  userdef: number;
 }
 
 export interface LateArrival {
@@ -74,6 +77,7 @@ export interface LateArrival {
   schoolName: string;
   entryTime: string;
   expectedEntryTime: string;
+  userdef: number;
 }
 
 export interface Absentee {
@@ -134,6 +138,7 @@ export class DashboardService {
             schoolName: row.Okul,
             exitTime: row.CikisSaati,
             expectedExitTime: row.BeklenenCikisSaati,
+            userdef: row.UserDef,
           })),
         ),
       );
@@ -154,6 +159,7 @@ export class DashboardService {
             schoolName: row.Okul,
             entryTime: row.GirisSaati,
             expectedEntryTime: row.BeklenenGirisSaati,
+            userdef: row.UserDef,
           })),
         ),
       );

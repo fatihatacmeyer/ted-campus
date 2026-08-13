@@ -27,6 +27,7 @@ import { TooltipModule } from 'primeng/tooltip';
 import { ButtonModule } from 'primeng/button';
 import { SelectModule } from 'primeng/select';
 import { CheckboxModule } from 'primeng/checkbox';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { formatDate } from '../../utils/date.utils';
 import { exportToExcel } from '../../utils/table-export.utils';
 
@@ -80,9 +81,10 @@ export class ColumnCellDirective {
     IconFieldModule,
     InputIconModule,
     TooltipModule,
-  ButtonModule,
-  SelectModule,
-  CheckboxModule,
+    ButtonModule,
+    SelectModule,
+    CheckboxModule,
+    TranslatePipe,
   ],
   templateUrl: './customizable-table.html',
   styleUrl: './customizable-table.scss',
@@ -96,10 +98,10 @@ export class CustomizableTableComponent<T extends object = Record<string, unknow
   @Input() loading = false;
   @Input() tableId = 'default'; // localStorage anahtarı: ted_table_columns_${tableId}
   @Input() defaultFields: string[] | null = null; // null ise tüm sütunlar varsayılan
-  @Input() emptyMessage = 'Kayıt bulunamadı.';
+  @Input() emptyMessage = 'COMMON.NO_RECORDS';
   @Input() emptyCellValue = '-'; // boş hücre (null/undefined) görünümü
   @Input() showSearch = true;
-  @Input() searchPlaceholder = 'Arama';
+  @Input() searchPlaceholder = 'COMMON.SEARCH';
   @Input() rowClickable = false;
   @Input() actionsTemplate: TemplateRef<{ $implicit: T }> | null = null; // her satırın sonundaki sabit İşlemler sütunu
   @Input() exportable = true; // Dışa Aktar (Excel/CSV) butonu
@@ -140,6 +142,7 @@ export class CustomizableTableComponent<T extends object = Record<string, unknow
   private currentFirst = 0;
 
   private destroyRef = inject(DestroyRef);
+  private translateService = inject(TranslateService);
 
   private cellTemplateMap = new Map<string, TemplateRef<unknown>>();
 
@@ -481,7 +484,9 @@ export class CustomizableTableComponent<T extends object = Record<string, unknow
   formatCellValue(row: T, field: string): string {
     const value = this.getFieldValue(row, field);
     if (value === null || value === undefined) return this.emptyCellValue;
-    if (typeof value === 'boolean') return value ? 'Evet' : 'Hayır';
+    if (typeof value === 'boolean') {
+      return this.translateService.instant(value ? 'COMMON.YES' : 'COMMON.NO');
+    }
     if (value instanceof Date) return formatDate(value);
     return String(value);
   }
@@ -540,7 +545,9 @@ export class CustomizableTableComponent<T extends object = Record<string, unknow
     }
     const value = this.getFieldValue(row, col.field);
     if (value === null || value === undefined) return '';
-    if (typeof value === 'boolean') return value ? 'Evet' : 'Hayır';
+    if (typeof value === 'boolean') {
+      return this.translateService.instant(value ? 'COMMON.YES' : 'COMMON.NO');
+    }
     if (value instanceof Date) return formatDate(value);
     return String(value);
   }
