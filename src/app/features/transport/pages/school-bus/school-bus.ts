@@ -1,4 +1,11 @@
-import { Component, ChangeDetectionStrategy, signal, computed, inject } from '@angular/core';
+import {
+  Component,
+  ChangeDetectionStrategy,
+  signal,
+  computed,
+  inject,
+  OnInit,
+} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
@@ -9,21 +16,17 @@ import { TooltipModule } from 'primeng/tooltip';
 import { SelectModule } from 'primeng/select';
 import { InputTextModule } from 'primeng/inputtext';
 import { TextareaModule } from 'primeng/textarea';
+import { Bus, BusAssignment, Passenger, SeferTuru, MOCK_ASSIGNMENTS } from './mock-data';
 import {
-  Bus,
-  BusAssignment,
-  Driver,
-  Hostess,
-  Passenger,
-  SeferTuru,
-  MOCK_ASSIGNMENTS,
-  MOCK_BUSES,
-  MOCK_DRIVERS,
-  MOCK_HOSTESSES,
-} from './mock-data';
-import { CustomizableTableComponent, ColumnCellDirective, ColumnDef } from '../../../../shared/components/customizable-table/customizable-table';
+  CustomizableTableComponent,
+  ColumnCellDirective,
+  ColumnDef,
+} from '../../../../shared/components/customizable-table/customizable-table';
+import { SchoolBusService } from '../../services/school-bus.service';
+import { NotificationService } from '../../../../core/services/notification.service';
+import { BusDashboardStats } from '../../services/school-bus.service';
 
-type TabKey = 'dashboard' | 'buses' | 'drivers' | 'hostesses' | 'assignments';
+type TabKey = 'dashboard' | 'buses' | 'assignments';
 
 @Component({
   selector: 'app-school-bus',
@@ -46,30 +49,26 @@ type TabKey = 'dashboard' | 'buses' | 'drivers' | 'hostesses' | 'assignments';
   styleUrl: './school-bus.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class SchoolBusComponent {
+export class SchoolBusComponent implements OnInit {
   private fb = inject(FormBuilder);
+  private busService = inject(SchoolBusService);
+  private notification = inject(NotificationService);
 
   // ── Tab State ──────────────────────────────────────────
   protected readonly activeTab = signal<TabKey>('dashboard');
   protected readonly tabs: { key: TabKey; label: string; icon: string }[] = [
     { key: 'dashboard', label: 'Genel Bakış', icon: 'dashboard' },
     { key: 'buses', label: 'Araçlar', icon: 'directions_bus' },
-    { key: 'drivers', label: 'Şöförler', icon: 'person' },
-    { key: 'hostesses', label: 'Hostesler', icon: 'badge' },
     { key: 'assignments', label: 'Atamalar', icon: 'assignment' },
   ];
 
   // ── Data State ─────────────────────────────────────────
-  protected readonly buses = signal<Bus[]>([...MOCK_BUSES]);
-  protected readonly drivers = signal<Driver[]>([...MOCK_DRIVERS]);
-  protected readonly hostesses = signal<Hostess[]>([...MOCK_HOSTESSES]);
-  protected readonly assignments = signal<BusAssignment[]>([...MOCK_ASSIGNMENTS]);
+  protected readonly buses = signal<Bus[]>([]);
+  protected readonly assignments = signal<BusAssignment[]>([]);
 
   // ── ID Counters ────────────────────────────────────────
-  private busNextId = MOCK_BUSES.length + 1;
-  private driverNextId = MOCK_DRIVERS.length + 1;
-  private hostessNextId = MOCK_HOSTESSES.length + 1;
-  private assignmentNextId = MOCK_ASSIGNMENTS.length + 1;
+  private busNextId = 100;
+  private assignmentNextId = 100;
 
   // ── Dialog Visibility ──────────────────────────────────
   // Buses
@@ -77,18 +76,6 @@ export class SchoolBusComponent {
   protected readonly busDeleteVisible = signal(false);
   protected readonly busEditing = signal<Bus | null>(null);
   protected readonly busDeleting = signal<Bus | null>(null);
-
-  // Drivers
-  protected readonly driverFormVisible = signal(false);
-  protected readonly driverDeleteVisible = signal(false);
-  protected readonly driverEditing = signal<Driver | null>(null);
-  protected readonly driverDeleting = signal<Driver | null>(null);
-
-  // Hostesses
-  protected readonly hostessFormVisible = signal(false);
-  protected readonly hostessDeleteVisible = signal(false);
-  protected readonly hostessEditing = signal<Hostess | null>(null);
-  protected readonly hostessDeleting = signal<Hostess | null>(null);
 
   // Assignments
   protected readonly assignmentFormVisible = signal(false);
@@ -103,100 +90,72 @@ export class SchoolBusComponent {
   protected readonly assignmentSearch = signal('');
   protected readonly seferTuruFilter = signal<SeferTuru | null>(null);
 
+  protected readonly dashboardStats = signal<BusDashboardStats | null>(null);
+
   // ── Forms ──────────────────────────────────────────────
-  private createStaffForm(): FormGroup {
-    return this.fb.group({
-      adSoyad: ['', Validators.required],
-      telefon: ['', Validators.required],
-    });
-  }
-
   protected readonly busForm: FormGroup = this.fb.group({
-    adi: ['', Validators.required],
-    plaka: ['', Validators.required],
+    plate: ['', Validators.required],
+    brand: ['', Validators.required],
+    model: ['', Validators.required],
+    seatCount: [16, [Validators.required, Validators.min(1)]],
+    description: [''],
+    status: ['Aktif', Validators.required],
   });
-
-  protected readonly driverForm: FormGroup = this.createStaffForm();
-
-  protected readonly hostessForm: FormGroup = this.createStaffForm();
 
   protected readonly assignmentForm: FormGroup = this.fb.group({
     bus: [null, Validators.required],
-    sofor: [null, Validators.required],
-    hostes: [null],
-    kalkisSaati: ['07:30', Validators.required],
-    seferTuru: ['Sabah', Validators.required],
+    departureTime: ['07:30', Validators.required],
+    tripType: ['Sabah', Validators.required],
   });
 
   // ── Dashboard Computed ─────────────────────────────────
   protected readonly totalBuses = computed(() => this.buses().length);
-  protected readonly totalDrivers = computed(() => this.drivers().length);
-  protected readonly totalHostesses = computed(() => this.hostesses().length);
   protected readonly totalAssignments = computed(() => this.assignments().length);
   protected readonly totalPassengers = computed(() =>
-    this.assignments().reduce((sum, a) => sum + a.yolcular.length, 0),
+    this.assignments().reduce((sum, a) => sum + a.passengers.length, 0),
   );
-  protected readonly completedTrips = computed(() =>
-    this.assignments().filter(a => a.durum === 'Tamamlandı').length,
+  protected readonly completedTrips = computed(
+    () => this.assignments().filter((a) => a.status === 'Tamamlandı').length,
   );
 
   // ── Table Columns ──────────────────────────────────────
   protected readonly busColumns: ColumnDef<Bus>[] = [
-    { field: 'adi', header: 'Servis Adı', sortable: true },
-    { field: 'plaka', header: 'Plaka', sortable: true },
-  ];
-
-  protected readonly driverColumns: ColumnDef<Driver>[] = [
-    { field: 'id', header: 'ID', sortable: true },
-    { field: 'adSoyad', header: 'Ad Soyad', sortable: true },
-    { field: 'telefon', header: 'Telefon', sortable: true },
-  ];
-
-  protected readonly hostessColumns: ColumnDef<Hostess>[] = [
-    { field: 'id', header: 'ID', sortable: true },
-    { field: 'adSoyad', header: 'Ad Soyad', sortable: true },
-    { field: 'telefon', header: 'Telefon', sortable: true },
+    { field: 'plate', header: 'Plaka', sortable: true },
+    { field: 'brand', header: 'Marka', sortable: true },
+    { field: 'model', header: 'Model', sortable: true },
+    { field: 'seatCount', header: 'Koltuk Sayısı', sortable: true },
+    { field: 'occupiedSeats', header: 'Dolu Koltuk', sortable: true },
+    { field: 'emptySeats', header: 'Boş Koltuk', sortable: true },
+    { field: 'description', header: 'Açıklama', sortable: true },
+    { field: 'status', header: 'Durum', sortable: true },
   ];
 
   protected readonly passengerColumns: ColumnDef<Passenger>[] = [
-    { field: 'adSoyad', header: 'Ad Soyad', sortable: true },
-    { field: 'sinif', header: 'Sınıf', sortable: true },
-    { field: 'durum', header: 'Durum', sortable: true },
+    { field: 'fullName', header: 'Ad Soyad', sortable: true },
+    { field: 'className', header: 'Sınıf', sortable: true },
+    { field: 'status', header: 'Durum', sortable: true },
   ];
 
   // ── Filtered Lists ─────────────────────────────────────
   protected readonly filteredAssignments = computed(() => {
     const term = this.assignmentSearch().toLowerCase();
     const tur = this.seferTuruFilter();
-    return this.assignments().filter(a =>
-      (a.bus.plaka.toLowerCase().includes(term) ||
-       a.bus.adi.toLowerCase().includes(term) ||
-       a.sofor.adSoyad.toLowerCase().includes(term) ||
-       a.seferTuru.toLowerCase().includes(term) ||
-       a.durum.toLowerCase().includes(term)) &&
-      (tur ? a.seferTuru === tur : true)
+    return this.assignments().filter(
+      (a) =>
+        (a.bus.plate.toLowerCase().includes(term) ||
+          a.bus.brand.toLowerCase().includes(term) ||
+          a.bus.model.toLowerCase().includes(term) ||
+          a.tripType.toLowerCase().includes(term) ||
+          a.status.toLowerCase().includes(term)) &&
+        (tur ? a.tripType === tur : true),
     );
   });
 
   // ── Dropdown Options ───────────────────────────────────
   protected readonly busOptions = computed(() =>
-    this.buses().map(b => ({
-      label: b.adi,
+    this.buses().map((b) => ({
+      label: `${b.plate} — ${b.brand} ${b.model}`,
       value: b,
-    }))
-  );
-
-  protected readonly driverOptions = computed(() =>
-    this.drivers().map(d => ({
-      label: `${d.adSoyad} — ${d.telefon}`,
-      value: d.id,
-    })),
-  );
-
-  protected readonly hostessOptions = computed(() =>
-    this.hostesses().map(h => ({
-      label: `${h.adSoyad} — ${h.telefon}`,
-      value: h.id,
     })),
   );
 
@@ -207,9 +166,54 @@ export class SchoolBusComponent {
   ];
 
   protected readonly filteredAssignmentCount = computed(() => this.filteredAssignments().length);
-  protected readonly sabahCount = computed(() => this.assignments().filter(a => a.seferTuru === 'Sabah').length);
-  protected readonly ogledenSonraCount = computed(() => this.assignments().filter(a => a.seferTuru === 'Öğleden Sonra').length);
-  protected readonly aksamCount = computed(() => this.assignments().filter(a => a.seferTuru === 'Akşam').length);
+  protected readonly sabahCount = computed(
+    () => this.assignments().filter((a) => a.tripType === 'Sabah').length,
+  );
+  protected readonly ogledenSonraCount = computed(
+    () => this.assignments().filter((a) => a.tripType === 'Öğleden Sonra').length,
+  );
+  protected readonly aksamCount = computed(
+    () => this.assignments().filter((a) => a.tripType === 'Akşam').length,
+  );
+
+  ngOnInit(): void {
+    this.loadBuses();
+    this.loadDashboardStats();
+  }
+
+  private loadDashboardStats(): void {
+    this.busService.getDashboardStats().subscribe({
+      next: (stats) => this.dashboardStats.set(stats),
+      error: (err) => console.error('Dashboard istatistikleri alınamadı:', err),
+    });
+  }
+
+  private loadBuses(): void {
+    this.busService.getBuses().subscribe({
+      next: (busesData) => {
+        this.buses.set(busesData);
+        if (busesData.length > 0) {
+          this.busNextId = Math.max(...busesData.map((b) => b.id)) + 1;
+        }
+
+        // Map mock assignments to actual database buses
+        const mappedAssignments = MOCK_ASSIGNMENTS.map((assignment, index) => {
+          const realBus = busesData[index % busesData.length] || assignment.bus;
+          return {
+            ...assignment,
+            bus: realBus,
+          };
+        });
+        this.assignments.set(mappedAssignments);
+        if (mappedAssignments.length > 0) {
+          this.assignmentNextId = Math.max(...mappedAssignments.map((a) => a.id)) + 1;
+        }
+      },
+      error: (err) => {
+        console.error('Failed to load buses from database:', err);
+      },
+    });
+  }
 
   // ════════════════════════════════════════════════════════
   //  BUS CRUD
@@ -219,11 +223,22 @@ export class SchoolBusComponent {
     this.busEditing.set(bus ?? null);
     if (bus) {
       this.busForm.patchValue({
-        adi: bus.adi,
-        plaka: bus.plaka,
+        plate: bus.plate,
+        brand: bus.brand,
+        model: bus.model,
+        seatCount: bus.seatCount,
+        description: bus.description,
+        status: bus.status,
       });
     } else {
-      this.busForm.reset({ plaka: '', adi: '' });
+      this.busForm.reset({
+        plate: '',
+        brand: '',
+        model: '',
+        seatCount: 16,
+        description: '',
+        status: 'Aktif',
+      });
     }
     this.busFormVisible.set(true);
   }
@@ -238,19 +253,42 @@ export class SchoolBusComponent {
     if (this.busForm.invalid) return;
     const v = this.busForm.value;
     const editing = this.busEditing();
+
     if (editing) {
-      this.buses.update(list =>
-        list.map(b => b.id === editing.id ? { ...b, ...v } : b)
-      );
+      // DÜZENLEME İŞLEMİ (UPDATE)
+      this.busService.updateBus(editing.id, v).subscribe({
+        next: (result) => {
+          if (result.sonuc === 1) {
+            this.notification.success(result.sunucuCevap || 'Araç başarıyla güncellendi.');
+            this.loadBuses(); // Tabloyu sunucudan güncel verilerle yenile
+            this.closeBusForm();
+          } else {
+            this.notification.error(result.sunucuCevap || 'Araç güncellenirken bir hata oluştu.');
+          }
+        },
+        error: (err) => {
+          this.notification.error('Sunucuyla iletişim kurulurken bir hata oluştu.');
+          console.error(err);
+        },
+      });
     } else {
-      const newBus: Bus = {
-        id: this.busNextId++,
-        adi: v.adi,
-        plaka: v.plaka,
-      };
-      this.buses.update(list => [...list, newBus]);
+      // EKLEME İŞLEMİ (INSERT) - Mevcut haliyle kalıyor
+      this.busService.addBus(v).subscribe({
+        next: (result) => {
+          if (result.sonuc === 1) {
+            this.notification.success(result.sunucuCevap || 'Araç başarıyla eklendi.');
+            this.loadBuses();
+            this.closeBusForm();
+          } else {
+            this.notification.error(result.sunucuCevap || 'Araç eklenirken bir hata oluştu.');
+          }
+        },
+        error: (err) => {
+          this.notification.error('Sunucuyla iletişim kurulurken bir hata oluştu.');
+          console.error(err);
+        },
+      });
     }
-    this.closeBusForm();
   }
 
   protected confirmBusDelete(bus: Bus): void {
@@ -266,129 +304,24 @@ export class SchoolBusComponent {
   protected deleteBus(): void {
     const target = this.busDeleting();
     if (!target) return;
-    this.buses.update(list => list.filter(b => b.id !== target.id));
-    const idx = MOCK_BUSES.findIndex(b => b.id === target.id);
-    if (idx !== -1) MOCK_BUSES.splice(idx, 1);
-    this.closeBusDelete();
-  }
 
-  // ════════════════════════════════════════════════════════
-  //  DRIVER CRUD
-  // ════════════════════════════════════════════════════════
-
-  openDriverForm(driver?: Driver): void {
-    this.driverEditing.set(driver ?? null);
-    if (driver) {
-      this.driverForm.patchValue({ adSoyad: driver.adSoyad, telefon: driver.telefon });
-    } else {
-      this.driverForm.reset({ adSoyad: '', telefon: '' });
-    }
-    this.driverFormVisible.set(true);
-  }
-
-  protected closeDriverForm(): void {
-    this.driverFormVisible.set(false);
-    this.driverEditing.set(null);
-    this.driverForm.reset();
-  }
-
-  submitDriver(): void {
-    if (this.driverForm.invalid) return;
-    const v = this.driverForm.value;
-    const editing = this.driverEditing();
-    if (editing) {
-      this.drivers.update(list =>
-        list.map(d => d.id === editing.id ? { ...d, ...v } : d)
-      );
-    } else {
-      const newDriver: Driver = {
-        id: this.driverNextId++,
-        adSoyad: v.adSoyad,
-        telefon: v.telefon,
-      };
-      this.drivers.update(list => [...list, newDriver]);
-    }
-    this.closeDriverForm();
-  }
-
-  protected confirmDriverDelete(driver: Driver): void {
-    this.driverDeleting.set(driver);
-    this.driverDeleteVisible.set(true);
-  }
-
-  protected closeDriverDelete(): void {
-    this.driverDeleteVisible.set(false);
-    this.driverDeleting.set(null);
-  }
-
-  protected deleteDriver(): void {
-    const target = this.driverDeleting();
-    if (!target) return;
-    this.drivers.update(list => list.filter(d => d.id !== target.id));
-    const idx = MOCK_DRIVERS.findIndex(d => d.id === target.id);
-    if (idx !== -1) MOCK_DRIVERS.splice(idx, 1);
-    this.closeDriverDelete();
-  }
-
-  // ════════════════════════════════════════════════════════
-  //  HOSTESS CRUD
-  // ════════════════════════════════════════════════════════
-
-  protected openHostessForm(hostess?: Hostess): void {
-    if (hostess) {
-      this.hostessEditing.set(hostess);
-      this.hostessForm.patchValue({
-        adSoyad: hostess.adSoyad,
-        telefon: hostess.telefon,
-      });
-    } else {
-      this.hostessEditing.set(null);
-      this.hostessForm.reset({ adSoyad: '', telefon: '' });
-    }
-    this.hostessFormVisible.set(true);
-  }
-
-  protected closeHostessForm(): void {
-    this.hostessFormVisible.set(false);
-    this.hostessEditing.set(null);
-    this.hostessForm.reset();
-  }
-
-  protected submitHostess(): void {
-    if (this.hostessForm.invalid) { this.hostessForm.markAllAsTouched(); return; }
-    const v = this.hostessForm.value;
-    const editing = this.hostessEditing();
-
-    if (editing) {
-      const updated: Hostess = { ...editing, adSoyad: v.adSoyad, telefon: v.telefon };
-      this.hostesses.update(list => list.map(h => h.id === editing.id ? updated : h));
-      const idx = MOCK_HOSTESSES.findIndex(h => h.id === editing.id);
-      if (idx !== -1) MOCK_HOSTESSES[idx] = updated;
-    } else {
-      const newHostess: Hostess = { id: this.hostessNextId++, adSoyad: v.adSoyad, telefon: v.telefon };
-      this.hostesses.update(list => [...list, newHostess]);
-      MOCK_HOSTESSES.push(newHostess);
-    }
-    this.closeHostessForm();
-  }
-
-  protected confirmHostessDelete(hostess: Hostess): void {
-    this.hostessDeleting.set(hostess);
-    this.hostessDeleteVisible.set(true);
-  }
-
-  protected closeHostessDelete(): void {
-    this.hostessDeleteVisible.set(false);
-    this.hostessDeleting.set(null);
-  }
-
-  protected deleteHostess(): void {
-    const target = this.hostessDeleting();
-    if (!target) return;
-    this.hostesses.update(list => list.filter(h => h.id !== target.id));
-    const idx = MOCK_HOSTESSES.findIndex(h => h.id === target.id);
-    if (idx !== -1) MOCK_HOSTESSES.splice(idx, 1);
-    this.closeHostessDelete();
+    // SİLME İŞLEMİ (DELETE)
+    this.busService.deleteBus(target.id).subscribe({
+      next: (result) => {
+        if (result.sonuc === 1) {
+          this.notification.success(result.sunucuCevap || 'Araç başarıyla silindi.');
+          this.loadBuses(); // Tabloyu yenile
+          this.closeBusDelete();
+        } else {
+          this.notification.error(result.sunucuCevap || 'Araç silinirken bir hata oluştu.');
+        }
+      },
+      error: (err) => {
+        this.notification.error('Sunucuyla iletişim kurulurken bir hata oluştu.');
+        console.error(err);
+        this.closeBusDelete();
+      },
+    });
   }
 
   // ════════════════════════════════════════════════════════
@@ -404,13 +337,11 @@ export class SchoolBusComponent {
     if (assignment) {
       this.assignmentForm.patchValue({
         bus: assignment.bus,
-        sofor: assignment.sofor,
-        hostes: assignment.hostes ?? null,
-        kalkisSaati: assignment.kalkisSaati,
-        seferTuru: assignment.seferTuru,
+        departureTime: assignment.departureTime,
+        tripType: assignment.tripType,
       });
     } else {
-      this.assignmentForm.reset({ bus: null, sofor: null, hostes: null, kalkisSaati: '07:30', seferTuru: 'Sabah' });
+      this.assignmentForm.reset({ bus: null, departureTime: '07:30', tripType: 'Sabah' });
     }
     this.assignmentFormVisible.set(true);
   }
@@ -426,21 +357,23 @@ export class SchoolBusComponent {
     const v = this.assignmentForm.value;
     const editing = this.assignmentEditing();
     if (editing) {
-      this.assignments.update(list =>
-        list.map(a => a.id === editing.id ? { ...a, bus: v.bus, sofor: v.sofor, hostes: v.hostes, kalkisSaati: v.kalkisSaati, seferTuru: v.seferTuru } : a)
+      this.assignments.update((list) =>
+        list.map((a) =>
+          a.id === editing.id
+            ? { ...a, bus: v.bus, departureTime: v.departureTime, tripType: v.tripType }
+            : a,
+        ),
       );
     } else {
       const newAssignment: BusAssignment = {
         id: this.assignmentNextId++,
         bus: v.bus,
-        sofor: v.sofor,
-        hostes: v.hostes,
-        yolcular: [],
-        kalkisSaati: v.kalkisSaati,
-        seferTuru: v.seferTuru,
-        durum: 'Beklemede',
+        passengers: [],
+        departureTime: v.departureTime,
+        tripType: v.tripType,
+        status: 'Beklemede',
       };
-      this.assignments.update(list => [...list, newAssignment]);
+      this.assignments.update((list) => [...list, newAssignment]);
     }
     this.closeAssignmentForm();
   }
@@ -451,6 +384,7 @@ export class SchoolBusComponent {
   }
 
   protected closeAssignmentDetail(): void {
+    this.assignmentDetailVisible.set(true);
     this.assignmentDetailVisible.set(false);
     this.assignmentDetail.set(null);
   }
@@ -468,27 +402,31 @@ export class SchoolBusComponent {
   protected deleteAssignment(): void {
     const target = this.assignmentDeleting();
     if (!target) return;
-    this.assignments.update(list => list.filter(a => a.id !== target.id));
-    const idx = MOCK_ASSIGNMENTS.findIndex(a => a.id === target.id);
-    if (idx !== -1) MOCK_ASSIGNMENTS.splice(idx, 1);
+    this.assignments.update((list) => list.filter((a) => a.id !== target.id));
     this.closeAssignmentDelete();
   }
 
   // ── Stat Detail Dialog ───────────────────────────────
   protected readonly statDetailVisible = signal(false);
-  protected readonly statDetailType = signal<'buses' | 'activeBuses' | 'drivers' | 'hostesses' | 'assignments' | 'passengers' | 'completedTrips' | null>(null);
+  protected readonly statDetailType = signal<
+    'buses' | 'activeBuses' | 'assignments' | 'passengers' | 'completedTrips' | null
+  >(null);
 
   protected readonly statDetailTitle = computed(() => {
     const type = this.statDetailType();
     switch (type) {
-      case 'buses': return 'Toplam Araç Listesi';
-      case 'activeBuses': return 'Aktif Araç Listesi';
-      case 'drivers': return 'Şöför Listesi';
-      case 'hostesses': return 'Hostes Listesi';
-      case 'assignments': return 'Atama Listesi';
-      case 'passengers': return 'Yolcu Listesi';
-      case 'completedTrips': return 'Tamamlanan Seferler';
-      default: return '';
+      case 'buses':
+        return 'Toplam Araç Listesi';
+      case 'activeBuses':
+        return 'Aktif Araç Listesi';
+      case 'assignments':
+        return 'Atama Listesi';
+      case 'passengers':
+        return 'Yolcu Listesi';
+      case 'completedTrips':
+        return 'Tamamlanan Seferler';
+      default:
+        return '';
     }
   });
 
@@ -496,18 +434,36 @@ export class SchoolBusComponent {
     const type = this.statDetailType();
     if (!type) return [];
     switch (type) {
-      case 'buses': return this.buses().map(b => ({ label: b.adi, sub: b.plaka }));
-      case 'activeBuses': return this.buses().map(b => ({ label: b.adi, sub: b.plaka }));
-      case 'drivers': return this.drivers().map(d => ({ label: d.adSoyad, sub: d.telefon }));
-      case 'hostesses': return this.hostesses().map(h => ({ label: h.adSoyad, sub: h.telefon }));
-      case 'assignments': return this.assignments().map(a => ({ label: a.bus.adi, sub: `${a.sofor.adSoyad} — ${a.seferTuru} — ${a.durum}` }));
-      case 'passengers': return this.assignments().flatMap(a => a.yolcular.map(p => ({ label: p.adSoyad, sub: `${p.sinif} — ${p.durum}` })));
-      case 'completedTrips': return this.assignments().filter(a => a.durum === 'Tamamlandı').map(a => ({ label: a.bus.adi, sub: `${a.sofor.adSoyad} — ${a.kalkisSaati}` }));
-      default: return [];
+      case 'buses':
+        return this.buses().map((b) => ({ label: `${b.brand} ${b.model}`, sub: b.plate }));
+      case 'activeBuses':
+        return this.buses()
+          .filter((b) => b.status === 'Aktif')
+          .map((b) => ({ label: `${b.brand} ${b.model}`, sub: b.plate }));
+      case 'assignments':
+        return this.assignments().map((a) => ({
+          label: `${a.bus.brand} ${a.bus.model} (${a.bus.plate})`,
+          sub: `${a.tripType} — ${a.status}`,
+        }));
+      case 'passengers':
+        return this.assignments().flatMap((a) =>
+          a.passengers.map((p) => ({ label: p.fullName, sub: `${p.className} — ${p.status}` })),
+        );
+      case 'completedTrips':
+        return this.assignments()
+          .filter((a) => a.status === 'Tamamlandı')
+          .map((a) => ({
+            label: `${a.bus.brand} ${a.bus.model} (${a.bus.plate})`,
+            sub: a.departureTime,
+          }));
+      default:
+        return [];
     }
   });
 
-  openStatDetail(type: 'buses' | 'activeBuses' | 'drivers' | 'hostesses' | 'assignments' | 'passengers' | 'completedTrips'): void {
+  openStatDetail(
+    type: 'buses' | 'activeBuses' | 'assignments' | 'passengers' | 'completedTrips',
+  ): void {
     this.statDetailType.set(type);
     this.statDetailVisible.set(true);
   }
@@ -518,19 +474,25 @@ export class SchoolBusComponent {
   }
 
   // ── Helpers ────────────────────────────────────────────
-  protected getDurumSeverity(durum: string): 'success' | 'warn' | 'info' {
-    switch (durum) {
-      case 'Tamamlandı': return 'success';
-      case 'Yolda': return 'warn';
-      default: return 'info';
+  protected getDurumSeverity(status: string): 'success' | 'warn' | 'info' {
+    switch (status) {
+      case 'Tamamlandı':
+        return 'success';
+      case 'Yolda':
+        return 'warn';
+      default:
+        return 'info';
     }
   }
 
   protected getSeferTuruSeverity(tur: SeferTuru): 'info' | 'warn' | 'danger' {
     switch (tur) {
-      case 'Sabah': return 'info';
-      case 'Öğleden Sonra': return 'warn';
-      case 'Akşam': return 'danger';
+      case 'Sabah':
+        return 'info';
+      case 'Öğleden Sonra':
+        return 'warn';
+      case 'Akşam':
+        return 'danger';
     }
   }
 
@@ -539,11 +501,11 @@ export class SchoolBusComponent {
   }
 
   protected getPassengerCount(a: BusAssignment): number {
-    return a.yolcular.length;
+    return a.passengers.length;
   }
 
   protected getBinmisCount(a: BusAssignment): number {
-    return a.yolcular.filter(y => y.durum === 'Binmiş').length;
+    return a.passengers.filter((p) => p.status === 'Binmiş').length;
   }
 
   protected getDoluOran(): number {
