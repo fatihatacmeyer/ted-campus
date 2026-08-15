@@ -147,6 +147,18 @@ $radius-full: 9999px;
   to { opacity: 1; transform: translateY(0); }
 }
 
+.empty-state {
+  text-align: center;
+  color: $text-muted;
+  padding: 40px 0;
+}
+
+/* ── Öğrenci Atama Dialogu: Gidiş / Dönüş sekmesi ──────── */
+.direction-tab-bar {
+  margin-top: 20px;
+  margin-bottom: 12px;
+}
+
 /* ── Stat Cards ────────────────────────────────────────── */
 .stat-grid {
   display: grid;

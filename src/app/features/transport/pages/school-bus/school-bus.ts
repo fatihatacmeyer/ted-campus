@@ -16,7 +16,7 @@ import { TooltipModule } from 'primeng/tooltip';
 import { SelectModule } from 'primeng/select';
 import { InputTextModule } from 'primeng/inputtext';
 import { TextareaModule } from 'primeng/textarea';
-import { Bus, BusAssignment, Passenger, SeferTuru, MOCK_ASSIGNMENTS } from './mock-data';
+import { Bus, ServisYonu, StudentAssignment } from './mock-data';
 import {
   CustomizableTableComponent,
   ColumnCellDirective,
@@ -25,6 +25,8 @@ import {
 import { SchoolBusService } from '../../services/school-bus.service';
 import { NotificationService } from '../../../../core/services/notification.service';
 import { BusDashboardStats } from '../../services/school-bus.service';
+import { PersonService } from '../../../persons/services/person.service';
+import { Person, UserDef } from '../../../../core/models/person.model';
 
 type TabKey = 'dashboard' | 'buses' | 'assignments';
 
@@ -52,6 +54,7 @@ type TabKey = 'dashboard' | 'buses' | 'assignments';
 export class SchoolBusComponent implements OnInit {
   private fb = inject(FormBuilder);
   private busService = inject(SchoolBusService);
+  private personService = inject(PersonService);
   private notification = inject(NotificationService);
 
   // ── Tab State ──────────────────────────────────────────
@@ -64,31 +67,29 @@ export class SchoolBusComponent implements OnInit {
 
   // ── Data State ─────────────────────────────────────────
   protected readonly buses = signal<Bus[]>([]);
-  protected readonly assignments = signal<BusAssignment[]>([]);
+  protected readonly students = signal<Person[]>([]);
 
   // ── ID Counters ────────────────────────────────────────
   private busNextId = 100;
-  private assignmentNextId = 100;
 
-  // ── Dialog Visibility ──────────────────────────────────
-  // Buses
+  // ── Dialog Visibility: Buses ────────────────────────────
   protected readonly busFormVisible = signal(false);
   protected readonly busDeleteVisible = signal(false);
   protected readonly busEditing = signal<Bus | null>(null);
   protected readonly busDeleting = signal<Bus | null>(null);
 
-  // Assignments
-  protected readonly assignmentFormVisible = signal(false);
-  protected readonly assignmentDeleteVisible = signal(false);
-  protected readonly assignmentDetailVisible = signal(false);
-  protected readonly assignmentEditing = signal<BusAssignment | null>(null);
-  protected readonly assignmentDeleting = signal<BusAssignment | null>(null);
-  protected readonly assignmentDetail = signal<BusAssignment | null>(null);
+  // ── Dialog Visibility: Öğrenci Atama (araca bağlı) ──────
+  protected readonly studentAssignVisible = signal(false);
+  protected readonly studentAssignBus = signal<Bus | null>(null);
+  protected readonly studentAssignments = signal<StudentAssignment[]>([]);
+  protected readonly studentAssignLoading = signal(false);
+  protected readonly studentAssignDeleteVisible = signal(false);
+  protected readonly studentAssignDeleting = signal<StudentAssignment | null>(null);
+  protected readonly studentAssignDirectionTab = signal<ServisYonu>(1);
 
   // ── Search Terms ───────────────────────────────────────
-  protected assignmentSearchValue = '';
-  protected readonly assignmentSearch = signal('');
-  protected readonly seferTuruFilter = signal<SeferTuru | null>(null);
+  protected assignmentBusSearchValue = '';
+  protected readonly assignmentBusSearch = signal('');
 
   protected readonly dashboardStats = signal<BusDashboardStats | null>(null);
 
@@ -102,23 +103,15 @@ export class SchoolBusComponent implements OnInit {
     status: ['Aktif', Validators.required],
   });
 
-  protected readonly assignmentForm: FormGroup = this.fb.group({
-    bus: [null, Validators.required],
-    departureTime: ['07:30', Validators.required],
-    tripType: ['Sabah', Validators.required],
+  protected readonly studentAssignForm: FormGroup = this.fb.group({
+    ogrenciSicilId: [null, Validators.required],
+    yon: [1, Validators.required],
   });
 
   // ── Dashboard Computed ─────────────────────────────────
   protected readonly totalBuses = computed(() => this.buses().length);
-  protected readonly totalAssignments = computed(() => this.assignments().length);
-  protected readonly totalPassengers = computed(() =>
-    this.assignments().reduce((sum, a) => sum + a.passengers.length, 0),
-  );
-  protected readonly completedTrips = computed(
-    () => this.assignments().filter((a) => a.status === 'Tamamlandı').length,
-  );
 
-  // ── Table Columns ──────────────────────────────────────
+  // ── Table Columns: Araçlar ──────────────────────────────
   protected readonly busColumns: ColumnDef<Bus>[] = [
     { field: 'plate', header: 'Plaka', sortable: true },
     { field: 'brand', header: 'Marka', sortable: true },
@@ -130,50 +123,52 @@ export class SchoolBusComponent implements OnInit {
     { field: 'status', header: 'Durum', sortable: true },
   ];
 
-  protected readonly passengerColumns: ColumnDef<Passenger>[] = [
-    { field: 'fullName', header: 'Ad Soyad', sortable: true },
-    { field: 'className', header: 'Sınıf', sortable: true },
-    { field: 'status', header: 'Durum', sortable: true },
+  // ── Table Columns: Bir araca atanmış öğrenciler (Gidiş / Dönüş ayrı ayrı) ──
+  protected readonly assignedStudentColumns: ColumnDef<StudentAssignment>[] = [
+    { field: 'ogrenciAdSoyad', header: 'Öğrenci', sortable: true },
+    { field: 'sinif', header: 'Sınıf', sortable: true },
+    { field: 'kampus', header: 'Kampüs', sortable: true },
   ];
 
   // ── Filtered Lists ─────────────────────────────────────
-  protected readonly filteredAssignments = computed(() => {
-    const term = this.assignmentSearch().toLowerCase();
-    const tur = this.seferTuruFilter();
-    return this.assignments().filter(
-      (a) =>
-        (a.bus.plate.toLowerCase().includes(term) ||
-          a.bus.brand.toLowerCase().includes(term) ||
-          a.bus.model.toLowerCase().includes(term) ||
-          a.tripType.toLowerCase().includes(term) ||
-          a.status.toLowerCase().includes(term)) &&
-        (tur ? a.tripType === tur : true),
+  protected readonly filteredAssignmentBuses = computed(() => {
+    const term = this.assignmentBusSearch().toLowerCase();
+    if (!term) return this.buses();
+    return this.buses().filter(
+      (b) =>
+        b.plate.toLowerCase().includes(term) ||
+        b.brand.toLowerCase().includes(term) ||
+        b.model.toLowerCase().includes(term) ||
+        (b.description || '').toLowerCase().includes(term),
     );
   });
 
   // ── Dropdown Options ───────────────────────────────────
-  protected readonly busOptions = computed(() =>
-    this.buses().map((b) => ({
-      label: `${b.plate} — ${b.brand} ${b.model}`,
-      value: b,
+  protected readonly studentOptions = computed(() =>
+    this.students().map((s) => ({
+      label: s.bolumad ? `${s.adsoyad} — ${s.bolumad}` : s.adsoyad,
+      value: s.id,
     })),
   );
 
-  protected readonly seferTuruOptions: { label: string; value: SeferTuru }[] = [
-    { label: 'Sabah', value: 'Sabah' },
-    { label: 'Öğleden Sonra', value: 'Öğleden Sonra' },
-    { label: 'Akşam', value: 'Akşam' },
+  protected readonly yonOptions: { label: string; value: ServisYonu }[] = [
+    { label: 'Gidiş', value: 1 },
+    { label: 'Dönüş', value: 2 },
   ];
 
-  protected readonly filteredAssignmentCount = computed(() => this.filteredAssignments().length);
-  protected readonly sabahCount = computed(
-    () => this.assignments().filter((a) => a.tripType === 'Sabah').length,
+  // İki ayrı liste: Gidiş (Yön=1) ve Dönüş (Yön=2)
+  protected readonly studentAssignGidisList = computed(() =>
+    this.studentAssignments().filter((a) => a.yon === 1),
   );
-  protected readonly ogledenSonraCount = computed(
-    () => this.assignments().filter((a) => a.tripType === 'Öğleden Sonra').length,
+  protected readonly studentAssignDonusList = computed(() =>
+    this.studentAssignments().filter((a) => a.yon === 2),
   );
-  protected readonly aksamCount = computed(
-    () => this.assignments().filter((a) => a.tripType === 'Akşam').length,
+  protected readonly studentAssignGidisCount = computed(() => this.studentAssignGidisList().length);
+  protected readonly studentAssignDonusCount = computed(() => this.studentAssignDonusList().length);
+  protected readonly studentAssignActiveList = computed(() =>
+    this.studentAssignDirectionTab() === 1
+      ? this.studentAssignGidisList()
+      : this.studentAssignDonusList(),
   );
 
   ngOnInit(): void {
@@ -195,23 +190,17 @@ export class SchoolBusComponent implements OnInit {
         if (busesData.length > 0) {
           this.busNextId = Math.max(...busesData.map((b) => b.id)) + 1;
         }
-
-        // Map mock assignments to actual database buses
-        const mappedAssignments = MOCK_ASSIGNMENTS.map((assignment, index) => {
-          const realBus = busesData[index % busesData.length] || assignment.bus;
-          return {
-            ...assignment,
-            bus: realBus,
-          };
-        });
-        this.assignments.set(mappedAssignments);
-        if (mappedAssignments.length > 0) {
-          this.assignmentNextId = Math.max(...mappedAssignments.map((a) => a.id)) + 1;
-        }
       },
       error: (err) => {
         console.error('Failed to load buses from database:', err);
       },
+    });
+  }
+
+  private loadStudents(): void {
+    this.personService.getPersonListCampus().subscribe({
+      next: (people) => this.students.set(people.filter((p) => p.userdef === UserDef.Ogrenci)),
+      error: (err) => console.error('Öğrenci listesi alınamadı:', err),
     });
   }
 
@@ -325,193 +314,107 @@ export class SchoolBusComponent implements OnInit {
   }
 
   // ════════════════════════════════════════════════════════
-  //  ASSIGNMENT CRUD
+  //  ÖĞRENCİ SERVİS ATAMASI (araca bağlı)
   // ════════════════════════════════════════════════════════
 
-  protected readonly assignmentFormTitle = computed(() =>
-    this.assignmentEditing() ? 'Atamayı Düzenle' : 'Yeni Atama Ekle',
-  );
-
-  openAssignmentForm(assignment?: BusAssignment): void {
-    this.assignmentEditing.set(assignment ?? null);
-    if (assignment) {
-      this.assignmentForm.patchValue({
-        bus: assignment.bus,
-        departureTime: assignment.departureTime,
-        tripType: assignment.tripType,
-      });
-    } else {
-      this.assignmentForm.reset({ bus: null, departureTime: '07:30', tripType: 'Sabah' });
+  protected openStudentAssign(bus: Bus): void {
+    this.studentAssignBus.set(bus);
+    this.studentAssignForm.reset({ ogrenciSicilId: null, yon: 1 });
+    this.studentAssignDirectionTab.set(1);
+    this.loadStudentAssignments(bus.id);
+    if (this.students().length === 0) {
+      this.loadStudents();
     }
-    this.assignmentFormVisible.set(true);
+    this.studentAssignVisible.set(true);
   }
 
-  protected closeAssignmentForm(): void {
-    this.assignmentFormVisible.set(false);
-    this.assignmentEditing.set(null);
-    this.assignmentForm.reset();
+  protected setStudentAssignDirectionTab(yon: ServisYonu): void {
+    this.studentAssignDirectionTab.set(yon);
   }
 
-  submitAssignment(): void {
-    if (this.assignmentForm.invalid) return;
-    const v = this.assignmentForm.value;
-    const editing = this.assignmentEditing();
-    if (editing) {
-      this.assignments.update((list) =>
-        list.map((a) =>
-          a.id === editing.id
-            ? { ...a, bus: v.bus, departureTime: v.departureTime, tripType: v.tripType }
-            : a,
-        ),
-      );
-    } else {
-      const newAssignment: BusAssignment = {
-        id: this.assignmentNextId++,
-        bus: v.bus,
-        passengers: [],
-        departureTime: v.departureTime,
-        tripType: v.tripType,
-        status: 'Beklemede',
-      };
-      this.assignments.update((list) => [...list, newAssignment]);
-    }
-    this.closeAssignmentForm();
+  protected closeStudentAssign(): void {
+    this.studentAssignVisible.set(false);
+    this.studentAssignBus.set(null);
+    this.studentAssignments.set([]);
+    this.studentAssignForm.reset({ ogrenciSicilId: null, yon: 1 });
   }
 
-  protected openAssignmentDetail(assignment: BusAssignment): void {
-    this.assignmentDetail.set(assignment);
-    this.assignmentDetailVisible.set(true);
+  private loadStudentAssignments(servisId: number): void {
+    this.studentAssignLoading.set(true);
+    this.busService.getStudentAssignments({ servisId }).subscribe({
+      next: (rows) => {
+        this.studentAssignments.set(rows);
+        this.studentAssignLoading.set(false);
+      },
+      error: (err) => {
+        this.notification.error('Öğrenci atamaları alınırken bir hata oluştu.');
+        console.error(err);
+        this.studentAssignLoading.set(false);
+      },
+    });
   }
 
-  protected closeAssignmentDetail(): void {
-    this.assignmentDetailVisible.set(true);
-    this.assignmentDetailVisible.set(false);
-    this.assignmentDetail.set(null);
+  submitStudentAssign(): void {
+    if (this.studentAssignForm.invalid) return;
+    const bus = this.studentAssignBus();
+    if (!bus) return;
+    const v = this.studentAssignForm.value;
+
+    this.busService.assignStudentToBus(v.ogrenciSicilId, bus.id, v.yon).subscribe({
+      next: (result) => {
+        if (result.sonuc === 1) {
+          this.notification.success(result.sunucuCevap || 'Öğrenci servise başarıyla atandı.');
+          this.loadStudentAssignments(bus.id);
+          this.loadBuses(); // dolu/boş koltuk sayıları güncellensin
+          this.studentAssignForm.reset({ ogrenciSicilId: null, yon: v.yon });
+        } else {
+          this.notification.error(result.sunucuCevap || 'Öğrenci atanırken bir hata oluştu.');
+        }
+      },
+      error: (err) => {
+        this.notification.error('Sunucuyla iletişim kurulurken bir hata oluştu.');
+        console.error(err);
+      },
+    });
   }
 
-  protected confirmAssignmentDelete(assignment: BusAssignment): void {
-    this.assignmentDeleting.set(assignment);
-    this.assignmentDeleteVisible.set(true);
+  protected confirmStudentAssignDelete(row: StudentAssignment): void {
+    this.studentAssignDeleting.set(row);
+    this.studentAssignDeleteVisible.set(true);
   }
 
-  protected closeAssignmentDelete(): void {
-    this.assignmentDeleteVisible.set(false);
-    this.assignmentDeleting.set(null);
+  protected closeStudentAssignDelete(): void {
+    this.studentAssignDeleteVisible.set(false);
+    this.studentAssignDeleting.set(null);
   }
 
-  protected deleteAssignment(): void {
-    const target = this.assignmentDeleting();
+  protected deleteStudentAssign(): void {
+    const target = this.studentAssignDeleting();
+    const bus = this.studentAssignBus();
     if (!target) return;
-    this.assignments.update((list) => list.filter((a) => a.id !== target.id));
-    this.closeAssignmentDelete();
-  }
 
-  // ── Stat Detail Dialog ───────────────────────────────
-  protected readonly statDetailVisible = signal(false);
-  protected readonly statDetailType = signal<
-    'buses' | 'activeBuses' | 'assignments' | 'passengers' | 'completedTrips' | null
-  >(null);
-
-  protected readonly statDetailTitle = computed(() => {
-    const type = this.statDetailType();
-    switch (type) {
-      case 'buses':
-        return 'Toplam Araç Listesi';
-      case 'activeBuses':
-        return 'Aktif Araç Listesi';
-      case 'assignments':
-        return 'Atama Listesi';
-      case 'passengers':
-        return 'Yolcu Listesi';
-      case 'completedTrips':
-        return 'Tamamlanan Seferler';
-      default:
-        return '';
-    }
-  });
-
-  protected readonly statDetailItems = computed(() => {
-    const type = this.statDetailType();
-    if (!type) return [];
-    switch (type) {
-      case 'buses':
-        return this.buses().map((b) => ({ label: `${b.brand} ${b.model}`, sub: b.plate }));
-      case 'activeBuses':
-        return this.buses()
-          .filter((b) => b.status === 'Aktif')
-          .map((b) => ({ label: `${b.brand} ${b.model}`, sub: b.plate }));
-      case 'assignments':
-        return this.assignments().map((a) => ({
-          label: `${a.bus.brand} ${a.bus.model} (${a.bus.plate})`,
-          sub: `${a.tripType} — ${a.status}`,
-        }));
-      case 'passengers':
-        return this.assignments().flatMap((a) =>
-          a.passengers.map((p) => ({ label: p.fullName, sub: `${p.className} — ${p.status}` })),
-        );
-      case 'completedTrips':
-        return this.assignments()
-          .filter((a) => a.status === 'Tamamlandı')
-          .map((a) => ({
-            label: `${a.bus.brand} ${a.bus.model} (${a.bus.plate})`,
-            sub: a.departureTime,
-          }));
-      default:
-        return [];
-    }
-  });
-
-  openStatDetail(
-    type: 'buses' | 'activeBuses' | 'assignments' | 'passengers' | 'completedTrips',
-  ): void {
-    this.statDetailType.set(type);
-    this.statDetailVisible.set(true);
-  }
-
-  closeStatDetail(): void {
-    this.statDetailVisible.set(false);
-    this.statDetailType.set(null);
+    this.busService.removeStudentAssignment(target.id).subscribe({
+      next: (result) => {
+        if (result.sonuc === 1) {
+          this.notification.success(result.sunucuCevap || 'Kayıt başarıyla silindi.');
+          if (bus) {
+            this.loadStudentAssignments(bus.id);
+            this.loadBuses();
+          }
+          this.closeStudentAssignDelete();
+        } else {
+          this.notification.error(result.sunucuCevap || 'Kayıt silinirken bir hata oluştu.');
+        }
+      },
+      error: (err) => {
+        this.notification.error('Sunucuyla iletişim kurulurken bir hata oluştu.');
+        console.error(err);
+        this.closeStudentAssignDelete();
+      },
+    });
   }
 
   // ── Helpers ────────────────────────────────────────────
-  protected getDurumSeverity(status: string): 'success' | 'warn' | 'info' {
-    switch (status) {
-      case 'Tamamlandı':
-        return 'success';
-      case 'Yolda':
-        return 'warn';
-      default:
-        return 'info';
-    }
-  }
-
-  protected getSeferTuruSeverity(tur: SeferTuru): 'info' | 'warn' | 'danger' {
-    switch (tur) {
-      case 'Sabah':
-        return 'info';
-      case 'Öğleden Sonra':
-        return 'warn';
-      case 'Akşam':
-        return 'danger';
-    }
-  }
-
-  protected toggleSeferTuruFilter(tur: SeferTuru): void {
-    this.seferTuruFilter.set(this.seferTuruFilter() === tur ? null : tur);
-  }
-
-  protected getPassengerCount(a: BusAssignment): number {
-    return a.passengers.length;
-  }
-
-  protected getBinmisCount(a: BusAssignment): number {
-    return a.passengers.filter((p) => p.status === 'Binmiş').length;
-  }
-
-  protected getDoluOran(): number {
-    return 0;
-  }
-
   protected setTab(tab: TabKey): void {
     this.activeTab.set(tab);
   }

@@ -1,6 +1,6 @@
 <!-- ════════════════════════════════════════════════════════════
      TED Servis Takip — School Bus
-     Komple servis yönetimi: Araçlar, Atamalar
+     Komple servis yönetimi: Araçlar, araca bağlı öğrenci atamaları
      ════════════════════════════════════════════════════════════ -->
 
 <div class="school-bus">
@@ -152,7 +152,7 @@
   }
 
   <!-- ════════════════════════════════════════════════════ -->
-  <!-- TAB: Atamalar (Assignments)                          -->
+  <!-- TAB: Atamalar (Servis Atamaları — araca bağlı)       -->
   <!-- ════════════════════════════════════════════════════ -->
   @if (activeTab() === 'assignments') {
     <div class="tab-content">
@@ -161,160 +161,90 @@
           <span class="material-symbols-outlined">assignment</span>
           <h2>Servis Atamaları</h2>
         </div>
-        <button
-          pButton
-          label="Yeni Atama Ekle"
-          aria-label="Yeni Atama Ekle"
-          icon="pi pi-plus"
-          class="p-button-sm p-button-success"
-          (click)="openAssignmentForm()"
-        ></button>
       </div>
 
       <div class="search-bar">
         <span class="material-symbols-outlined">search</span>
         <input
           pInputText
-          [ngModel]="assignmentSearchValue"
-          (ngModelChange)="assignmentSearchValue = $event; assignmentSearch.set($event)"
-          placeholder="Atama ara... (plaka, marka, model, sefer türü)"
+          [ngModel]="assignmentBusSearchValue"
+          (ngModelChange)="assignmentBusSearchValue = $event; assignmentBusSearch.set($event)"
+          placeholder="Araç ara... (plaka, marka, model, açıklama)"
           class="w-full"
         />
       </div>
 
-      <!-- Sefer Türü Filtreleri -->
-      <div class="sefer-filter-bar">
-        <button
-          class="sefer-filter-btn"
-          [class.active]="seferTuruFilter() === null"
-          (click)="seferTuruFilter.set(null)"
-        >
-          Tümü ({{ assignments().length }})
-        </button>
-        <button
-          class="sefer-filter-btn"
-          [class.active]="seferTuruFilter() === 'Sabah'"
-          (click)="toggleSeferTuruFilter('Sabah')"
-        >
-          <span class="material-symbols-outlined">wb_sunny</span> Sabah ({{ sabahCount() }})
-        </button>
-        <button
-          class="sefer-filter-btn"
-          [class.active]="seferTuruFilter() === 'Öğleden Sonra'"
-          (click)="toggleSeferTuruFilter('Öğleden Sonra')"
-        >
-          <span class="material-symbols-outlined">wb_twilight</span> Öğleden Sonra ({{
-            ogledenSonraCount()
-          }})
-        </button>
-        <button
-          class="sefer-filter-btn"
-          [class.active]="seferTuruFilter() === 'Akşam'"
-          (click)="toggleSeferTuruFilter('Akşam')"
-        >
-          <span class="material-symbols-outlined">nights_stay</span> Akşam ({{ aksamCount() }})
-        </button>
-      </div>
-
-      <div class="bus-grid">
-        @for (assignment of filteredAssignments(); track assignment.id) {
-          <div
-            class="bus-card"
-            [class.bus-active]="assignment.status === 'Yolda'"
-            [class.bus-completed]="assignment.status === 'Tamamlandı'"
-            [class.bus-waiting]="assignment.status === 'Beklemede'"
-          >
-            <!-- Bus Header -->
-            <div class="bus-card-header">
-              <div class="bus-plate">
-                <span class="material-symbols-outlined">pin</span>
-                {{ assignment.bus.plate }}
-              </div>
-              <div class="bus-card-tags">
-                <p-tag
-                  [value]="assignment.tripType"
-                  [severity]="getSeferTuruSeverity(assignment.tripType)"
-                  styleClass="sefer-turu-tag"
-                />
-                <p-tag
-                  [value]="assignment.status"
-                  [severity]="getDurumSeverity(assignment.status)"
-                />
-              </div>
-            </div>
-
-            <!-- Servis Info -->
-            <div class="bus-route">
-              <div class="route-point">
-                <span class="material-symbols-outlined">directions_bus</span>
-                <div>
-                  <span class="route-label">Araç</span>
-                  <span class="route-value"
-                    >{{ assignment.bus.brand }} {{ assignment.bus.model }}</span
-                  >
+      <!-- Araç bazlı atama kartları: Plaka, Koltuk Sayısı, Dolu Koltuk, Boş Koltuk, Açıklama -->
+      @if (filteredAssignmentBuses().length === 0) {
+        <p class="empty-state">Araç bulunamadı.</p>
+      } @else {
+        <div class="bus-grid">
+          @for (bus of filteredAssignmentBuses(); track bus.id) {
+            <div class="bus-card" [class.bus-waiting]="bus.emptySeats <= 0">
+              <!-- Bus Header -->
+              <div class="bus-card-header">
+                <div class="bus-plate">
+                  <span class="material-symbols-outlined">pin</span>
+                  {{ bus.plate }}
+                </div>
+                <div class="bus-card-tags">
+                  <p-tag
+                    [value]="bus.emptySeats > 0 ? bus.emptySeats + ' Boş Koltuk' : 'Dolu'"
+                    [severity]="bus.emptySeats > 0 ? 'success' : 'danger'"
+                  />
                 </div>
               </div>
-              <div class="route-line">
-                <span class="material-symbols-outlined">schedule</span>
-              </div>
-              <div class="route-point">
-                <span class="material-symbols-outlined">departure_board</span>
-                <div>
-                  <span class="route-label">Kalkış Saati</span>
-                  <span class="route-time">{{ assignment.departureTime }}</span>
+
+              <!-- Araç Info -->
+              <div class="bus-route">
+                <div class="route-point">
+                  <span class="material-symbols-outlined">directions_bus</span>
+                  <div>
+                    <span class="route-label">Araç</span>
+                    <span class="route-value">{{ bus.brand }} {{ bus.model }}</span>
+                  </div>
+                </div>
+                <div class="route-line">
+                  <span class="material-symbols-outlined">airline_seat_recline_normal</span>
+                </div>
+                <div class="route-point">
+                  <span class="route-label">Koltuk Sayısı</span>
+                  <span class="route-value">{{ bus.seatCount }}</span>
                 </div>
               </div>
-            </div>
 
-            <!-- Route Description -->
-            <div class="bus-route-name">
-              <span class="material-symbols-outlined">info</span>
-              {{ assignment.bus.description }}
-            </div>
+              <!-- Açıklama -->
+              <div class="bus-route-name">
+                <span class="material-symbols-outlined">info</span>
+                {{ bus.description || 'Açıklama yok' }}
+              </div>
 
-            <!-- Passenger Info -->
-            <div class="bus-passengers">
-              <div class="passenger-stats">
-                <span class="passenger-count">
-                  <span class="material-symbols-outlined">group</span>
-                  {{ getPassengerCount(assignment) }} yolcu
-                </span>
+              <!-- Doluluk Info -->
+              <div class="bus-passengers">
+                <div class="passenger-stats">
+                  <span class="passenger-count">
+                    <span class="material-symbols-outlined">group</span>
+                    {{ bus.occupiedSeats }} dolu / {{ bus.emptySeats }} boş
+                  </span>
+                </div>
+              </div>
+
+              <!-- Actions -->
+              <div class="bus-actions">
+                <button
+                  pButton
+                  label="Detay"
+                  icon="pi pi-eye"
+                  class="p-button-sm p-button-text"
+                  (click)="openStudentAssign(bus)"
+                  pTooltip="Öğrenci atamalarını görüntüle / düzenle"
+                  aria-label="Öğrenci atamalarını görüntüle / düzenle"
+                ></button>
               </div>
             </div>
-
-            <!-- Actions -->
-            <div class="bus-actions">
-              <button
-                pButton
-                label="Detay"
-                icon="pi pi-eye"
-                class="p-button-sm p-button-text"
-                (click)="openAssignmentDetail(assignment)"
-                pTooltip="Yolcu listesini görüntüle"
-                aria-label="Yolcu listesini görüntüle"
-              ></button>
-              <button
-                pButton
-                label="Düzenle"
-                icon="pi pi-pencil"
-                class="p-button-sm p-button-text p-button-warning"
-                (click)="openAssignmentForm(assignment)"
-                pTooltip="Atamayı düzenle"
-                aria-label="Atamayı düzenle"
-              ></button>
-              <button
-                pButton
-                label="Sil"
-                icon="pi pi-trash"
-                class="p-button-sm p-button-text p-button-danger"
-                (click)="confirmAssignmentDelete(assignment)"
-                pTooltip="Atamayı sil"
-                aria-label="Atamayı sil"
-              ></button>
-            </div>
-          </div>
-        }
-      </div>
+          }
+        </div>
+      }
     </div>
   }
 
@@ -525,183 +455,13 @@
   }
 
   <!-- ══════════════════════════════════════════════════════════ -->
-  <!-- DIALOG: Assignment Form (Add/Edit)                        -->
+  <!-- DIALOG: Öğrenci Servis Atama (araca bağlı)                 -->
   <!-- ══════════════════════════════════════════════════════════ -->
-  @if (assignmentFormVisible()) {
+  @if (studentAssignVisible() && studentAssignBus(); as bus) {
     <div
       class="dialog-overlay"
-      (click)="closeAssignmentForm()"
-      (keyup.enter)="closeAssignmentForm()"
-      role="presentation"
-    >
-      <div
-        class="dialog-content form-dialog"
-        (click)="$event.stopPropagation()"
-        (keyup.enter)="$event.stopPropagation()"
-        tabindex="-1"
-      >
-        <div class="dialog-header">
-          <h3>
-            <span class="material-symbols-outlined">{{
-              assignmentEditing() ? 'edit' : 'add_circle'
-            }}</span>
-            {{ assignmentFormTitle() }}
-          </h3>
-          <button class="dialog-close" (click)="closeAssignmentForm()">
-            <span class="material-symbols-outlined">close</span>
-          </button>
-        </div>
-        <div class="dialog-body">
-          <form [formGroup]="assignmentForm" (ngSubmit)="submitAssignment()" class="entity-form">
-            <div class="form-field">
-              <label for="assignmentBus"
-                ><span class="material-symbols-outlined">directions_bus</span> Servis Aracı</label
-              >
-              <p-select
-                inputId="assignmentBus"
-                formControlName="bus"
-                [options]="busOptions()"
-                optionLabel="label"
-                optionValue="value"
-                placeholder="Otobüs seçin..."
-                styleClass="w-full"
-                appendTo="body"
-              />
-              @if (assignmentForm.get('bus')?.invalid && assignmentForm.get('bus')?.touched) {
-                <small class="field-error">Servis aracı zorunludur.</small>
-              }
-            </div>
-            <div class="form-field">
-              <label for="kalkisSaati"
-                ><span class="material-symbols-outlined">schedule</span> Kalkış Saati</label
-              >
-              <input
-                pInputText
-                id="kalkisSaati"
-                formControlName="departureTime"
-                placeholder="Örn: 07:30"
-                class="w-full"
-              />
-              @if (
-                assignmentForm.get('departureTime')?.invalid &&
-                assignmentForm.get('departureTime')?.touched
-              ) {
-                <small class="field-error">Kalkış saati zorunludur.</small>
-              }
-            </div>
-            <div class="form-field">
-              <label for="assignmentSeferTuru"
-                ><span class="material-symbols-outlined">event_time</span> Sefer Türü</label
-              >
-              <p-select
-                inputId="assignmentSeferTuru"
-                formControlName="tripType"
-                [options]="seferTuruOptions"
-                optionLabel="label"
-                optionValue="value"
-                placeholder="Sefer türü seçin..."
-                styleClass="w-full"
-                appendTo="body"
-              />
-              @if (
-                assignmentForm.get('tripType')?.invalid && assignmentForm.get('tripType')?.touched
-              ) {
-                <small class="field-error">Sefer türü zorunludur.</small>
-              }
-            </div>
-            <div class="form-actions">
-              <button
-                type="button"
-                pButton
-                label="İptal"
-                icon="pi pi-times"
-                class="p-button-text"
-                (click)="closeAssignmentForm()"
-                aria-label="İptal"
-              ></button>
-              <button
-                type="submit"
-                pButton
-                [label]="assignmentEditing() ? 'Güncelle' : 'Atama Ekle'"
-                aria-label="{{ assignmentEditing() ? 'Güncelle' : 'Atama Ekle' }}"
-                icon="pi pi-check"
-                class="p-button-success"
-              ></button>
-            </div>
-          </form>
-        </div>
-      </div>
-    </div>
-  }
-
-  <!-- ══════════════════════════════════════════════════════════ -->
-  <!-- DIALOG: Assignment Delete Confirmation                     -->
-  <!-- ══════════════════════════════════════════════════════════ -->
-  @if (assignmentDeleteVisible() && assignmentDeleting()) {
-    <div
-      class="dialog-overlay"
-      (click)="closeAssignmentDelete()"
-      (keyup.enter)="closeAssignmentDelete()"
-      role="presentation"
-    >
-      <div
-        class="dialog-content delete-dialog"
-        (click)="$event.stopPropagation()"
-        (keyup.enter)="$event.stopPropagation()"
-        tabindex="-1"
-      >
-        <div class="dialog-header">
-          <h3><span class="material-symbols-outlined delete-icon">warning</span> Atamayı Sil</h3>
-          <button class="dialog-close" (click)="closeAssignmentDelete()">
-            <span class="material-symbols-outlined">close</span>
-          </button>
-        </div>
-        <div class="dialog-body">
-          <div class="delete-confirm-content">
-            <div class="delete-warning">
-              <span class="material-symbols-outlined">error</span>
-              <p>
-                <strong>{{ assignmentDeleting()!.bus.plate }}</strong> plakalı
-                <strong
-                  >{{ assignmentDeleting()!.bus.brand }}
-                  {{ assignmentDeleting()!.bus.model }}</strong
-                >
-                servisinin atamasını silmek üzeresiniz.
-              </p>
-            </div>
-            <p class="delete-note">Bu işlem geri alınamaz.</p>
-          </div>
-          <div class="form-actions">
-            <button
-              pButton
-              label="İptal"
-              icon="pi pi-times"
-              class="p-button-text"
-              (click)="closeAssignmentDelete()"
-              aria-label="İptal"
-            ></button>
-            <button
-              pButton
-              label="Sil"
-              icon="pi pi-trash"
-              class="p-button-danger"
-              (click)="deleteAssignment()"
-              aria-label="Sil"
-            ></button>
-          </div>
-        </div>
-      </div>
-    </div>
-  }
-
-  <!-- ══════════════════════════════════════════════════════════ -->
-  <!-- DIALOG: Assignment Detail                                  -->
-  <!-- ══════════════════════════════════════════════════════════ -->
-  @if (assignmentDetailVisible() && assignmentDetail()) {
-    <div
-      class="dialog-overlay"
-      (click)="closeAssignmentDetail()"
-      (keyup.enter)="closeAssignmentDetail()"
+      (click)="closeStudentAssign()"
+      (keyup.enter)="closeStudentAssign()"
       role="presentation"
     >
       <div
@@ -713,83 +473,156 @@
         <div class="dialog-header">
           <h3>
             <span class="material-symbols-outlined">directions_bus</span>
-            {{ assignmentDetail()!.bus.plate }} — {{ assignmentDetail()!.bus.brand }}
-            {{ assignmentDetail()!.bus.model }}
+            {{ bus.plate }} — {{ bus.brand }} {{ bus.model }}
           </h3>
-          <button class="dialog-close" (click)="closeAssignmentDetail()">
+          <button class="dialog-close" (click)="closeStudentAssign()">
             <span class="material-symbols-outlined">close</span>
           </button>
         </div>
         <div class="dialog-body">
+          <!-- Araç özeti -->
           <div class="dialog-summary">
             <div class="summary-item">
-              <span class="material-symbols-outlined">directions_bus</span>
+              <span class="material-symbols-outlined">pin</span>
               <div>
-                <span class="summary-label">Servis / Araç</span>
-                <span class="summary-value"
-                  >{{ assignmentDetail()!.bus.brand }} {{ assignmentDetail()!.bus.model }} —
-                  {{ assignmentDetail()!.bus.plate }}</span
-                >
+                <span class="summary-label">Plaka</span>
+                <span class="summary-value">{{ bus.plate }}</span>
               </div>
             </div>
             <div class="summary-item">
               <span class="material-symbols-outlined">airline_seat_recline_normal</span>
               <div>
                 <span class="summary-label">Koltuk Sayısı</span>
-                <span class="summary-value">{{ assignmentDetail()!.bus.seatCount }}</span>
+                <span class="summary-value">{{ bus.seatCount }}</span>
+              </div>
+            </div>
+            <div class="summary-item">
+              <span class="material-symbols-outlined">event_seat</span>
+              <div>
+                <span class="summary-label">Dolu Koltuk</span>
+                <span class="summary-value">{{ bus.occupiedSeats }}</span>
+              </div>
+            </div>
+            <div class="summary-item">
+              <span class="material-symbols-outlined">chair</span>
+              <div>
+                <span class="summary-label">Boş Koltuk</span>
+                <span class="summary-value">{{ bus.emptySeats }}</span>
               </div>
             </div>
             <div class="summary-item">
               <span class="material-symbols-outlined">info</span>
               <div>
                 <span class="summary-label">Açıklama</span>
-                <span class="summary-value">{{ assignmentDetail()!.bus.description || '—' }}</span>
-              </div>
-            </div>
-            <div class="summary-item">
-              <span class="material-symbols-outlined">schedule</span>
-              <div>
-                <span class="summary-label">Saat</span>
-                <span class="summary-value">{{ assignmentDetail()!.departureTime }}</span>
-              </div>
-            </div>
-            <div class="summary-item">
-              <span class="material-symbols-outlined">event_time</span>
-              <div>
-                <span class="summary-label">Sefer Türü</span>
-                <span class="summary-value">
-                  <p-tag
-                    [value]="assignmentDetail()!.tripType"
-                    [severity]="getSeferTuruSeverity(assignmentDetail()!.tripType)"
-                  />
-                </span>
+                <span class="summary-value">{{ bus.description || '—' }}</span>
               </div>
             </div>
           </div>
 
-          <h4 class="passenger-table-title">
-            <span class="material-symbols-outlined">group</span>
-            Yolcu Listesi ({{ assignmentDetail()!.passengers.length }})
-          </h4>
+          <!-- Öğrenci atama formu -->
+          <form
+            [formGroup]="studentAssignForm"
+            (ngSubmit)="submitStudentAssign()"
+            class="entity-form"
+          >
+            <div class="form-field">
+              <label for="assignOgrenci"
+                ><span class="material-symbols-outlined">person</span> Öğrenci</label
+              >
+              <p-select
+                inputId="assignOgrenci"
+                formControlName="ogrenciSicilId"
+                [options]="studentOptions()"
+                optionLabel="label"
+                optionValue="value"
+                [filter]="true"
+                filterBy="label"
+                placeholder="Öğrenci seçin..."
+                styleClass="w-full"
+                appendTo="body"
+              />
+              @if (
+                studentAssignForm.get('ogrenciSicilId')?.invalid &&
+                studentAssignForm.get('ogrenciSicilId')?.touched
+              ) {
+                <small class="field-error">Öğrenci seçimi zorunludur.</small>
+              }
+            </div>
+            <div class="form-field">
+              <label for="assignYon"
+                ><span class="material-symbols-outlined">swap_horiz</span> Yön</label
+              >
+              <p-select
+                inputId="assignYon"
+                formControlName="yon"
+                [options]="yonOptions"
+                optionLabel="label"
+                optionValue="value"
+                placeholder="Yön seçin..."
+                styleClass="w-full"
+                appendTo="body"
+              />
+              @if (studentAssignForm.get('yon')?.invalid && studentAssignForm.get('yon')?.touched) {
+                <small class="field-error">Yön zorunludur.</small>
+              }
+            </div>
+            <div class="form-actions">
+              <button
+                type="submit"
+                pButton
+                label="Öğrenciyi Ata"
+                aria-label="Öğrenciyi Ata"
+                icon="pi pi-check"
+                class="p-button-success"
+                [disabled]="studentAssignForm.invalid || bus.emptySeats <= 0"
+              ></button>
+            </div>
+          </form>
+
+          <!-- Gidiş / Dönüş sekmeleri (aynı anda tek liste gösterilir) -->
+          <div class="sefer-filter-bar direction-tab-bar">
+            <button
+              class="sefer-filter-btn"
+              [class.active]="studentAssignDirectionTab() === 1"
+              (click)="setStudentAssignDirectionTab(1)"
+            >
+              <span class="material-symbols-outlined">wb_sunny</span>
+              Gidiş ({{ studentAssignGidisCount() }})
+            </button>
+            <button
+              class="sefer-filter-btn"
+              [class.active]="studentAssignDirectionTab() === 2"
+              (click)="setStudentAssignDirectionTab(2)"
+            >
+              <span class="material-symbols-outlined">nights_stay</span>
+              Dönüş ({{ studentAssignDonusCount() }})
+            </button>
+          </div>
+
           <app-customizable-table
-            [rows]="assignmentDetail()!.passengers"
-            [columns]="passengerColumns"
-            tableId="school_bus_passengers"
+            [rows]="studentAssignActiveList()"
+            [columns]="assignedStudentColumns"
+            tableId="school_bus_student_assignments"
             [showRowNumbers]="true"
             [exportable]="false"
-            emptyMessage="Bu atamada yolcu bulunmuyor."
+            [emptyMessage]="
+              studentAssignDirectionTab() === 1
+                ? 'Gidiş için atanmış öğrenci yok.'
+                : 'Dönüş için atanmış öğrenci yok.'
+            "
+            [actionsTemplate]="studentAssignActionsTpl"
           >
-            <ng-template appColumnCell="status" let-passenger>
-              <p-tag
-                [value]="passenger.status"
-                [severity]="
-                  passenger.status === 'Binmiş'
-                    ? 'success'
-                    : passenger.status === 'İnmemiş'
-                      ? 'danger'
-                      : 'info'
-                "
-              />
+            <ng-template #studentAssignActionsTpl let-row>
+              <div class="row-actions">
+                <button
+                  pButton
+                  icon="pi pi-trash"
+                  class="p-button-sm p-button-text p-button-danger"
+                  (click)="confirmStudentAssignDelete(row)"
+                  pTooltip="Atamayı kaldır"
+                  aria-label="Atamayı kaldır"
+                ></button>
+              </div>
             </ng-template>
           </app-customizable-table>
         </div>
@@ -797,39 +630,57 @@
     </div>
   }
 
-  <!-- ── Stat Detail Dialog ──────────────────────────── -->
-  @if (statDetailVisible()) {
+  <!-- ══════════════════════════════════════════════════════════ -->
+  <!-- DIALOG: Öğrenci Servis Ataması Silme Onayı                 -->
+  <!-- ══════════════════════════════════════════════════════════ -->
+  @if (studentAssignDeleteVisible() && studentAssignDeleting(); as deleting) {
     <div
       class="dialog-overlay"
-      (click)="closeStatDetail()"
-      (keyup.enter)="closeStatDetail()"
+      (click)="closeStudentAssignDelete()"
+      (keyup.enter)="closeStudentAssignDelete()"
       role="presentation"
     >
       <div
-        class="dialog-content detail-dialog"
+        class="dialog-content delete-dialog"
         (click)="$event.stopPropagation()"
         (keyup.enter)="$event.stopPropagation()"
         tabindex="-1"
       >
         <div class="dialog-header">
-          <h2>{{ statDetailTitle() }}</h2>
-          <button class="close-btn" (click)="closeStatDetail()">
+          <h3><span class="material-symbols-outlined delete-icon">warning</span> Atamayı Kaldır</h3>
+          <button class="dialog-close" (click)="closeStudentAssignDelete()">
             <span class="material-symbols-outlined">close</span>
           </button>
         </div>
         <div class="dialog-body">
-          @if (statDetailItems().length === 0) {
-            <p style="color: var(--text-muted); text-align: center; padding: 32px 0">
-              Kayıt bulunamadı.
-            </p>
-          } @else {
-            @for (item of statDetailItems(); track $index) {
-              <div class="stat-detail-item">
-                <span class="stat-detail-label">{{ item.label }}</span>
-                <span class="stat-detail-sub">{{ item.sub }}</span>
-              </div>
-            }
-          }
+          <div class="delete-confirm-content">
+            <div class="delete-warning">
+              <span class="material-symbols-outlined">error</span>
+              <p>
+                <strong>{{ deleting.ogrenciAdSoyad }}</strong> adlı öğrencinin
+                <strong>{{ deleting.yonAciklama }}</strong> servis atamasını kaldırmak üzeresiniz.
+              </p>
+            </div>
+            <p class="delete-note">Bu işlem geri alınamaz.</p>
+          </div>
+          <div class="form-actions">
+            <button
+              pButton
+              label="İptal"
+              icon="pi pi-times"
+              class="p-button-text"
+              (click)="closeStudentAssignDelete()"
+              aria-label="İptal"
+            ></button>
+            <button
+              pButton
+              label="Kaldır"
+              icon="pi pi-trash"
+              class="p-button-danger"
+              (click)="deleteStudentAssign()"
+              aria-label="Kaldır"
+            ></button>
+          </div>
         </div>
       </div>
     </div>
