@@ -9,7 +9,8 @@
     "TEACHERS": "Teachers",
     "TRANSPORT": "Transport",
     "ACTIVITIES": "Activities",
-    "ATTENDANCE": "Attendance"
+    "ATTENDANCE": "Attendance",
+    "STUDENT_ATTENDANCE": "Student Attendance"
   },
   "HEADER": {
     "MENU": "MENU",
@@ -295,6 +296,37 @@
     "REQUEST": "Request",
     "DISMISS": "Cancel",
     "CONFIRM_CANCEL_ACTION": "Yes, Cancel"
+  },
+  "STUDENT_ATTENDANCE": {
+    "TITLE": "Student Attendance Tracking",
+    "TAB_ALL": "All",
+    "TAB_ON_LEAVE": "On Leave",
+    "TAB_EARLY_LEAVERS": "Early Leavers",
+    "TAB_LATE_ARRIVALS": "Late Arrivals",
+    "PERIOD_DAY": "Day",
+    "PERIOD_WEEK": "Week",
+    "PERIOD_MONTH": "Month",
+    "PREV_PERIOD": "Previous Period",
+    "NEXT_PERIOD": "Next Period",
+    "GO_TODAY": "Today",
+    "COL_SICIL_NO": "ID No",
+    "COL_AD_SOYAD": "Full Name",
+    "COL_SINIF": "Class",
+    "COL_KAMPUS": "Campus",
+    "COL_EGITIM_DUZEYI": "Education Level",
+    "COL_TARIH": "Date",
+    "COL_GIRIS": "Entry Time",
+    "COL_CIKIS": "Exit Time",
+    "COL_GEC_KALMA": "Late (min)",
+    "COL_ERKEN_CIKMA": "Early Exit (min)",
+    "COL_IZIN_TIPI": "Leave Type",
+    "COL_IZIN_SAAT_ARALIGI": "Leave Time Range",
+    "COL_OKUL_SAATLERI": "School Hours",
+    "LEAVES_TITLE": "Students on Leave",
+    "NO_LEAVES": "No students on leave in this period.",
+    "LEAVE_TIME": "Time Range",
+    "SEARCH_PLACEHOLDER": "Search by name...",
+    "ERROR_LOAD": "Could not load student attendance data."
   },
   "ACTIVITIES": {
     "TITLE": "Activities",

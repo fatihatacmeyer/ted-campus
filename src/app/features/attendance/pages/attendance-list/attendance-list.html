@@ -2,7 +2,7 @@
   <!-- Başlık satırı: başlık solda, dönem/tarih filtresi sağda -->
   <div class="admin-card mb-3">
     <div class="d-flex flex-wrap justify-content-between align-items-center gap-2">
-      <h4 class="fw-bold mb-0" style="color: #dc2134">{{ 'ATTENDANCE.TITLE' | translate }}</h4>
+      <h4 class="fw-bold mb-0" style="color: #dc2134">{{ (isStudentMode() ? 'STUDENT_ATTENDANCE.TITLE' : 'ATTENDANCE.TITLE') | translate }}</h4>
       <div class="d-flex flex-wrap align-items-center gap-2 period-toolbar">
         <div class="d-flex align-items-center period-segment">
           <button
@@ -68,7 +68,7 @@
     <div class="admin-card attendance-table-card">
       <!-- Liste sekmeleri + seçim sayacı -->
       <div class="d-flex flex-wrap align-items-center gap-2 mb-3 filter-tabs">
-        @for (tab of tabOptions; track tab.tip) {
+        @for (tab of activeTabOptions(); track tab.tip) {
           <button
             pButton
             type="button"
@@ -93,117 +93,200 @@
             ></button>
           </div>
         }
+        @if (isStudentMode()) {
+          <div class="d-flex align-items-center gap-2 ms-auto">
+            <span pInputIcon class="p-input-icon-left">
+              <i class="pi pi-search"></i>
+              <input
+                pInputText
+                type="text"
+                [placeholder]="'STUDENT_ATTENDANCE.SEARCH_PLACEHOLDER' | translate"
+                [value]="searchQuery()"
+                (input)="onSearch($any($event.target).value)"
+                size="small"
+              />
+            </span>
+          </div>
+        }
       </div>
 
-      <app-customizable-table
-        [rows]="rows()"
-        [columns]="attendanceColumns"
-        [loading]="isLoading()"
-        tableId="attendance_grid"
-        [defaultFields]="defaultAttendanceFields"
-        [emptyMessage]="'COMMON.NO_RECORDS' | translate"
-        exportFilename="attendance_listesi"
-        [showRowNumbers]="true"
-        selectionMode="multiple"
-        [selectedRows]="selectedRows()"
-        (selectedRowsChange)="onSelectionChange($event)"
-        [actionsTemplate]="actionsTpl"
-      >
-        <ng-template appColumnCell="giris" let-row>
-          <span [class.cell-red]="row.gecKalma > 0">{{
-            formatTime(row.giris) || emptyCellValue
-          }}</span>
-        </ng-template>
+      @if (isStudentMode()) {
+        <app-customizable-table
+          [rows]="studentRows()"
+          [columns]="studentColumns"
+          [loading]="isLoading()"
+          tableId="student_attendance_grid"
+          [defaultFields]="studentDefaultFields"
+          [emptyMessage]="'COMMON.NO_RECORDS' | translate"
+          exportFilename="ogrenci_devam_listesi"
+          [showRowNumbers]="true"
+        >
+          <ng-template appColumnCell="girisSaati" let-row>
+            <span [class.cell-red]="row.gecKalmaSuresiDk > 0">{{ row.girisSaati || emptyCellValue }}</span>
+          </ng-template>
 
-        <ng-template appColumnCell="cikis" let-row>
-          <span [class.cell-red]="row.erkenCikma > 0">{{
-            formatTime(row.cikis) || emptyCellValue
-          }}</span>
-        </ng-template>
+          <ng-template appColumnCell="cikisSaati" let-row>
+            <span [class.cell-red]="row.erkenCikmaSuresiDk > 0">{{ row.cikisSaati || emptyCellValue }}</span>
+          </ng-template>
 
-        <ng-template appColumnCell="izinSuresi" let-row>
-          @if (row.izinSuresi > 0) {
-            <div class="d-flex align-items-center gap-2 izinli-tag">
-              <p-tag [value]="'ATTENDANCE.STATUS_ON_LEAVE' | translate" icon="pi pi-calendar-plus" severity="info"></p-tag>
-              <span class="small text-muted">{{ row.izinSuresi }} dk</span>
+          <ng-template appColumnCell="izinTipi" let-row>
+            @if (row.izinTipi) {
+              <p-tag [value]="row.izinTipi" severity="info"></p-tag>
+            } @else {
+              <span>{{ emptyCellValue }}</span>
+            }
+          </ng-template>
+        </app-customizable-table>
+      } @else {
+        <app-customizable-table
+          [rows]="rows()"
+          [columns]="attendanceColumns"
+          [loading]="isLoading()"
+          tableId="attendance_grid"
+          [defaultFields]="defaultAttendanceFields"
+          [emptyMessage]="'COMMON.NO_RECORDS' | translate"
+          exportFilename="attendance_listesi"
+          [showRowNumbers]="true"
+          selectionMode="multiple"
+          [selectedRows]="selectedRows()"
+          (selectedRowsChange)="onSelectionChange($event)"
+          [actionsTemplate]="actionsTpl"
+        >
+          <ng-template appColumnCell="giris" let-row>
+            <span [class.cell-red]="row.gecKalma > 0">{{
+              formatTime(row.giris) || emptyCellValue
+            }}</span>
+          </ng-template>
+
+          <ng-template appColumnCell="cikis" let-row>
+            <span [class.cell-red]="row.erkenCikma > 0">{{
+              formatTime(row.cikis) || emptyCellValue
+            }}</span>
+          </ng-template>
+
+          <ng-template appColumnCell="izinSuresi" let-row>
+            @if (row.izinSuresi > 0) {
+              <div class="d-flex align-items-center gap-2 izinli-tag">
+                <p-tag [value]="'ATTENDANCE.STATUS_ON_LEAVE' | translate" icon="pi pi-calendar-plus" severity="info"></p-tag>
+                <span class="small text-muted">{{ row.izinSuresi }} dk</span>
+              </div>
+            } @else {
+              <span>{{ emptyCellValue }}</span>
+            }
+          </ng-template>
+
+          <ng-template #actionsTpl let-row>
+            <div class="d-flex justify-content-center gap-1">
+              <button
+                pButton
+                type="button"
+                icon="pi pi-calendar"
+                [label]="'ATTENDANCE.LEAVE' | translate"
+                size="small"
+                outlined="true"
+                severity="primary"
+                [pTooltip]="'ATTENDANCE.LEAVE_REQUEST' | translate"
+                (click)="openLeaveDialog(row)"
+              ></button>
             </div>
-          } @else {
-            <span>{{ emptyCellValue }}</span>
-          }
-        </ng-template>
-
-        <ng-template #actionsTpl let-row>
-          <div class="d-flex justify-content-center gap-1">
-            <button
-              pButton
-              type="button"
-              icon="pi pi-calendar"
-              [label]="'ATTENDANCE.LEAVE' | translate"
-              size="small"
-              outlined="true"
-              severity="primary"
-              [pTooltip]="'ATTENDANCE.LEAVE_REQUEST' | translate"
-              (click)="openLeaveDialog(row)"
-            ></button>
-          </div>
-        </ng-template>
-      </app-customizable-table>
+          </ng-template>
+        </app-customizable-table>
+      }
     </div>
 
-    <!-- İzinlerim — sağ yan panel -->
+    <!-- İzinlerim / İzinli Öğrenciler — sağ yan panel -->
     <div class="admin-card izinlerim-panel">
-      <div class="table-toolbar mb-3">
-        <h5 class="fw-bold mb-0" style="color: #dc2134">{{ 'ATTENDANCE.MY_LEAVES' | translate }}</h5>
-      </div>
-      <div class="table-responsive">
-        <table class="table table-sm align-middle mb-0">
-          <thead>
-            <tr>
-              <th scope="col">{{ 'ATTENDANCE.LEAVE_TYPES' | translate }}</th>
-              <th scope="col">{{ 'ATTENDANCE.START_DATE' | translate }}</th>
-              <th scope="col">{{ 'ATTENDANCE.END_DATE' | translate }}</th>
-              <th scope="col">{{ 'ATTENDANCE.STATUS' | translate }}</th>
-              <th scope="col" class="text-end">{{ 'COMMON.ACTIONS' | translate }}</th>
-            </tr>
-          </thead>
-          <tbody>
-            @for (rec of leaves(); track rec.id) {
+      @if (isStudentMode()) {
+        <!-- Öğrenci modu: izinli öğrenciler paneli -->
+        <div class="table-toolbar mb-3">
+          <h5 class="fw-bold mb-0" style="color: #dc2134">{{ 'STUDENT_ATTENDANCE.LEAVES_TITLE' | translate }}</h5>
+        </div>
+        <div class="table-responsive">
+          <table class="table table-sm align-middle mb-0">
+            <thead>
               <tr>
-                <td>{{ rec.izinTipi }}</td>
-                <td>{{ rec.bastarih.split('-').reverse().join('-') }}</td>
-                <td>{{ rec.bittarih.split('-').reverse().join('-') }}</td>
-                <td>
-                  <p-tag [value]="getLeaveStatusLabel(rec.durum) | translate" [severity]="getLeaveSeverity(rec.durum)"></p-tag>
-                </td>
-                <td class="text-end">
-                  <button
-                    pButton
-                    type="button"
-                    icon="pi pi-times"
-                    [label]="'ATTENDANCE.CANCEL' | translate"
-                    size="small"
-                    severity="danger"
-                    text="true"
-                    [disabled]="rec.durum === 'Onaylandı'"
-                    [pTooltip]="'ATTENDANCE.CANCEL_LEAVE' | translate"
-                    (click)="cancelLeave(rec)"
-                  ></button>
-                </td>
+                <th scope="col">{{ 'STUDENT_ATTENDANCE.COL_AD_SOYAD' | translate }}</th>
+                <th scope="col">{{ 'STUDENT_ATTENDANCE.COL_SINIF' | translate }}</th>
+                <th scope="col">{{ 'STUDENT_ATTENDANCE.COL_IZIN_TIPI' | translate }}</th>
+                <th scope="col">{{ 'STUDENT_ATTENDANCE.LEAVE_TIME' | translate }}</th>
               </tr>
-            } @empty {
+            </thead>
+            <tbody>
+              @for (rec of leaveStudents(); track rec.sicilNo) {
+                <tr>
+                  <td>{{ rec.adSoyad }}</td>
+                  <td>{{ rec.sinif }}</td>
+                  <td>
+                    <p-tag [value]="rec.izinTipi ?? ''" severity="info"></p-tag>
+                  </td>
+                  <td>{{ rec.izinSaatAraligi || emptyCellValue }}</td>
+                </tr>
+              } @empty {
+                <tr>
+                  <td colspan="4" class="text-center text-muted py-3">
+                    {{ 'ATTENDANCE.NO_LEAVES' | translate }}
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      } @else {
+        <!-- Personel modu: izinlerim paneli -->
+        <div class="table-toolbar mb-3">
+          <h5 class="fw-bold mb-0" style="color: #dc2134">{{ 'ATTENDANCE.MY_LEAVES' | translate }}</h5>
+        </div>
+        <div class="table-responsive">
+          <table class="table table-sm align-middle mb-0">
+            <thead>
               <tr>
-                <td colspan="5" class="text-center text-muted py-3">
-                  {{ 'ATTENDANCE.NO_LEAVES' | translate }}
-                </td>
+                <th scope="col">{{ 'ATTENDANCE.LEAVE_TYPES' | translate }}</th>
+                <th scope="col">{{ 'ATTENDANCE.START_DATE' | translate }}</th>
+                <th scope="col">{{ 'ATTENDANCE.END_DATE' | translate }}</th>
+                <th scope="col">{{ 'ATTENDANCE.STATUS' | translate }}</th>
+                <th scope="col" class="text-end">{{ 'COMMON.ACTIONS' | translate }}</th>
               </tr>
-            }
-          </tbody>
-        </table>
-      </div>
+            </thead>
+            <tbody>
+              @for (rec of leaves(); track rec.id) {
+                <tr>
+                  <td>{{ rec.izinTipi }}</td>
+                  <td>{{ rec.bastarih.split('-').reverse().join('-') }}</td>
+                  <td>{{ rec.bittarih.split('-').reverse().join('-') }}</td>
+                  <td>
+                    <p-tag [value]="getLeaveStatusLabel(rec.durum) | translate" [severity]="getLeaveSeverity(rec.durum)"></p-tag>
+                  </td>
+                  <td class="text-end">
+                    <button
+                      pButton
+                      type="button"
+                      icon="pi pi-times"
+                      [label]="'ATTENDANCE.CANCEL' | translate"
+                      size="small"
+                      severity="danger"
+                      text="true"
+                      [disabled]="rec.durum === 'Onaylandı'"
+                      [pTooltip]="'ATTENDANCE.CANCEL_LEAVE' | translate"
+                      (click)="cancelLeave(rec)"
+                    ></button>
+                  </td>
+                </tr>
+              } @empty {
+                <tr>
+                  <td colspan="5" class="text-center text-muted py-3">
+                    {{ 'ATTENDANCE.NO_LEAVES' | translate }}
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
     </div>
   </div>
 </div>
 
+@if (!isStudentMode()) {
 <!-- İzin Talep Dialogu -->
 <p-dialog
   [header]="(selectedRow()?.adSoyad ?? '') + ' — ' + ('ATTENDANCE.LEAVE_REQUEST' | translate)"
@@ -365,3 +448,4 @@
     ></button>
   </div>
 </p-dialog>
+}

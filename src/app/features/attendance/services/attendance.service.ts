@@ -7,6 +7,8 @@ import {
   LeaveBalance,
   LeaveRecord,
   LeaveRequest,
+  StudentAttendanceFilterType,
+  StudentAttendanceRow,
 } from '../../../core/models/attendance.model';
 import { ApiHelperService } from '../../../core/services/api-helper.service';
 import {
@@ -44,6 +46,23 @@ interface AttendanceRowRaw {
   Izinaciklama: string;
   Kayityetki: number;
   Onaymipdks: boolean | number;
+}
+
+/** Raw DB row returned from sp_OgrenciHareketRaporu_s (PascalCase column names). */
+interface StudentAttendanceRowRaw {
+  SicilNo: string;
+  AdSoyad: string;
+  Sinif: string;
+  Kampus: string;
+  EgitimDuzeyi: string;
+  Tarih: string;
+  GirisSaati: string | null;
+  CikisSaati: string | null;
+  GecKalmaSuresiDk: number;
+  ErkenCikmaSuresiDk: number;
+  IzinTipi: string | null;
+  IzinSaatAraligi: string | null;
+  OkulSaatleri: string;
 }
 
 /**
@@ -222,5 +241,93 @@ export class AttendanceService {
   /** Bekleyen bir izin talebini iptal eder. */
   cancelLeave(izinId: number): Observable<unknown> {
     return this.callDynamic<unknown>({ point: 'izintek', islemtipi: 'd', izinid: izinId });
+  }
+
+  // ────────────────────────────────────────────────────────────────
+  // Öğrenci Devam — sp_OgrenciHareketRaporu_s
+  // ────────────────────────────────────────────────────────────────
+
+  /** Backend dispatcher point'i öğrenci hareket raporu prosedürüyle eşleşir. */
+  private readonly studentPoint = 'OgrenciHareketRaporu';
+
+  private callStudentDynamic<T>(params: Record<string, string | number>): Observable<T> {
+    const requestParams: Record<string, string | number> = {
+      point: this.studentPoint,
+      islemtipi: 's',
+      ...params,
+    };
+    return this.api.callEndpoint<T>('Dynamic', requestParams);
+  }
+
+  /** sp_OgrenciHareketRaporu_s sonuç sütunlarını StudentAttendanceRow'a çevirir. */
+  private mapRowToStudentAttendance(row: StudentAttendanceRowRaw): StudentAttendanceRow {
+    return {
+      sicilNo: row.SicilNo,
+      adSoyad: row.AdSoyad,
+      sinif: row.Sinif,
+      kampus: row.Kampus,
+      egitimDuzeyi: row.EgitimDuzeyi,
+      tarih: row.Tarih,
+      girisSaati: row.GirisSaati,
+      cikisSaati: row.CikisSaati,
+      gecKalmaSuresiDk: row.GecKalmaSuresiDk,
+      erkenCikmaSuresiDk: row.ErkenCikmaSuresiDk,
+      izinTipi: row.IzinTipi,
+      izinSaatAraligi: row.IzinSaatAraligi,
+      okulSaatleri: row.OkulSaatleri,
+    };
+  }
+
+  /**
+   * Öğrenci devam listesini döndürür.
+   * gosterimTuru'ne göre sekme filtresi uygulanır:
+   * 0=genel liste, 1=izinliler, 2=erken çıkanlar, 3=geç gelenler.
+   *
+   * SP: sp_OgrenciHareketRaporu_s
+   * @FiltreTipi, @Tarih, @BaslangicTarih, @BitisTarih, @AdSoyadArama,
+   * @SicilId, @SinifId, @KampusId, @GosterimTuru
+   * (point/islemtipi/islemno SP tarafından kullanılmaz)
+   */
+  getStudentAttendanceRows(params: {
+    gosterimTuru: StudentAttendanceFilterType;
+    baslangic?: string;
+    bitis?: string;
+    tarih?: string;
+    filtreTipi?: 'Gun' | 'Hafta' | 'Ay';
+    adSoyadArama?: string;
+    sicilId?: number;
+    sinifId?: number;
+    kampusId?: number;
+  }): Observable<StudentAttendanceRow[]> {
+    const spParams: Record<string, string | number> = {
+      GosterimTuru: params.gosterimTuru,
+    };
+
+    // BaslangicTarih + BitisTarih verilirse SP doğrudan bu aralığı kullanır
+    // ve FiltreTipi/Tarih'i yok sayar.
+    if (params.baslangic && params.bitis) {
+      spParams['BaslangicTarih'] = params.baslangic;
+      spParams['BitisTarih'] = params.bitis;
+    } else {
+      spParams['FiltreTipi'] = params.filtreTipi ?? 'Gun';
+      spParams['Tarih'] = params.tarih ?? '';
+    }
+
+    if (params.adSoyadArama) {
+      spParams['AdSoyadArama'] = params.adSoyadArama;
+    }
+    if (params.sicilId != null) {
+      spParams['SicilId'] = params.sicilId;
+    }
+    if (params.sinifId != null) {
+      spParams['SinifId'] = params.sinifId;
+    }
+    if (params.kampusId != null) {
+      spParams['KampusId'] = params.kampusId;
+    }
+
+    return this.callStudentDynamic<StudentAttendanceRowRaw[]>(spParams).pipe(
+      map((rows) => (rows || []).map((row) => this.mapRowToStudentAttendance(row))),
+    );
   }
 }

@@ -17,6 +17,7 @@ import { SelectModule } from 'primeng/select';
 import { DatePickerModule } from 'primeng/datepicker';
 import { TagModule } from 'primeng/tag';
 import { TooltipModule } from 'primeng/tooltip';
+import { InputIconModule } from 'primeng/inputicon';
 import { CheckboxModule } from 'primeng/checkbox';
 import { NotificationService } from '../../../../core/services/notification.service';
 import { forkJoin, of } from 'rxjs';
@@ -33,6 +34,7 @@ import {
   LeaveBalance,
   LeaveRecord,
   LeaveRequest,
+  StudentAttendanceRow,
 } from '../../../../core/models/attendance.model';
 import { AttendanceService } from '../../services/attendance.service';
 import { DropdownItem } from '../../../../features/persons/services/types.service';
@@ -42,14 +44,15 @@ import {
   formatTime,
 } from '../../../../shared/utils/date.utils';
 import { TranslatePipe } from '@ngx-translate/core';
+import { ActivatedRoute } from '@angular/router';
 
 /** Period type: gün / hafta / ay. */
 type Period = 'gun' | 'hafta' | 'ay';
 
-/** Attendance list tabs: label and listType mapping (0=general, 6=on leave, 5=early leavers, 4=late arrivals). */
+/** Attendance list tabs: label and listType mapping. */
 interface TabOption {
   label: string;
-  tip: AttendanceListType;
+  tip: number;
 }
 
 @Component({
@@ -67,6 +70,7 @@ interface TabOption {
     DatePickerModule,
     TagModule,
     TooltipModule,
+    InputIconModule,
     CheckboxModule,
     TranslatePipe,
   ],
@@ -79,16 +83,28 @@ export class AttendanceListComponent {
   private attendanceService = inject(AttendanceService);
   private notification = inject(NotificationService);
   private destroyRef = inject(DestroyRef);
+  private route = inject(ActivatedRoute);
+
+  /** Mode from route data: 'personnel' or 'student'. */
+  mode = signal<'personnel' | 'student'>('personnel');
+  isStudentMode = computed(() => this.mode() === 'student');
 
   /** Attendance rows for the active tab + period range. */
   rows = signal<AttendanceRow[]>([]);
+
+  /** Student attendance rows. */
+  studentRows = signal<StudentAttendanceRow[]>([]);
+
   isLoading = signal(false);
 
   /** Multiselect ile seçilen satırlar. */
   selectedRows = signal<AttendanceRow[]>([]);
 
-  /** Active list tab: 0=Genel, 6=İzinliler, 5=Erken Çıkanlar, 4=Geç Gelenler. */
-  activeTab = signal<AttendanceListType>(0);
+  /** Student search text. */
+  searchQuery = signal('');
+
+  /** Active list tab: personnel uses 0/4/5/6, student uses 0/1/2/3. */
+  activeTab = signal<number>(0);
 
   /** Selected period type and date; range is computed from them. */
   period = signal<Period>('gun');
@@ -123,6 +139,17 @@ export class AttendanceListComponent {
     { label: 'ATTENDANCE.TAB_EARLY_LEAVERS', tip: 5 },
     { label: 'ATTENDANCE.TAB_LATE_ARRIVALS', tip: 4 },
   ];
+
+  /** Student-specific tab options. */
+  studentTabOptions: TabOption[] = [
+    { label: 'STUDENT_ATTENDANCE.TAB_ALL', tip: 0 },
+    { label: 'STUDENT_ATTENDANCE.TAB_ON_LEAVE', tip: 1 },
+    { label: 'STUDENT_ATTENDANCE.TAB_EARLY_LEAVERS', tip: 2 },
+    { label: 'STUDENT_ATTENDANCE.TAB_LATE_ARRIVALS', tip: 3 },
+  ];
+
+  /** Returns the active tab options based on mode. */
+  activeTabOptions = computed(() => this.isStudentMode() ? this.studentTabOptions : this.tabOptions);
 
   /** Empty cell rendering (used in custom cells). */
   readonly emptyCellValue = '-';
@@ -171,6 +198,62 @@ export class AttendanceListComponent {
     'mesaiAciklama',
   ];
 
+  /** Student-specific columns. */
+  studentColumns: ColumnDef<StudentAttendanceRow>[] = [
+    {
+      field: 'sicilNo',
+      header: 'STUDENT_ATTENDANCE.COL_SICIL_NO',
+      sortable: true,
+      filterType: 'select',
+      filterOptions: (rows) => uniqueFilterOptions(rows, 'sicilNo'),
+    },
+    { field: 'adSoyad', header: 'STUDENT_ATTENDANCE.COL_AD_SOYAD', sortable: true, alwaysVisible: true },
+    {
+      field: 'sinif',
+      header: 'STUDENT_ATTENDANCE.COL_SINIF',
+      sortable: true,
+      filterType: 'select',
+      filterOptions: (rows) => uniqueFilterOptions(rows, 'sinif'),
+    },
+    {
+      field: 'kampus',
+      header: 'STUDENT_ATTENDANCE.COL_KAMPUS',
+      sortable: true,
+      filterType: 'select',
+      filterOptions: (rows) => uniqueFilterOptions(rows, 'kampus'),
+    },
+    { field: 'egitimDuzeyi', header: 'STUDENT_ATTENDANCE.COL_EGITIM_DUZEYI', sortable: true },
+    { field: 'tarih', header: 'STUDENT_ATTENDANCE.COL_TARIH', sortable: true },
+    { field: 'girisSaati', header: 'STUDENT_ATTENDANCE.COL_GIRIS', sortable: true },
+    { field: 'cikisSaati', header: 'STUDENT_ATTENDANCE.COL_CIKIS', sortable: true },
+    { field: 'gecKalmaSuresiDk', header: 'STUDENT_ATTENDANCE.COL_GEC_KALMA', sortable: true },
+    { field: 'erkenCikmaSuresiDk', header: 'STUDENT_ATTENDANCE.COL_ERKEN_CIKMA', sortable: true },
+    { field: 'izinTipi', header: 'STUDENT_ATTENDANCE.COL_IZIN_TIPI' },
+    { field: 'izinSaatAraligi', header: 'STUDENT_ATTENDANCE.COL_IZIN_SAAT_ARALIGI' },
+    { field: 'okulSaatleri', header: 'STUDENT_ATTENDANCE.COL_OKUL_SAATLERI' },
+  ];
+
+  studentDefaultFields = [
+    'sicilNo',
+    'adSoyad',
+    'sinif',
+    'kampus',
+    'egitimDuzeyi',
+    'tarih',
+    'girisSaati',
+    'cikisSaati',
+    'gecKalmaSuresiDk',
+    'erkenCikmaSuresiDk',
+    'izinTipi',
+    'izinSaatAraligi',
+    'okulSaatleri',
+  ];
+
+  /** Students who have a leave (izinTipi is not null) — used in the side panel for student mode. */
+  leaveStudents = computed(() =>
+    this.studentRows().filter((r) => r.izinTipi != null && r.izinTipi !== ''),
+  );
+
   leaveForm: FormGroup = this.fb.group({
     izintip: [null, Validators.required],
     kalan: [{ value: null, disabled: true }],
@@ -190,7 +273,17 @@ export class AttendanceListComponent {
       .valueChanges.pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((value) => this.hourlyLeave.set(!!value));
 
-    // Initial loads: leave types, general tab + today's range, my leaves.
+    // Read mode from route data.
+    this.route.data.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((data) => {
+      const routeMode = (data as Record<string, string>)['mode'];
+      if (routeMode === 'student') {
+        this.mode.set('student');
+      } else {
+        this.mode.set('personnel');
+      }
+    });
+
+    // Initial loads.
     this.loadLeaveTypes();
     this.loadRows();
     this.loadLeaves();
@@ -211,25 +304,48 @@ export class AttendanceListComponent {
   loadRows(): void {
     this.isLoading.set(true);
     const { baslangic, bitis } = this.range();
-    this.attendanceService
-      .getAttendanceRows({ listeTip: this.activeTab(), baslangic, bitis })
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe({
-        next: (list) => {
-          this.rows.set(list ?? []);
-          this.selectedRows.set([]);
-          this.isLoading.set(false);
-        },
-        error: (err) => {
-          console.error('[AttendanceListComponent] loadRows error:', err);
-          this.rows.set([]);
-          this.isLoading.set(false);
-        },
-      });
+
+    if (this.isStudentMode()) {
+      this.attendanceService
+        .getStudentAttendanceRows({
+          gosterimTuru: this.activeTab() as 0 | 1 | 2 | 3,
+          baslangic,
+          bitis,
+          adSoyadArama: this.searchQuery() || undefined,
+        })
+        .pipe(takeUntilDestroyed(this.destroyRef))
+        .subscribe({
+          next: (list) => {
+            this.studentRows.set(list ?? []);
+            this.isLoading.set(false);
+          },
+          error: (err) => {
+            console.error('[AttendanceListComponent] loadRows (student) error:', err);
+            this.studentRows.set([]);
+            this.isLoading.set(false);
+          },
+        });
+    } else {
+      this.attendanceService
+        .getAttendanceRows({ listeTip: this.activeTab() as AttendanceListType, baslangic, bitis })
+        .pipe(takeUntilDestroyed(this.destroyRef))
+        .subscribe({
+          next: (list) => {
+            this.rows.set(list ?? []);
+            this.selectedRows.set([]);
+            this.isLoading.set(false);
+          },
+          error: (err) => {
+            console.error('[AttendanceListComponent] loadRows error:', err);
+            this.rows.set([]);
+            this.isLoading.set(false);
+          },
+        });
+    }
   }
 
   /** Applies tab change and refreshes the list. */
-  onTabChange(tip: AttendanceListType): void {
+  onTabChange(tip: number): void {
     this.activeTab.set(tip);
     this.loadRows();
   }
@@ -242,6 +358,12 @@ export class AttendanceListComponent {
   /** Clears the multiselect selection. */
   clearSelection(): void {
     this.selectedRows.set([]);
+  }
+
+  /** Applies student name search and refreshes the list. */
+  onSearch(query: string): void {
+    this.searchQuery.set(query);
+    this.loadRows();
   }
 
   /** Changes period type; resets the date to today and refreshes the list. */

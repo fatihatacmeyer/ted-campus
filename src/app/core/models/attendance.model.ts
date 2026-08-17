@@ -77,3 +77,27 @@ export interface LeaveRecord {
   saatlik: boolean;
   durum: string; // 'Talep' | 'Onaylandı' | 'Reddedildi'
 }
+
+// ─────────────────────────────────────────────────────────────────
+// Öğrenci Devam (sp_OgrenciHareketRaporu_s)
+// ─────────────────────────────────────────────────────────────────
+
+/** Student attendance display type: 0=all, 1=on leave, 2=early leavers, 3=late arrivals. */
+export type StudentAttendanceFilterType = 0 | 1 | 2 | 3;
+
+/** Student attendance row returned from sp_OgrenciHareketRaporu_s (UI model). */
+export interface StudentAttendanceRow {
+  sicilNo: string;
+  adSoyad: string;
+  sinif: string;
+  kampus: string;
+  egitimDuzeyi: string;
+  tarih: string; // yyyy-MM-dd
+  girisSaati: string | null; // HH:mm
+  cikisSaati: string | null; // HH:mm
+  gecKalmaSuresiDk: number;
+  erkenCikmaSuresiDk: number;
+  izinTipi: string | null;
+  izinSaatAraligi: string | null;
+  okulSaatleri: string;
+}

@@ -9,7 +9,8 @@
     "TEACHERS": "Öğretmenler",
     "TRANSPORT": "Servis",
     "ACTIVITIES": "Etkinlikler",
-    "ATTENDANCE": "PDKS"
+    "ATTENDANCE": "PDKS",
+    "STUDENT_ATTENDANCE": "Öğrenci Devam"
   },
   "HEADER": {
     "MENU": "MENÜ",
@@ -295,6 +296,37 @@
     "REQUEST": "Talep",
     "DISMISS": "Vazgeç",
     "CONFIRM_CANCEL_ACTION": "Evet, İptal Et"
+  },
+  "STUDENT_ATTENDANCE": {
+    "TITLE": "Öğrenci Devam Takip",
+    "TAB_ALL": "Hepsi",
+    "TAB_ON_LEAVE": "İzinliler",
+    "TAB_EARLY_LEAVERS": "Erken Çıkanlar",
+    "TAB_LATE_ARRIVALS": "Geç Gelenler",
+    "PERIOD_DAY": "Gün",
+    "PERIOD_WEEK": "Hafta",
+    "PERIOD_MONTH": "Ay",
+    "PREV_PERIOD": "Önceki dönem",
+    "NEXT_PERIOD": "Sonraki dönem",
+    "GO_TODAY": "Bugün",
+    "COL_SICIL_NO": "Sicil No",
+    "COL_AD_SOYAD": "Ad Soyad",
+    "COL_SINIF": "Sınıf",
+    "COL_KAMPUS": "Kampüs",
+    "COL_EGITIM_DUZEYI": "Eğitim Düzeyi",
+    "COL_TARIH": "Tarih",
+    "COL_GIRIS": "Giriş Saati",
+    "COL_CIKIS": "Çıkış Saati",
+    "COL_GEC_KALMA": "Geç Kalma (dk)",
+    "COL_ERKEN_CIKMA": "Erken Çıkma (dk)",
+    "COL_IZIN_TIPI": "İzin Tipi",
+    "COL_IZIN_SAAT_ARALIGI": "İzin Saat Aralığı",
+    "COL_OKUL_SAATLERI": "Okul Saatleri",
+    "LEAVES_TITLE": "İzinli Öğrenciler",
+    "NO_LEAVES": "Bu dönemde izinli öğrenci bulunmamaktadır.",
+    "LEAVE_TIME": "Saat Aralığı",
+    "SEARCH_PLACEHOLDER": "Ad Soyad ile ara...",
+    "ERROR_LOAD": "Öğrenci devam verileri yüklenemedi."
   },
   "ACTIVITIES": {
     "TITLE": "Etkinlikler",
