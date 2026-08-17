@@ -174,13 +174,16 @@
         />
       </div>
 
-      <!-- Araç bazlı atama kartları: Plaka, Koltuk Sayısı, Dolu Koltuk, Boş Koltuk, Açıklama -->
+      <!-- Araç bazlı atama kartları: Plaka, Koltuk Sayısı, Gidiş/Dönüş Doluluk, Açıklama -->
       @if (filteredAssignmentBuses().length === 0) {
         <p class="empty-state">Araç bulunamadı.</p>
       } @else {
         <div class="bus-grid">
           @for (bus of filteredAssignmentBuses(); track bus.id) {
-            <div class="bus-card" [class.bus-waiting]="bus.emptySeats <= 0">
+            <div
+              class="bus-card"
+              [class.bus-waiting]="bus.bosKoltukGidis <= 0 && bus.bosKoltukDonus <= 0"
+            >
               <!-- Bus Header -->
               <div class="bus-card-header">
                 <div class="bus-plate">
@@ -188,10 +191,7 @@
                   {{ bus.plate }}
                 </div>
                 <div class="bus-card-tags">
-                  <p-tag
-                    [value]="bus.emptySeats > 0 ? bus.emptySeats + ' Boş Koltuk' : 'Dolu'"
-                    [severity]="bus.emptySeats > 0 ? 'success' : 'danger'"
-                  />
+                  <p-tag [value]="bus.seatCount + ' Koltuk'" severity="info" />
                 </div>
               </div>
 
@@ -204,10 +204,12 @@
                     <span class="route-value">{{ bus.brand }} {{ bus.model }}</span>
                   </div>
                 </div>
-                <div class="route-line">
+                <br />
+                <!-- <div class="route-line">
                   <span class="material-symbols-outlined">airline_seat_recline_normal</span>
-                </div>
+                </div> -->
                 <div class="route-point">
+                  <span class="material-symbols-outlined">airline_seat_recline_normal</span>
                   <span class="route-label">Koltuk Sayısı</span>
                   <span class="route-value">{{ bus.seatCount }}</span>
                 </div>
@@ -219,12 +221,16 @@
                 {{ bus.description || 'Açıklama yok' }}
               </div>
 
-              <!-- Doluluk Info -->
+              <!-- Gidiş / Dönüş Doluluk -->
               <div class="bus-passengers">
                 <div class="passenger-stats">
                   <span class="passenger-count">
-                    <span class="material-symbols-outlined">group</span>
-                    {{ bus.occupiedSeats }} dolu / {{ bus.emptySeats }} boş
+                    <span class="material-symbols-outlined">arrow_forward</span>
+                    Gidiş: {{ bus.doluKoltukGidis }} dolu / {{ bus.bosKoltukGidis }} boş
+                  </span>
+                  <span class="passenger-count">
+                    <span class="material-symbols-outlined">arrow_back</span>
+                    Dönüş: {{ bus.doluKoltukDonus }} dolu / {{ bus.bosKoltukDonus }} boş
                   </span>
                 </div>
               </div>
@@ -497,17 +503,21 @@
               </div>
             </div>
             <div class="summary-item">
-              <span class="material-symbols-outlined">event_seat</span>
+              <span class="material-symbols-outlined">arrow_forward</span>
               <div>
-                <span class="summary-label">Dolu Koltuk</span>
-                <span class="summary-value">{{ bus.occupiedSeats }}</span>
+                <span class="summary-label">Gidiş Dolu / Boş</span>
+                <span class="summary-value"
+                  >{{ bus.doluKoltukGidis }} / {{ bus.bosKoltukGidis }}</span
+                >
               </div>
             </div>
             <div class="summary-item">
-              <span class="material-symbols-outlined">chair</span>
+              <span class="material-symbols-outlined">arrow_back</span>
               <div>
-                <span class="summary-label">Boş Koltuk</span>
-                <span class="summary-value">{{ bus.emptySeats }}</span>
+                <span class="summary-label">Dönüş Dolu / Boş</span>
+                <span class="summary-value"
+                  >{{ bus.doluKoltukDonus }} / {{ bus.bosKoltukDonus }}</span
+                >
               </div>
             </div>
             <div class="summary-item">
@@ -574,7 +584,12 @@
                 aria-label="Öğrenciyi Ata"
                 icon="pi pi-check"
                 class="p-button-success"
-                [disabled]="studentAssignForm.invalid || bus.emptySeats <= 0"
+                [disabled]="
+                  studentAssignForm.invalid ||
+                  (studentAssignDirectionTab() === 1
+                    ? bus.bosKoltukGidis <= 0
+                    : bus.bosKoltukDonus <= 0)
+                "
               ></button>
             </div>
           </form>

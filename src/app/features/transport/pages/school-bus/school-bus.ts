@@ -117,8 +117,6 @@ export class SchoolBusComponent implements OnInit {
     { field: 'brand', header: 'Marka', sortable: true },
     { field: 'model', header: 'Model', sortable: true },
     { field: 'seatCount', header: 'Koltuk Sayısı', sortable: true },
-    { field: 'occupiedSeats', header: 'Dolu Koltuk', sortable: true },
-    { field: 'emptySeats', header: 'Boş Koltuk', sortable: true },
     { field: 'description', header: 'Açıklama', sortable: true },
     { field: 'status', header: 'Durum', sortable: true },
   ];

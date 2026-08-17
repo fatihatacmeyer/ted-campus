@@ -11,8 +11,10 @@ interface ServisCampusRow {
   Marka: string;
   Model: string;
   KoltukSayisi: number;
-  DoluKoltuk: number;
-  BosKoltuk: number;
+  DoluKoltukGidis: number;
+  BosKoltukGidis: number;
+  DoluKoltukDonus: number;
+  BosKoltukDonus: number;
   Aciklama: string;
   Durum: string;
 }
@@ -96,8 +98,10 @@ export class SchoolBusService {
             brand: row.Marka,
             model: row.Model,
             seatCount: row.KoltukSayisi,
-            occupiedSeats: row.DoluKoltuk,
-            emptySeats: row.BosKoltuk,
+            doluKoltukGidis: row.DoluKoltukGidis,
+            bosKoltukGidis: row.BosKoltukGidis,
+            doluKoltukDonus: row.DoluKoltukDonus,
+            bosKoltukDonus: row.BosKoltukDonus,
             description: row.Aciklama,
             status: row.Durum,
           })),

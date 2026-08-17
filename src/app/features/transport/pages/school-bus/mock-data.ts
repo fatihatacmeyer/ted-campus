@@ -6,8 +6,10 @@ export interface Bus {
   brand: string;
   model: string;
   seatCount: number;
-  occupiedSeats: number;
-  emptySeats: number;
+  doluKoltukGidis: number;
+  bosKoltukGidis: number;
+  doluKoltukDonus: number;
+  bosKoltukDonus: number;
   description: string;
   status: string;
 }
