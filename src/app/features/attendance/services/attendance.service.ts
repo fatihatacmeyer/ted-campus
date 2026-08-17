@@ -11,10 +11,7 @@ import {
   StudentAttendanceRow,
 } from '../../../core/models/attendance.model';
 import { ApiHelperService } from '../../../core/services/api-helper.service';
-import {
-  DropdownItem,
-  TypesService,
-} from '../../../features/persons/services/types.service';
+import { DropdownItem, TypesService } from '../../../features/persons/services/types.service';
 
 /** Raw DB row returned from sp_pdks_s (Turkish/DB column names). */
 interface AttendanceRowRaw {
@@ -143,13 +140,10 @@ export class AttendanceService {
    */
   private mapLeaveBalance(raw: Record<string, unknown>): LeaveBalance {
     return {
-      yillikIzinHakTarihi:
-        String(raw['YillikIzinHakTarihi'] ?? raw['yillikIzinHakTarihi'] ?? ''),
+      yillikIzinHakTarihi: String(raw['YillikIzinHakTarihi'] ?? raw['yillikIzinHakTarihi'] ?? ''),
       kidem: Number(raw['Kidem'] ?? raw['kidem'] ?? 0),
       hak: Number(raw['Hak'] ?? raw['hak'] ?? 0),
-      kullanilanYillikIzin: Number(
-        raw['KullanilanYillikIzin'] ?? raw['kullanilanYillikIzin'] ?? 0,
-      ),
+      kullanilanYillikIzin: Number(raw['KullanilanYillikIzin'] ?? raw['kullanilanYillikIzin'] ?? 0),
       izinDevir: Number(raw['IzinDevir'] ?? raw['izinDevir'] ?? 0),
       kalan: Number(raw['Kalan'] ?? raw['kalan'] ?? 0),
     };
@@ -289,7 +283,7 @@ export class AttendanceService {
    * (point/islemtipi/islemno SP tarafından kullanılmaz)
    */
   getStudentAttendanceRows(params: {
-    gosterimTuru: StudentAttendanceFilterType;
+    GosterimTuru: StudentAttendanceFilterType;
     baslangic?: string;
     bitis?: string;
     tarih?: string;
@@ -300,7 +294,7 @@ export class AttendanceService {
     kampusId?: number;
   }): Observable<StudentAttendanceRow[]> {
     const spParams: Record<string, string | number> = {
-      GosterimTuru: params.gosterimTuru,
+      GosterimTuru: params.GosterimTuru,
     };
 
     // BaslangicTarih + BitisTarih verilirse SP doğrudan bu aralığı kullanır

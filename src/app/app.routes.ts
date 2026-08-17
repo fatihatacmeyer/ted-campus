@@ -65,15 +65,7 @@ export const routes: Routes = [
       },
       {
         path: 'attendance',
-        data: { titleKey: 'MENU.ATTENDANCE', mode: 'personnel' },
-        loadComponent: () =>
-          import('./features/attendance/pages/attendance-list/attendance-list').then(
-            (m) => m.AttendanceListComponent,
-          ),
-      },
-      {
-        path: 'student-attendance',
-        data: { titleKey: 'MENU.STUDENT_ATTENDANCE', mode: 'student' },
+        data: { titleKey: 'MENU.STUDENT_ATTENDANCE' },
         loadComponent: () =>
           import('./features/attendance/pages/attendance-list/attendance-list').then(
             (m) => m.AttendanceListComponent,

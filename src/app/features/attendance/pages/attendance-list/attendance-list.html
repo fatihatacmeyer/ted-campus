@@ -1,8 +1,8 @@
 <div class="admin-wrapper">
-  <!-- Başlık satırı: başlık solda, dönem/tarih filtresi sağda -->
+  <!-- Başlık satırı -->
   <div class="admin-card mb-3">
     <div class="d-flex flex-wrap justify-content-between align-items-center gap-2">
-      <h4 class="fw-bold mb-0" style="color: #dc2134">{{ (isStudentMode() ? 'STUDENT_ATTENDANCE.TITLE' : 'ATTENDANCE.TITLE') | translate }}</h4>
+      <h4 class="fw-bold mb-0" style="color: #dc2134">{{ 'STUDENT_ATTENDANCE.TITLE' | translate }}</h4>
       <div class="d-flex flex-wrap align-items-center gap-2 period-toolbar">
         <div class="d-flex align-items-center period-segment">
           <button
@@ -66,9 +66,9 @@
 
   <div class="attendance-layout">
     <div class="admin-card attendance-table-card">
-      <!-- Liste sekmeleri + seçim sayacı -->
+      <!-- Liste sekmeleri + arama -->
       <div class="d-flex flex-wrap align-items-center gap-2 mb-3 filter-tabs">
-        @for (tab of activeTabOptions(); track tab.tip) {
+        @for (tab of tabOptions; track tab.tip) {
           <button
             pButton
             type="button"
@@ -78,374 +78,84 @@
             (click)="onTabChange(tab.tip)"
           ></button>
         }
-        @if (selectedRows().length > 0) {
-          <div class="d-flex align-items-center gap-2 ms-auto">
-            <span class="fw-semibold">{{ selectedRows().length }} {{ 'ATTENDANCE.SELECTED_COUNT' | translate }}</span>
-            <button
-              pButton
-              type="button"
-              icon="pi pi-times"
-              [label]="'ATTENDANCE.CLEAR_SELECTION' | translate"
+        <div class="d-flex align-items-center gap-2 ms-auto">
+          <span pInputIcon class="p-input-icon-left">
+            <i class="pi pi-search"></i>
+            <input
+              pInputText
+              type="text"
+              [placeholder]="'STUDENT_ATTENDANCE.SEARCH_PLACEHOLDER' | translate"
+              [value]="searchQuery()"
+              (input)="onSearch($any($event.target).value)"
               size="small"
-              text="true"
-              severity="secondary"
-              (click)="clearSelection()"
-            ></button>
-          </div>
-        }
-        @if (isStudentMode()) {
-          <div class="d-flex align-items-center gap-2 ms-auto">
-            <span pInputIcon class="p-input-icon-left">
-              <i class="pi pi-search"></i>
-              <input
-                pInputText
-                type="text"
-                [placeholder]="'STUDENT_ATTENDANCE.SEARCH_PLACEHOLDER' | translate"
-                [value]="searchQuery()"
-                (input)="onSearch($any($event.target).value)"
-                size="small"
-              />
-            </span>
-          </div>
-        }
+            />
+          </span>
+        </div>
       </div>
 
-      @if (isStudentMode()) {
-        <app-customizable-table
-          [rows]="studentRows()"
-          [columns]="studentColumns"
-          [loading]="isLoading()"
-          tableId="student_attendance_grid"
-          [defaultFields]="studentDefaultFields"
-          [emptyMessage]="'COMMON.NO_RECORDS' | translate"
-          exportFilename="ogrenci_devam_listesi"
-          [showRowNumbers]="true"
-        >
-          <ng-template appColumnCell="girisSaati" let-row>
-            <span [class.cell-red]="row.gecKalmaSuresiDk > 0">{{ row.girisSaati || emptyCellValue }}</span>
-          </ng-template>
+      <app-customizable-table
+        [rows]="rows()"
+        [columns]="columns"
+        [loading]="isLoading()"
+        tableId="student_attendance_grid"
+        [defaultFields]="defaultFields"
+        [emptyMessage]="'COMMON.NO_RECORDS' | translate"
+        exportFilename="ogrenci_devam_listesi"
+        [showRowNumbers]="true"
+      >
+        <ng-template appColumnCell="girisSaati" let-row>
+          <span [class.cell-red]="row.gecKalmaSuresiDk > 0">{{ row.girisSaati || emptyCellValue }}</span>
+        </ng-template>
 
-          <ng-template appColumnCell="cikisSaati" let-row>
-            <span [class.cell-red]="row.erkenCikmaSuresiDk > 0">{{ row.cikisSaati || emptyCellValue }}</span>
-          </ng-template>
+        <ng-template appColumnCell="cikisSaati" let-row>
+          <span [class.cell-red]="row.erkenCikmaSuresiDk > 0">{{ row.cikisSaati || emptyCellValue }}</span>
+        </ng-template>
 
-          <ng-template appColumnCell="izinTipi" let-row>
-            @if (row.izinTipi) {
-              <p-tag [value]="row.izinTipi" severity="info"></p-tag>
-            } @else {
-              <span>{{ emptyCellValue }}</span>
-            }
-          </ng-template>
-        </app-customizable-table>
-      } @else {
-        <app-customizable-table
-          [rows]="rows()"
-          [columns]="attendanceColumns"
-          [loading]="isLoading()"
-          tableId="attendance_grid"
-          [defaultFields]="defaultAttendanceFields"
-          [emptyMessage]="'COMMON.NO_RECORDS' | translate"
-          exportFilename="attendance_listesi"
-          [showRowNumbers]="true"
-          selectionMode="multiple"
-          [selectedRows]="selectedRows()"
-          (selectedRowsChange)="onSelectionChange($event)"
-          [actionsTemplate]="actionsTpl"
-        >
-          <ng-template appColumnCell="giris" let-row>
-            <span [class.cell-red]="row.gecKalma > 0">{{
-              formatTime(row.giris) || emptyCellValue
-            }}</span>
-          </ng-template>
-
-          <ng-template appColumnCell="cikis" let-row>
-            <span [class.cell-red]="row.erkenCikma > 0">{{
-              formatTime(row.cikis) || emptyCellValue
-            }}</span>
-          </ng-template>
-
-          <ng-template appColumnCell="izinSuresi" let-row>
-            @if (row.izinSuresi > 0) {
-              <div class="d-flex align-items-center gap-2 izinli-tag">
-                <p-tag [value]="'ATTENDANCE.STATUS_ON_LEAVE' | translate" icon="pi pi-calendar-plus" severity="info"></p-tag>
-                <span class="small text-muted">{{ row.izinSuresi }} dk</span>
-              </div>
-            } @else {
-              <span>{{ emptyCellValue }}</span>
-            }
-          </ng-template>
-
-          <ng-template #actionsTpl let-row>
-            <div class="d-flex justify-content-center gap-1">
-              <button
-                pButton
-                type="button"
-                icon="pi pi-calendar"
-                [label]="'ATTENDANCE.LEAVE' | translate"
-                size="small"
-                outlined="true"
-                severity="primary"
-                [pTooltip]="'ATTENDANCE.LEAVE_REQUEST' | translate"
-                (click)="openLeaveDialog(row)"
-              ></button>
-            </div>
-          </ng-template>
-        </app-customizable-table>
-      }
+        <ng-template appColumnCell="izinTipi" let-row>
+          @if (row.izinTipi) {
+            <p-tag [value]="row.izinTipi ?? ''" severity="info"></p-tag>
+          } @else {
+            <span>{{ emptyCellValue }}</span>
+          }
+        </ng-template>
+      </app-customizable-table>
     </div>
 
-    <!-- İzinlerim / İzinli Öğrenciler — sağ yan panel -->
+    <!-- İzinli Öğrenciler — sağ yan panel -->
     <div class="admin-card izinlerim-panel">
-      @if (isStudentMode()) {
-        <!-- Öğrenci modu: izinli öğrenciler paneli -->
-        <div class="table-toolbar mb-3">
-          <h5 class="fw-bold mb-0" style="color: #dc2134">{{ 'STUDENT_ATTENDANCE.LEAVES_TITLE' | translate }}</h5>
-        </div>
-        <div class="table-responsive">
-          <table class="table table-sm align-middle mb-0">
-            <thead>
+      <div class="table-toolbar mb-3">
+        <h5 class="fw-bold mb-0" style="color: #dc2134">{{ 'STUDENT_ATTENDANCE.LEAVES_TITLE' | translate }}</h5>
+      </div>
+      <div class="table-responsive">
+        <table class="table table-sm align-middle mb-0">
+          <thead>
+            <tr>
+              <th scope="col">{{ 'STUDENT_ATTENDANCE.COL_AD_SOYAD' | translate }}</th>
+              <th scope="col">{{ 'STUDENT_ATTENDANCE.COL_SINIF' | translate }}</th>
+              <th scope="col">{{ 'STUDENT_ATTENDANCE.COL_IZIN_TIPI' | translate }}</th>
+              <th scope="col">{{ 'STUDENT_ATTENDANCE.LEAVE_TIME' | translate }}</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (rec of leaveStudents(); track rec.sicilNo) {
               <tr>
-                <th scope="col">{{ 'STUDENT_ATTENDANCE.COL_AD_SOYAD' | translate }}</th>
-                <th scope="col">{{ 'STUDENT_ATTENDANCE.COL_SINIF' | translate }}</th>
-                <th scope="col">{{ 'STUDENT_ATTENDANCE.COL_IZIN_TIPI' | translate }}</th>
-                <th scope="col">{{ 'STUDENT_ATTENDANCE.LEAVE_TIME' | translate }}</th>
+                <td>{{ rec.adSoyad }}</td>
+                <td>{{ rec.sinif }}</td>
+                <td>
+                  <p-tag [value]="rec.izinTipi ?? ''" severity="info"></p-tag>
+                </td>
+                <td>{{ rec.izinSaatAraligi || emptyCellValue }}</td>
               </tr>
-            </thead>
-            <tbody>
-              @for (rec of leaveStudents(); track rec.sicilNo) {
-                <tr>
-                  <td>{{ rec.adSoyad }}</td>
-                  <td>{{ rec.sinif }}</td>
-                  <td>
-                    <p-tag [value]="rec.izinTipi ?? ''" severity="info"></p-tag>
-                  </td>
-                  <td>{{ rec.izinSaatAraligi || emptyCellValue }}</td>
-                </tr>
-              } @empty {
-                <tr>
-                  <td colspan="4" class="text-center text-muted py-3">
-                    {{ 'ATTENDANCE.NO_LEAVES' | translate }}
-                  </td>
-                </tr>
-              }
-            </tbody>
-          </table>
-        </div>
-      } @else {
-        <!-- Personel modu: izinlerim paneli -->
-        <div class="table-toolbar mb-3">
-          <h5 class="fw-bold mb-0" style="color: #dc2134">{{ 'ATTENDANCE.MY_LEAVES' | translate }}</h5>
-        </div>
-        <div class="table-responsive">
-          <table class="table table-sm align-middle mb-0">
-            <thead>
+            } @empty {
               <tr>
-                <th scope="col">{{ 'ATTENDANCE.LEAVE_TYPES' | translate }}</th>
-                <th scope="col">{{ 'ATTENDANCE.START_DATE' | translate }}</th>
-                <th scope="col">{{ 'ATTENDANCE.END_DATE' | translate }}</th>
-                <th scope="col">{{ 'ATTENDANCE.STATUS' | translate }}</th>
-                <th scope="col" class="text-end">{{ 'COMMON.ACTIONS' | translate }}</th>
+                <td colspan="4" class="text-center text-muted py-3">
+                  {{ 'STUDENT_ATTENDANCE.NO_LEAVES' | translate }}
+                </td>
               </tr>
-            </thead>
-            <tbody>
-              @for (rec of leaves(); track rec.id) {
-                <tr>
-                  <td>{{ rec.izinTipi }}</td>
-                  <td>{{ rec.bastarih.split('-').reverse().join('-') }}</td>
-                  <td>{{ rec.bittarih.split('-').reverse().join('-') }}</td>
-                  <td>
-                    <p-tag [value]="getLeaveStatusLabel(rec.durum) | translate" [severity]="getLeaveSeverity(rec.durum)"></p-tag>
-                  </td>
-                  <td class="text-end">
-                    <button
-                      pButton
-                      type="button"
-                      icon="pi pi-times"
-                      [label]="'ATTENDANCE.CANCEL' | translate"
-                      size="small"
-                      severity="danger"
-                      text="true"
-                      [disabled]="rec.durum === 'Onaylandı'"
-                      [pTooltip]="'ATTENDANCE.CANCEL_LEAVE' | translate"
-                      (click)="cancelLeave(rec)"
-                    ></button>
-                  </td>
-                </tr>
-              } @empty {
-                <tr>
-                  <td colspan="5" class="text-center text-muted py-3">
-                    {{ 'ATTENDANCE.NO_LEAVES' | translate }}
-                  </td>
-                </tr>
-              }
-            </tbody>
-          </table>
-        </div>
-      }
+            }
+          </tbody>
+        </table>
+      </div>
     </div>
   </div>
 </div>
-
-@if (!isStudentMode()) {
-<!-- İzin Talep Dialogu -->
-<p-dialog
-  [header]="(selectedRow()?.adSoyad ?? '') + ' — ' + ('ATTENDANCE.LEAVE_REQUEST' | translate)"
-  [(visible)]="leaveDialogVisible"
-  [modal]="true"
-  [style]="{ width: '750px', maxHeight: '90vh' }"
-  [draggable]="false"
-  (onHide)="closeLeaveDialog()"
->
-  <form [formGroup]="leaveForm" class="mt-3 d-flex flex-column gap-4 pb-3">
-    <!-- GENEL BİLGİLER -->
-    <div>
-      <h6 class="text-primary fw-bold mb-3 border-bottom pb-2">{{ 'ATTENDANCE.GENERAL_INFO' | translate }}</h6>
-      <div class="d-flex gap-3 mb-3">
-        <div class="w-100 d-flex flex-column gap-1">
-          <label for="izintip" class="fw-semibold small text-muted"
-            >{{ 'ATTENDANCE.LEAVE_TYPES' | translate }} <span class="text-primary">*</span></label
-          >
-          <p-select
-            id="izintip"
-            formControlName="izintip"
-            [options]="leaveTypes()"
-            optionLabel="ad"
-            optionValue="id"
-            [placeholder]="'ATTENDANCE.SELECT_LEAVE_TYPE' | translate"
-            appendTo="body"
-            styleClass="w-100"
-          ></p-select>
-        </div>
-        <div class="w-100 d-flex flex-column gap-1">
-          <label for="kalan" class="fw-semibold small text-muted">{{ 'ATTENDANCE.REMAINING_BALANCE' | translate }}</label>
-          <input pInputText id="kalan" formControlName="kalan" />
-        </div>
-      </div>
-      <div class="d-flex gap-3">
-        <div class="d-flex align-items-center gap-2">
-          <p-checkbox formControlName="saatlik" [binary]="true" inputId="saatlik"></p-checkbox>
-          <label for="saatlik" class="fw-semibold small text-muted mb-0">{{ 'ATTENDANCE.HOURLY_LEAVE' | translate }}</label>
-        </div>
-        <div class="d-flex align-items-center gap-2">
-          <p-checkbox formControlName="ucretli" [binary]="true" inputId="ucretli"></p-checkbox>
-          <label for="ucretli" class="fw-semibold small text-muted mb-0">{{ 'ATTENDANCE.PAID_LEAVE' | translate }}</label>
-        </div>
-      </div>
-    </div>
-
-    <!-- TARİH BİLGİLERİ -->
-    <div>
-      <h6 class="text-primary fw-bold mb-3 border-bottom pb-2">{{ 'ATTENDANCE.DATE_INFO' | translate }}</h6>
-      <div class="d-flex gap-3 mb-3">
-        <div class="w-100 d-flex flex-column gap-1">
-          <label for="baslangic" class="fw-semibold small text-muted"
-            >{{ 'ATTENDANCE.START_DATE' | translate }} <span class="text-primary">*</span></label
-          >
-          <p-datepicker
-            id="baslangic"
-            formControlName="baslangic"
-            dateFormat="dd-mm-yy"
-            appendTo="body"
-            styleClass="w-100"
-            [showIcon]="true"
-          ></p-datepicker>
-        </div>
-        <div class="w-100 d-flex flex-column gap-1">
-          <label for="bitis" class="fw-semibold small text-muted"
-            >{{ 'ATTENDANCE.END_DATE' | translate }} <span class="text-primary">*</span></label
-          >
-          <p-datepicker
-            id="bitis"
-            formControlName="bitis"
-            dateFormat="dd-mm-yy"
-            appendTo="body"
-            styleClass="w-100"
-            [showIcon]="true"
-          ></p-datepicker>
-        </div>
-      </div>
-      @if (hourlyLeave()) {
-        <div class="d-flex gap-3 mb-3">
-          <div class="w-100 d-flex flex-column gap-1">
-            <label for="baslangicSaat" class="fw-semibold small text-muted">{{ 'ATTENDANCE.START_TIME' | translate }}</label>
-            <input pInputText id="baslangicSaat" type="time" formControlName="baslangicSaat" />
-          </div>
-          <div class="w-100 d-flex flex-column gap-1">
-            <label for="bitisSaat" class="fw-semibold small text-muted">{{ 'ATTENDANCE.END_TIME' | translate }}</label>
-            <input pInputText id="bitisSaat" type="time" formControlName="bitisSaat" />
-          </div>
-        </div>
-      }
-      <div class="d-flex gap-3 mb-3">
-        <div class="w-100 d-flex flex-column gap-1">
-          <label for="adres" class="fw-semibold small text-muted">{{ 'ATTENDANCE.ADDRESS' | translate }}</label>
-          <input pInputText id="adres" formControlName="adres" />
-        </div>
-      </div>
-      <div class="d-flex gap-3">
-        <div class="w-100 d-flex flex-column gap-1">
-          <label for="aciklama" class="fw-semibold small text-muted">{{ 'ATTENDANCE.DESCRIPTION' | translate }}</label>
-          <textarea
-            pTextarea
-            id="aciklama"
-            formControlName="aciklama"
-            rows="3"
-            styleClass="w-100"
-          ></textarea>
-        </div>
-      </div>
-    </div>
-  </form>
-
-  <div class="d-flex justify-content-end gap-2 pt-3 border-top">
-    <button
-      pButton
-      type="button"
-      [label]="'ATTENDANCE.CANCEL' | translate"
-      severity="secondary"
-      text="true"
-      (click)="closeLeaveDialog()"
-    ></button>
-    <button
-      pButton
-      type="button"
-      [label]="'ATTENDANCE.REQUEST' | translate"
-      icon="pi pi-check"
-      [disabled]="leaveForm.invalid || saving()"
-      (click)="saveLeave()"
-    ></button>
-  </div>
-</p-dialog>
-
-<!-- İzin İptal Onay Dialogu -->
-<p-dialog
-  [header]="'ATTENDANCE.CANCEL_LEAVE' | translate"
-  [(visible)]="confirmCancelVisible"
-  [modal]="true"
-  [style]="{ width: '400px' }"
-  [draggable]="false"
-  (onHide)="closeCancelConfirm()"
->
-  <p class="mb-0">
-    <strong>{{ confirmCancelRec()?.izinTipi }}</strong> {{ 'ATTENDANCE.CONFIRM_CANCEL' | translate }}
-  </p>
-  <div class="d-flex justify-content-end gap-2 pt-3">
-    <button
-      pButton
-      type="button"
-      [label]="'ATTENDANCE.DISMISS' | translate"
-      severity="secondary"
-      text="true"
-      (click)="closeCancelConfirm()"
-    ></button>
-    <button
-      pButton
-      type="button"
-      [label]="'ATTENDANCE.CONFIRM_CANCEL_ACTION' | translate"
-      icon="pi pi-times"
-      severity="danger"
-      (click)="confirmCancelLeave()"
-    ></button>
-  </div>
-</p-dialog>
-}
