@@ -1,7 +1,7 @@
 <app-header></app-header>
 <div class="layout-body" [class.sidebar-closed]="!isSidebarOpen">
   <app-sidebar [isOpen]="isSidebarOpen" (sidebarToggle)="onToggleSidebar()"></app-sidebar>
-  <main class="content">
+  <main class="content" [class.content--scrollable]="isContentScrollable()">
     <router-outlet />
   </main>
 </div>

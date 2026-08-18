@@ -1,7 +1,7 @@
 import { inject, Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
-import { ActivityApprovalStats, ActivityInterface } from '../../../core/models/activity.model';
+import { ActivityApprovalStats, ActivityInterface, ActivityParticipant } from '../../../core/models/activity.model';
 import { ApiHelperService } from '../../../core/services/api-helper.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { formatDate } from '../../../shared/utils/date.utils';
@@ -60,6 +60,19 @@ interface ActivityApprovalRow {
   Onaylanan: number;
   Reddedilen: number;
   Toplam: number;
+}
+
+/** sp_EtkinlikKatilimcilari_s'ten dönen ham DB satırı. */
+interface ParticipantRow {
+  SiraNo: number;
+  OgrenciSicilId: number;
+  Ogrenci: string;
+  Sinif: string;
+  VeliSicilId: number;
+  Veli: string;
+  Telefon: string;
+  Durum: number;
+  DurumMetni: string;
 }
 
 @Injectable({
@@ -146,6 +159,30 @@ export class ActivityService {
           toplam: row?.Toplam ?? 0,
         };
       }),
+    );
+  }
+
+  /**
+   * sp_EtkinlikKatilimcilari_s: verilen etkinliğe katılan öğrencileri ve velileri döndürür.
+   */
+  getParticipants(etkinlikId: number): Observable<ActivityParticipant[]> {
+    return this.callDynamic<ParticipantRow[]>({
+      point: 'etkinlikkatilimcilari',
+      islemtipi: 's',
+      EtkinlikId: etkinlikId,
+    }).pipe(
+      map((rows) =>
+        (rows || []).map((row) => ({
+          id: row.SiraNo,
+          ogrenciSicilId: row.OgrenciSicilId,
+          ogrenci: row.Ogrenci,
+          sinif: row.Sinif,
+          veliSicilId: row.VeliSicilId,
+          veli: row.Veli,
+          telefon: row.Telefon ?? '',
+          durum: (row.DurumMetni as ActivityParticipant['durum']) || 'Bekleyen',
+        })),
+      ),
     );
   }
 

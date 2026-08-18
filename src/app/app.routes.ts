@@ -18,6 +18,7 @@ export const routes: Routes = [
       {
         path: '',
         //data: { titleKey: 'DASHBOARD.TITLE' },
+        data: { scrollable: true },
         loadComponent: () =>
           import('./features/dashboard/pages/dashboard/dashboard').then(
             (m) => m.DashboardComponent,

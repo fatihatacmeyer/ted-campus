@@ -22,18 +22,14 @@ import { TooltipModule } from 'primeng/tooltip';
 import { forkJoin, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { DropdownItem, TypesService } from '../../../persons/services/types.service';
-import { ActivityApprovalStats, ActivityInterface } from '../../../../core/models/activity.model';
+import { ActivityApprovalStats, ActivityInterface, ActivityParticipant } from '../../../../core/models/activity.model';
 import { ActivityService } from '../../services/activity.service';
-import {
-  MOCK_ACTIVITY_PARTICIPANTS,
-  MockActivityParticipant,
-} from '../../mocks/activity-participants.mock';
 import { formatDate, parseDate } from '../../../../shared/utils/date.utils';
 import { NotificationService } from '../../../../core/services/notification.service';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 
 /** Katılımcı durum filtreleri — dashboard kartlarıyla eşleşir. */
-type ParticipantFilter = 'Tümü' | MockActivityParticipant['durum'];
+type ParticipantFilter = 'Tümü' | ActivityParticipant['durum'];
 
 /** Boole sütun filtreleri için Evet/Hayır seçenekleri */
 const BOOLEAN_FILTER_OPTIONS: FilterOption[] = [
@@ -86,7 +82,9 @@ export class ActivitiesComponent {
   approvalStats = signal<ActivityApprovalStats | null>(null);
   isLoadingStats = signal(false);
   approvalError = signal<string | null>(null);
-  participants = signal<MockActivityParticipant[]>(MOCK_ACTIVITY_PARTICIPANTS);
+  participants = signal<ActivityParticipant[]>([]);
+  isLoadingParticipants = signal(false);
+  participantError = signal<string | null>(null);
 
   /** Katılımcı listesi için aktif filtre — dashboard kartlarından seçilir. */
   activeParticipantFilter = signal<ParticipantFilter>('Tümü');
@@ -473,12 +471,13 @@ export class ActivitiesComponent {
     this.activityForm.reset();
   }
 
-  /** Tablo satırına tıklandığında detay modalını açar ve istatistikleri çeker. */
+  /** Tablo satırına tıklandığında detay modalını açar ve istatistikleri + katılımcıları çeker. */
   openDetailDialog(activity: ActivityInterface) {
     this.activeParticipantFilter.set('Tümü');
     this.selectedActivity.set(activity);
     this.isDetailVisible.set(true);
     this.loadApprovalStats(activity.id);
+    this.loadParticipants(activity.id);
   }
 
   closeDetailDialog() {
@@ -486,6 +485,8 @@ export class ActivitiesComponent {
     this.selectedActivity.set(null);
     this.approvalStats.set(null);
     this.approvalError.set(null);
+    this.participants.set([]);
+    this.participantError.set(null);
   }
 
   /** sp_EtkinlikOnayCampus_s'ten o etkinliğin onay istatistiklerini çeker. */
@@ -504,6 +505,26 @@ export class ActivitiesComponent {
           console.error('[ActivitiesComponent] getApprovalStats error:', err);
           this.approvalError.set(this.translate.instant('ACTIVITIES.ERROR_LOAD_APPROVAL'));
           this.isLoadingStats.set(false);
+        },
+      });
+  }
+
+  /** sp_EtkinlikKatilimcilari_s'ten o etkinliğin katılımcılarını çeker. */
+  loadParticipants(etkinlikId: number) {
+    this.isLoadingParticipants.set(true);
+    this.participantError.set(null);
+    this.activityService
+      .getParticipants(etkinlikId)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (list) => {
+          this.participants.set(list);
+          this.isLoadingParticipants.set(false);
+        },
+        error: (err) => {
+          console.error('[ActivitiesComponent] getParticipants error:', err);
+          this.participantError.set(this.translate.instant('ACTIVITIES.ERROR_LOAD_PARTICIPANTS'));
+          this.isLoadingParticipants.set(false);
         },
       });
   }

@@ -355,6 +355,7 @@
     "ERROR_SAVE": "Could not save activity.",
     "ERROR_DELETE": "Could not delete activity.",
     "ERROR_LOAD_APPROVAL": "Could not load approval information.",
+    "ERROR_LOAD_PARTICIPANTS": "Could not load participant list.",
     "STATUS_ACTIVE": "Active",
     "STATUS_INACTIVE": "Inactive",
     "CANCELLED": "Cancelled",

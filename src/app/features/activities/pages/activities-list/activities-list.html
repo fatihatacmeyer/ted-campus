@@ -541,47 +541,69 @@
       </div>
     }
 
-    <!-- KATILIMCI LİSTESİ (MOCK) -->
+    <!-- KATILIMCI LİSTESİ -->
     <h6
       class="text-primary fw-bold mb-3 mt-4 border-bottom pb-2 d-flex align-items-center justify-content-between"
     >
       <span>Etkinliğe Katılanlar</span>
-      <span class="text-muted small fw-normal">{{ filteredParticipants().length }} katılımcı</span>
+      @if (!isLoadingParticipants()) {
+        <span class="text-muted small fw-normal">{{ filteredParticipants().length }} katılımcı</span>
+      }
     </h6>
-    <div class="participant-table-wrapper">
-      <table class="participant-table">
-        <thead>
-          <tr>
-            <th>#</th>
-            <th>Öğrenci</th>
-            <th>Sınıf</th>
-            <th>Veli</th>
-            <th>Telefon</th>
-            <th>Durum</th>
-          </tr>
-        </thead>
-        <tbody>
-          @for (p of filteredParticipants(); track p.id) {
+
+    @if (isLoadingParticipants()) {
+      <div class="d-flex justify-content-center py-4">
+        <i class="pi pi-spin pi-spinner" style="font-size: 2rem; color: var(--p-primary-color)"></i>
+      </div>
+    } @else if (participantError()) {
+      <div class="d-flex flex-column align-items-center gap-2 py-4">
+        <span class="text-danger small">{{ participantError() }}</span>
+        @if (selectedActivity(); as act) {
+          <button
+            pButton
+            label="Tekrar Dene"
+            icon="pi pi-refresh"
+            class="p-button-text p-button-sm"
+            (click)="loadParticipants(act.id)"
+          ></button>
+        }
+      </div>
+    } @else {
+      <div class="participant-table-wrapper">
+        <table class="participant-table">
+          <thead>
             <tr>
-              <td>{{ p.id }}</td>
-              <td>{{ p.ogrenci }}</td>
-              <td>{{ p.sinif }}</td>
-              <td>{{ p.veli }}</td>
-              <td>{{ p.telefon }}</td>
-              <td>
-                <p-tag [value]="p.durum" [severity]="getParticipantSeverity(p.durum)"></p-tag>
-              </td>
+              <th>#</th>
+              <th>Öğrenci</th>
+              <th>Sınıf</th>
+              <th>Veli</th>
+              <th>Telefon</th>
+              <th>Durum</th>
             </tr>
-          } @empty {
-            <tr>
-              <td colspan="6" class="text-center text-muted py-3">
-                Bu filtreye uygun katılımcı bulunamadı.
-              </td>
-            </tr>
-          }
-        </tbody>
-      </table>
-    </div>
+          </thead>
+          <tbody>
+            @for (p of filteredParticipants(); track p.id) {
+              <tr>
+                <td>{{ p.id }}</td>
+                <td>{{ p.ogrenci }}</td>
+                <td>{{ p.sinif }}</td>
+                <td>{{ p.veli }}</td>
+                <td>{{ p.telefon }}</td>
+                <td>
+                  <p-tag [value]="p.durum" [severity]="getParticipantSeverity(p.durum)"></p-tag>
+                </td>
+              </tr>
+            } @empty {
+              <tr>
+                <td colspan="6" class="text-center text-muted py-3">
+                  Bu filtreye uygun katılımcı bulunamadı.
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
   </div>
   <ng-template pTemplate="footer">
     <div class="d-flex justify-content-end">

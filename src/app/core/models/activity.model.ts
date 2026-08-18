@@ -35,3 +35,15 @@ export interface ActivityApprovalStats {
   reddedilen: number;
   toplam: number;
 }
+
+/** sp_EtkinlikKatilimcilari_s'ten dönen katılımcı kaydı. */
+export interface ActivityParticipant {
+  id: number; // SiraNo
+  ogrenciSicilId: number;
+  ogrenci: string; // Ogrenci (ad soyad)
+  sinif: string; // Sinif
+  veliSicilId: number;
+  veli: string; // Veli (ad soyad)
+  telefon: string; // Telefon
+  durum: 'Bekleyen' | 'Onaylanan' | 'Reddedilen'; // DurumMetni
+}

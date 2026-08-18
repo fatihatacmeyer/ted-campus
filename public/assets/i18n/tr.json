@@ -355,6 +355,7 @@
     "ERROR_SAVE": "Etkinlik kaydedilemedi.",
     "ERROR_DELETE": "Etkinlik silinemedi.",
     "ERROR_LOAD_APPROVAL": "Onay bilgileri yüklenemedi.",
+    "ERROR_LOAD_PARTICIPANTS": "Katılımcı listesi yüklenemedi.",
     "STATUS_ACTIVE": "Aktif",
     "STATUS_INACTIVE": "Pasif",
     "CANCELLED": "İptal",

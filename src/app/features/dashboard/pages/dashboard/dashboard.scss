@@ -6,6 +6,11 @@
   display: block;
 }
 
+.admin-wrapper {
+  height: auto;
+  min-height: 100%;
+}
+
 /* ── Variables ─────────────────────────────────────────── */
 $brand-red: #dc2134;
 $brand-red-light: #fef2f2;
