@@ -25,9 +25,11 @@ export class LayoutComponent {
       filter((e) => e instanceof NavigationEnd),
       startWith(null),
       map(() => {
-        let route = this.activatedRoute.firstChild;
-        while (route?.firstChild) route = route.firstChild;
-        return !!route?.snapshot.data['scrollable'];
+        let route: ActivatedRoute | null = this.activatedRoute;
+        while (route?.firstChild) {
+          route = route.firstChild;
+        }
+        return !!route?.snapshot?.data?.['scrollable'];
       }),
     ),
     { initialValue: false },

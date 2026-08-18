@@ -131,10 +131,15 @@ export class PersonCrudComponent implements OnInit {
   /** Tablo sütun başlıkları — userdef'a göre farklılık gösterir. */
   get columnOverrides(): { field: string; header: string }[] {
     if (this.USERDEF === UserDef.Ogrenci) {
-      return [{ field: 'veliAdSoyad', header: 'Veliler' }]; // personelno yerine veliAdSoyad oldu
+      return [
+        { field: 'veliAdSoyad', header: 'Veliler' },
+        { field: 'firmaad', header: 'Kampüs' },
+        { field: 'bolumad', header: 'Sınıf' },
+        { field: 'direktorlukad', header: 'Eğitim Düzeyi' },
+      ];
     }
     if (this.USERDEF === UserDef.Veli) {
-      return [{ field: 'veliAdSoyad', header: 'Çocuklar' }]; // personelno yerine veliAdSoyad oldu
+      return [{ field: 'veliAdSoyad', header: 'Çocuklar' }];
     }
     return [];
   }
@@ -229,7 +234,14 @@ export class PersonCrudComponent implements OnInit {
             const veli = this.allPersons.find((p) => p.id === veliId);
             const child = this.allPersons.find((p) => p.id === ogrenciId);
             if (!veli && !child) {
-              console.log('[Rel] eşleşmeyen satır → anahtarlar:', Object.keys(rel), '| VeliSicilId:', rel.VeliSicilId, '| OgrenciSicilId:', rel.OgrenciSicilId);
+              console.log(
+                '[Rel] eşleşmeyen satır → anahtarlar:',
+                Object.keys(rel),
+                '| VeliSicilId:',
+                rel.VeliSicilId,
+                '| OgrenciSicilId:',
+                rel.OgrenciSicilId,
+              );
               continue;
             }
             // childrenMap: eski davranış korunur (çocuk çözülebilen her satır)

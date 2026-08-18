@@ -23,6 +23,7 @@
       [actionsTemplate]="actionsTpl"
       [rowClickable]="true"
       (rowClick)="openDetailDialog($event)"
+      displayMode="scroll"
     >
       <ng-template appColumnCell="classroom" let-activity>
         <span [pTooltip]="getTableClassroomFull(activity.classroom)" tooltipPosition="top">
@@ -107,9 +108,9 @@
       </div>
       <div class="d-flex gap-3">
         <div class="w-100 d-flex flex-column gap-1">
-          <label for="eventManager" class="fw-semibold small text-muted"
-            >{{ 'ACTIVITIES.MANAGER_RESPONSIBLE' | translate }}</label
-          >
+          <label for="eventManager" class="fw-semibold small text-muted">{{
+            'ACTIVITIES.MANAGER_RESPONSIBLE' | translate
+          }}</label>
           <input pInputText id="eventManager" formControlName="eventManager" />
         </div>
         <!-- <div class="w-100 d-flex flex-column gap-1">
@@ -163,9 +164,9 @@
       </div>
       <div class="d-flex gap-3">
         <div class="w-100 d-flex flex-column gap-1">
-          <label for="requestStartDate" class="fw-semibold small text-muted"
-            >{{ 'ACTIVITIES.REQUEST_START' | translate }}</label
-          >
+          <label for="requestStartDate" class="fw-semibold small text-muted">{{
+            'ACTIVITIES.REQUEST_START' | translate
+          }}</label>
           <p-datepicker
             formControlName="requestStartDate"
             inputId="requestStartDate"
@@ -176,9 +177,9 @@
           ></p-datepicker>
         </div>
         <div class="w-100 d-flex flex-column gap-1">
-          <label for="requestEndDate" class="fw-semibold small text-muted"
-            >{{ 'ACTIVITIES.REQUEST_END' | translate }}</label
-          >
+          <label for="requestEndDate" class="fw-semibold small text-muted">{{
+            'ACTIVITIES.REQUEST_END' | translate
+          }}</label>
           <p-datepicker
             formControlName="requestEndDate"
             inputId="requestEndDate"
@@ -203,28 +204,28 @@
             [binary]="true"
             inputId="parentReq"
           ></p-checkbox>
-          <label for="parentReq" class="fw-semibold small text-muted mb-0"
-            >{{ 'ACTIVITIES.PARENT_REQUIRED_QUESTION' | translate }}</label
-          >
+          <label for="parentReq" class="fw-semibold small text-muted mb-0">{{
+            'ACTIVITIES.PARENT_REQUIRED_QUESTION' | translate
+          }}</label>
         </div>
         <div class="w-100 d-flex align-items-center gap-2">
           <p-checkbox formControlName="isPaid" [binary]="true" inputId="isPaidCheck"></p-checkbox>
-          <label for="isPaidCheck" class="fw-semibold small text-muted mb-0"
-            >{{ 'ACTIVITIES.PAID_ACTIVITY' | translate }}</label
-          >
+          <label for="isPaidCheck" class="fw-semibold small text-muted mb-0">{{
+            'ACTIVITIES.PAID_ACTIVITY' | translate
+          }}</label>
         </div>
       </div>
       <div class="d-flex gap-3 mb-3">
         <div class="w-100 d-flex flex-column gap-1">
-          <label for="maxStudentCount" class="fw-semibold small text-muted"
-            >{{ 'ACTIVITIES.MAX_STUDENT' | translate }}</label
-          >
+          <label for="maxStudentCount" class="fw-semibold small text-muted">{{
+            'ACTIVITIES.MAX_STUDENT' | translate
+          }}</label>
           <input pInputText type="number" id="maxStudentCount" formControlName="maxStudentCount" />
         </div>
         <div class="w-100 d-flex flex-column gap-1">
-          <label for="studentParentCount" class="fw-semibold small text-muted"
-            >{{ 'ACTIVITIES.PARENT_QUOTA' | translate }}</label
-          >
+          <label for="studentParentCount" class="fw-semibold small text-muted">{{
+            'ACTIVITIES.PARENT_QUOTA' | translate
+          }}</label>
           <input
             pInputText
             type="number"
@@ -233,7 +234,9 @@
           />
         </div>
         <div class="w-100 d-flex flex-column gap-1">
-          <label for="fee" class="fw-semibold small text-muted">{{ 'ACTIVITIES.FEE' | translate }}</label>
+          <label for="fee" class="fw-semibold small text-muted">{{
+            'ACTIVITIES.FEE' | translate
+          }}</label>
           <input
             pInputText
             type="number"
@@ -252,9 +255,9 @@
       </h6>
       <!-- Sınıf Kapsamı — quick-select但onları + MultiSelect -->
       <div class="d-flex flex-column gap-2 mb-3">
-        <label for="classroom" class="fw-semibold small text-muted"
-          >{{ 'ACTIVITIES.CLASSROOM_SCOPE' | translate }}</label
-        >
+        <label for="classroom" class="fw-semibold small text-muted">{{
+          'ACTIVITIES.CLASSROOM_SCOPE' | translate
+        }}</label>
 
         <!-- Üst aksiyon satırı: Tüm Şubeleri Seç / Seçimi Temizle -->
         <div class="d-flex align-items-center gap-3">
@@ -292,7 +295,8 @@
               (click)="clearAllClasses()"
             >
               Temizle
-            </button>          </div>
+            </button>
+          </div>
         }
 
         <!-- MultiSelect — detaylı bireysel seçim için -->
@@ -547,7 +551,9 @@
     >
       <span>Etkinliğe Katılanlar</span>
       @if (!isLoadingParticipants()) {
-        <span class="text-muted small fw-normal">{{ filteredParticipants().length }} katılımcı</span>
+        <span class="text-muted small fw-normal"
+          >{{ filteredParticipants().length }} katılımcı</span
+        >
       }
     </h6>
 

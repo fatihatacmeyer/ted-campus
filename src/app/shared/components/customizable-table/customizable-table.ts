@@ -6,6 +6,7 @@ import {
   DestroyRef,
   Directive,
   EventEmitter,
+  HostBinding,
   HostListener,
   inject,
   input,
@@ -122,7 +123,12 @@ export class CustomizableTableComponent<T extends object = Record<string, unknow
   /** Seçim değiştiğinde parent'a yeni seçim listesini bildirir */
 
   @Input() displayMode: 'paginated' | 'scroll' = 'paginated';
-  @Input() scrollHeight = '480px';
+  @Input() scrollHeight = 'calc(100vh - 280px)';
+
+  @HostBinding('class.mode-paginated')
+  get isPaginated(): boolean {
+    return this.displayMode === 'paginated';
+  }
 
   @Output() selectedRowsChange = new EventEmitter<T[]>();
   @Output() rowClick = new EventEmitter<T>();

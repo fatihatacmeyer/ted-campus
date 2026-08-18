@@ -121,7 +121,6 @@
         [selectedRows]="selectedRows()"
         (selectedRowsChange)="selectedRows.set($event)"
         displayMode="scroll"
-        scrollHeight="600px"
       >
         <ng-template appColumnCell="izinIkon" let-row>
           @if (row.izinTipi && row.izinTipi !== 'null' && row.izinTipi.trim() !== '') {
