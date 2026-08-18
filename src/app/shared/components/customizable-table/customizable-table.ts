@@ -40,16 +40,21 @@ export interface FilterOption {
 export interface ColumnDef<T = unknown> {
   field: string; // veri alanı adı
   header: string; // başlık
+  headerTooltip?: string;
   sortable?: boolean;
   width?: string; // css genişliği (örn '70px')
   alwaysVisible?: boolean; // panelden kaldırılamaz
   filterType?: 'text' | 'select'; // filtre widget türü (varsayılan 'text')
   filterOptions?: FilterOption[] | ((rows: T[]) => FilterOption[]); // select seçenekleri (statik veya satırlardan türetilen)
   exportValue?: (row: T) => string | number | null; // dışa aktarma için özel değer (hücre görünümünden bağımsız)
+  filterable?: boolean;
 }
 
 /** Sütun filtreleri için satırlardan benzersiz değer listesi üretir (null/boş hariç) */
-export function uniqueFilterOptions<T extends object, K extends keyof T>(rows: T[], field: K): FilterOption[] {
+export function uniqueFilterOptions<T extends object, K extends keyof T>(
+  rows: T[],
+  field: K,
+): FilterOption[] {
   const seen = new Set<unknown>();
   const options: FilterOption[] = [];
   for (const row of rows) {
@@ -267,6 +272,12 @@ export class CustomizableTableComponent<T extends object = Record<string, unknow
     return this.columns.find((col) => col.field === field)?.header ?? field;
   }
 
+  /** Sütun seçici panelde gösterilecek uzun ismi döner */
+  getColDisplayName(field: string): string {
+    const col = this.columns.find((c) => c.field === field);
+    return col ? (col.headerTooltip ?? col.header) : field;
+  }
+
   isAlwaysVisible(field: string): boolean {
     return this.alwaysVisibleFields.includes(field);
   }
@@ -391,7 +402,11 @@ export class CustomizableTableComponent<T extends object = Record<string, unknow
   /** Tek sütunun filtresini temizler (popup açık kalır) */
   clearColumnFilter(col: ColumnDef<T>): void {
     this.columnFilters.delete(col.field);
-    this.dt?.filter(null, col.field, this.getColumnFilterType(col) === 'select' ? 'equals' : 'contains');
+    this.dt?.filter(
+      null,
+      col.field,
+      this.getColumnFilterType(col) === 'select' ? 'equals' : 'contains',
+    );
     this.saveColumnFilters();
   }
 
@@ -418,7 +433,8 @@ export class CustomizableTableComponent<T extends object = Record<string, unknow
 
   /** Select seçenekleri — statik dizi veya satırlardan türetilen fonksiyon */
   getFilterOptions(col: ColumnDef<T>): FilterOption[] {
-    const opts = typeof col.filterOptions === 'function' ? col.filterOptions(this.rows) : col.filterOptions;
+    const opts =
+      typeof col.filterOptions === 'function' ? col.filterOptions(this.rows) : col.filterOptions;
     return opts ?? [];
   }
 
@@ -443,7 +459,11 @@ export class CustomizableTableComponent<T extends object = Record<string, unknow
   clearColumnFilters(): void {
     for (const col of this.columns) {
       this.columnFilters.delete(col.field);
-      this.dt?.filter(null, col.field, this.getColumnFilterType(col) === 'select' ? 'equals' : 'contains');
+      this.dt?.filter(
+        null,
+        col.field,
+        this.getColumnFilterType(col) === 'select' ? 'equals' : 'contains',
+      );
     }
     this.saveColumnFilters();
   }
@@ -471,7 +491,10 @@ export class CustomizableTableComponent<T extends object = Record<string, unknow
 
   private saveColumnFilters(): void {
     try {
-      localStorage.setItem(this.filterStorageKey, JSON.stringify(Object.fromEntries(this.columnFilters)));
+      localStorage.setItem(
+        this.filterStorageKey,
+        JSON.stringify(Object.fromEntries(this.columnFilters)),
+      );
     } catch {
       /* localStorage doluysa sessizce geç */
     }
@@ -556,7 +579,8 @@ export class CustomizableTableComponent<T extends object = Record<string, unknow
 
   private get pageSizeStorageKey(): string {
     return `ted_table_page_size_${this.tableId}`;
-  }  private loadPageSize(): void {
+  }
+  private loadPageSize(): void {
     try {
       const raw = localStorage.getItem(this.pageSizeStorageKey);
       if (raw) {
@@ -615,7 +639,10 @@ export class CustomizableTableComponent<T extends object = Record<string, unknow
 
   private saveColumnWidths(): void {
     try {
-      localStorage.setItem(this.colWidthStorageKey, JSON.stringify(Object.fromEntries(this.columnWidths)));
+      localStorage.setItem(
+        this.colWidthStorageKey,
+        JSON.stringify(Object.fromEntries(this.columnWidths)),
+      );
     } catch {
       /* localStorage doluysa sessizce geç */
     }

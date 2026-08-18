@@ -11,7 +11,9 @@
           autocomplete="off"
         />
       </p-iconfield>
-      <label [for]="'customizable_table_search_' + tableId">{{ searchPlaceholder | translate }}</label>
+      <label [for]="'customizable_table_search_' + tableId">{{
+        searchPlaceholder | translate
+      }}</label>
     </p-floatlabel>
   }
 
@@ -90,7 +92,7 @@
                   (dragend)="onDragEnd()"
                 >
                   <span class="drag-handle">⠿</span>
-                  <span class="col-label">{{ getColHeader(field) | translate }}</span>
+                  <span class="col-label">{{ getColDisplayName(field) | translate }}</span>
                   @if (isAlwaysVisible(field)) {
                     <span class="col-locked">
                       <i class="pi pi-lock" style="font-size: 10px"></i>
@@ -116,7 +118,9 @@
                 @for (field of hiddenColumns; track field) {
                   <div class="col-panel-item col-panel-item--off">
                     <span class="drag-handle drag-handle--placeholder"></span>
-                    <span class="col-label col-label--dim">{{ getColHeader(field) | translate }}</span>
+                    <span class="col-label col-label--dim">{{
+                      getColDisplayName(field) | translate
+                    }}</span>
                     <label
                       class="col-toggle"
                       role="button"
@@ -162,7 +166,11 @@
       @if (selectionMode) {
         <th class="col-select" [style.width]="'48px'">
           @if (selectionMode === 'multiple') {
-            <p-checkbox [binary]="true" [ngModel]="isAllRowsSelected()" (ngModelChange)="toggleAllRows()"></p-checkbox>
+            <p-checkbox
+              [binary]="true"
+              [ngModel]="isAllRowsSelected()"
+              (ngModelChange)="toggleAllRows()"
+            ></p-checkbox>
           }
         </th>
       }
@@ -179,23 +187,32 @@
             [style.width]="getColumnWidth(col.field)"
           >
             <div class="col-head">
-              <span class="col-head-label">{{ col.header | translate }}</span>
+              <span
+                class="col-head-label"
+                [pTooltip]="col.headerTooltip ? (col.headerTooltip | translate) : ''"
+                tooltipPosition="top"
+                >{{ col.header | translate }}</span
+              >
               <div class="col-head-actions">
                 <p-sortIcon [field]="col.field" />
-                <button
-                  pButton
-                  type="button"
-                  icon="pi pi-filter"
-                  text="true"
-                  rounded="true"
-                  size="small"
-                  class="col-filter-btn"
-                  [class.is-active]="hasFilterOn(col.field)"
-                  (click)="onFilterBtnClick($event, col)"
-                  [attr.aria-label]="('COMMON.FILTER_FOR' | translate: { value: col.header | translate })"
-                  [pTooltip]="'COMMON.FILTER' | translate"
-                  tooltipPosition="top"
-                ></button>
+                @if (col.filterable !== false) {
+                  <button
+                    pButton
+                    type="button"
+                    icon="pi pi-filter"
+                    text="true"
+                    rounded="true"
+                    size="small"
+                    class="col-filter-btn"
+                    [class.is-active]="hasFilterOn(col.field)"
+                    (click)="onFilterBtnClick($event, col)"
+                    [attr.aria-label]="
+                      'COMMON.FILTER_FOR' | translate: { value: col.header | translate }
+                    "
+                    [pTooltip]="'COMMON.FILTER' | translate"
+                    tooltipPosition="top"
+                  ></button>
+                }
               </div>
             </div>
           </th>
@@ -207,22 +224,31 @@
             [style.width]="getColumnWidth(col.field)"
           >
             <div class="col-head">
-              <span class="col-head-label">{{ col.header | translate }}</span>
+              <span
+                class="col-head-label"
+                [pTooltip]="col.headerTooltip ? (col.headerTooltip | translate) : ''"
+                tooltipPosition="top"
+                >{{ col.header | translate }}</span
+              >
               <div class="col-head-actions">
-                <button
-                  pButton
-                  type="button"
-                  icon="pi pi-filter"
-                  text="true"
-                  rounded="true"
-                  size="small"
-                  class="col-filter-btn"
-                  [class.is-active]="hasFilterOn(col.field)"
-                  (click)="onFilterBtnClick($event, col)"
-                  [attr.aria-label]="('COMMON.FILTER_FOR' | translate: { value: col.header | translate })"
-                  [pTooltip]="'COMMON.FILTER' | translate"
-                  tooltipPosition="top"
-                ></button>
+                @if (col.filterable !== false) {
+                  <button
+                    pButton
+                    type="button"
+                    icon="pi pi-filter"
+                    text="true"
+                    rounded="true"
+                    size="small"
+                    class="col-filter-btn"
+                    [class.is-active]="hasFilterOn(col.field)"
+                    (click)="onFilterBtnClick($event, col)"
+                    [attr.aria-label]="
+                      'COMMON.FILTER_FOR' | translate: { value: col.header | translate }
+                    "
+                    [pTooltip]="'COMMON.FILTER' | translate"
+                    tooltipPosition="top"
+                  ></button>
+                }
               </div>
             </div>
           </th>
@@ -238,7 +264,11 @@
     <tr (click)="rowClick.emit(row)" [style.cursor]="rowClickable ? 'pointer' : 'default'">
       @if (selectionMode) {
         <td class="col-select" (click)="$event.stopPropagation()">
-          <p-checkbox [binary]="true" [ngModel]="isRowSelected(row)" (ngModelChange)="onRowSelectionChange(row, $event)"></p-checkbox>
+          <p-checkbox
+            [binary]="true"
+            [ngModel]="isRowSelected(row)"
+            (ngModelChange)="onRowSelectionChange(row, $event)"
+          ></p-checkbox>
         </td>
       }
       @if (showRowNumbers) {
@@ -266,9 +296,9 @@
       <td
         [attr.colspan]="
           visibleColumns.length +
-            (actionsTemplate ? 1 : 0) +
-            (showRowNumbers ? 1 : 0) +
-            (selectionMode ? 1 : 0)
+          (actionsTemplate ? 1 : 0) +
+          (showRowNumbers ? 1 : 0) +
+          (selectionMode ? 1 : 0)
         "
       >
         <div class="d-flex flex-column align-items-center py-5">
@@ -285,7 +315,9 @@
     class="col-filter-popup"
     [style]="{ left: popup.x + 'px', top: popup.y + 'px' }"
     role="dialog"
-    [attr.aria-label]="('COMMON.FILTER_POPUP_FOR' | translate: { value: popup.col.header | translate })"
+    [attr.aria-label]="
+      'COMMON.FILTER_POPUP_FOR' | translate: { value: popup.col.header | translate }
+    "
   >
     <div class="col-filter-popup-header">
       <span>{{ popup.col.header | translate }}</span>

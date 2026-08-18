@@ -47,6 +47,7 @@ interface AttendanceRowRaw {
 
 /** Raw DB row returned from sp_OgrenciHareketRaporu_s (PascalCase column names). */
 interface StudentAttendanceRowRaw {
+  SicilId: number;
   SicilNo: string;
   AdSoyad: string;
   Sinif: string;
@@ -256,6 +257,7 @@ export class AttendanceService {
   /** sp_OgrenciHareketRaporu_s sonuç sütunlarını StudentAttendanceRow'a çevirir. */
   private mapRowToStudentAttendance(row: StudentAttendanceRowRaw): StudentAttendanceRow {
     return {
+      sicilId: row.SicilId,
       sicilNo: row.SicilNo,
       adSoyad: row.AdSoyad,
       sinif: row.Sinif,

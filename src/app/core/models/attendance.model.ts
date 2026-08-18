@@ -87,6 +87,7 @@ export type StudentAttendanceFilterType = 0 | 1 | 2 | 3;
 
 /** Student attendance row returned from sp_OgrenciHareketRaporu_s (UI model). */
 export interface StudentAttendanceRow {
+  sicilId: number;
   sicilNo: string;
   adSoyad: string;
   sinif: string;

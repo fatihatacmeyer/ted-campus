@@ -2,7 +2,9 @@
   <!-- Başlık satırı -->
   <div class="admin-card mb-3">
     <div class="d-flex flex-wrap justify-content-between align-items-center gap-2">
-      <h4 class="fw-bold mb-0" style="color: #dc2134">{{ 'STUDENT_ATTENDANCE.TITLE' | translate }}</h4>
+      <h4 class="fw-bold mb-0" style="color: #dc2134">
+        {{ 'STUDENT_ATTENDANCE.TITLE' | translate }}
+      </h4>
       <div class="d-flex flex-wrap align-items-center gap-2 period-toolbar">
         <div class="d-flex align-items-center period-segment">
           <button
@@ -102,13 +104,36 @@
         [emptyMessage]="'COMMON.NO_RECORDS' | translate"
         exportFilename="ogrenci_devam_listesi"
         [showRowNumbers]="true"
+        selectionMode="multiple"
+        [selectedRows]="selectedRows()"
+        (selectedRowsChange)="selectedRows.set($event)"
       >
+        <ng-template appColumnCell="izinIkon" let-row>
+          @if (row.izinTipi && row.izinTipi !== 'null' && row.izinTipi.trim() !== '') {
+            <div class="d-flex align-items-center justify-content-center w-100">
+              <i
+                class="pi pi-info-circle"
+                style="color: #dc2134; cursor: pointer; font-size: 1.2rem"
+                (click)="openLeaveIconDialog(row); $event.stopPropagation()"
+                pTooltip="İzin Detayı"
+                tooltipPosition="right"
+              ></i>
+            </div>
+          }
+        </ng-template>
+        <ng-template appColumnCell="tarih" let-row>
+          <span>{{ row.tarih ? (row.tarih | date: 'dd.MM.yyyy') : emptyCellValue }}</span>
+        </ng-template>
         <ng-template appColumnCell="girisSaati" let-row>
-          <span [class.cell-red]="row.gecKalmaSuresiDk > 0">{{ row.girisSaati || emptyCellValue }}</span>
+          <span [class.cell-red]="row.gecKalmaSuresiDk > 0">{{
+            row.girisSaati ? (row.girisSaati | date: 'HH:mm:ss') : emptyCellValue
+          }}</span>
         </ng-template>
 
         <ng-template appColumnCell="cikisSaati" let-row>
-          <span [class.cell-red]="row.erkenCikmaSuresiDk > 0">{{ row.cikisSaati || emptyCellValue }}</span>
+          <span [class.cell-red]="row.erkenCikmaSuresiDk > 0">{{
+            row.cikisSaati ? (row.cikisSaati | date: 'HH:mm:ss') : emptyCellValue
+          }}</span>
         </ng-template>
 
         <ng-template appColumnCell="izinTipi" let-row>
@@ -122,9 +147,11 @@
     </div>
 
     <!-- İzinli Öğrenciler — sağ yan panel -->
-    <div class="admin-card izinlerim-panel">
+    <!-- <div class="admin-card izinlerim-panel">
       <div class="table-toolbar mb-3">
-        <h5 class="fw-bold mb-0" style="color: #dc2134">{{ 'STUDENT_ATTENDANCE.LEAVES_TITLE' | translate }}</h5>
+        <h5 class="fw-bold mb-0" style="color: #dc2134">
+          {{ 'STUDENT_ATTENDANCE.LEAVES_TITLE' | translate }}
+        </h5>
       </div>
       <div class="table-responsive">
         <table class="table table-sm align-middle mb-0">
@@ -156,6 +183,94 @@
           </tbody>
         </table>
       </div>
+    </div> -->
+
+    <!-- İzinler — sağ yan panel -->
+    <!-- İzinler — sağ yan panel -->
+    <div class="admin-card izinlerim-panel">
+      <div class="table-toolbar mb-3 d-flex justify-content-between align-items-center">
+        <h5 class="fw-bold mb-0" style="color: #dc2134">İzinler</h5>
+        <button
+          pButton
+          type="button"
+          icon="pi pi-calendar-plus"
+          label="İzin Ata"
+          size="small"
+          class="p-button-success p-button-sm"
+          [disabled]="selectedRows().length === 0"
+          (click)="openAssignLeaveDialog()"
+        ></button>
+      </div>
+
+      <div class="table-responsive">
+        <table class="table table-sm align-middle mb-0">
+          <thead>
+            <tr>
+              <th scope="col">{{ 'STUDENT_ATTENDANCE.COL_AD_SOYAD' | translate }}</th>
+              <th scope="col">{{ 'STUDENT_ATTENDANCE.COL_IZIN_TIPI' | translate }}</th>
+              <th scope="col">{{ 'STUDENT_ATTENDANCE.LEAVE_TIME' | translate }}</th>
+            </tr>
+          </thead>
+          <tbody>
+            <!-- SicilNo boş gelebildiği için track mekanizmasını sicilId ile yapıyoruz -->
+            @for (rec of leaveStudents(); track rec.sicilId) {
+              <tr>
+                <td>
+                  <div class="d-flex flex-column">
+                    <span class="fw-semibold">{{ rec.adSoyad }}</span>
+                    <span class="text-muted" style="font-size: 0.75rem">{{ rec.sinif }}</span>
+                  </div>
+                </td>
+                <td>
+                  <p-tag [value]="rec.izinTipi ?? ''" severity="info"></p-tag>
+                </td>
+                <td>{{ rec.izinSaatAraligi || 'Tüm Gün' }}</td>
+              </tr>
+            } @empty {
+              <tr>
+                <td colspan="3" class="text-center text-muted py-4">
+                  <i class="pi pi-info-circle mb-2" style="font-size: 1.5rem"></i><br />
+                  İzinleri görüntülemek için tablodan kayıt seçin.
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
     </div>
   </div>
 </div>
+
+<!-- EKLENDİ: Geçici İzin Detay Dialog'u -->
+<p-dialog
+  header="İzin Detayı"
+  [(visible)]="leaveIconDialogVisible"
+  [modal]="true"
+  [style]="{ width: '400px' }"
+>
+  @if (selectedLeaveRow(); as row) {
+    <div class="d-flex flex-column gap-2 mt-2">
+      <div><strong>Öğrenci:</strong> {{ row.adSoyad }}</div>
+      <div><strong>Sınıf:</strong> {{ row.sinif }}</div>
+      <div>
+        <strong>İzin Tipi:</strong> <p-tag [value]="row.izinTipi ?? ''" severity="info"></p-tag>
+      </div>
+      <div><strong>Saat Aralığı:</strong> {{ row.izinSaatAraligi || 'Tüm Gün' }}</div>
+    </div>
+  }
+  <ng-template pTemplate="footer">
+    <p-button
+      label="Kapat"
+      icon="pi pi-times"
+      (click)="leaveIconDialogVisible.set(false)"
+      class="p-button-text"
+    ></p-button>
+  </ng-template>
+</p-dialog>
+
+<!-- EKLENDİ: Toplu İzin Atama Formu -->
+<app-person-leave-dialog
+  [(visible)]="assignLeaveDialogVisible"
+  [multiPersons]="assignLeaveTargets()"
+  (confirmed)="onLeaveConfirmed($event)"
+></app-person-leave-dialog>

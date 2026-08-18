@@ -24,6 +24,8 @@ import { StudentAttendanceRow } from '../../../../core/models/attendance.model';
 import { AttendanceService } from '../../services/attendance.service';
 import { computePeriodRange } from '../../../../shared/utils/date.utils';
 import { TranslatePipe } from '@ngx-translate/core';
+import { Dialog, DialogModule } from 'primeng/dialog';
+import { PersonLeaveDialogComponent } from '../../../persons/components/person-leave-dialog/person-leave-dialog';
 
 /** Period type: gün / hafta / ay. */
 type Period = 'gun' | 'hafta' | 'ay';
@@ -46,6 +48,9 @@ interface TabOption {
     TooltipModule,
     InputIconModule,
     TranslatePipe,
+    DialogModule,
+    PersonLeaveDialogComponent,
+    ColumnCellDirective,
   ],
   templateUrl: './attendance-list.html',
   styleUrl: './attendance-list.scss',
@@ -55,6 +60,13 @@ export class AttendanceListComponent {
   private attendanceService = inject(AttendanceService);
   private notification = inject(NotificationService);
   private destroyRef = inject(DestroyRef);
+
+  selectedRows = signal<StudentAttendanceRow[]>([]);
+  leaveIconDialogVisible = signal(false);
+  selectedLeaveRow = signal<StudentAttendanceRow | null>(null);
+
+  assignLeaveDialogVisible = signal(false);
+  assignLeaveTargets = signal<{ id: number; adSoyad: string }[]>([]);
 
   /** Student attendance rows. */
   rows = signal<StudentAttendanceRow[]>([]);
@@ -78,8 +90,12 @@ export class AttendanceListComponent {
   searchQuery = signal('');
 
   /** Students who have a leave — shown in the side panel. */
+  // leaveStudents = computed(() =>
+  //   this.rows().filter((r) => r.izinTipi != null && r.izinTipi !== ''),
+  // );
+
   leaveStudents = computed(() =>
-    this.rows().filter((r) => r.izinTipi != null && r.izinTipi !== ''),
+    this.selectedRows().filter((r) => r.izinTipi != null && r.izinTipi !== ''),
   );
 
   /** Tab options: 0=Hepsi, 1=İzinliler, 2=Erken Çıkanlar, 3=Geç Kalanlar. */
@@ -96,8 +112,18 @@ export class AttendanceListComponent {
   /** Student attendance columns. */
   columns: ColumnDef<StudentAttendanceRow>[] = [
     {
+      field: 'izinIkon',
+      header: 'Simge',
+      sortable: false,
+      width: '45px',
+      alwaysVisible: true,
+      filterable: false,
+    },
+    //{ field: 'sicilId', header: '', sortable: true },
+    {
       field: 'sicilNo',
-      header: 'STUDENT_ATTENDANCE.COL_SICIL_NO',
+      header: 'SN',
+      headerTooltip: 'STUDENT_ATTENDANCE.COL_SICIL_NO',
       sortable: true,
       filterType: 'select',
       filterOptions: (rows) => uniqueFilterOptions(rows, 'sicilNo'),
@@ -134,6 +160,7 @@ export class AttendanceListComponent {
   ];
 
   defaultFields = [
+    'izinIkon',
     'sicilNo',
     'adSoyad',
     'sinif',
@@ -234,5 +261,28 @@ export class AttendanceListComponent {
   goToday(): void {
     this.selectedDate.set(new Date());
     this.loadRows();
+  }
+
+  openLeaveIconDialog(row: StudentAttendanceRow): void {
+    this.selectedLeaveRow.set(row);
+    this.leaveIconDialogVisible.set(true);
+  }
+
+  /** Sağ paneldeki İzin Ata butonuna tıklandığında çalışır */
+  /** Sağ paneldeki İzin Ata butonuna tıklandığında çalışır */
+  openAssignLeaveDialog(): void {
+    const targets = this.selectedRows().map((r) => ({
+      id: r.sicilId,
+      adSoyad: r.adSoyad,
+    }));
+    this.assignLeaveTargets.set(targets);
+    this.assignLeaveDialogVisible.set(true);
+  }
+
+  /** İzinler kaydedildikten sonra dialogdan tetiklenir */
+  onLeaveConfirmed(message: string): void {
+    this.notification.success(message);
+    this.selectedRows.set([]); // Seçimleri temizle
+    this.loadRows(); // Tabloyu yenile ki izin ikonları düşsün
   }
 }

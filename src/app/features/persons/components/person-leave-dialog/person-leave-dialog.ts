@@ -28,6 +28,7 @@ import { PersonService } from '../../services/person.service';
 import { TypesService, DropdownItem } from '../../services/types.service';
 import { formatDate } from '../../../../shared/utils/date.utils';
 import { unwrapResponse } from '../../../../shared/utils/response.utils';
+import { forkJoin } from 'rxjs';
 
 @Component({
   selector: 'app-person-leave-dialog',
@@ -49,6 +50,9 @@ import { unwrapResponse } from '../../../../shared/utils/response.utils';
 export class PersonLeaveDialogComponent implements OnChanges {
   @Input() visible = false;
   @Input() person: Person | null = null;
+
+  @Input() multiPersons: { id: number; adSoyad: string }[] = [];
+
   @Output() visibleChange = new EventEmitter<boolean>();
   @Output() confirmed = new EventEmitter<string>();
 
@@ -108,6 +112,9 @@ export class PersonLeaveDialogComponent implements OnChanges {
   }
 
   get dialogTitle(): string {
+    if (this.multiPersons && this.multiPersons.length > 0) {
+      return `Toplu İzin Ata (${this.multiPersons.length} Kişi)`;
+    }
     if (!this.person) return 'İzin Ata';
     return `İzin Ata — ${this.person.ad} ${this.person.soyad}`;
   }
@@ -120,7 +127,11 @@ export class PersonLeaveDialogComponent implements OnChanges {
   }
 
   onConfirm(): void {
-    if (!this.person || !this.isFormValid) return;
+    if (
+      (!this.person && (!this.multiPersons || this.multiPersons.length === 0)) ||
+      !this.isFormValid
+    )
+      return;
 
     this.isProcessing = true;
     this.errorMessage = '';
@@ -130,45 +141,48 @@ export class PersonLeaveDialogComponent implements OnChanges {
     const bastarih = `${this.startDateStr}T${basSaat}`;
     const bittarih = `${this.endDateStr}T${bitSaat}`;
 
-    const request: PersonLeaveAssignCampusParams = {
-      sicilid: this.person.id,
-      tip: this.selectedLeaveType!,
-      bastarih,
-      bittarih,
-      saatlikmi: this.isSaatlik ? 1 : 0,
-      aciklama: (this.description || '').trim(),
-      blok: this.isBlok ? 1 : 0,
-    };
+    // Hedef sicil ID'lerini belirle (Çoklu liste doluysa onları, yoksa tekil personeli al)
+    const targets =
+      this.multiPersons && this.multiPersons.length > 0
+        ? this.multiPersons.map((p) => p.id)
+        : [this.person!.id];
 
-    this.personService
-      .assignLeaveCampus(request)
+    // Her bir sicil için ayrı bir backend isteği hazırla
+    const requests = targets.map((sicilid) => {
+      const request: PersonLeaveAssignCampusParams = {
+        sicilid,
+        tip: this.selectedLeaveType!,
+        bastarih,
+        bittarih,
+        saatlikmi: this.isSaatlik ? 1 : 0,
+        aciklama: (this.description || '').trim(),
+        blok: this.isBlok ? 1 : 0,
+      };
+      return this.personService.assignLeaveCampus(request);
+    });
+
+    // forkJoin ile tüm istekleri aynı anda yolla ve hepsinin bitmesini bekle
+    forkJoin(requests)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
-        next: (response: unknown) => {
+        next: (responses) => {
           this.isProcessing = false;
 
-          // /Dynamic response'u array olarak gelir; başarı = islemsonuc "1"
-          const result = unwrapResponse<Record<string, unknown>>(
-            response as Record<string, unknown> | Record<string, unknown>[] | null | undefined,
-          );
+          // Tüm yanıtların başarılı (Sonuc === '1') olup olmadığını kontrol et
+          const allSuccess = responses.every((res) => {
+            const result = unwrapResponse<Record<string, unknown>>(
+              res as Record<string, unknown> | null | undefined,
+            );
+            return result && String(result['Sonuc'] ?? '') === '1';
+          });
 
-          if (!result) {
-            this.errorMessage = 'Sunucudan geçerli bir yanıt alınamadı.';
-            this.cdr.markForCheck();
-            return;
-          }
-
-          const sonuc = String(result['Sonuc'] ?? '');
-          if (sonuc === '1') {
-            const successMessage = (result['SunucuCevap'] as string) || 'İzin başarıyla atandı.';
-            this.confirmed.emit(successMessage);
+          if (allSuccess) {
+            this.confirmed.emit('İzin(ler) başarıyla atandı.');
             this.close();
           } else {
-            this.errorMessage = (result['SunucuCevap'] as string) || 'İzin kaydedilemedi.';
+            this.errorMessage = 'Bazı izinler kaydedilemedi. Lütfen tekrar deneyin.';
             this.cdr.markForCheck();
           }
-
-          console.log(request);
         },
         error: (err: unknown) => {
           this.isProcessing = false;
