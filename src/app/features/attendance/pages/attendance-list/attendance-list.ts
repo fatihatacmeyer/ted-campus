@@ -285,4 +285,23 @@ export class AttendanceListComponent {
     this.selectedRows.set([]); // Seçimleri temizle
     this.loadRows(); // Tabloyu yenile ki izin ikonları düşsün
   }
+
+  /** İzin detay modalından silme işlemini tetikler */
+  deleteLeave(izinId: number): void {
+    this.attendanceService
+      .deleteStudentLeave(izinId)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: () => {
+          this.notification.success('İzin başarıyla silindi.');
+          this.leaveIconDialogVisible.set(false); // Modalı kapat[cite: 1]
+          this.selectedRows.set([]); // Seçimleri temizle
+          this.loadRows(); // Tabloyu yenile[cite: 1]
+        },
+        error: (err) => {
+          console.error('İzin silme hatası:', err);
+          this.notification.error('İzin silinirken bir hata oluştu.');
+        },
+      });
+  }
 }

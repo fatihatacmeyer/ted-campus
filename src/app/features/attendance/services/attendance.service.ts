@@ -58,6 +58,7 @@ interface StudentAttendanceRowRaw {
   CikisSaati: string | null;
   GecKalmaSuresiDk: number;
   ErkenCikmaSuresiDk: number;
+  IzinId: number | null;
   IzinTipi: string | null;
   IzinSaatAraligi: string | null;
   OkulSaatleri: string;
@@ -268,6 +269,7 @@ export class AttendanceService {
       cikisSaati: row.CikisSaati,
       gecKalmaSuresiDk: row.GecKalmaSuresiDk,
       erkenCikmaSuresiDk: row.ErkenCikmaSuresiDk,
+      izinId: row.IzinId,
       izinTipi: row.IzinTipi,
       izinSaatAraligi: row.IzinSaatAraligi,
       okulSaatleri: row.OkulSaatleri,
@@ -325,5 +327,13 @@ export class AttendanceService {
     return this.callStudentDynamic<StudentAttendanceRowRaw[]>(spParams).pipe(
       map((rows) => (rows || []).map((row) => this.mapRowToStudentAttendance(row))),
     );
+  }
+
+  deleteStudentLeave(izinId: number): Observable<unknown> {
+    return this.api.callEndpoint<unknown>('Dynamic', {
+      point: 'izinlercampus',
+      islemtipi: 'd',
+      izinid: izinId,
+    });
   }
 }

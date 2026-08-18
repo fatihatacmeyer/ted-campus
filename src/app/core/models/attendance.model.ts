@@ -98,6 +98,7 @@ export interface StudentAttendanceRow {
   cikisSaati: string | null; // HH:mm
   gecKalmaSuresiDk: number;
   erkenCikmaSuresiDk: number;
+  izinId: number | null;
   izinTipi: string | null;
   izinSaatAraligi: string | null;
   okulSaatleri: string;

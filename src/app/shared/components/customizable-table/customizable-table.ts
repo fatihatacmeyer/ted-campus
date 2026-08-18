@@ -8,6 +8,7 @@ import {
   EventEmitter,
   HostListener,
   inject,
+  input,
   Input,
   OnInit,
   Output,
@@ -119,6 +120,10 @@ export class CustomizableTableComponent<T extends object = Record<string, unknow
   /** Seçili satırlar (parent bileşen tutar) */
   @Input() selectedRows: T[] = [];
   /** Seçim değiştiğinde parent'a yeni seçim listesini bildirir */
+
+  @Input() displayMode: 'paginated' | 'scroll' = 'paginated';
+  @Input() scrollHeight = '480px';
+
   @Output() selectedRowsChange = new EventEmitter<T[]>();
   @Output() rowClick = new EventEmitter<T>();
 
