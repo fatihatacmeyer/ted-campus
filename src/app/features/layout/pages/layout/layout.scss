@@ -23,7 +23,7 @@ app-sidebar {
 .content {
   flex: 1;
   overflow: hidden;          /* varsayılan: sabit, scroll yok */
-  padding: 24px;
+  padding: 16px 24px;
   background-color: #fcf9f8;
   min-height: 0;
   transition: all 0.3s ease-in-out;

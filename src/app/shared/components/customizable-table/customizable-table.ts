@@ -123,7 +123,7 @@ export class CustomizableTableComponent<T extends object = Record<string, unknow
   /** Seçim değiştiğinde parent'a yeni seçim listesini bildirir */
 
   @Input() displayMode: 'paginated' | 'scroll' = 'paginated';
-  @Input() scrollHeight = 'calc(100vh - 280px)';
+  @Input() scrollHeight = 'calc(100vh - 240px)';
 
   @HostBinding('class.mode-paginated')
   get isPaginated(): boolean {

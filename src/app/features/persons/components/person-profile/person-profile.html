@@ -9,6 +9,29 @@
 >
   @if (person) {
     <div class="profile-content">
+      <!-- FOTOĞRAF VE BAŞLIK BÖLÜMÜ -->
+      <div class="profile-header">
+        @if (!photoFailed && photoUrl) {
+          <div class="profile-image-container clickable" (click)="showFullPhoto = true">
+            <img
+              [src]="photoUrl"
+              (error)="onPhotoError()"
+              alt="Profil Fotoğrafı"
+              class="profile-image"
+            />
+            <div class="photo-hover-overlay">
+              <i class="pi pi-search-plus"></i>
+            </div>
+          </div>
+        } @else {
+          <!-- Varsayılan (Default) Fotoğraf İkonu -->
+          <div class="default-avatar">
+            <i class="pi pi-user"></i>
+          </div>
+        }
+        <h4 class="profile-name">{{ person.adsoyad }}</h4>
+        <span class="profile-title">{{ person.userdefad || '-' }}</span>
+      </div>
       <div class="profile-info">
         <div class="info-row">
           <span class="info-label">Ad Soyad</span>
@@ -59,40 +82,56 @@
         </div>
       }
 
-      <div class="profile-actions">
-        <div class="profile-actions-left">
-          @if (isPersonActive) {
-            <button
-              pButton
-              type="button"
-              class="p-button-danger p-button-outlined"
-              icon="pi pi-times"
-              (click)="onExitClick()"
-            >
-              Çıkış Ver
-            </button>
-          } @else {
-            <button
-              pButton
-              type="button"
-              class="p-button-success p-button-outlined"
-              icon="pi pi-replay"
-              (click)="onRestoreClick()"
-            >
-              İşe Geri Al
-            </button>
-          }
+      @if (!isProxyPerson) {
+        <div class="profile-actions">
+          <div class="profile-actions-left">
+            @if (isPersonActive) {
+              <button
+                pButton
+                type="button"
+                class="p-button-danger p-button-outlined"
+                icon="pi pi-times"
+                (click)="onExitClick()"
+              >
+                Çıkış Ver
+              </button>
+            } @else {
+              <button
+                pButton
+                type="button"
+                class="p-button-success p-button-outlined"
+                icon="pi pi-replay"
+                (click)="onRestoreClick()"
+              >
+                İşe Geri Al
+              </button>
+            }
+          </div>
+          <button
+            pButton
+            type="button"
+            class="p-button-outlined"
+            icon="pi pi-pencil"
+            (click)="onEditClick()"
+          >
+            Düzenle
+          </button>
         </div>
-        <button
-          pButton
-          type="button"
-          class="p-button-outlined"
-          icon="pi pi-pencil"
-          (click)="onEditClick()"
-        >
-          Düzenle
-        </button>
-      </div>
+      }
     </div>
   }
+</p-dialog>
+
+<!-- Tam Boyut Fotoğraf Önizleme -->
+<p-dialog
+  [(visible)]="showFullPhoto"
+  [modal]="true"
+  [dismissableMask]="true"
+  [showHeader]="false"
+  [draggable]="false"
+  [resizable]="false"
+  styleClass="full-photo-dialog"
+  [baseZIndex]="10005"
+>
+  <img [src]="photoUrl" alt="Büyük Profil Fotoğrafı" class="full-size-img" />
 </p-dialog>

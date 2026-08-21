@@ -1,0 +1,94 @@
+<div class="admin-wrapper">
+  <div class="admin-card">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+      <h4 class="fw-bold mb-0" style="color: #dc2134">Fotoğraf Onay İşlemleri</h4>
+      <button
+        pButton
+        icon="pi pi-refresh"
+        label="Yenile"
+        class="p-button-sm p-button-outlined"
+        (click)="loadPendingPhotos()"
+        [loading]="isLoading && !processingId"
+      ></button>
+    </div>
+
+    <div class="text-muted small mb-4">
+      Onay bekleyen profil fotoğraflarını aşağıdan inceleyip onaylayabilir veya reddedebilirsiniz.
+    </div>
+
+    @if (isLoading && !processingId) {
+      <div class="loading-box">
+        <p-progressSpinner strokeWidth="4" animationDuration=".8s"></p-progressSpinner>
+        <span class="loading-text">Fotoğraflar yükleniyor...</span>
+      </div>
+    } @else if (pendingPhotos.length === 0) {
+      <div class="empty-state">
+        <i class="pi pi-check-circle text-4xl text-green-500 mb-3"></i>
+        <h5 class="m-0 text-muted">Harika!</h5>
+        <span class="text-muted">Onay bekleyen hiçbir fotoğraf yok.</span>
+      </div>
+    } @else {
+      <!-- Kart Izgarası (Grid) -->
+      <div class="photo-grid">
+        @for (photo of pendingPhotos; track photo.Id) {
+          <div class="photo-card" [class.processing]="processingId === photo.Id">
+            <div class="photo-wrapper">
+              @if (failedPhotoIds.has(photo.Id)) {
+                <div class="default-avatar-wrapper">
+                  <i class="pi pi-user"></i>
+                </div>
+              } @else {
+                <img
+                  [src]="getPhotoUrl(photo.DosyaAdi)"
+                  alt="Profil Fotoğrafı"
+                  class="profile-img"
+                  (error)="onPhotoError(photo.Id)"
+                />
+              }
+
+              <div class="photo-overlay" *ngIf="processingId === photo.Id">
+                <p-progressSpinner
+                  strokeWidth="4"
+                  [style]="{ width: '40px', height: '40px' }"
+                ></p-progressSpinner>
+              </div>
+            </div>
+
+            <div class="photo-info">
+              <h5 class="person-name">{{ getPersonName(photo) }}</h5>
+              <div class="d-flex justify-content-between align-items-center mb-2">
+                <p-tag
+                  [value]="getPersonType(photo)"
+                  [severity]="getPersonTypeSeverity(photo)"
+                ></p-tag>
+                <span class="upload-date" title="Yükleme Tarihi">
+                  <i class="pi pi-calendar"></i>
+                  {{ photo.YuklemeTarihi | date: 'dd.MM.yyyy HH:mm' }}
+                </span>
+              </div>
+            </div>
+
+            <div class="photo-actions">
+              <button
+                pButton
+                icon="pi pi-times"
+                label="Reddet"
+                class="p-button-danger p-button-outlined w-100"
+                (click)="rejectPhoto(photo)"
+                [disabled]="processingId !== null"
+              ></button>
+              <button
+                pButton
+                icon="pi pi-check"
+                label="Onayla"
+                class="p-button-success w-100"
+                (click)="approvePhoto(photo)"
+                [disabled]="processingId !== null"
+              ></button>
+            </div>
+          </div>
+        }
+      </div>
+    }
+  </div>
+</div>

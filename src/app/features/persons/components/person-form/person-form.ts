@@ -183,6 +183,44 @@ export class PersonFormComponent implements OnChanges, OnInit {
     return controls;
   }
 
+  // Form alanlarının isimlendirmesi ve görünürlüğü için i18n uyumlu dinamik yapı
+  // Form alanlarının isimlendirmesi ve görünürlüğü için i18n uyumlu dinamik yapı
+  get formConfig() {
+    const isOgrenci = this.userdef === UserDef.Ogrenci;
+    const isOgretmen = this.userdef === UserDef.Ogretmen;
+
+    return {
+      show: {
+        personelno: isOgrenci || isOgretmen, // Veli'de okul/personel no gizlenir
+        kurumsal: isOgrenci || isOgretmen, // Veli'nin sınıfı, branşı olmaz
+        pozisyon: !isOgrenci,
+        gorev: !isOgrenci,
+      },
+      labels: {
+        sicilno: isOgrenci ? 'PERSON.IDENTITY_STUDENT' : 'PERSON.IDENTITY_DEFAULT',
+        personelno: isOgrenci ? 'PERSON.SCHOOL_NO' : 'PERSON.PERSONNEL_NO',
+        firma: 'PERSON.CAMPUS',
+        direktorluk: isOgrenci ? 'PERSON.EDU_LEVEL' : 'PERSON.DIRECTORATE',
+        bolum: isOgrenci ? 'PERSON.CLASS' : 'PERSON.DEPARTMENT',
+        pozisyon: isOgretmen ? 'PERSON.BRANCH' : 'PERSON.POSITION',
+        gorev: 'PERSON.TASK',
+        altfirma: 'PERSON.SUB_CAMPUS',
+      },
+      placeholders: {
+        sicilno: isOgrenci
+          ? 'PERSON.IDENTITY_STUDENT_PLACEHOLDER'
+          : 'PERSON.IDENTITY_DEFAULT_PLACEHOLDER',
+        personelno: isOgrenci ? 'PERSON.SCHOOL_NO_PLACEHOLDER' : 'PERSON.PERSONNEL_NO_PLACEHOLDER',
+        firma: 'PERSON.CAMPUS_PLACEHOLDER',
+        direktorluk: isOgrenci ? 'PERSON.EDU_LEVEL_PLACEHOLDER' : 'PERSON.DIRECTORATE_PLACEHOLDER',
+        bolum: isOgrenci ? 'PERSON.CLASS_PLACEHOLDER' : 'PERSON.DEPARTMENT_PLACEHOLDER',
+        pozisyon: isOgretmen ? 'PERSON.BRANCH_PLACEHOLDER' : 'PERSON.POSITION_PLACEHOLDER',
+        gorev: 'PERSON.TASK_PLACEHOLDER',
+        altfirma: 'PERSON.SUB_CAMPUS_PLACEHOLDER',
+      },
+    };
+  }
+
   toggleNewLinkedMode(): void {
     this.isCreatingNewLinked = !this.isCreatingNewLinked;
 
@@ -542,7 +580,8 @@ export class PersonFormComponent implements OnChanges, OnInit {
       next: (stdRes) => {
         const stdResult = unwrapResponse<Person>(stdRes);
         if (!isSuccessResult(stdResult)) {
-          this.errorMessage = stdResult?.sunucucevap || this.translate.instant('PERSON.SAVE_FAILED');
+          this.errorMessage =
+            stdResult?.sunucucevap || this.translate.instant('PERSON.SAVE_FAILED');
           this.isSaving = false;
           this.cdr.markForCheck();
           return;

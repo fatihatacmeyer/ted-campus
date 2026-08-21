@@ -1,12 +1,22 @@
-import { ChangeDetectionStrategy, Component, EventEmitter, Input, Output } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  EventEmitter,
+  Input,
+  Output,
+  OnChanges,
+  SimpleChanges,
+  inject,
+  ChangeDetectorRef,
+  DestroyRef,
+} from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { DialogModule } from 'primeng/dialog';
 import { ButtonModule } from 'primeng/button';
-import {
-  Person,
-  LinkedPerson,
-  UserDef,
-} from '../../../../core/models/person.model';
+import { Person, LinkedPerson, UserDef } from '../../../../core/models/person.model';
+import { ApiHelperService } from '../../../../core/services/api-helper.service';
+import { AppConfig, APP_CONFIG } from '../../../../core/services/app-config.service';
 
 @Component({
   selector: 'app-person-profile',
@@ -16,7 +26,7 @@ import {
   styleUrl: './person-profile.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class PersonProfileComponent {
+export class PersonProfileComponent implements OnChanges {
   @Input() visible = false;
   @Input() person: Person | null = null;
   @Input() allPersons: Person[] = [];
@@ -29,6 +39,128 @@ export class PersonProfileComponent {
   @Output() editRequest = new EventEmitter<Person>();
   @Output() exitRequest = new EventEmitter<Person>();
   @Output() restoreRequest = new EventEmitter<Person>();
+
+  private api = inject(ApiHelperService);
+  private cdr = inject(ChangeDetectorRef);
+  private destroyRef = inject(DestroyRef);
+  private config: AppConfig = inject(APP_CONFIG);
+
+  showFullPhoto = false;
+  photoUrl: string | null = null;
+  photoFailed = false;
+  private readonly basePhotoUrl = 'http://localhost/MeCampus/ProfilFotograflari';
+
+  ngOnChanges(changes: SimpleChanges): void {
+    // Farklı bir kişiye tıklandığında veya modal açıldığında hata durumunu sıfırlıyoruz
+    if (changes['person']) {
+      this.photoFailed = false;
+      this.photoUrl = null;
+      this.loadProfilePhoto();
+    }
+  }
+
+  // private loadProfilePhoto(): void {
+  //   if (!this.person) return;
+
+  //   const isVekil = this.person.userdefad === 'Vekil';
+
+  //   this.api
+  //     .callEndpoint<any[]>('Dynamic', {
+  //       point: 'ProfilFotografCampus',
+  //       islemtipi: 's',
+  //       SicilId: isVekil ? '' : this.person.id,
+  //       VekilCampusId: isVekil ? this.person.id : '',
+  //       OnayDurumu: 1,
+  //     })
+  //     .pipe(takeUntilDestroyed(this.destroyRef))
+  //     .subscribe({
+  //       next: (rows) => {
+  //         if (rows && rows.length > 0 && rows[0].DosyaAdi) {
+  //           // Doğrudan verdiğin klasör yolunu ve dosya adını birleştiriyoruz
+  //           this.photoUrl = `${this.basePhotoUrl}\\${rows[0].DosyaAdi}`;
+  //           console.log('Oluşturulan Resim URLsi:', this.photoUrl);
+  //         } else {
+  //           this.photoFailed = true;
+  //         }
+  //         this.cdr.markForCheck();
+  //       },
+  //       error: () => {
+  //         this.photoFailed = true;
+  //         this.cdr.markForCheck();
+  //       },
+  //     });
+  // }
+  // private loadProfilePhoto(): void {
+  //   if (!this.person) return;
+
+  //   const isVekil = this.person.userdefad === 'Vekil';
+
+  //   this.api
+  //     .callEndpoint<any[]>('Dynamic', {
+  //       point: 'ProfilFotografCampus',
+  //       islemtipi: 's',
+  //       SicilId: isVekil ? '' : this.person.id,
+  //       VekilCampusId: isVekil ? this.person.id : '',
+  //       OnayDurumu: 1,
+  //     })
+  //     .pipe(takeUntilDestroyed(this.destroyRef))
+  //     .subscribe({
+  //       next: (rows) => {
+  //         if (rows && rows.length > 0 && rows[0].DosyaAdi) {
+  //           this.photoUrl = `${this.basePhotoUrl}/${rows[0].DosyaAdi}`;
+
+  //           console.log('Oluşturulan Resim URLsi:', this.photoUrl);
+  //         } else {
+  //           this.photoFailed = true;
+  //         }
+
+  //         this.cdr.markForCheck();
+  //       },
+  //       error: () => {
+  //         this.photoFailed = true;
+  //         this.cdr.markForCheck();
+  //       },
+  //     });
+  // }
+
+  private loadProfilePhoto(): void {
+    if (!this.person) return;
+
+    const isVekil = this.person.userdefad === 'Vekil';
+
+    this.api
+      .callEndpoint<any[]>('Dynamic', {
+        point: 'ProfilFotografCampus',
+        islemtipi: 's',
+        SicilId: isVekil ? '' : this.person.id,
+        VekilCampusId: isVekil ? this.person.id : '',
+        OnayDurumu: 1,
+      })
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (rows) => {
+          if (rows && rows.length > 0 && rows[0].DosyaAdi) {
+            // Konfigürasyondan gelen dinamik URL'i kullanıyoruz
+            const baseUrl =
+              this.config.photoBaseUrl || 'http://localhost/MeCampus/ProfilFotograflari';
+            this.photoUrl = `${baseUrl}/${rows[0].DosyaAdi}`;
+
+            console.log('Oluşturulan Resim URLsi:', this.photoUrl);
+          } else {
+            this.photoFailed = true;
+          }
+
+          this.cdr.markForCheck();
+        },
+        error: () => {
+          this.photoFailed = true;
+          this.cdr.markForCheck();
+        },
+      });
+  }
+  onPhotoError(): void {
+    this.photoFailed = true;
+  }
 
   get linkedPersons(): LinkedPerson[] {
     if (!this.person) return [];
@@ -140,5 +272,9 @@ export class PersonProfileComponent {
   close(): void {
     this.visible = false;
     this.visibleChange.emit(false);
+  }
+
+  get isProxyPerson(): boolean {
+    return this.person?.userdefad === 'Vekil';
   }
 }

@@ -141,7 +141,35 @@ export class PersonCrudComponent implements OnInit {
     if (this.USERDEF === UserDef.Veli) {
       return [{ field: 'veliAdSoyad', header: 'Çocuklar' }];
     }
+    if (this.USERDEF === UserDef.Ogretmen) {
+      return [
+        { field: 'firmaad', header: 'Kampüs' },
+        { field: 'bolumad', header: 'Zümre / Bölüm' },
+        { field: 'pozisyonad', header: 'Branş' },
+        { field: 'personelno', header: 'Personel No' },
+      ];
+    }
     return [];
+  }
+
+  /** Tablo ilk açıldığında veya varsayılanlara dönüldüğünde gösterilecek sütunlar. */
+  get currentDefaultFields(): string[] {
+    if (this.USERDEF === UserDef.Ogrenci) {
+      // Ad, Soyad, Kampüs, Sınıf, Telefon, Eğitim Düzeyi, Veliler, Sicil No, Personel No, Pozisyon
+      return ['ad', 'soyad', 'firmaad', 'bolumad', 'ceptelefon', 'direktorlukad', 'veliAdSoyad'];
+    }
+
+    if (this.USERDEF === UserDef.Veli) {
+      // Veli ekranı için mantıklı olan varsayılanlar
+      return ['ad', 'soyad', 'ceptelefon', 'veliAdSoyad'];
+    }
+
+    if (this.USERDEF === UserDef.Ogretmen) {
+      // Öğretmen ekranı için mantıklı olan varsayılanlar
+      return ['ad', 'soyad', 'personelno', 'firmaad', 'bolumad', 'pozisyonad', 'ceptelefon'];
+    }
+
+    return this.PERSON_DEFAULT_FIELDS;
   }
 
   // ─── Column config ───
@@ -219,31 +247,80 @@ export class PersonCrudComponent implements OnInit {
    *   parentsMap:  ogrenciId → veli listesi (Öğrenci sayfası "Veliler" kolonu)
    * İsimler allPersons'tan çözülür.
    */
+  // private loadRelationsMap(): void {
+  //   this.personService
+  //     .getAllRelations()
+  //     .pipe(takeUntilDestroyed(this.destroyRef))
+  //     .subscribe({
+  //       next: (relations) => {
+  //         console.log('[Rel] getAllRelations satırları:', JSON.stringify(relations));
+  //         this.childrenMap.clear();
+  //         this.parentsMap.clear();
+  //         for (const rel of relations || []) {
+  //           const veliId = Number(rel.VeliSicilId);
+  //           const ogrenciId = Number(rel.OgrenciSicilId);
+  //           const veli = this.allPersons.find((p) => p.id === veliId);
+  //           const child = this.allPersons.find((p) => p.id === ogrenciId);
+  //           if (!veli && !child) {
+  //             console.log(
+  //               '[Rel] eşleşmeyen satır → anahtarlar:',
+  //               Object.keys(rel),
+  //               '| VeliSicilId:',
+  //               rel.VeliSicilId,
+  //               '| OgrenciSicilId:',
+  //               rel.OgrenciSicilId,
+  //             );
+  //             continue;
+  //           }
+  //           // childrenMap: eski davranış korunur (çocuk çözülebilen her satır)
+  //           if (child) {
+  //             if (!this.childrenMap.has(veliId)) this.childrenMap.set(veliId, []);
+  //             this.childrenMap.get(veliId)!.push(child);
+  //           }
+  //           // parentsMap: ters yön — veli çözülebilen her satır
+  //           if (veli) {
+  //             if (!this.parentsMap.has(ogrenciId)) this.parentsMap.set(ogrenciId, []);
+  //             this.parentsMap.get(ogrenciId)!.push(veli);
+  //           }
+  //         }
+  //         this.isLoading = false;
+  //         this.cdr.markForCheck();
+  //       },
+  //       error: (err) => {
+  //         console.error('[PersonCrud] Veli-öğrenci ilişkileri yüklenemedi:', err);
+  //         this.isLoading = false;
+  //         this.cdr.markForCheck();
+  //       },
+  //     });
+  // }
+
   private loadRelationsMap(): void {
     this.personService
       .getAllRelations()
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: (relations) => {
-          console.log('[Rel] getAllRelations satırları:', JSON.stringify(relations));
+          // 1. Eşleştirme için allPersons dizisini hızlı erişilebilir bir Map'e çeviriyoruz O(N)
+          const personLookup = new Map<number, Person>();
+          for (const p of this.allPersons) {
+            personLookup.set(p.id, p);
+          }
+
           this.childrenMap.clear();
           this.parentsMap.clear();
+
+          // 2. Döngü içinde array.find() yerine lookup.get() kullanıyoruz O(1)
           for (const rel of relations || []) {
             const veliId = Number(rel.VeliSicilId);
             const ogrenciId = Number(rel.OgrenciSicilId);
-            const veli = this.allPersons.find((p) => p.id === veliId);
-            const child = this.allPersons.find((p) => p.id === ogrenciId);
-            if (!veli && !child) {
-              console.log(
-                '[Rel] eşleşmeyen satır → anahtarlar:',
-                Object.keys(rel),
-                '| VeliSicilId:',
-                rel.VeliSicilId,
-                '| OgrenciSicilId:',
-                rel.OgrenciSicilId,
-              );
-              continue;
-            }
+
+            // HIZLANDIRILMIŞ KISIM:
+            // this.allPersons.find(p => p.id === ...) yerine direkt erişim:
+            const veli = personLookup.get(veliId);
+            const child = personLookup.get(ogrenciId);
+
+            if (!veli && !child) continue;
+
             // childrenMap: eski davranış korunur (çocuk çözülebilen her satır)
             if (child) {
               if (!this.childrenMap.has(veliId)) this.childrenMap.set(veliId, []);
@@ -255,6 +332,7 @@ export class PersonCrudComponent implements OnInit {
               this.parentsMap.get(ogrenciId)!.push(veli);
             }
           }
+
           this.isLoading = false;
           this.cdr.markForCheck();
         },

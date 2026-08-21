@@ -41,6 +41,14 @@ export const routes: Routes = [
           ),
       },
       {
+        path: 'proxies',
+        data: { titleKey: 'MENU.PROXIES' },
+        loadComponent: () =>
+          import('./features/persons/pages/proxy-list/proxy-list').then(
+            (m) => m.ProxyListComponent,
+          ),
+      },
+      {
         path: 'parents',
         data: { userDef: UserDef.Veli, titleKey: 'MENU.PARENTS' },
         loadComponent: () =>
@@ -70,6 +78,22 @@ export const routes: Routes = [
         loadComponent: () =>
           import('./features/attendance/pages/attendance-list/attendance-list').then(
             (m) => m.AttendanceListComponent,
+          ),
+      },
+      {
+        path: 'photo-approval',
+        data: { titleKey: 'MENU.PHOTO_APPROVAL' }, // Varsa i18n key'in
+        loadComponent: () =>
+          import('./features/persons/pages/photo-approval/photo-approval').then(
+            (m) => m.PhotoApprovalComponent,
+          ),
+      },
+      {
+        path: 'school-hours',
+        data: { titleKey: 'Giriş ve Çıkış Saatleri', scrollable: true },
+        loadComponent: () =>
+          import('./features/school-hours/pages/school-hours-list/school-hours-list').then(
+            (m) => m.SchoolHoursListComponent,
           ),
       },
     ],

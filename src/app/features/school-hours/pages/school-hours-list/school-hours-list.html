@@ -1,0 +1,145 @@
+<div class="admin-wrapper">
+  <div class="admin-card">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+      <h4 class="fw-bold mb-0" style="color: #dc2134">Giriş ve Çıkış Saatleri Yönetimi</h4>
+    </div>
+
+    <!-- Onay Penceresi -->
+    <p-confirmDialog [style]="{ width: '450px' }"></p-confirmDialog>
+
+    <p-table
+      [value]="hours"
+      dataKey="Id"
+      editMode="row"
+      [loading]="loading"
+      styleClass="admin-table p-datatable-sm"
+      [scrollable]="true"
+      [tableStyle]="{ 'min-width': '1150px' }"
+    >
+      <ng-template pTemplate="header">
+        <tr>
+          <th class="sticky-col" style="width: 140px">Sınıf Seviyesi</th>
+          @for (day of days; track day.key) {
+            <th class="text-center" style="min-width: 130px">{{ day.header }}</th>
+          }
+          <th class="text-center sticky-right-col" style="width: 95px">İşlem</th>
+        </tr>
+      </ng-template>
+
+      <ng-template pTemplate="body" let-row let-editing="editing" let-ri="rowIndex">
+        <tr [pEditableRow]="row">
+          <!-- Sınıf Seviyesi (Sabit Sol) -->
+          <td class="font-bold sticky-col">{{ row.SinifSeviyesi }}</td>
+
+          @for (day of days; track day.key) {
+            <td class="text-center" style="min-width: 130px">
+              <p-cellEditor>
+                <!-- DÜZENLEME MODU -->
+                <ng-template pTemplate="input">
+                  <div class="time-edit-box">
+                      <div class="time-line">
+                        <span class="lbl" title="Normal Saatler">N:</span>
+                        <input
+                          type="text"
+                          [(ngModel)]="$any(row)[day.key + 'Bas']"
+                          (focus)="onTimeFocus($event)"
+                          (keydown)="onTimeKeyDown($event, row, day.key + 'Bas')"
+                          (input)="onTimeInput($event, row, day.key + 'Bas')"
+                          (blur)="onTimeBlur($event, row, day.key + 'Bas')"
+                          class="time-input"
+                          placeholder="00:00"
+                          maxlength="5"
+                        />
+                        <span class="sep">-</span>
+                        <input
+                          type="text"
+                          [(ngModel)]="$any(row)[day.key + 'Bit']"
+                          (focus)="onTimeFocus($event)"
+                          (keydown)="onTimeKeyDown($event, row, day.key + 'Bit')"
+                          (input)="onTimeInput($event, row, day.key + 'Bit')"
+                          (blur)="onTimeBlur($event, row, day.key + 'Bit')"
+                          class="time-input"
+                          placeholder="00:00"
+                          maxlength="5"
+                        />
+                      </div>
+                      <div class="time-line">
+                        <span class="lbl" title="Etütlü Saatler">E:</span>
+                        <input
+                          type="text"
+                          [(ngModel)]="$any(row)[day.key + 'EtutluBas']"
+                          (focus)="onTimeFocus($event)"
+                          (keydown)="onTimeKeyDown($event, row, day.key + 'EtutluBas')"
+                          (input)="onTimeInput($event, row, day.key + 'EtutluBas')"
+                          (blur)="onTimeBlur($event, row, day.key + 'EtutluBas')"
+                          class="time-input"
+                          placeholder="00:00"
+                          maxlength="5"
+                        />
+                        <span class="sep">-</span>
+                        <input
+                          type="text"
+                          [(ngModel)]="$any(row)[day.key + 'EtutluBit']"
+                          (focus)="onTimeFocus($event)"
+                          (keydown)="onTimeKeyDown($event, row, day.key + 'EtutluBit')"
+                          (input)="onTimeInput($event, row, day.key + 'EtutluBit')"
+                          (blur)="onTimeBlur($event, row, day.key + 'EtutluBit')"
+                          class="time-input"
+                          placeholder="00:00"
+                          maxlength="5"
+                        />
+                      </div>
+                  </div>
+                </ng-template>
+
+                <!-- İZLEME MODU -->
+                <ng-template pTemplate="output">
+                  <div class="time-output" [innerHTML]="formatDay(row, day.key)"></div>
+                </ng-template>
+              </p-cellEditor>
+            </td>
+          }
+
+          <!-- Satır Aksiyon Butonları (Sabit Sağ) -->
+          <td class="sticky-right-col" style="text-align: center">
+            <div class="d-flex align-items-center justify-content-center gap-1">
+              @if (!editing) {
+                <button
+                  pButton
+                  pRipple
+                  type="button"
+                  pInitEditableRow
+                  icon="pi pi-pencil"
+                  class="p-button-rounded p-button-text p-button-sm p-button-secondary"
+                  (click)="onRowEditInit(row)"
+                  pTooltip="Düzenle"
+                ></button>
+              } @else {
+                <button
+                  pButton
+                  pRipple
+                  type="button"
+                  pSaveEditableRow
+                  icon="pi pi-check"
+                  class="p-button-rounded p-button-text p-button-sm p-button-success"
+                  (click)="onRowEditSave(row)"
+                  pTooltip="Kaydet"
+                ></button>
+                <button
+                  pButton
+                  pRipple
+                  type="button"
+                  pCancelEditableRow
+                  icon="pi pi-times"
+                  class="p-button-rounded p-button-text p-button-sm p-button-danger"
+                  (click)="onRowEditCancel(row, ri)"
+                  pTooltip="İptal"
+                ></button>
+              }
+            </div>
+          </td>
+        </tr>
+      </ng-template>
+    </p-table>
+  </div>
+</div>

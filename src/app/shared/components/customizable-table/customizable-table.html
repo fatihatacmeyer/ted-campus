@@ -1,4 +1,4 @@
-<div class="table-toolbar mb-3">
+<div class="table-toolbar">
   @if (showSearch) {
     <p-floatlabel variant="on" class="table-search">
       <p-iconfield>
@@ -6,8 +6,8 @@
         <input
           pInputText
           [id]="'customizable_table_search_' + tableId"
-          [(ngModel)]="filterText"
-          (ngModelChange)="dt.filterGlobal($event, 'contains')"
+          [ngModel]="filterText"
+          (ngModelChange)="filterText = $event; dt.filterGlobal($event, 'contains')"
           autocomplete="off"
         />
       </p-iconfield>
@@ -151,6 +151,8 @@
   [paginator]="displayMode === 'paginated'"
   [rows]="displayMode === 'paginated' ? rowsPerPage : rows.length"
   [scrollable]="displayMode === 'scroll'"
+  [virtualScroll]="displayMode === 'scroll'"
+  [virtualScrollItemSize]="40"
   [scrollHeight]="displayMode === 'scroll' ? scrollHeight : undefined"
   [rowTrackBy]="trackByRow"
   [rowsPerPageOptions]="[10, 25, 50]"

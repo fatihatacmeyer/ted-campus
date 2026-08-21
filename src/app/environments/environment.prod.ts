@@ -6,4 +6,5 @@ export const environment: AppConfig = {
   production: true,
   apiUrl: '',
   reportBaseUrl: '',
+  photoBaseUrl: '',
 };

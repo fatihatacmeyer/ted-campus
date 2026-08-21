@@ -61,10 +61,8 @@ export const PERSON_COLUMNS: ColumnDef<Person>[] = [
 export const PERSON_DEFAULT_FIELDS: string[] = [
   'ad',
   'soyad',
-  'sicilno',
   'firmaad',
-  'personelno',
   'bolumad',
-  'pozisyonad',
+  'direktorlukad',
   'ceptelefon',
 ];

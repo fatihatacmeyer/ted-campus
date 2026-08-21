@@ -9,6 +9,7 @@ export interface AppConfig {
   isAuthEnabled: boolean;
   apiUrl: string;
   reportBaseUrl: string;
+  photoBaseUrl: string;
 }
 
 export const APP_CONFIG = new InjectionToken<AppConfig>('APP_CONFIG');
@@ -32,7 +33,9 @@ export async function loadRuntimeConfig(): Promise<void> {
   try {
     const response = await fetch('config.json');
     if (!response.ok) {
-      console.warn(`[AppConfig] config.json bulunamadı (${response.status}); environment değerleri kullanılacak.`);
+      console.warn(
+        `[AppConfig] config.json bulunamadı (${response.status}); environment değerleri kullanılacak.`,
+      );
       return;
     }
     const runtime: RuntimeConfig = await response.json();
@@ -43,7 +46,10 @@ export async function loadRuntimeConfig(): Promise<void> {
       environment.reportBaseUrl = runtime.reportBaseUrl;
     }
   } catch (error) {
-    console.warn('[AppConfig] config.json okunurken hata oluştu; environment değerleri kullanılacak.', error);
+    console.warn(
+      '[AppConfig] config.json okunurken hata oluştu; environment değerleri kullanılacak.',
+      error,
+    );
   }
 }
 

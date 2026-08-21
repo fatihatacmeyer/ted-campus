@@ -44,7 +44,7 @@
             @if (loginForm.get('username')?.invalid && loginForm.get('username')?.touched) {
               <div class="field-error" id="username-error" role="alert">
                 <span class="material-symbols-outlined field-error-icon" aria-hidden="true">error</span>
-                {{ getErrorMessage('username') }}
+                {{ getErrorMessage('username') | translate }}
               </div>
             }
           </div>
@@ -89,7 +89,7 @@
             @if (loginForm.get('password')?.invalid && loginForm.get('password')?.touched) {
               <div class="field-error" id="password-error" role="alert">
                 <span class="material-symbols-outlined field-error-icon" aria-hidden="true">error</span>
-                {{ getErrorMessage('password') }}
+                {{ getErrorMessage('password') | translate }}
               </div>
             }
           </div>

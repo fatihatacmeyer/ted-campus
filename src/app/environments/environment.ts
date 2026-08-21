@@ -7,4 +7,5 @@ export const environment: AppConfig = {
   apiUrl: 'http://10.20.24.27:1323/api',
   /** PDF/rapor dosyaları için backend root URL (legacy'deki baglanti.substr(0, -3) karşılığı) */
   reportBaseUrl: 'http://10.20.24.27:1323',
+  photoBaseUrl: 'http://localhost/MeCampus/ProfilFotograflari',
 };

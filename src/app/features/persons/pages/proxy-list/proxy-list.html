@@ -1,0 +1,91 @@
+<div class="admin-wrapper">
+  <div class="admin-card">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+      <h4 class="fw-bold mb-0" style="color: #dc2134">Vekil Yönetimi</h4>
+      <button
+        pButton
+        icon="pi pi-refresh"
+        class="p-button-sm p-button-outlined"
+        pTooltip="Yenile"
+        (click)="loadProxies()"
+      ></button>
+    </div>
+
+    <!-- PDKS Tarzı Filtre Sekmeleri -->
+    <div class="d-flex flex-wrap align-items-center gap-2 mb-3 filter-tabs">
+      @for (tab of tabOptions; track tab.label) {
+        <button
+          pButton
+          type="button"
+          [label]="tab.label"
+          size="small"
+          [class.active]="activeTab() === tab.status"
+          (click)="onTabChange(tab.status)"
+        ></button>
+      }
+    </div>
+
+    <app-customizable-table
+      [rows]="proxies"
+      [columns]="columns"
+      [loading]="isLoading"
+      tableId="proxy_list_grid"
+      exportFilename="vekil_listesi"
+      [showRowNumbers]="true"
+      displayMode="scroll"
+      [actionsTemplate]="actionsTpl"
+      [rowClickable]="true"
+      (rowClick)="onRowClick($event)"
+    >
+      <!-- Durum Kolonu -->
+      <ng-template appColumnCell="onayDurumu" let-row>
+        <p-tag [value]="row.onayDurumuMetni" [severity]="getSeverity(row.onayDurumu)"></p-tag>
+      </ng-template>
+
+      <!-- İşlemler (Onay/Red) Kolonu -->
+      <!-- İşlemler Kolonu -->
+      <ng-template #actionsTpl let-row>
+        <div class="d-flex gap-2 justify-content-end align-items-center">
+          <!-- Sadece BEKLİYOR durumundaysa Onay/Red butonları çıkar -->
+          @if (row.onayDurumu === ProxyApprovalStatus.Pending) {
+            <button
+              pButton
+              icon="pi pi-check"
+              class="p-button-rounded p-button-text p-button-success p-button-sm"
+              pTooltip="Onayla"
+              tooltipPosition="top"
+              (click)="updateStatus(row, ProxyApprovalStatus.Approved); $event.stopPropagation()"
+            ></button>
+
+            <button
+              pButton
+              icon="pi pi-times"
+              class="p-button-rounded p-button-text p-button-danger p-button-sm"
+              pTooltip="Reddet"
+              tooltipPosition="top"
+              (click)="updateStatus(row, ProxyApprovalStatus.Rejected); $event.stopPropagation()"
+            ></button>
+          }
+
+          <!-- ONAYLANDI durumundaysa şimdilik pasif olan On/Off şalteri çıkar -->
+          @else if (row.onayDurumu === ProxyApprovalStatus.Approved) {
+            <p-toggleswitch
+              [ngModel]="row.isActive"
+              (click)="$event.stopPropagation()"
+              pTooltip="Yetki Durumu"
+              tooltipPosition="left"
+            >
+            </p-toggleswitch>
+          }
+        </div>
+      </ng-template>
+    </app-customizable-table>
+  </div>
+</div>
+
+@if (showProfileModal) {
+  <app-person-profile
+    [(visible)]="showProfileModal"
+    [person]="selectedProfilePerson"
+  ></app-person-profile>
+}

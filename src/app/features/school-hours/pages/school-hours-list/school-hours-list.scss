@@ -1,0 +1,171 @@
+:host {
+  display: block;
+}
+
+.admin-wrapper {
+  height: auto;
+  min-height: 100%;
+  overflow: visible;
+}
+
+.admin-card {
+  margin-bottom: 24px;
+}
+
+:host ::ng-deep {
+  .p-datatable.admin-table {
+    border-radius: 8px;
+    border: 1px solid #e2e8f0;
+    background: #fff;
+    width: 100%;
+  }
+
+  .p-datatable.admin-table .p-datatable-wrapper {
+    overflow-x: auto;
+    overflow-y: hidden;
+    border-radius: 8px;
+
+    &::-webkit-scrollbar {
+      height: 8px;
+    }
+    &::-webkit-scrollbar-track {
+      background: #f1f5f9;
+    }
+    &::-webkit-scrollbar-thumb {
+      background-color: #cbd5e1;
+      border-radius: 4px;
+
+      &:hover {
+        background-color: #94a3b8;
+      }
+    }
+  }
+
+  .p-datatable.admin-table .p-datatable-tbody > tr > td,
+  .p-datatable.admin-table .p-datatable-thead > tr > th {
+    padding: 0.5rem 0.6rem;
+    vertical-align: middle;
+    background-color: #ffffff;
+    font-size: 0.85rem;
+    border-right: 1px solid #e2e8f0;
+    border-bottom: 1px solid #e2e8f0;
+
+    &:last-child {
+      border-right: none;
+    }
+  }
+
+  .p-datatable.admin-table .p-datatable-thead > tr > th {
+    background-color: #f8fafc;
+    font-weight: 700;
+    color: #475569;
+    border-bottom: 2px solid #cbd5e1;
+    border-right: 1px solid #e2e8f0;
+
+    &:last-child {
+      border-right: none;
+    }
+  }
+
+  .p-datatable.admin-table .p-datatable-tbody > tr:hover {
+    background-color: #f8fafc;
+
+    td {
+      background-color: #f8fafc;
+    }
+  }
+
+  /* ── Sabit Kolonlar (Sticky Columns) ── */
+  .p-datatable.admin-table th.sticky-col,
+  .p-datatable.admin-table td.sticky-col {
+    position: sticky !important;
+    left: 0 !important;
+    z-index: 2 !important;
+    background-color: #ffffff !important;
+    box-shadow: 3px 0 6px -2px rgba(0, 0, 0, 0.08);
+  }
+
+  .p-datatable.admin-table th.sticky-right-col,
+  .p-datatable.admin-table td.sticky-right-col {
+    position: sticky !important;
+    right: 0 !important;
+    z-index: 2 !important;
+    background-color: #ffffff !important;
+    box-shadow: -3px 0 6px -2px rgba(0, 0, 0, 0.08);
+  }
+
+  .p-datatable.admin-table th.sticky-col,
+  .p-datatable.admin-table th.sticky-right-col {
+    z-index: 3 !important;
+    background-color: #f8fafc !important;
+  }
+
+  .p-datatable.admin-table .p-datatable-tbody > tr:hover td.sticky-col,
+  .p-datatable.admin-table .p-datatable-tbody > tr:hover td.sticky-right-col {
+    background-color: #f8fafc !important;
+  }
+}
+
+/* ── Çıktı Modu (İzleme) ── */
+.normal-time {
+  font-weight: 600;
+  color: #1f2937;
+  white-space: nowrap;
+}
+
+/* ── Düzenleme Modu (Input Box Yapısı) ── */
+.time-edit-box {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  align-items: center;
+}
+
+.time-line {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  background: #f8fafc;
+  padding: 2px 4px;
+  border-radius: 4px;
+  border: 1px solid #e2e8f0;
+  width: max-content;
+
+  .lbl {
+    font-size: 10px;
+    font-weight: 700;
+    color: #64748b;
+    width: 12px;
+    cursor: help;
+  }
+
+  .sep {
+    color: #94a3b8;
+    font-size: 12px;
+    margin: 0 -2px;
+  }
+}
+
+.time-input {
+  width: 44px;
+  height: 22px;
+  padding: 0 4px;
+  font-size: 11px;
+  text-align: center;
+  border: 1px solid #cbd5e1;
+  border-radius: 4px;
+  outline: none;
+  background: #ffffff;
+  color: #1e293b;
+  font-family: monospace;
+
+  &:focus {
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 1px rgba(59, 130, 246, 0.2);
+  }
+
+  &::placeholder {
+    color: #cbd5e1;
+  }
+}

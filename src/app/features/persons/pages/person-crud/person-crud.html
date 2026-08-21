@@ -1,6 +1,6 @@
 <div class="admin-wrapper">
   <div class="admin-card">
-    <div class="d-flex justify-content-between align-items-center mb-3 gap-2 flex-wrap">
+    <div class="d-flex justify-content-between align-items-center mb-1 gap-2 flex-wrap">
       <h4 class="fw-bold mb-0" style="color: #dc2134">{{ pageTitleKey | translate }}</h4>
 
       <button
@@ -13,7 +13,7 @@
       ></button>
     </div>
 
-    <div class="small text-muted mb-3">
+    <div class="small text-muted mb-2">
       {{ descriptionTextKey | translate }}
     </div>
 
@@ -40,13 +40,14 @@
         [columns]="columns"
         [loading]="isLoading"
         [tableId]="USERDEF.toString()"
-        [defaultFields]="PERSON_DEFAULT_FIELDS"
+        [defaultFields]="currentDefaultFields"
         [emptyCellValue]="''"
         [rowClickable]="true"
         [showRowNumbers]="true"
         [exportFilename]="'person_liste_' + USERDEF.toString()"
         [actionsTemplate]="showActionsColumn ? actionsTpl : null"
         (rowClick)="onRowClick($event)"
+        displayMode="scroll"
       >
         <ng-template appColumnCell="veliAdSoyad" let-person>
           <span
@@ -119,4 +120,3 @@
   (visibleChange)="onLeaveDialogClose()"
   (confirmed)="onLeaveConfirmed($event)"
 ></app-person-leave-dialog>
-
