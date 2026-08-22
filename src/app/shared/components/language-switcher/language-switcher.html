@@ -1,0 +1,27 @@
+<p-select
+  class="lang-select"
+  inputId="lang-select"
+  [options]="langOptions"
+  [(ngModel)]="currentLang"
+  optionLabel="label"
+  optionValue="value"
+  (onChange)="onLangChange($event.value)"
+  [attr.aria-label]="'HEADER.LANG_LABEL' | translate"
+  appendTo="body"
+>
+  <ng-template pTemplate="selectedItem">
+    <span class="lang-value">
+      @if (selectedOption) {
+        <app-flag-icon [lang]="selectedOption.value" />
+        <span>{{ selectedOption.label }}</span>
+      }
+    </span>
+  </ng-template>
+
+  <ng-template pTemplate="item" let-option>
+    <span class="lang-item">
+      <app-flag-icon [lang]="option.value" />
+      <span>{{ option.label }}</span>
+    </span>
+  </ng-template>
+</p-select>

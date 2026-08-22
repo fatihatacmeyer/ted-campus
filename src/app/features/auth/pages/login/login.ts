@@ -6,11 +6,12 @@ import { first } from 'rxjs/operators';
 import { AuthService } from '../../../../core/services/auth.service';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { TranslatePipe } from '@ngx-translate/core';
+import { LanguageSwitcherComponent } from '../../../../shared/components/language-switcher/language-switcher';
 
 @Component({
   selector: 'app-login',
   standalone: true,
-  imports: [ReactiveFormsModule, RouterModule, TranslatePipe],
+  imports: [ReactiveFormsModule, RouterModule, TranslatePipe, LanguageSwitcherComponent],
   templateUrl: './login.html',
   styleUrls: ['./login.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,

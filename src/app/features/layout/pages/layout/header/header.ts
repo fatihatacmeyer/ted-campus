@@ -1,42 +1,19 @@
-import { Component, ChangeDetectionStrategy, inject, OnInit } from '@angular/core';
-import { FormsModule } from '@angular/forms';
+import { Component, ChangeDetectionStrategy, inject } from '@angular/core';
 import { TranslatePipe } from '@ngx-translate/core';
-import { SelectButtonModule } from 'primeng/selectbutton';
 
 import { AuthService } from '../../../../../core/services/auth.service';
-import { AppLang, LanguageService } from '../../../../../core/services/language.service';
-
-interface LangOption {
-  label: string;
-  value: AppLang;
-}
+import { LanguageSwitcherComponent } from '../../../../../shared/components/language-switcher/language-switcher';
 
 @Component({
   selector: 'app-header',
   standalone: true,
-  imports: [FormsModule, TranslatePipe, SelectButtonModule],
+  imports: [TranslatePipe, LanguageSwitcherComponent],
   templateUrl: './header.html',
   styleUrl: './header.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class HeaderComponent implements OnInit {
+export class HeaderComponent {
   private authService = inject(AuthService);
-  private languageService = inject(LanguageService);
-
-  protected currentLang: AppLang = 'tr';
-
-  protected readonly langOptions: LangOption[] = [
-    { label: 'TR', value: 'tr' },
-    { label: 'EN', value: 'en' },
-  ];
-
-  ngOnInit(): void {
-    this.currentLang = this.languageService.getCurrentLang();
-  }
-
-  onLangChange(lang: AppLang): void {
-    this.languageService.setLanguage(lang);
-  }
 
   logout(): void {
     this.authService.logout();

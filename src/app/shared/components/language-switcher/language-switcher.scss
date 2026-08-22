@@ -1,0 +1,38 @@
+:host {
+  display: inline-block;
+}
+
+.lang-value,
+.lang-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Metin bayraktan daha yüksek satır kutusuna sahip olduğunda flex ortalama
+   bayrağı yukarıda bırakır; line-height:1 ile glif bayrağa hizalanır. */
+.lang-value > span {
+  line-height: 1;
+  align-self: center;
+}
+
+::ng-deep {
+  .lang-select.p-select {
+    min-width: 132px;
+    height: 36px;
+    align-items: center;
+    border-radius: 8px;
+    box-shadow: none;
+  }
+
+  .p-select-overlay .lang-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .p-select-overlay .lang-item > span {
+    line-height: 1;
+    align-self: center;
+  }
+}

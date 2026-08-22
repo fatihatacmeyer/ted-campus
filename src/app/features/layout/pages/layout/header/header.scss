@@ -31,19 +31,11 @@
   letter-spacing: 1px;
 }
 
-.header-right {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-
-  ::ng-deep .p-selectbutton {
-    .p-button {
-      padding: 6px 14px;
-      font-size: 13px;
-      font-weight: 600;
-    }
+  .header-right {
+    display: flex;
+    align-items: center;
+    gap: 12px;
   }
-}
 
 .logout-btn {
   display: flex;
