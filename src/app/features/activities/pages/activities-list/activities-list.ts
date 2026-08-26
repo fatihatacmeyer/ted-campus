@@ -1,7 +1,7 @@
 import { Component, ChangeDetectionStrategy, signal, computed, inject, DestroyRef } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
-import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { AbstractControl, FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import {
   CustomizableTableComponent,
   ColumnCellDirective,
@@ -27,6 +27,33 @@ import { ActivityService } from '../../services/activity.service';
 import { formatDate, parseDate } from '../../../../shared/utils/date.utils';
 import { NotificationService } from '../../../../core/services/notification.service';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
+
+/** Cross-field: Bitiş tarihi başlangıç tarihinden küçük olamaz. */
+function dateRangeValidator(startKey: string, endKey: string, errorKey: string) {
+  return (group: FormGroup) => {
+    const start = group.get(startKey)?.value;
+    const end = group.get(endKey)?.value;
+    if (!start || !end) return null;
+    return new Date(end) >= new Date(start) ? null : { [errorKey]: true };
+  };
+}
+
+/** Cross-field: isPaid true iken fee boş olamaz. */
+function paidFeeValidator(group: FormGroup) {
+  const isPaid = group.get('isPaid')?.value;
+  const fee = group.get('fee')?.value;
+  if (isPaid && (fee === null || fee === undefined || fee === '')) {
+    return { feeRequired: true };
+  }
+  return null;
+}
+
+/** En az bir sınıf seçili olmalı. */
+function minClassroomValidator(control: AbstractControl) {
+  const val = control.value;
+  if (Array.isArray(val) && val.length > 0) return null;
+  return { minClassroom: true };
+}
 
 /** Katılımcı durum filtreleri — dashboard kartlarıyla eşleşir. */
 type ParticipantFilter = 'Tümü' | ActivityParticipant['durum'];
@@ -71,6 +98,7 @@ export class ActivitiesComponent {
   activities = signal<ActivityInterface[]>([]);
   isLoading = signal(false);
   isSaving = signal(false);
+  formSubmitted = signal(false);
   errorMessage = signal<string | null>(null);
   isDialogVisible = signal(false);
   editingActivity = signal<ActivityInterface | null>(null);
@@ -155,25 +183,34 @@ export class ActivitiesComponent {
     'status',
   ];
 
-  activityForm: FormGroup = this.fb.group({
-    name: ['', Validators.required],
-    activityType: ['', Validators.required],
-    status: ['Aktif', Validators.required],
-    startDate: [null, Validators.required],
-    endDate: [null, Validators.required],
-    requestStartDate: [null],
-    requestEndDate: [null],
-    maxStudentCount: [0, Validators.min(1)],
-    isParentRequired: [false],
-    studentParentCount: [0],
-    isPaid: [false],
-    fee: [{ value: null, disabled: true }],
-    transportation: [''],
-    educationLevel: [''],
-    eventManager: [''],
-    description: [''],
-    classroom: [[]],
-  });
+  activityForm: FormGroup = this.fb.group(
+    {
+      name: ['', Validators.required],
+      activityType: ['', Validators.required],
+      status: ['Aktif', Validators.required],
+      startDate: [null, Validators.required],
+      endDate: [null, Validators.required],
+      requestStartDate: [null, Validators.required],
+      requestEndDate: [null, Validators.required],
+      maxStudentCount: [null, [Validators.required, Validators.min(1)]],
+      isParentRequired: [false],
+      studentParentCount: [0],
+      isPaid: [false],
+      fee: [{ value: null, disabled: true }],
+      transportation: ['', Validators.required],
+      educationLevel: [''],
+      eventManager: [''],
+      description: [''],
+      classroom: [[], minClassroomValidator],
+    },
+    {
+      validators: [
+        dateRangeValidator('startDate', 'endDate', 'dateRange'),
+        dateRangeValidator('requestStartDate', 'requestEndDate', 'dateRangeRequest'),
+        paidFeeValidator,
+      ],
+    },
+  );
 
   constructor() {
     this.activityForm
@@ -183,10 +220,27 @@ export class ActivitiesComponent {
         const feeCtrl = this.activityForm.get('fee');
         if (paid) {
           feeCtrl!.enable();
+          feeCtrl!.setValidators([Validators.required]);
         } else {
           feeCtrl!.disable();
+          feeCtrl!.clearValidators();
           feeCtrl!.setValue(null);
         }
+        feeCtrl!.updateValueAndValidity();
+        this.activityForm.updateValueAndValidity();
+      });
+
+    this.activityForm
+      .get('isParentRequired')!
+      .valueChanges.pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((required) => {
+        const ctrl = this.activityForm.get('studentParentCount');
+        if (required) {
+          ctrl!.setValidators([Validators.required, Validators.min(1)]);
+        } else {
+          ctrl!.clearValidators();
+        }
+        ctrl!.updateValueAndValidity();
       });
 
     this.loadActivities();
@@ -432,13 +486,20 @@ export class ActivitiesComponent {
       : this.translate.instant('ACTIVITIES.ADD');
   }
 
+  /** Alanın dokunulmuş ve geçersiz olup olmadığını kontrol eder (hata border + mesaj tetikleme için). */
+  isFieldInvalid(field: string): boolean {
+    const ctrl = this.activityForm.get(field);
+    return !!(ctrl && ctrl.touched && ctrl.invalid);
+  }
+
   openAddDialog() {
     this.editingActivity.set(null);
+    this.formSubmitted.set(false);
     this.activityForm.reset({
       status: 'Aktif',
       isPaid: false,
       isParentRequired: false,
-      maxStudentCount: 0,
+      maxStudentCount: null,
       studentParentCount: 0,
       classroom: [],
     });
@@ -447,6 +508,7 @@ export class ActivitiesComponent {
 
   openEditDialog(activity: ActivityInterface) {
     this.editingActivity.set(activity);
+    this.formSubmitted.set(false);
 
     // Sınıfları string'den diziye (array) çeviriyoruz
     const classArray =
@@ -468,6 +530,7 @@ export class ActivitiesComponent {
   closeDialog() {
     this.isDialogVisible.set(false);
     this.editingActivity.set(null);
+    this.formSubmitted.set(false);
     this.activityForm.reset();
   }
 
@@ -548,6 +611,7 @@ export class ActivitiesComponent {
 
   saveActivity() {
     if (this.activityForm.invalid) {
+      this.formSubmitted.set(true);
       this.activityForm.markAllAsTouched();
       return;
     }

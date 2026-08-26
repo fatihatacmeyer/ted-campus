@@ -1,3 +1,21 @@
+.form-field-error {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 4px;
+  color: #93000a;
+  font-size: 0.8rem;
+  font-weight: 500;
+}
+
+// Invalid form field border — login sayfasındaki is-invalid paterniyle tutarlı
+:host ::ng-deep {
+  .is-invalid {
+    border-color: #93000a !important;
+    box-shadow: 0 0 0 1px #93000a !important;
+  }
+}
+
 .classroom-group-header {
   &:hover {
     background-color: var(--p-primary-50);
