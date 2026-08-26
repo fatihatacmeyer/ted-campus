@@ -72,4 +72,30 @@ export class ProxyService {
         }),
       );
   }
+
+  /**
+   * Onaylanmış vekillerin aktif/pasif durumunu değiştirir.
+   * sp_VekilTalep_ap procedure'ünü çağırır — hem VekilCampus hem LoginMeCampus tablosunu günceller.
+   */
+  toggleProxyActive(
+    vekilCampusId: number,
+    onayDurumu: 0 | 1,
+  ): Observable<{ sonuc: number; sunucuCevap: string }> {
+    return this.api
+      .callEndpoint<DBInsertResult[]>('Dynamic', {
+        point: 'VekilTalep',
+        islemtipi: 'ap',
+        VekilCampusId: vekilCampusId,
+        OnayDurumu: onayDurumu,
+      })
+      .pipe(
+        map((response) => {
+          const unwrapped = unwrapResponse(response);
+          return {
+            sonuc: unwrapped ? Number(unwrapped.Sonuc) : -1,
+            sunucuCevap: unwrapped ? String(unwrapped.SunucuCevap) : 'Sunucudan yanıt alınamadı.',
+          };
+        }),
+      );
+  }
 }

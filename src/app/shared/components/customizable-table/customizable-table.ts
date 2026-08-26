@@ -108,6 +108,7 @@ export class CustomizableTableComponent<T extends object = Record<string, unknow
   @Input() emptyMessage = 'COMMON.NO_RECORDS';
   @Input() emptyCellValue = '-'; // boş hücre (null/undefined) görünümü
   @Input() showSearch = true;
+  @Input() showColumnSelector = true;
   @Input() searchPlaceholder = 'COMMON.SEARCH';
   @Input() rowClickable = false;
   @Input() actionsTemplate: TemplateRef<{ $implicit: T }> | null = null; // her satırın sonundaki sabit İşlemler sütunu

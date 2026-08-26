@@ -152,6 +152,36 @@ export class ProxyListComponent implements OnInit {
       });
   }
 
+  /**
+   * Onaylanmış vekilin aktif/pasif durumunu değiştirir.
+   * Toggle anında geri alınır, sunucu onayladıktan sonra kalıcı değişir.
+   */
+  onToggleActive(proxy: GuardianProxy, newActiveState: boolean): void {
+    // Toggle'ı geri al — sunucudan onay gelene kadar
+    proxy.isActive = !newActiveState;
+
+    const onayDurumu = newActiveState ? 1 : 0;
+
+    this.proxyService
+      .toggleProxyActive(proxy.id, onayDurumu as 0 | 1)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (res) => {
+          if (res.sonuc === 1) {
+            proxy.isActive = newActiveState;
+            this.notification.success(res.sunucuCevap || 'İşlem başarılı.');
+          } else {
+            this.notification.error(res.sunucuCevap || 'İşlem başarısız.');
+          }
+          this.cdr.markForCheck();
+        },
+        error: () => {
+          this.notification.error('Sunucu hatası oluştu.');
+          this.cdr.markForCheck();
+        },
+      });
+  }
+
   getSeverity(
     status: ProxyApprovalStatus,
   ): 'success' | 'info' | 'warn' | 'danger' | 'secondary' | 'contrast' {

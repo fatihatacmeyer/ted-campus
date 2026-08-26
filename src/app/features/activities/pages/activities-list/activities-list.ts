@@ -1,7 +1,21 @@
-import { Component, ChangeDetectionStrategy, signal, computed, inject, DestroyRef } from '@angular/core';
+import {
+  Component,
+  ChangeDetectionStrategy,
+  signal,
+  computed,
+  inject,
+  DestroyRef,
+} from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
-import { AbstractControl, FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import {
+  AbstractControl,
+  FormBuilder,
+  FormGroup,
+  FormsModule,
+  ReactiveFormsModule,
+  Validators,
+} from '@angular/forms';
 import {
   CustomizableTableComponent,
   ColumnCellDirective,
@@ -22,7 +36,11 @@ import { TooltipModule } from 'primeng/tooltip';
 import { forkJoin, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { DropdownItem, TypesService } from '../../../persons/services/types.service';
-import { ActivityApprovalStats, ActivityInterface, ActivityParticipant } from '../../../../core/models/activity.model';
+import {
+  ActivityApprovalStats,
+  ActivityInterface,
+  ActivityParticipant,
+} from '../../../../core/models/activity.model';
 import { ActivityService } from '../../services/activity.service';
 import { formatDate, parseDate } from '../../../../shared/utils/date.utils';
 import { NotificationService } from '../../../../core/services/notification.service';
@@ -70,7 +88,9 @@ const BOOLEAN_FILTER_OPTIONS: FilterOption[] = [
   imports: [
     CommonModule,
     ReactiveFormsModule,
+    FormsModule,
     CustomizableTableComponent,
+    ColumnCellDirective,
     ButtonModule,
     DialogModule,
     InputTextModule,
@@ -95,6 +115,9 @@ export class ActivitiesComponent {
   private notification = inject(NotificationService);
   private translate = inject(TranslateService);
 
+  /** ngModel için düz değişken — participantSearch signal'ını senkronize eder. */
+  searchText = '';
+
   activities = signal<ActivityInterface[]>([]);
   isLoading = signal(false);
   isSaving = signal(false);
@@ -117,12 +140,43 @@ export class ActivitiesComponent {
   /** Katılımcı listesi için aktif filtre — dashboard kartlarından seçilir. */
   activeParticipantFilter = signal<ParticipantFilter>('Tümü');
 
+  /** Katılımcı listesi için metin araması. */
+  participantSearch = signal('');
+
   /** Aktif filtreye göre filtrelenmiş katılımcı listesi. */
   filteredParticipants = computed(() => {
     const filter = this.activeParticipantFilter();
-    if (filter === 'Tümü') return this.participants();
-    return this.participants().filter((p) => p.durum === filter);
+    const search = this.participantSearch().toLocaleLowerCase('tr');
+    let list = this.participants();
+    if (filter !== 'Tümü') {
+      list = list.filter((p) => p.durum === filter);
+    }
+    if (search) {
+      list = list.filter(
+        (p) =>
+          p.ogrenci?.toLocaleLowerCase('tr').includes(search) ||
+          p.sinif?.toLocaleLowerCase('tr').includes(search) ||
+          p.veli?.toLocaleLowerCase('tr').includes(search) ||
+          p.telefon?.includes(search),
+      );
+    }
+    return list;
   });
+
+  /** Küçük listelerde paginated, büyüklerde scroll kullan */
+  participantDisplayMode = computed(() =>
+    this.filteredParticipants().length <= 0 ? ('paginated' as const) : ('scroll' as const),
+  );
+
+  /** Katılımcı tablosu sütun tanımları — filterable: false porque filtreler header'da */
+  participantColumns: ColumnDef<ActivityParticipant>[] = [
+    // { field: 'id', header: '#', sortable: true, width: '60px' },
+    { field: 'ogrenci', header: 'Öğrenci', sortable: true, filterable: false },
+    { field: 'sinif', header: 'Sınıf', sortable: true, width: '100px', filterable: false },
+    { field: 'veli', header: 'Veli', sortable: true, filterable: false },
+    { field: 'telefon', header: 'Telefon', width: '120px', filterable: false },
+    { field: 'durum', header: 'Durum', sortable: true, width: '110px', filterable: false },
+  ];
 
   activityColumns: ColumnDef<ActivityInterface>[] = [
     { field: 'id', header: 'ID', sortable: true, width: '70px' },
@@ -146,8 +200,18 @@ export class ActivitiesComponent {
       filterType: 'select',
       filterOptions: (rows) => uniqueFilterOptions(rows, 'status'),
     },
-    { field: 'requestStartDate', header: 'ACTIVITIES.COLUMN_REQUEST_START', sortable: true, width: '130px' },
-    { field: 'requestEndDate', header: 'ACTIVITIES.COLUMN_REQUEST_END', sortable: true, width: '130px' },
+    {
+      field: 'requestStartDate',
+      header: 'ACTIVITIES.COLUMN_REQUEST_START',
+      sortable: true,
+      width: '130px',
+    },
+    {
+      field: 'requestEndDate',
+      header: 'ACTIVITIES.COLUMN_REQUEST_END',
+      sortable: true,
+      width: '130px',
+    },
     { field: 'maxStudentCount', header: 'ACTIVITIES.COLUMN_MAX_STUDENT', sortable: true },
     { field: 'studentParentCount', header: 'ACTIVITIES.COLUMN_PARENT_COUNT' },
     {
@@ -174,7 +238,7 @@ export class ActivitiesComponent {
     { field: 'createdAt', header: 'ACTIVITIES.COLUMN_CREATED_AT' },
   ];
   defaultActivityFields = [
-    'id',
+    // 'id',
     'name',
     'activityType',
     'startDate',
@@ -537,6 +601,8 @@ export class ActivitiesComponent {
   /** Tablo satırına tıklandığında detay modalını açar ve istatistikleri + katılımcıları çeker. */
   openDetailDialog(activity: ActivityInterface) {
     this.activeParticipantFilter.set('Tümü');
+    this.participantSearch.set('');
+    this.searchText = '';
     this.selectedActivity.set(activity);
     this.isDetailVisible.set(true);
     this.loadApprovalStats(activity.id);
@@ -550,6 +616,8 @@ export class ActivitiesComponent {
     this.approvalError.set(null);
     this.participants.set([]);
     this.participantError.set(null);
+    this.participantSearch.set('');
+    this.searchText = '';
   }
 
   /** sp_EtkinlikOnayCampus_s'ten o etkinliğin onay istatistiklerini çeker. */

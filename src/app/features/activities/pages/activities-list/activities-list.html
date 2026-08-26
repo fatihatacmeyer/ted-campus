@@ -89,7 +89,12 @@
           <label for="activityName" class="fw-semibold small text-muted"
             >{{ 'ACTIVITIES.NAME' | translate }} <span class="text-primary">*</span></label
           >
-          <input pInputText id="activityName" formControlName="name" [class.is-invalid]="isFieldInvalid('name')" />
+          <input
+            pInputText
+            id="activityName"
+            formControlName="name"
+            [class.is-invalid]="isFieldInvalid('name')"
+          />
           @if (activityForm.get('name')?.touched && activityForm.get('name')?.invalid) {
             <small class="form-field-error">Bu alan zorunludur.</small>
           }
@@ -107,7 +112,9 @@
             appendTo="body"
             [styleClass]="'w-100' + (isFieldInvalid('activityType') ? ' is-invalid' : '')"
           ></p-select>
-          @if (activityForm.get('activityType')?.touched && activityForm.get('activityType')?.invalid) {
+          @if (
+            activityForm.get('activityType')?.touched && activityForm.get('activityType')?.invalid
+          ) {
             <small class="form-field-error">Bu alan zorunludur.</small>
           }
         </div>
@@ -179,9 +186,9 @@
       </div>
       <div class="d-flex gap-3">
         <div class="w-100 d-flex flex-column gap-1">
-          <label for="requestStartDate" class="fw-semibold small text-muted">{{
-            'ACTIVITIES.REQUEST_START' | translate
-          }} <span class="text-primary">*</span></label>
+          <label for="requestStartDate" class="fw-semibold small text-muted"
+            >{{ 'ACTIVITIES.REQUEST_START' | translate }} <span class="text-primary">*</span></label
+          >
           <p-datepicker
             formControlName="requestStartDate"
             inputId="requestStartDate"
@@ -190,14 +197,17 @@
             [styleClass]="'w-100' + (isFieldInvalid('requestStartDate') ? ' is-invalid' : '')"
             [showIcon]="true"
           ></p-datepicker>
-          @if (activityForm.get('requestStartDate')?.touched && activityForm.get('requestStartDate')?.invalid) {
+          @if (
+            activityForm.get('requestStartDate')?.touched &&
+            activityForm.get('requestStartDate')?.invalid
+          ) {
             <small class="form-field-error">Bu alan zorunludur.</small>
           }
         </div>
         <div class="w-100 d-flex flex-column gap-1">
-          <label for="requestEndDate" class="fw-semibold small text-muted">{{
-            'ACTIVITIES.REQUEST_END' | translate
-          }} <span class="text-primary">*</span></label>
+          <label for="requestEndDate" class="fw-semibold small text-muted"
+            >{{ 'ACTIVITIES.REQUEST_END' | translate }} <span class="text-primary">*</span></label
+          >
           <p-datepicker
             formControlName="requestEndDate"
             inputId="requestEndDate"
@@ -206,7 +216,10 @@
             [styleClass]="'w-100' + (isFieldInvalid('requestEndDate') ? ' is-invalid' : '')"
             [showIcon]="true"
           ></p-datepicker>
-          @if (activityForm.get('requestEndDate')?.touched && activityForm.get('requestEndDate')?.invalid) {
+          @if (
+            activityForm.get('requestEndDate')?.touched &&
+            activityForm.get('requestEndDate')?.invalid
+          ) {
             <small class="form-field-error">Bu alan zorunludur.</small>
           }
           @if (activityForm.touched && activityForm.errors?.['dateRangeRequest']) {
@@ -241,11 +254,20 @@
       </div>
       <div class="d-flex gap-3 mb-3">
         <div class="w-100 d-flex flex-column gap-1">
-          <label for="maxStudentCount" class="fw-semibold small text-muted">{{
-            'ACTIVITIES.MAX_STUDENT' | translate
-          }} <span class="text-primary">*</span></label>
-          <input pInputText type="number" id="maxStudentCount" formControlName="maxStudentCount" [class.is-invalid]="isFieldInvalid('maxStudentCount')" />
-          @if (activityForm.get('maxStudentCount')?.touched && activityForm.get('maxStudentCount')?.invalid) {
+          <label for="maxStudentCount" class="fw-semibold small text-muted"
+            >{{ 'ACTIVITIES.MAX_STUDENT' | translate }} <span class="text-primary">*</span></label
+          >
+          <input
+            pInputText
+            type="number"
+            id="maxStudentCount"
+            formControlName="maxStudentCount"
+            [class.is-invalid]="isFieldInvalid('maxStudentCount')"
+          />
+          @if (
+            activityForm.get('maxStudentCount')?.touched &&
+            activityForm.get('maxStudentCount')?.invalid
+          ) {
             <small class="form-field-error">
               @if (activityForm.get('maxStudentCount')?.errors?.['required']) {
                 Bu alan zorunludur.
@@ -256,9 +278,12 @@
           }
         </div>
         <div class="w-100 d-flex flex-column gap-1">
-          <label for="studentParentCount" class="fw-semibold small text-muted">{{
-            'ACTIVITIES.PARENT_QUOTA' | translate
-          }} @if (activityForm.get('isParentRequired')?.value) { <span class="text-primary">*</span> }</label>
+          <label for="studentParentCount" class="fw-semibold small text-muted"
+            >{{ 'ACTIVITIES.PARENT_QUOTA' | translate }}
+            @if (activityForm.get('isParentRequired')?.value) {
+              <span class="text-primary">*</span>
+            }
+          </label>
           <input
             pInputText
             type="number"
@@ -266,7 +291,10 @@
             formControlName="studentParentCount"
             [class.is-invalid]="isFieldInvalid('studentParentCount')"
           />
-          @if (activityForm.get('studentParentCount')?.touched && activityForm.get('studentParentCount')?.invalid) {
+          @if (
+            activityForm.get('studentParentCount')?.touched &&
+            activityForm.get('studentParentCount')?.invalid
+          ) {
             <small class="form-field-error">
               @if (activityForm.get('studentParentCount')?.errors?.['required']) {
                 Bu alan zorunludur.
@@ -277,9 +305,12 @@
           }
         </div>
         <div class="w-100 d-flex flex-column gap-1">
-          <label for="fee" class="fw-semibold small text-muted">{{
-            'ACTIVITIES.FEE' | translate
-          }} @if (activityForm.get('isPaid')?.value) { <span class="text-primary">*</span> }</label>
+          <label for="fee" class="fw-semibold small text-muted"
+            >{{ 'ACTIVITIES.FEE' | translate }}
+            @if (activityForm.get('isPaid')?.value) {
+              <span class="text-primary">*</span>
+            }
+          </label>
           <input
             pInputText
             type="number"
@@ -302,9 +333,9 @@
       </h6>
       <!-- Sınıf Kapsamı — quick-select但onları + MultiSelect -->
       <div class="d-flex flex-column gap-2 mb-3">
-        <label for="classroom" class="fw-semibold small text-muted">{{
-          'ACTIVITIES.CLASSROOM_SCOPE' | translate
-        }} <span class="text-primary">*</span></label>
+        <label for="classroom" class="fw-semibold small text-muted"
+          >{{ 'ACTIVITIES.CLASSROOM_SCOPE' | translate }} <span class="text-primary">*</span></label
+        >
 
         <!-- Üst aksiyon satırı: Tüm Şubeleri Seç / Seçimi Temizle -->
         <div class="d-flex align-items-center gap-3">
@@ -416,7 +447,9 @@
 
       <!-- Ulaşım Bilgisi — UlasimCampus lookup'undan doldurulur -->
       <div class="d-flex flex-column gap-1 mb-3">
-        <label for="transportation" class="fw-semibold small text-muted">Ulaşım Bilgisi <span class="text-primary">*</span></label>
+        <label for="transportation" class="fw-semibold small text-muted"
+          >Ulaşım Bilgisi <span class="text-primary">*</span></label
+        >
         <p-select
           formControlName="transportation"
           inputId="transportation"
@@ -427,7 +460,9 @@
           [styleClass]="'w-100' + (isFieldInvalid('transportation') ? ' is-invalid' : '')"
           placeholder="Ulaşım seçin"
         ></p-select>
-        @if (activityForm.get('transportation')?.touched && activityForm.get('transportation')?.invalid) {
+        @if (
+          activityForm.get('transportation')?.touched && activityForm.get('transportation')?.invalid
+        ) {
           <small class="form-field-error">Bu alan zorunludur.</small>
         }
       </div>
@@ -517,13 +552,13 @@
   [header]="selectedActivity()?.name || 'Etkinlik Detayı'"
   [(visible)]="isDetailVisible"
   [modal]="true"
-  [style]="{ width: '820px', height: '80vh' }"
+  [style]="{ width: 'min(820px, 95vw)', height: 'min(80vh, 90vh)' }"
   [draggable]="false"
   (onHide)="closeDetailDialog()"
 >
   <div class="detail-body">
     <!-- ONAY DASHBOARD -->
-    <h6 class="text-primary fw-bold mb-3 border-bottom pb-2">Onay Durumu</h6>
+    <h6 class="text-primary fw-bold mb-1">Onay Durumu</h6>
 
     @if (isLoadingStats()) {
       <div class="d-flex justify-content-center py-4">
@@ -604,16 +639,18 @@
     }
 
     <!-- KATILIMCI LİSTESİ -->
-    <h6
-      class="text-primary fw-bold mb-3 mt-4 border-bottom pb-2 d-flex align-items-center justify-content-between"
+    <div
+      class="participant-header mt-2 mb-1 d-flex align-items-center justify-content-between gap-2"
     >
-      <span>Etkinliğe Katılanlar</span>
-      @if (!isLoadingParticipants()) {
-        <span class="text-muted small fw-normal"
-          >{{ filteredParticipants().length }} katılımcı</span
-        >
-      }
-    </h6>
+      <h6 class="text-primary fw-bold mb-0">Etkinliğe Katılanlar</h6>
+      <div class="d-flex align-items-center gap-2">
+        @if (!isLoadingParticipants()) {
+          <span class="text-muted small fw-normal participant-count-badge"
+            >{{ filteredParticipants().length }} katılımcı</span
+          >
+        }
+      </div>
+    </div>
 
     @if (isLoadingParticipants()) {
       <div class="d-flex justify-content-center py-4">
@@ -633,51 +670,23 @@
         }
       </div>
     } @else {
-      <div class="participant-table-wrapper">
-        <table class="participant-table">
-          <thead>
-            <tr>
-              <th>#</th>
-              <th>Öğrenci</th>
-              <th>Sınıf</th>
-              <th>Veli</th>
-              <th>Telefon</th>
-              <th>Durum</th>
-            </tr>
-          </thead>
-          <tbody>
-            @for (p of filteredParticipants(); track p.id) {
-              <tr>
-                <td>{{ p.id }}</td>
-                <td>{{ p.ogrenci }}</td>
-                <td>{{ p.sinif }}</td>
-                <td>{{ p.veli }}</td>
-                <td>{{ p.telefon }}</td>
-                <td>
-                  <p-tag [value]="p.durum" [severity]="getParticipantSeverity(p.durum)"></p-tag>
-                </td>
-              </tr>
-            } @empty {
-              <tr>
-                <td colspan="6" class="text-center text-muted py-3">
-                  Bu filtreye uygun katılımcı bulunamadı.
-                </td>
-              </tr>
-            }
-          </tbody>
-        </table>
-      </div>
+      <app-customizable-table
+        [rows]="filteredParticipants()"
+        [columns]="participantColumns"
+        [showSearch]="true"
+        [exportable]="true"
+        [showColumnSelector]="false"
+        [showRowNumbers]="true"
+        rowNumberHeader="#"
+        [displayMode]="'scroll'"
+        scrollHeight="calc(100vh - 420px)"
+        emptyMessage="Bu filtreye uygun katılımcı bulunamadı."
+        tableId="participant-list"
+      >
+        <ng-template appColumnCell="durum" let-row>
+          <p-tag [value]="row.durum" [severity]="getParticipantSeverity(row.durum)"></p-tag>
+        </ng-template>
+      </app-customizable-table>
     }
   </div>
-  <ng-template pTemplate="footer">
-    <div class="d-flex justify-content-end">
-      <button
-        pButton
-        label="Kapat"
-        icon="pi pi-times"
-        class="p-button-text"
-        (click)="closeDetailDialog()"
-      ></button>
-    </div>
-  </ng-template>
 </p-dialog>
