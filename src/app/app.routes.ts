@@ -58,7 +58,7 @@ export const routes: Routes = [
       },
       {
         path: 'transport',
-        data: { titleKey: 'MENU.TRANSPORT' },
+        data: { titleKey: 'MENU.TRANSPORT', scrollable: true },
         loadComponent: () =>
           import('./features/transport/pages/school-bus/school-bus').then(
             (m) => m.SchoolBusComponent,
@@ -82,7 +82,7 @@ export const routes: Routes = [
       },
       {
         path: 'photo-approval',
-        data: { titleKey: 'MENU.PHOTO_APPROVAL' }, // Varsa i18n key'in
+        data: { titleKey: 'MENU.PHOTO_APPROVAL', scrollable: true }, // Varsa i18n key'in
         loadComponent: () =>
           import('./features/persons/pages/photo-approval/photo-approval').then(
             (m) => m.PhotoApprovalComponent,

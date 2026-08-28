@@ -50,6 +50,7 @@ export class PhotoApprovalComponent implements OnInit {
     this.isLoading = true;
     this.cdr.markForCheck();
 
+    // api çağrısı
     this.photoApprovalService
       .getPendingPhotos()
       .pipe(takeUntilDestroyed(this.destroyRef))

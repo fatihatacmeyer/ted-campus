@@ -80,18 +80,35 @@ export class PersonLeaveDialogComponent implements OnChanges {
     }
   }
 
+  selectedTerminal: number | null = null;
+  terminals: DropdownItem[] = [
+    // Şimdilik mock veri koyuyoruz, sonrasında TypesService üzerinden veritabanından çekilecek
+    { id: 1, ad: 'Ana Kapı Turnike' },
+    { id: 2, ad: 'Otopark Çıkışı' },
+    { id: 3, ad: 'Lise Binası Arka Kapı' },
+  ];
+
+  private getTimeString(date: Date): string {
+    const hours = String(date.getHours()).padStart(2, '0');
+    const minutes = String(date.getMinutes()).padStart(2, '0');
+    return `${hours}:${minutes}`;
+  }
+
   private resetForm(): void {
     const today = new Date();
+    const defaultEndTime = new Date(today.getTime() + 15 * 60 * 1000);
+
     this.errorMessage = '';
     this.startDateStr = formatDate(today);
     this.endDateStr = formatDate(today);
     this.selectedLeaveType = null;
-    this.startTime = '';
-    this.endTime = '';
+    this.selectedTerminal = null;
+    this.startTime = this.getTimeString(today);
+    this.endTime = this.getTimeString(defaultEndTime);
     this.description = '';
     this.isProcessing = false;
-    this.isBlok = true;
-    this.isSaatlik = false;
+    this.isBlok = false;
+    this.isSaatlik = true;
   }
 
   private loadLeaveTypes(): void {
@@ -123,6 +140,7 @@ export class PersonLeaveDialogComponent implements OnChanges {
     if (!this.startDateStr) return false;
     if (!this.endDateStr) return false;
     if (this.selectedLeaveType == null) return false;
+    if (this.selectedTerminal == null) return false;
     return true;
   }
 

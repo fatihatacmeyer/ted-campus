@@ -14,17 +14,39 @@
       </div>
     }
 
-    <div class="field">
-      <label class="field-label" for="leaveType">İzin Tipi <span class="required">*</span></label>
-      <p-select
-        id="leaveType"
-        [options]="leaveTypes"
-        optionLabel="ad"
-        optionValue="id"
-        [(ngModel)]="selectedLeaveType"
-        placeholder="İzin tipi seçin"
-        [style]="{ width: '100%' }"
-      />
+    <div class="field-row">
+      <!-- Mevcut İzin Tipi Alanı -->
+      <div class="field">
+        <label class="field-label" for="leaveType">İzin Tipi <span class="required">*</span></label>
+        <p-select
+          id="leaveType"
+          [options]="leaveTypes"
+          optionLabel="ad"
+          optionValue="id"
+          [(ngModel)]="selectedLeaveType"
+          placeholder="İzin tipi seçin..."
+          [style]="{ width: '100%' }"
+          appendTo="body"
+        />
+      </div>
+
+      <!-- Yeni Çıkış Terminali Alanı -->
+      <div class="field">
+        <label class="field-label" for="terminal"
+          >Çıkış Terminali <span class="required">*</span></label
+        >
+        <p-select
+          id="terminal"
+          [options]="terminals"
+          optionLabel="ad"
+          optionValue="id"
+          [(ngModel)]="selectedTerminal"
+          placeholder="Terminal seçin..."
+          [style]="{ width: '100%' }"
+          appendTo="body"
+          [showClear]="true"
+        />
+      </div>
     </div>
 
     <div class="field-row">
@@ -53,6 +75,7 @@
       </div>
     </div>
 
+    <!-- Bitiş tarihi -->
     <div class="field-row">
       <div class="field">
         <label class="field-label" for="endDate">Bitiş Tarihi <span class="">*</span></label>
@@ -79,19 +102,11 @@
 
     <div class="checkbox-row">
       <div class="checkbox-item">
-        <p-checkbox
-          [(ngModel)]="isSaatlik"
-          [binary]="true"
-          inputId="saatlikCheck"
-        />
+        <p-checkbox [(ngModel)]="isSaatlik" [binary]="true" inputId="saatlikCheck" />
         <label for="saatlikCheck" class="checkbox-label">Saatlik</label>
       </div>
       <div class="checkbox-item">
-        <p-checkbox
-          [(ngModel)]="isBlok"
-          [binary]="true"
-          inputId="blokCheck"
-        />
+        <p-checkbox [(ngModel)]="isBlok" [binary]="true" inputId="blokCheck" />
         <label for="blokCheck" class="checkbox-label">Blok izin (her gün aynı saat)</label>
       </div>
     </div>
