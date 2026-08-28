@@ -9,7 +9,7 @@ import {
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute } from '@angular/router';
 import { PersonService } from '../../services/person.service';
-import { unwrapResponse } from '../../../../shared/utils/response.utils';
+import { unwrapResponse, isSuccessResult } from '../../../../shared/utils/response.utils';
 import {
   Person,
   UserDef,
@@ -34,6 +34,7 @@ import { TooltipModule } from 'primeng/tooltip';
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
 import { NotificationService } from '../../../../core/services/notification.service';
 import { TranslatePipe } from '@ngx-translate/core';
+import { OperationResultResponse } from '../../../../core/models/person.model';
 
 @Component({
   selector: 'app-person-crud',
@@ -240,60 +241,6 @@ export class PersonCrudComponent implements OnInit {
       });
   }
 
-  /**
-   * Tüm veli-öğrenci ilişkilerini tek çağrıda çeker (sp_relationcampus_s, tip=0)
-   * ve iki yönlü harita kurar:
-   *   childrenMap: veliId → çocuk listesi   (Veli sayfası "Çocuklar" kolonu)
-   *   parentsMap:  ogrenciId → veli listesi (Öğrenci sayfası "Veliler" kolonu)
-   * İsimler allPersons'tan çözülür.
-   */
-  // private loadRelationsMap(): void {
-  //   this.personService
-  //     .getAllRelations()
-  //     .pipe(takeUntilDestroyed(this.destroyRef))
-  //     .subscribe({
-  //       next: (relations) => {
-  //         console.log('[Rel] getAllRelations satırları:', JSON.stringify(relations));
-  //         this.childrenMap.clear();
-  //         this.parentsMap.clear();
-  //         for (const rel of relations || []) {
-  //           const veliId = Number(rel.VeliSicilId);
-  //           const ogrenciId = Number(rel.OgrenciSicilId);
-  //           const veli = this.allPersons.find((p) => p.id === veliId);
-  //           const child = this.allPersons.find((p) => p.id === ogrenciId);
-  //           if (!veli && !child) {
-  //             console.log(
-  //               '[Rel] eşleşmeyen satır → anahtarlar:',
-  //               Object.keys(rel),
-  //               '| VeliSicilId:',
-  //               rel.VeliSicilId,
-  //               '| OgrenciSicilId:',
-  //               rel.OgrenciSicilId,
-  //             );
-  //             continue;
-  //           }
-  //           // childrenMap: eski davranış korunur (çocuk çözülebilen her satır)
-  //           if (child) {
-  //             if (!this.childrenMap.has(veliId)) this.childrenMap.set(veliId, []);
-  //             this.childrenMap.get(veliId)!.push(child);
-  //           }
-  //           // parentsMap: ters yön — veli çözülebilen her satır
-  //           if (veli) {
-  //             if (!this.parentsMap.has(ogrenciId)) this.parentsMap.set(ogrenciId, []);
-  //             this.parentsMap.get(ogrenciId)!.push(veli);
-  //           }
-  //         }
-  //         this.isLoading = false;
-  //         this.cdr.markForCheck();
-  //       },
-  //       error: (err) => {
-  //         console.error('[PersonCrud] Veli-öğrenci ilişkileri yüklenemedi:', err);
-  //         this.isLoading = false;
-  //         this.cdr.markForCheck();
-  //       },
-  //     });
-  // }
-
   private loadRelationsMap(): void {
     this.personService
       .getAllRelations()
@@ -339,6 +286,46 @@ export class PersonCrudComponent implements OnInit {
         error: (err) => {
           console.error('[PersonCrud] Veli-öğrenci ilişkileri yüklenemedi:', err);
           this.isLoading = false;
+          this.cdr.markForCheck();
+        },
+      });
+  }
+
+  onForgotPasswordRequest(person: Person): void {
+    // Sadece öğrenci ve veli için geçerli kısıtlaması
+    if (this.USERDEF !== UserDef.Ogrenci && this.USERDEF !== UserDef.Veli) {
+      this.notification.error('Bu işlem sadece öğrenci ve veliler için geçerlidir.');
+      return;
+    }
+
+    this.isLoading = true;
+    this.cdr.markForCheck();
+
+    this.personService
+      .sendPasswordReminder(person.id)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (response) => {
+          this.isLoading = false;
+
+          // Dizi olarak gelen yanıtı tekil nesneye indirgiyoruz
+          const result = unwrapResponse<any>(response);
+
+          console.log(result);
+
+          // Prosedür güncellendiği için artık projenin standart helper'ını kullanabiliriz
+          if (result && (result.Sonuc === 1 || result.Sonuc === '1')) {
+            this.notification.success(result.sunucucevap || 'Kullanıcı silindi.');
+          } else {
+            this.notification.error(result?.sunucucevap || 'Kullanıcı bulunamadı veya silinemedi.');
+          }
+
+          this.showProfileModal = false;
+          this.cdr.markForCheck();
+        },
+        error: () => {
+          this.isLoading = false;
+          this.notification.error('Sunucuyla iletişim kurulurken hata oluştu.');
           this.cdr.markForCheck();
         },
       });

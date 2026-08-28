@@ -74,13 +74,17 @@
   padding-top: 1rem;
   border-top: 1px solid #f0f0f0;
   display: flex;
-  justify-content: space-between;
+  justify-content: space-between; /* Sol ve sağ grupları iki uca yaslar */
   align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap; /* Dar ekranlarda butonların taşmasını ve sıkışmasını önler */
 }
 
-.profile-actions-left {
+.profile-actions-left,
+.profile-actions-right {
   display: flex;
-  gap: 0.5rem;
+  gap: 0.5rem; /* Yan yana duran butonlar arasındaki boşluk */
+  align-items: center;
 }
 
 

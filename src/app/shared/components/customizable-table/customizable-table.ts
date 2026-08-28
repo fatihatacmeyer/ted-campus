@@ -541,7 +541,8 @@ export class CustomizableTableComponent<T extends object = Record<string, unknow
 
   /** Görünür satır numarası — sayfa başına göre hesaplanır */
   rowNumberFor(index: number): number {
-    return this.currentFirst + index + 1;
+    // return this.currentFirst + index + 1;
+    return index + 1;
   }
 
   /** p-table rowTrackBy — gereksiz DOM güncellemelerini önler */

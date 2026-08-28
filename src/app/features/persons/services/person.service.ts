@@ -19,6 +19,7 @@ import {
 import { AuthService } from '../../../core/services/auth.service';
 import { PrepareService } from '../../../core/services/prepare.service';
 import { ApiHelperService } from '../../../core/services/api-helper.service';
+import { unwrapResponse } from '../../../shared/utils/response.utils';
 
 /**
  * sp_sicilcampus_s'ten dönen ham DB satırı (Türkçe/DB sütun adları).
@@ -370,17 +371,23 @@ export class PersonService {
     );
   }
 
-  terminatePerson(sicilIds: number[], nedenId: number, cikisTarihi: string): Observable<unknown> {
+  terminatePerson(
+    sicilIds: number[],
+    nedenId: number,
+    cikisTarihi: string,
+  ): Observable<OperationResultResponse> {
     const sicilIdString = sicilIds.join('#');
 
-    return this.api.callEndpoint<unknown>('Dynamic', {
-      islemtipi: 'c',
-      point: 'sicil',
-      sicilid: sicilIdString,
-      neden: nedenId,
-      cikistarih: cikisTarihi,
-      type: 'cikis',
-    });
+    return this.api
+      .callEndpoint<OperationResultResponse>('Dynamic', {
+        islemtipi: 'c',
+        point: 'sicil',
+        sicilid: sicilIdString,
+        neden: nedenId,
+        cikistarih: cikisTarihi,
+        type: 'cikis',
+      })
+      .pipe(map((response) => unwrapResponse(response) as OperationResultResponse));
   }
 
   requestLeave(leaveRequest: PersonLeaveRequest): Observable<LeaveRequestResponse[]> {
@@ -474,15 +481,17 @@ export class PersonService {
     });
   }
 
-  restorePerson(sicilId: number, girisTarihi: string): Observable<unknown> {
-    return this.api.callEndpoint<unknown>('Dynamic', {
-      islemtipi: 'c',
-      point: 'sicil',
-      sicilid: sicilId,
-      neden: 0,
-      cikistarih: girisTarihi,
-      type: 'donus',
-    });
+  restorePerson(sicilId: number, girisTarihi: string): Observable<OperationResultResponse> {
+    return this.api
+      .callEndpoint<OperationResultResponse[]>('Dynamic', {
+        islemtipi: 'c',
+        point: 'sicil',
+        sicilid: sicilId,
+        neden: 0,
+        cikistarih: girisTarihi,
+        type: 'donus',
+      })
+      .pipe(map((response) => unwrapResponse(response) as OperationResultResponse));
   }
 
   getExitReasons(): Observable<ExitReason[]> {
@@ -596,6 +605,14 @@ export class PersonService {
       point: 'velicampus',
       islemtipi: 'd',
       relid: relId,
+    });
+  }
+
+  sendPasswordReminder(sicilId: number): Observable<OperationResultResponse[]> {
+    return this.api.callEndpoint<OperationResultResponse[]>('Dynamic', {
+      point: 'loginsendcampus',
+      islemtipi: 'd',
+      xsicilid: sicilId,
     });
   }
 }

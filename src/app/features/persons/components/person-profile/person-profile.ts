@@ -39,6 +39,7 @@ export class PersonProfileComponent implements OnChanges {
   @Output() editRequest = new EventEmitter<Person>();
   @Output() exitRequest = new EventEmitter<Person>();
   @Output() restoreRequest = new EventEmitter<Person>();
+  @Output() forgotPasswordRequest = new EventEmitter<Person>();
 
   private api = inject(ApiHelperService);
   private cdr = inject(ChangeDetectorRef);
@@ -58,70 +59,6 @@ export class PersonProfileComponent implements OnChanges {
       this.loadProfilePhoto();
     }
   }
-
-  // private loadProfilePhoto(): void {
-  //   if (!this.person) return;
-
-  //   const isVekil = this.person.userdefad === 'Vekil';
-
-  //   this.api
-  //     .callEndpoint<any[]>('Dynamic', {
-  //       point: 'ProfilFotografCampus',
-  //       islemtipi: 's',
-  //       SicilId: isVekil ? '' : this.person.id,
-  //       VekilCampusId: isVekil ? this.person.id : '',
-  //       OnayDurumu: 1,
-  //     })
-  //     .pipe(takeUntilDestroyed(this.destroyRef))
-  //     .subscribe({
-  //       next: (rows) => {
-  //         if (rows && rows.length > 0 && rows[0].DosyaAdi) {
-  //           // Doğrudan verdiğin klasör yolunu ve dosya adını birleştiriyoruz
-  //           this.photoUrl = `${this.basePhotoUrl}\\${rows[0].DosyaAdi}`;
-  //           console.log('Oluşturulan Resim URLsi:', this.photoUrl);
-  //         } else {
-  //           this.photoFailed = true;
-  //         }
-  //         this.cdr.markForCheck();
-  //       },
-  //       error: () => {
-  //         this.photoFailed = true;
-  //         this.cdr.markForCheck();
-  //       },
-  //     });
-  // }
-  // private loadProfilePhoto(): void {
-  //   if (!this.person) return;
-
-  //   const isVekil = this.person.userdefad === 'Vekil';
-
-  //   this.api
-  //     .callEndpoint<any[]>('Dynamic', {
-  //       point: 'ProfilFotografCampus',
-  //       islemtipi: 's',
-  //       SicilId: isVekil ? '' : this.person.id,
-  //       VekilCampusId: isVekil ? this.person.id : '',
-  //       OnayDurumu: 1,
-  //     })
-  //     .pipe(takeUntilDestroyed(this.destroyRef))
-  //     .subscribe({
-  //       next: (rows) => {
-  //         if (rows && rows.length > 0 && rows[0].DosyaAdi) {
-  //           this.photoUrl = `${this.basePhotoUrl}/${rows[0].DosyaAdi}`;
-
-  //           console.log('Oluşturulan Resim URLsi:', this.photoUrl);
-  //         } else {
-  //           this.photoFailed = true;
-  //         }
-
-  //         this.cdr.markForCheck();
-  //       },
-  //       error: () => {
-  //         this.photoFailed = true;
-  //         this.cdr.markForCheck();
-  //       },
-  //     });
-  // }
 
   private loadProfilePhoto(): void {
     if (!this.person) return;
@@ -266,6 +203,13 @@ export class PersonProfileComponent implements OnChanges {
   onRestoreClick(): void {
     if (this.person) {
       this.restoreRequest.emit(this.person);
+    }
+  }
+
+  onForgotPasswordClick(): void {
+    if (this.person) {
+      // Şimdilik sadece event fırlatıyoruz, prosedür bağlantısı parent component'te (veya burada servise bağlanarak) yapılacak.
+      this.forgotPasswordRequest.emit(this.person);
     }
   }
 

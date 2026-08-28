@@ -82,14 +82,14 @@
         </div>
       }
 
-      @if (!isProxyPerson) {
-        <div class="profile-actions">
-          <div class="profile-actions-left">
+      <div class="profile-actions">
+        <div class="profile-actions-left">
+          @if (!isProxyPerson) {
             @if (isPersonActive) {
               <button
                 pButton
                 type="button"
-                class="p-button-danger p-button-outlined"
+                class="p-button-danger p-button-outlined p-button-sm"
                 icon="pi pi-times"
                 (click)="onExitClick()"
               >
@@ -99,25 +99,44 @@
               <button
                 pButton
                 type="button"
-                class="p-button-success p-button-outlined"
+                class="p-button-success p-button-outlined p-button-sm"
                 icon="pi pi-replay"
                 (click)="onRestoreClick()"
               >
                 İşe Geri Al
               </button>
             }
-          </div>
-          <button
-            pButton
-            type="button"
-            class="p-button-outlined"
-            icon="pi pi-pencil"
-            (click)="onEditClick()"
-          >
-            Düzenle
-          </button>
+          }
         </div>
-      }
+
+        <div class="profile-actions-right">
+          @if (!isProxyPerson) {
+            <!-- Şifre Hatırlat Butonu -->
+            <button
+              pButton
+              type="button"
+              class="p-button-help p-button-outlined p-button-sm"
+              icon="pi pi-key"
+              (click)="onForgotPasswordClick()"
+              pTooltip="Kullanıcı Bilgilerini Gönder"
+              tooltipPosition="top"
+            >
+              Bilgileri Gönder
+            </button>
+
+            <!-- Düzenle Butonu (Birincil Eylem) -->
+            <button
+              pButton
+              type="button"
+              class="p-button-primary p-button-sm"
+              icon="pi pi-pencil"
+              (click)="onEditClick()"
+            >
+              Düzenle
+            </button>
+          }
+        </div>
+      </div>
     </div>
   }
 </p-dialog>
