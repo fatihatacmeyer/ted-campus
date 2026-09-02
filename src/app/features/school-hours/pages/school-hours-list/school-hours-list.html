@@ -1,7 +1,7 @@
 <div class="admin-wrapper">
   <div class="admin-card">
     <div class="d-flex justify-content-between align-items-center mb-3">
-      <h4 class="fw-bold mb-0" style="color: #dc2134">Giriş ve Çıkış Saatleri Yönetimi</h4>
+      <h4 class="fw-bold mb-0" style="color: #dc2134">{{ 'SCHOOL_HOURS.PAGE_TITLE' | translate }}</h4>
     </div>
 
     <!-- Onay Penceresi -->
@@ -18,11 +18,11 @@
     >
       <ng-template pTemplate="header">
         <tr>
-          <th class="sticky-col" style="width: 140px">Sınıf Seviyesi</th>
+          <th class="sticky-col" style="width: 140px">{{ 'SCHOOL_HOURS.GRADE_LEVEL' | translate }}</th>
           @for (day of days; track day.key) {
-            <th class="text-center" style="min-width: 130px">{{ day.header }}</th>
+            <th class="text-center" style="min-width: 130px">{{ day.headerKey | translate }}</th>
           }
-          <th class="text-center sticky-right-col" style="width: 95px">İşlem</th>
+          <th class="text-center sticky-right-col" style="width: 95px">{{ 'COMMON.ACTIONS' | translate }}</th>
         </tr>
       </ng-template>
 
@@ -38,7 +38,7 @@
                 <ng-template pTemplate="input">
                   <div class="time-edit-box">
                       <div class="time-line">
-                        <span class="lbl" title="Normal Saatler">N:</span>
+                        <span class="lbl" [title]="'SCHOOL_HOURS.NORMAL_HOURS_HINT' | translate">{{ 'SCHOOL_HOURS.NORMAL_HOURS_LABEL' | translate }}</span>
                         <input
                           type="text"
                           [(ngModel)]="$any(row)[day.key + 'Bas']"
@@ -64,7 +64,7 @@
                         />
                       </div>
                       <div class="time-line">
-                        <span class="lbl" title="Etütlü Saatler">E:</span>
+                        <span class="lbl" [title]="'SCHOOL_HOURS.STUDY_HOURS_HINT' | translate">{{ 'SCHOOL_HOURS.STUDY_HOURS_LABEL' | translate }}</span>
                         <input
                           type="text"
                           [(ngModel)]="$any(row)[day.key + 'EtutluBas']"
@@ -112,7 +112,7 @@
                   icon="pi pi-pencil"
                   class="p-button-rounded p-button-text p-button-sm p-button-secondary"
                   (click)="onRowEditInit(row)"
-                  pTooltip="Düzenle"
+                  [pTooltip]="'COMMON.EDIT' | translate"
                 ></button>
               } @else {
                 <button
@@ -123,7 +123,7 @@
                   icon="pi pi-check"
                   class="p-button-rounded p-button-text p-button-sm p-button-success"
                   (click)="onRowEditSave(row)"
-                  pTooltip="Kaydet"
+                  [pTooltip]="'COMMON.SAVE' | translate"
                 ></button>
                 <button
                   pButton
@@ -133,7 +133,7 @@
                   icon="pi pi-times"
                   class="p-button-rounded p-button-text p-button-sm p-button-danger"
                   (click)="onRowEditCancel(row, ri)"
-                  pTooltip="İptal"
+                  [pTooltip]="'COMMON.CANCEL' | translate"
                 ></button>
               }
             </div>

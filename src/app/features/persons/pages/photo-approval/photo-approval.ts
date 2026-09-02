@@ -11,7 +11,7 @@ import { CommonModule } from '@angular/common';
 import { ButtonModule } from 'primeng/button';
 import { TagModule } from 'primeng/tag';
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
-import { TranslatePipe } from '@ngx-translate/core';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 
 import { PhotoApprovalService, PhotoApproval } from '../../services/photo-approval.service';
 import { NotificationService } from '../../../../core/services/notification.service';
@@ -28,6 +28,7 @@ import { AppConfig, APP_CONFIG } from '../../../../core/services/app-config.serv
 export class PhotoApprovalComponent implements OnInit {
   private photoApprovalService = inject(PhotoApprovalService);
   private notification = inject(NotificationService);
+  private translate = inject(TranslateService);
   private cdr = inject(ChangeDetectorRef);
   private destroyRef = inject(DestroyRef);
   private config: AppConfig = inject(APP_CONFIG);
@@ -61,7 +62,7 @@ export class PhotoApprovalComponent implements OnInit {
           this.cdr.markForCheck();
         },
         error: () => {
-          this.notification.error('Onay bekleyen fotoğraflar yüklenirken hata oluştu.');
+          this.notification.error('PHOTO_APPROVAL.ERROR_LOAD');
           this.isLoading = false;
           this.cdr.markForCheck();
         },
@@ -87,17 +88,17 @@ export class PhotoApprovalComponent implements OnInit {
         next: (res) => {
           this.processingId = null;
           if (res.sonuc === 1) {
-            this.notification.success(res.sunucuCevap || 'İşlem başarılı.');
+            this.notification.success(res.sunucuCevap || 'PHOTO_APPROVAL.SUCCESS');
             // Başarılı olanı listeden çıkarıyoruz (anında UI güncellenir)
             this.pendingPhotos = this.pendingPhotos.filter((p) => p.Id !== photo.Id);
           } else {
-            this.notification.error(res.sunucuCevap || 'İşlem başarısız.');
+            this.notification.error(res.sunucuCevap || 'PHOTO_APPROVAL.FAILED');
           }
           this.cdr.markForCheck();
         },
         error: () => {
           this.processingId = null;
-          this.notification.error('Sunucu hatası oluştu.');
+          this.notification.error('PHOTO_APPROVAL.ERROR_SERVER');
           this.cdr.markForCheck();
         },
       });
@@ -113,13 +114,13 @@ export class PhotoApprovalComponent implements OnInit {
   }
 
   getPersonName(photo: PhotoApproval): string {
-    return photo.SicilAdSoyad || photo.VekilAdSoyad || 'Bilinmeyen Kişi';
+    return photo.SicilAdSoyad || photo.VekilAdSoyad || this.translate.instant('PHOTO_APPROVAL.UNKNOWN_PERSON');
   }
 
   getPersonType(photo: PhotoApproval): string {
-    if (photo.SicilId) return 'Personel / Öğrenci';
-    if (photo.VekilCampusId) return 'Vekil';
-    return 'Bilinmeyen';
+    if (photo.SicilId) return 'PHOTO_APPROVAL.STAFF_OR_STUDENT';
+    if (photo.VekilCampusId) return 'PHOTO_APPROVAL.PROXY';
+    return 'PHOTO_APPROVAL.UNKNOWN';
   }
 
   getPersonTypeSeverity(

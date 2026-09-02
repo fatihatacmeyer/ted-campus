@@ -12,7 +12,7 @@ import { CommonModule } from '@angular/common';
 import { ButtonModule } from 'primeng/button';
 import { TagModule } from 'primeng/tag';
 import { TooltipModule } from 'primeng/tooltip';
-import { TranslatePipe } from '@ngx-translate/core';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 
 import {
   CustomizableTableComponent,
@@ -28,7 +28,7 @@ import { FormsModule } from '@angular/forms';
 import { ToggleSwitchModule } from 'primeng/toggleswitch';
 
 interface TabOption {
-  label: string;
+  labelKey: string;
   status: ProxyApprovalStatus | null;
 }
 
@@ -54,6 +54,7 @@ interface TabOption {
 export class ProxyListComponent implements OnInit {
   private proxyService = inject(ProxyService);
   private notification = inject(NotificationService);
+  private translate = inject(TranslateService);
   private cdr = inject(ChangeDetectorRef);
   private destroyRef = inject(DestroyRef);
 
@@ -74,7 +75,7 @@ export class ProxyListComponent implements OnInit {
       ad: proxy.vekilAdSoyad,
       soyad: '',
       sicilno: proxy.vekilTC,
-      userdefad: 'Vekil',
+      userdefad: this.translate.instant('PROXIES.PROXY'),
       ceptelefon: proxy.vekilTelefon,
       cardid: '',
       userdef: -1,
@@ -87,25 +88,28 @@ export class ProxyListComponent implements OnInit {
   activeTab = signal<ProxyApprovalStatus | null>(null);
 
   tabOptions: TabOption[] = [
-    { label: 'Hepsi', status: null },
-    { label: 'Onaylandı', status: ProxyApprovalStatus.Approved },
-    { label: 'Bekliyor', status: ProxyApprovalStatus.Pending },
-    { label: 'Reddedildi', status: ProxyApprovalStatus.Rejected },
+    { labelKey: 'COMMON.ALL', status: null },
+    { labelKey: 'PROXIES.STATUS_APPROVED', status: ProxyApprovalStatus.Approved },
+    { labelKey: 'PROXIES.STATUS_PENDING', status: ProxyApprovalStatus.Pending },
+    { labelKey: 'PROXIES.STATUS_REJECTED', status: ProxyApprovalStatus.Rejected },
   ];
 
   columns: ColumnDef<GuardianProxy>[] = [
-    { field: 'ogrenciAdSoyad', header: 'Öğrenci', sortable: true, alwaysVisible: true },
-    { field: 'veliAdSoyad', header: 'Veli', sortable: true },
-    { field: 'vekilAdSoyad', header: 'Vekil', sortable: true, alwaysVisible: true },
-    { field: 'vekilTC', header: 'TC Kimlik', sortable: true },
-    { field: 'vekilTelefon', header: 'Telefon' },
-    { field: 'yakinlik', header: 'Yakınlık' },
-    { field: 'basTarih', header: 'Başlangıç' },
-    { field: 'bitTarih', header: 'Bitiş' },
-    { field: 'onayDurumu', header: 'Durum', sortable: true },
+    { field: 'ogrenciAdSoyad', header: 'PROXIES.STUDENT', sortable: true, alwaysVisible: true },
+    { field: 'veliAdSoyad', header: 'PROXIES.PARENT', sortable: true },
+    { field: 'vekilAdSoyad', header: 'PROXIES.PROXY', sortable: true, alwaysVisible: true },
+    { field: 'vekilTC', header: 'PROXIES.TC_NO', sortable: true },
+    { field: 'vekilTelefon', header: 'PROXIES.PHONE' },
+    { field: 'yakinlik', header: 'PROXIES.RELATIONSHIP' },
+    { field: 'basTarih', header: 'PROXIES.START_DATE' },
+    { field: 'bitTarih', header: 'PROXIES.END_DATE' },
+    { field: 'onayDurumu', header: 'PROXIES.STATUS', sortable: true },
   ];
 
   ngOnInit(): void {
+    this.translate.onLangChange.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => {
+      this.cdr.markForCheck();
+    });
     this.loadProxies();
   }
 
@@ -128,7 +132,7 @@ export class ProxyListComponent implements OnInit {
           this.cdr.markForCheck();
         },
         error: () => {
-          this.notification.error('Vekil kayıtları yüklenirken bir hata oluştu.');
+          this.notification.error('PROXIES.ERROR_LOAD');
           this.isLoading = false;
           this.cdr.markForCheck();
         },
@@ -142,13 +146,13 @@ export class ProxyListComponent implements OnInit {
       .subscribe({
         next: (res) => {
           if (res.sonuc === 1) {
-            this.notification.success(res.sunucuCevap || 'İşlem başarılı.');
+            this.notification.success(res.sunucuCevap || 'PROXIES.SUCCESS');
             this.loadProxies();
           } else {
-            this.notification.error(res.sunucuCevap || 'İşlem başarısız.');
+            this.notification.error(res.sunucuCevap || 'PROXIES.FAILED');
           }
         },
-        error: () => this.notification.error('Sunucu hatası oluştu.'),
+        error: () => this.notification.error('PROXIES.ERROR_SERVER'),
       });
   }
 
@@ -169,17 +173,30 @@ export class ProxyListComponent implements OnInit {
         next: (res) => {
           if (res.sonuc === 1) {
             proxy.isActive = newActiveState;
-            this.notification.success(res.sunucuCevap || 'İşlem başarılı.');
+            this.notification.success(res.sunucuCevap || 'PROXIES.SUCCESS');
           } else {
-            this.notification.error(res.sunucuCevap || 'İşlem başarısız.');
+            this.notification.error(res.sunucuCevap || 'PROXIES.FAILED');
           }
           this.cdr.markForCheck();
         },
         error: () => {
-          this.notification.error('Sunucu hatası oluştu.');
+          this.notification.error('PROXIES.ERROR_SERVER');
           this.cdr.markForCheck();
         },
       });
+  }
+
+  getStatusLabel(status: ProxyApprovalStatus): string {
+    switch (status) {
+      case ProxyApprovalStatus.Approved:
+        return 'PROXIES.STATUS_APPROVED';
+      case ProxyApprovalStatus.Rejected:
+        return 'PROXIES.STATUS_REJECTED';
+      case ProxyApprovalStatus.Pending:
+        return 'PROXIES.STATUS_PENDING';
+      default:
+        return 'PROXIES.STATUS_UNKNOWN';
+    }
   }
 
   getSeverity(

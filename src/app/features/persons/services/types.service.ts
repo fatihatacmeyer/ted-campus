@@ -1,6 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 import { ApiHelperService } from '../../../core/services/api-helper.service';
+import { map } from 'rxjs/operators';
 
 export interface DropdownItem {
   id: number;
@@ -20,5 +21,21 @@ export class TypesService {
       islemtipi: 's',
       id,
     });
+  }
+
+  getTerminals(): Observable<DropdownItem[]> {
+    return this.api
+      .callEndpoint<any[]>('Dynamic', {
+        point: 'MeCampusterminal',
+        islemtipi: 's',
+      })
+      .pipe(
+        map((rows) =>
+          (rows || []).map((row) => ({
+            id: row.id,
+            ad: row.terminalname, // DB'den gelen 'terminalname'i UI'ın beklediği 'ad' alanına bağlıyoruz
+          })),
+        ),
+      );
   }
 }

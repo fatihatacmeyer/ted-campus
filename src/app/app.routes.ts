@@ -90,7 +90,7 @@ export const routes: Routes = [
       },
       {
         path: 'school-hours',
-        data: { titleKey: 'Giriş ve Çıkış Saatleri', scrollable: true },
+        data: { titleKey: 'MENU.SCHOOL_HOURS', scrollable: true },
         loadComponent: () =>
           import('./features/school-hours/pages/school-hours-list/school-hours-list').then(
             (m) => m.SchoolHoursListComponent,

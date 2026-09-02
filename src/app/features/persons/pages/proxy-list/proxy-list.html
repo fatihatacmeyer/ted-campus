@@ -1,23 +1,23 @@
 <div class="admin-wrapper">
   <div class="admin-card">
     <div class="d-flex justify-content-between align-items-center mb-3">
-      <h4 class="fw-bold mb-0" style="color: #dc2134">Vekil Yönetimi</h4>
+      <h4 class="fw-bold mb-0" style="color: #dc2134">{{ 'PROXIES.PAGE_TITLE' | translate }}</h4>
       <button
         pButton
         icon="pi pi-refresh"
         class="p-button-sm p-button-outlined"
-        pTooltip="Yenile"
+        [pTooltip]="'COMMON.REFRESH' | translate"
         (click)="loadProxies()"
       ></button>
     </div>
 
     <!-- PDKS Tarzı Filtre Sekmeleri -->
     <div class="d-flex flex-wrap align-items-center gap-2 mb-3 filter-tabs">
-      @for (tab of tabOptions; track tab.label) {
+      @for (tab of tabOptions; track tab.status ?? 'all') {
         <button
           pButton
           type="button"
-          [label]="tab.label"
+          [label]="tab.labelKey | translate"
           size="small"
           [class.active]="activeTab() === tab.status"
           (click)="onTabChange(tab.status)"
@@ -39,11 +39,10 @@
     >
       <!-- Durum Kolonu -->
       <ng-template appColumnCell="onayDurumu" let-row>
-        <p-tag [value]="row.onayDurumuMetni" [severity]="getSeverity(row.onayDurumu)"></p-tag>
+        <p-tag [value]="getStatusLabel(row.onayDurumu) | translate" [severity]="getSeverity(row.onayDurumu)"></p-tag>
       </ng-template>
 
       <!-- İşlemler (Onay/Red) Kolonu -->
-      <!-- İşlemler Kolonu -->
       <ng-template #actionsTpl let-row>
         <div class="d-flex gap-2 justify-content-end align-items-center">
           <!-- Sadece BEKLİYOR durumundaysa Onay/Red butonları çıkar -->
@@ -52,7 +51,7 @@
               pButton
               icon="pi pi-check"
               class="p-button-rounded p-button-text p-button-success p-button-sm"
-              pTooltip="Onayla"
+              [pTooltip]="'PROXIES.APPROVE' | translate"
               tooltipPosition="top"
               (click)="updateStatus(row, ProxyApprovalStatus.Approved); $event.stopPropagation()"
             ></button>
@@ -61,7 +60,7 @@
               pButton
               icon="pi pi-times"
               class="p-button-rounded p-button-text p-button-danger p-button-sm"
-              pTooltip="Reddet"
+              [pTooltip]="'PROXIES.REJECT' | translate"
               tooltipPosition="top"
               (click)="updateStatus(row, ProxyApprovalStatus.Rejected); $event.stopPropagation()"
             ></button>
@@ -73,7 +72,7 @@
               [ngModel]="row.isActive"
               (ngModelChange)="onToggleActive(row, $event)"
               (click)="$event.stopPropagation()"
-              pTooltip="Yetki Durumu"
+              [pTooltip]="'PROXIES.AUTH_STATUS' | translate"
               tooltipPosition="left"
             ></p-toggleswitch>
           }

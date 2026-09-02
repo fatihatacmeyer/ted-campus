@@ -1,11 +1,11 @@
 <div class="admin-wrapper">
   <div class="admin-card">
     <div class="d-flex justify-content-between align-items-center mb-3">
-      <h4 class="fw-bold mb-0" style="color: #dc2134">Fotoğraf Onay İşlemleri</h4>
+      <h4 class="fw-bold mb-0" style="color: #dc2134">{{ 'PHOTO_APPROVAL.PAGE_TITLE' | translate }}</h4>
       <button
         pButton
         icon="pi pi-refresh"
-        label="Yenile"
+        [label]="'COMMON.REFRESH' | translate"
         class="p-button-sm p-button-outlined"
         (click)="loadPendingPhotos()"
         [loading]="isLoading && !processingId"
@@ -13,19 +13,19 @@
     </div>
 
     <div class="text-muted small mb-4">
-      Onay bekleyen profil fotoğraflarını aşağıdan inceleyip onaylayabilir veya reddedebilirsiniz.
+      {{ 'PHOTO_APPROVAL.DESCRIPTION' | translate }}
     </div>
 
     @if (isLoading && !processingId) {
       <div class="loading-box">
         <p-progressSpinner strokeWidth="4" animationDuration=".8s"></p-progressSpinner>
-        <span class="loading-text">Fotoğraflar yükleniyor...</span>
+        <span class="loading-text">{{ 'PHOTO_APPROVAL.LOADING' | translate }}</span>
       </div>
     } @else if (pendingPhotos.length === 0) {
       <div class="empty-state">
         <i class="pi pi-check-circle text-4xl text-green-500 mb-3"></i>
-        <h5 class="m-0 text-muted">Harika!</h5>
-        <span class="text-muted">Onay bekleyen hiçbir fotoğraf yok.</span>
+        <h5 class="m-0 text-muted">{{ 'PHOTO_APPROVAL.EMPTY_TITLE' | translate }}</h5>
+        <span class="text-muted">{{ 'PHOTO_APPROVAL.EMPTY_DESCRIPTION' | translate }}</span>
       </div>
     } @else {
       <!-- Kart Izgarası (Grid) -->
@@ -40,7 +40,7 @@
               } @else {
                 <img
                   [src]="getPhotoUrl(photo.DosyaAdi)"
-                  alt="Profil Fotoğrafı"
+                  [alt]="'PERSON.PHOTO' | translate"
                   class="profile-img"
                   (error)="onPhotoError(photo.Id)"
                 />
@@ -58,10 +58,10 @@
               <h5 class="person-name">{{ getPersonName(photo) }}</h5>
               <div class="d-flex justify-content-between align-items-center mb-2">
                 <p-tag
-                  [value]="getPersonType(photo)"
+                  [value]="getPersonType(photo) | translate"
                   [severity]="getPersonTypeSeverity(photo)"
                 ></p-tag>
-                <span class="upload-date" title="Yükleme Tarihi">
+                <span class="upload-date" [title]="'PHOTO_APPROVAL.UPLOAD_DATE' | translate">
                   <i class="pi pi-calendar"></i>
                   {{ photo.YuklemeTarihi | date: 'dd.MM.yyyy HH:mm' }}
                 </span>
@@ -72,7 +72,7 @@
               <button
                 pButton
                 icon="pi pi-times"
-                label="Reddet"
+                [label]="'PHOTO_APPROVAL.REJECT' | translate"
                 class="p-button-danger p-button-outlined w-100"
                 (click)="rejectPhoto(photo)"
                 [disabled]="processingId !== null"
@@ -80,7 +80,7 @@
               <button
                 pButton
                 icon="pi pi-check"
-                label="Onayla"
+                [label]="'PHOTO_APPROVAL.APPROVE' | translate"
                 class="p-button-success w-100"
                 (click)="approvePhoto(photo)"
                 [disabled]="processingId !== null"

@@ -4,7 +4,9 @@ import {
   inject,
   ChangeDetectionStrategy,
   ChangeDetectorRef,
+  DestroyRef,
 } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { TableModule } from 'primeng/table';
@@ -12,6 +14,7 @@ import { ButtonModule } from 'primeng/button';
 import { TooltipModule } from 'primeng/tooltip';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { ConfirmationService } from 'primeng/api';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 
 import { NotificationService } from '../../../../core/services/notification.service';
 import { SchoolHoursService } from '../../services/school-hours.service';
@@ -27,6 +30,7 @@ import { SchoolHours } from '../../models/school-hours.model';
     ButtonModule,
     TooltipModule,
     ConfirmDialogModule,
+    TranslatePipe,
   ],
   providers: [ConfirmationService],
   templateUrl: './school-hours-list.html',
@@ -42,21 +46,26 @@ export class SchoolHoursListComponent implements OnInit {
 
   // Tablo sütunlarını döngüye alabilmek için tanımladık
   days = [
-    { key: 'Pazartesi', header: 'Pazartesi' },
-    { key: 'Sali', header: 'Salı' },
-    { key: 'Carsamba', header: 'Çarşamba' },
-    { key: 'Persembe', header: 'Perşembe' },
-    { key: 'Cuma', header: 'Cuma' },
-    { key: 'Cumartesi', header: 'Cumartesi' },
-    { key: 'Pazar', header: 'Pazar' },
+    { key: 'Pazartesi', headerKey: 'DAYS.MONDAY' },
+    { key: 'Sali', headerKey: 'DAYS.TUESDAY' },
+    { key: 'Carsamba', headerKey: 'DAYS.WEDNESDAY' },
+    { key: 'Persembe', headerKey: 'DAYS.THURSDAY' },
+    { key: 'Cuma', headerKey: 'DAYS.FRIDAY' },
+    { key: 'Cumartesi', headerKey: 'DAYS.SATURDAY' },
+    { key: 'Pazar', headerKey: 'DAYS.SUNDAY' },
   ];
 
   private schoolHoursService = inject(SchoolHoursService);
   private confirmationService = inject(ConfirmationService);
   private notification = inject(NotificationService);
+  private translate = inject(TranslateService);
   private cdr = inject(ChangeDetectorRef);
+  private destroyRef = inject(DestroyRef);
 
   ngOnInit(): void {
+    this.translate.onLangChange.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => {
+      this.cdr.markForCheck();
+    });
     this.loadData();
   }
 
@@ -70,7 +79,7 @@ export class SchoolHoursListComponent implements OnInit {
         this.cdr.markForCheck();
       },
       error: () => {
-        this.notification.error('Saat bilgileri yüklenirken bir hata oluştu.');
+        this.notification.error('SCHOOL_HOURS.ERROR_LOAD');
         this.loading = false;
         this.cdr.markForCheck();
       },
@@ -96,11 +105,11 @@ export class SchoolHoursListComponent implements OnInit {
 
     // Değişiklik varsa onay penceresini aç
     this.confirmationService.confirm({
-      message: `<b>${row.SinifSeviyesi}</b> saatlerinde yaptığınız değişiklikleri kaydetmek istediğinize emin misiniz?`,
-      header: 'Değişiklikleri Onayla',
+      message: this.translate.instant('SCHOOL_HOURS.CONFIRM_MESSAGE', { grade: row.SinifSeviyesi }),
+      header: this.translate.instant('SCHOOL_HOURS.CONFIRM_TITLE'),
       icon: 'pi pi-exclamation-triangle',
-      acceptLabel: 'Evet, Kaydet',
-      rejectLabel: 'Vazgeç',
+      acceptLabel: this.translate.instant('SCHOOL_HOURS.CONFIRM_ACCEPT'),
+      rejectLabel: this.translate.instant('SCHOOL_HOURS.CONFIRM_REJECT'),
       acceptButtonStyleClass: 'p-button-success',
       rejectButtonStyleClass: 'p-button-text p-button-danger',
       accept: () => {
@@ -125,18 +134,18 @@ export class SchoolHoursListComponent implements OnInit {
     this.schoolHoursService.updateSchoolHours(row).subscribe({
       next: (res) => {
         if (res.sonuc === 1 || res.sonuc === 0) {
-          this.notification.success(res.sunucuCevap || 'Saatler başarıyla güncellendi.');
+          this.notification.success(res.sunucuCevap || 'SCHOOL_HOURS.SUCCESS_UPDATE');
           delete this.clonedHours[row.Id];
           this.loadData();
         } else {
-          this.notification.error(res.sunucuCevap || 'Güncelleme sırasında hata oluştu.');
+          this.notification.error(res.sunucuCevap || 'SCHOOL_HOURS.ERROR_UPDATE');
           this.revertRow(row);
           this.loading = false;
           this.cdr.markForCheck();
         }
       },
       error: () => {
-        this.notification.error('Sunucuyla iletişim hatası.');
+        this.notification.error('SCHOOL_HOURS.ERROR_SERVER');
         this.revertRow(row);
         this.loading = false;
         this.cdr.markForCheck();
@@ -339,12 +348,14 @@ export class SchoolHoursListComponent implements OnInit {
 
     // Etütlü Saatler (Sadece geçerli saat girilmişse ve 00:00 değilse gösterilir)
     if (hasEtut) {
-      output += `<div class="etut-time" style="font-size: 0.75rem; color: #6b7280; margin-top: 2px;">(Etüt: ${eBas} - ${eBit})</div>`;
+      const studyPrefix = this.translate.instant('SCHOOL_HOURS.STUDY_PREFIX');
+      output += `<div class="etut-time" style="font-size: 0.75rem; color: #6b7280; margin-top: 2px;">(${studyPrefix}: ${eBas} - ${eBit})</div>`;
     }
 
     // Hiç saat yoksa Kapalı göster
     if (!output) {
-      output = '<span style="color: #9ca3af; font-size: 0.8rem; font-style: italic;">Kapalı</span>';
+      const closedLabel = this.translate.instant('SCHOOL_HOURS.CLOSED');
+      output = `<span style="color: #9ca3af; font-size: 0.8rem; font-style: italic;">${closedLabel}</span>`;
     }
 
     return output;

@@ -469,6 +469,7 @@ export class PersonService {
       saatlikmi: params.saatlikmi,
       aciklama: params.aciklama,
       blok: params.blok,
+      kapi: params.kapi,
     });
   }
 

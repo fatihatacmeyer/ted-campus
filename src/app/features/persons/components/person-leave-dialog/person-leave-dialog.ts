@@ -77,17 +77,30 @@ export class PersonLeaveDialogComponent implements OnChanges {
     if (changes['visible'] && this.visible) {
       this.resetForm();
       this.loadLeaveTypes();
+      this.loadTerminals(); // ← YENİ
     }
   }
 
   selectedTerminal: number | null = null;
-  terminals: DropdownItem[] = [
-    // Şimdilik mock veri koyuyoruz, sonrasında TypesService üzerinden veritabanından çekilecek
-    { id: 1, ad: 'Ana Kapı Turnike' },
-    { id: 2, ad: 'Otopark Çıkışı' },
-    { id: 3, ad: 'Lise Binası Arka Kapı' },
-  ];
+  terminals: DropdownItem[] = []; // artık boş başlıyor, backend'den dolduruluyor
 
+  /** sp_MeCampusterminal_s'ten çıkış terminali (kapı) listesini çeker. */
+  private loadTerminals(): void {
+    this.typesService
+      .getTerminals()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (items: DropdownItem[]) => {
+          this.terminals = items; // Dropdown'ı besleyen dizi
+          this.cdr.markForCheck();
+        },
+        error: (err) => {
+          console.error('[PersonLeaveDialog] Terminaller yüklenirken hata:', err);
+          this.terminals = [];
+          this.cdr.markForCheck();
+        },
+      });
+  }
   private getTimeString(date: Date): string {
     const hours = String(date.getHours()).padStart(2, '0');
     const minutes = String(date.getMinutes()).padStart(2, '0');
@@ -175,6 +188,7 @@ export class PersonLeaveDialogComponent implements OnChanges {
         saatlikmi: this.isSaatlik ? 1 : 0,
         aciklama: (this.description || '').trim(),
         blok: this.isBlok ? 1 : 0,
+        kapi: this.selectedTerminal!,
       };
       return this.personService.assignLeaveCampus(request);
     });

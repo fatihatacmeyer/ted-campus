@@ -26,10 +26,17 @@
       displayMode="scroll"
     >
       <ng-template appColumnCell="classroom" let-activity>
-        <span [pTooltip]="getTableClassroomFull(activity.classroom)" tooltipPosition="top">
+        <span
+          [pTooltip]="
+            activity.classroom && activity.classroom !== 'Tüm Sınıflar'
+              ? activity.classroom
+              : ('ACTIVITIES.ALL_CLASSES' | translate)
+          "
+          tooltipPosition="top"
+        >
           @if (activity.classroom && activity.classroom !== 'Tüm Sınıflar') {
             <span class="cell-text classroom-summary-text" style="max-width: 180px">
-              {{ getTableClassroomSummary(activity.classroom) }}
+              {{ activity.classroom }}
             </span>
           } @else {
             <span class="text-muted">{{ 'ACTIVITIES.ALL_CLASSES' | translate }}</span>
@@ -96,7 +103,7 @@
             [class.is-invalid]="isFieldInvalid('name')"
           />
           @if (activityForm.get('name')?.touched && activityForm.get('name')?.invalid) {
-            <small class="form-field-error">Bu alan zorunludur.</small>
+            <small class="form-field-error">{{ 'ACTIVITIES.ERROR_REQUIRED_FIELD' | translate }}</small>
           }
         </div>
         <div class="w-100 d-flex flex-column gap-1">
@@ -115,7 +122,7 @@
           @if (
             activityForm.get('activityType')?.touched && activityForm.get('activityType')?.invalid
           ) {
-            <small class="form-field-error">Bu alan zorunludur.</small>
+            <small class="form-field-error">{{ 'ACTIVITIES.ERROR_REQUIRED_FIELD' | translate }}</small>
           }
         </div>
       </div>
@@ -156,12 +163,15 @@
             formControlName="startDate"
             inputId="startDate"
             dateFormat="yy-mm-dd"
+            [showTime]="true"
+            [showSeconds]="false"
+            hourFormat="24"
             appendTo="body"
             [styleClass]="'w-100' + (isFieldInvalid('startDate') ? ' is-invalid' : '')"
             [showIcon]="true"
           ></p-datepicker>
           @if (activityForm.get('startDate')?.touched && activityForm.get('startDate')?.invalid) {
-            <small class="form-field-error">Bu alan zorunludur.</small>
+            <small class="form-field-error">{{ 'ACTIVITIES.ERROR_REQUIRED_FIELD' | translate }}</small>
           }
         </div>
         <div class="w-100 d-flex flex-column gap-1">
@@ -172,15 +182,18 @@
             formControlName="endDate"
             inputId="endDate"
             dateFormat="yy-mm-dd"
+            [showTime]="true"
+            [showSeconds]="false"
+            hourFormat="24"
             appendTo="body"
             [styleClass]="'w-100' + (isFieldInvalid('endDate') ? ' is-invalid' : '')"
             [showIcon]="true"
           ></p-datepicker>
           @if (activityForm.get('endDate')?.touched && activityForm.get('endDate')?.invalid) {
-            <small class="form-field-error">Bu alan zorunludur.</small>
+            <small class="form-field-error">{{ 'ACTIVITIES.ERROR_REQUIRED_FIELD' | translate }}</small>
           }
           @if (activityForm.touched && activityForm.errors?.['dateRange']) {
-            <small class="form-field-error">Bitiş tarihi, başlangıç tarihinden önce olamaz.</small>
+            <small class="form-field-error">{{ 'ACTIVITIES.ERROR_DATE_RANGE' | translate }}</small>
           }
         </div>
       </div>
@@ -193,6 +206,9 @@
             formControlName="requestStartDate"
             inputId="requestStartDate"
             dateFormat="yy-mm-dd"
+            [showTime]="true"
+            [showSeconds]="false"
+            hourFormat="24"
             appendTo="body"
             [styleClass]="'w-100' + (isFieldInvalid('requestStartDate') ? ' is-invalid' : '')"
             [showIcon]="true"
@@ -201,7 +217,7 @@
             activityForm.get('requestStartDate')?.touched &&
             activityForm.get('requestStartDate')?.invalid
           ) {
-            <small class="form-field-error">Bu alan zorunludur.</small>
+            <small class="form-field-error">{{ 'ACTIVITIES.ERROR_REQUIRED_FIELD' | translate }}</small>
           }
         </div>
         <div class="w-100 d-flex flex-column gap-1">
@@ -212,6 +228,9 @@
             formControlName="requestEndDate"
             inputId="requestEndDate"
             dateFormat="yy-mm-dd"
+            [showTime]="true"
+            [showSeconds]="false"
+            hourFormat="24"
             appendTo="body"
             [styleClass]="'w-100' + (isFieldInvalid('requestEndDate') ? ' is-invalid' : '')"
             [showIcon]="true"
@@ -220,10 +239,10 @@
             activityForm.get('requestEndDate')?.touched &&
             activityForm.get('requestEndDate')?.invalid
           ) {
-            <small class="form-field-error">Bu alan zorunludur.</small>
+            <small class="form-field-error">{{ 'ACTIVITIES.ERROR_REQUIRED_FIELD' | translate }}</small>
           }
           @if (activityForm.touched && activityForm.errors?.['dateRangeRequest']) {
-            <small class="form-field-error">Bitiş tarihi, başlangıç tarihinden önce olamaz.</small>
+            <small class="form-field-error">{{ 'ACTIVITIES.ERROR_REQUEST_DATE_RANGE' | translate }}</small>
           }
         </div>
       </div>
@@ -270,9 +289,9 @@
           ) {
             <small class="form-field-error">
               @if (activityForm.get('maxStudentCount')?.errors?.['required']) {
-                Bu alan zorunludur.
+                {{ 'ACTIVITIES.ERROR_REQUIRED_FIELD' | translate }}
               } @else if (activityForm.get('maxStudentCount')?.errors?.['min']) {
-                En az 1 olmalıdır.
+                {{ 'ACTIVITIES.ERROR_MIN_STUDENT' | translate }}
               }
             </small>
           }
@@ -297,9 +316,9 @@
           ) {
             <small class="form-field-error">
               @if (activityForm.get('studentParentCount')?.errors?.['required']) {
-                Bu alan zorunludur.
+                {{ 'ACTIVITIES.ERROR_REQUIRED_FIELD' | translate }}
               } @else if (activityForm.get('studentParentCount')?.errors?.['min']) {
-                En az 1 olmalıdır.
+                {{ 'ACTIVITIES.ERROR_MIN_PARENT' | translate }}
               }
             </small>
           }
@@ -320,7 +339,7 @@
             [class.is-invalid]="isFieldInvalid('fee')"
           />
           @if (activityForm.get('fee')?.touched && activityForm.get('fee')?.invalid) {
-            <small class="form-field-error">Bu alan zorunludur.</small>
+            <small class="form-field-error">{{ 'ACTIVITIES.ERROR_REQUIRED_FIELD' | translate }}</small>
           }
         </div>
       </div>
@@ -331,7 +350,7 @@
       <h6 class="text-primary fw-bold mb-3 border-bottom pb-2">
         {{ 'ACTIVITIES.EXTRA_INFO' | translate }}
       </h6>
-      <!-- Sınıf Kapsamı — quick-select但onları + MultiSelect -->
+      <!-- Sınıf Kapsamı — quick-select butonları + MultiSelect -->
       <div class="d-flex flex-column gap-2 mb-3">
         <label for="classroom" class="fw-semibold small text-muted"
           >{{ 'ACTIVITIES.CLASSROOM_SCOPE' | translate }} <span class="text-primary">*</span></label
@@ -357,8 +376,6 @@
           </button>
         </div>
 
-        <!-- Tüm Sınıflar toggle + grade pill但onları (yatay scroll) -->
-
         <!-- Seçim özeti satırı -->
         @if (getSelectionSummary) {
           <div class="d-flex align-items-center gap-2 classroom-selection-summary">
@@ -372,7 +389,7 @@
               style="text-decoration: none; font-size: 0.75rem"
               (click)="clearAllClasses()"
             >
-              Temizle
+              {{ 'COMMON.CLEAR' | translate }}
             </button>
           </div>
         }
@@ -385,7 +402,7 @@
           [group]="true"
           optionLabel="label"
           optionValue="value"
-          placeholder="Bireysel şube seçimi için tıklayın"
+          [placeholder]="'ACTIVITIES.SELECT_CLASSROOM_PLACEHOLDER' | translate"
           display="chip"
           [maxSelectedLabels]="8"
           appendTo="body"
@@ -426,13 +443,13 @@
           </ng-template>
         </p-multiSelect>
         @if (isFieldInvalid('classroom')) {
-          <small class="form-field-error">En az bir sınıf seçilmelidir.</small>
+          <small class="form-field-error">{{ 'ACTIVITIES.ERROR_CLASSROOM_REQUIRED' | translate }}</small>
         }
       </div>
 
       <!-- Eğitim Düzeyi — cbo_direktorluk lookup'undan doldurulur -->
       <div class="d-flex flex-column gap-1 mb-3">
-        <label for="educationLevel" class="fw-semibold small text-muted">Eğitim Düzeyi</label>
+        <label for="educationLevel" class="fw-semibold small text-muted">{{ 'ACTIVITIES.EDUCATION_LEVEL' | translate }}</label>
         <p-select
           formControlName="educationLevel"
           inputId="educationLevel"
@@ -441,14 +458,14 @@
           optionValue="ad"
           appendTo="body"
           styleClass="w-100"
-          placeholder="Eğitim düzeyi seçin"
+          [placeholder]="'ACTIVITIES.EDUCATION_LEVEL_PLACEHOLDER' | translate"
         ></p-select>
       </div>
 
       <!-- Ulaşım Bilgisi — UlasimCampus lookup'undan doldurulur -->
       <div class="d-flex flex-column gap-1 mb-3">
         <label for="transportation" class="fw-semibold small text-muted"
-          >Ulaşım Bilgisi <span class="text-primary">*</span></label
+          >{{ 'ACTIVITIES.COLUMN_TRANSPORTATION' | translate }} <span class="text-primary">*</span></label
         >
         <p-select
           formControlName="transportation"
@@ -458,17 +475,17 @@
           optionValue="ad"
           appendTo="body"
           [styleClass]="'w-100' + (isFieldInvalid('transportation') ? ' is-invalid' : '')"
-          placeholder="Ulaşım seçin"
+          [placeholder]="'ACTIVITIES.TRANSPORTATION_PLACEHOLDER' | translate"
         ></p-select>
         @if (
           activityForm.get('transportation')?.touched && activityForm.get('transportation')?.invalid
         ) {
-          <small class="form-field-error">Bu alan zorunludur.</small>
+          <small class="form-field-error">{{ 'ACTIVITIES.ERROR_REQUIRED_FIELD' | translate }}</small>
         }
       </div>
 
       <div class="w-100 d-flex flex-column gap-1 mb-3">
-        <label for="description" class="fw-semibold small text-muted">Açıklama</label>
+        <label for="description" class="fw-semibold small text-muted">{{ 'ACTIVITIES.DESCRIPTION' | translate }}</label>
         <textarea
           pTextarea
           id="description"
@@ -484,14 +501,14 @@
       @if (formSubmitted && activityForm.invalid) {
         <div class="me-auto d-flex align-items-center gap-2 form-field-error">
           <i class="pi pi-exclamation-circle"></i>
-          <span>Lütfen zorunlu alanları doldurun.</span>
+          <span>{{ 'ACTIVITIES.ERROR_FILL_REQUIRED_FIELDS' | translate }}</span>
         </div>
       }
       <button
         pButton
         type="button"
-        label="İptal"
-        aria-label="İptal"
+        [label]="'COMMON.CANCEL' | translate"
+        [attr.aria-label]="'COMMON.CANCEL' | translate"
         icon="pi pi-times"
         class="p-button-text"
         (click)="closeDialog()"
@@ -499,8 +516,8 @@
       <button
         pButton
         type="submit"
-        label="Kaydet"
-        aria-label="Kaydet"
+        [label]="'COMMON.SAVE' | translate"
+        [attr.aria-label]="'COMMON.SAVE' | translate"
         icon="pi pi-check"
         class="p-button-primary"
       ></button>
@@ -510,7 +527,7 @@
 
 <!-- Tüm Sınıflar onay dialogu -->
 <p-dialog
-  header="Etkinlik Kapsamı Onayı"
+  [header]="'ACTIVITIES.CONFIRM_ALL_CLASSES_TITLE' | translate"
   [(visible)]="showAllClassesConfirm"
   [modal]="true"
   [style]="{ width: '450px' }"
@@ -519,9 +536,9 @@
   <div class="d-flex align-items-start gap-3">
     <i class="pi pi-exclamation-triangle text-warning" style="font-size: 1.5rem"></i>
     <div>
-      <p class="mb-2">Bu etkinlik <strong>tüm sınıflara</strong> açılacaktır.</p>
+      <p class="mb-2" [innerHTML]="'ACTIVITIES.CONFIRM_ALL_CLASSES_DESC' | translate"></p>
       <p class="text-muted small mb-0">
-        Seçili sınıf bulunmuyor. Devam etmek istediğinize emin misiniz?
+        {{ 'ACTIVITIES.CONFIRM_ALL_CLASSES_SUB' | translate }}
       </p>
     </div>
   </div>
@@ -529,16 +546,16 @@
     <div class="d-flex justify-content-end gap-2">
       <button
         pButton
-        label="Geri Dön"
-        aria-label="Geri Dön"
+        [label]="'COMMON.BACK' | translate"
+        [attr.aria-label]="'COMMON.BACK' | translate"
         icon="pi pi-arrow-left"
         class="p-button-text"
         (click)="cancelConfirm()"
       ></button>
       <button
         pButton
-        label="Evet, Kaydet"
-        aria-label="Evet, Kaydet"
+        [label]="'ACTIVITIES.CONFIRM_SAVE_ACCEPT' | translate"
+        [attr.aria-label]="'ACTIVITIES.CONFIRM_SAVE_ACCEPT' | translate"
         icon="pi pi-check"
         class="p-button-primary"
         (click)="confirmSave()"
@@ -549,7 +566,7 @@
 
 <!-- Etkinlik Detay Dialogu -->
 <p-dialog
-  [header]="selectedActivity()?.name || 'Etkinlik Detayı'"
+  [header]="selectedActivity()?.name || ('ACTIVITIES.DETAIL_TITLE' | translate)"
   [(visible)]="isDetailVisible"
   [modal]="true"
   [style]="{ width: 'min(820px, 95vw)', height: 'min(80vh, 90vh)' }"
@@ -558,7 +575,7 @@
 >
   <div class="detail-body">
     <!-- ONAY DASHBOARD -->
-    <h6 class="text-primary fw-bold mb-1">Onay Durumu</h6>
+    <h6 class="text-primary fw-bold mb-1">{{ 'ACTIVITIES.APPROVAL_STATUS' | translate }}</h6>
 
     @if (isLoadingStats()) {
       <div class="d-flex justify-content-center py-4">
@@ -570,7 +587,7 @@
         @if (selectedActivity(); as act) {
           <button
             pButton
-            label="Tekrar Dene"
+            [label]="'COMMON.RETRY' | translate"
             icon="pi pi-refresh"
             class="p-button-text p-button-sm"
             (click)="loadApprovalStats(act.id)"
@@ -590,7 +607,7 @@
           <div class="stat-icon"><i class="pi pi-clock"></i></div>
           <div class="stat-info">
             <span class="stat-count">{{ stats.bekleyen }}</span>
-            <span class="stat-label">Bekleyen</span>
+            <span class="stat-label">{{ 'ACTIVITIES.PENDING' | translate }}</span>
           </div>
         </div>
         <div
@@ -604,7 +621,7 @@
           <div class="stat-icon"><i class="pi pi-check-circle"></i></div>
           <div class="stat-info">
             <span class="stat-count">{{ stats.onaylanan }}</span>
-            <span class="stat-label">Onaylanan</span>
+            <span class="stat-label">{{ 'ACTIVITIES.APPROVED' | translate }}</span>
           </div>
         </div>
         <div
@@ -618,7 +635,7 @@
           <div class="stat-icon"><i class="pi pi-times-circle"></i></div>
           <div class="stat-info">
             <span class="stat-count">{{ stats.reddedilen }}</span>
-            <span class="stat-label">Reddedilen</span>
+            <span class="stat-label">{{ 'ACTIVITIES.REJECTED' | translate }}</span>
           </div>
         </div>
         <div
@@ -632,7 +649,7 @@
           <div class="stat-icon"><i class="pi pi-users"></i></div>
           <div class="stat-info">
             <span class="stat-count">{{ stats.toplam }}</span>
-            <span class="stat-label">Toplam</span>
+            <span class="stat-label">{{ 'ACTIVITIES.TOTAL' | translate }}</span>
           </div>
         </div>
       </div>
@@ -642,11 +659,11 @@
     <div
       class="participant-header mt-2 mb-1 d-flex align-items-center justify-content-between gap-2"
     >
-      <h6 class="text-primary fw-bold mb-0">Etkinliğe Katılanlar</h6>
+      <h6 class="text-primary fw-bold mb-0">{{ 'ACTIVITIES.PARTICIPANTS' | translate }}</h6>
       <div class="d-flex align-items-center gap-2">
         @if (!isLoadingParticipants()) {
           <span class="text-muted small fw-normal participant-count-badge"
-            >{{ filteredParticipants().length }} katılımcı</span
+            >{{ filteredParticipants().length }} {{ 'COMMON.PERSON' | translate }}</span
           >
         }
       </div>
@@ -662,7 +679,7 @@
         @if (selectedActivity(); as act) {
           <button
             pButton
-            label="Tekrar Dene"
+            [label]="'COMMON.RETRY' | translate"
             icon="pi pi-refresh"
             class="p-button-text p-button-sm"
             (click)="loadParticipants(act.id)"
@@ -680,7 +697,7 @@
         rowNumberHeader="#"
         [displayMode]="'paginated'"
         scrollHeight="calc(100vh - 420px)"
-        emptyMessage="Bu filtreye uygun katılımcı bulunamadı."
+        [emptyMessage]="'ACTIVITIES.NO_PARTICIPANTS_FOUND' | translate"
         tableId="participant-list"
       >
         <ng-template appColumnCell="durum" let-row>

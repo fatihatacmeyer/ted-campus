@@ -26,11 +26,11 @@ export class SidebarComponent {
     { labelKey: 'MENU.STUDENTS', route: '/home/students', icon: 'school' },
     { labelKey: 'MENU.PARENTS', route: '/home/parents', icon: 'group' },
     // { labelKey: 'MENU.TEACHERS', route: '/home/teachers', icon: 'badge' },
-    { labelKey: 'Vekiller', route: '/home/proxies', icon: 'supervisor_account' },
+    { labelKey: 'MENU.PROXIES', route: '/home/proxies', icon: 'supervisor_account' },
     { labelKey: 'MENU.TRANSPORT', route: '/home/transport', icon: 'directions_bus' },
     { labelKey: 'MENU.ACTIVITIES', route: '/home/activities', icon: 'event' },
     { labelKey: 'MENU.ATTENDANCE', route: '/home/attendance', icon: 'schedule' },
-    { labelKey: 'Fotoğraf Yönetimi', route: '/home/photo-approval', icon: 'photo_camera' },
-    { labelKey: 'Okul Saatleri', route: '/home/school-hours', icon: 'alarm' },
+    { labelKey: 'MENU.PHOTO_APPROVAL', route: '/home/photo-approval', icon: 'photo_camera' },
+    { labelKey: 'MENU.SCHOOL_HOURS', route: '/home/school-hours', icon: 'alarm' },
   ];
 }

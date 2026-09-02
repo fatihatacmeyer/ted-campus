@@ -42,7 +42,7 @@ import {
   ActivityParticipant,
 } from '../../../../core/models/activity.model';
 import { ActivityService } from '../../services/activity.service';
-import { formatDate, parseDate } from '../../../../shared/utils/date.utils';
+import { formatDateTime, parseDate } from '../../../../shared/utils/date.utils';
 import { NotificationService } from '../../../../core/services/notification.service';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 
@@ -171,11 +171,11 @@ export class ActivitiesComponent {
   /** Katılımcı tablosu sütun tanımları — filterable: false porque filtreler header'da */
   participantColumns: ColumnDef<ActivityParticipant>[] = [
     // { field: 'id', header: '#', sortable: true, width: '60px' },
-    { field: 'ogrenci', header: 'Öğrenci', sortable: true, filterable: false },
-    { field: 'sinif', header: 'Sınıf', sortable: true, width: '100px', filterable: false },
-    { field: 'veli', header: 'Veli', sortable: true, filterable: false },
-    { field: 'telefon', header: 'Telefon', width: '120px', filterable: false },
-    { field: 'durum', header: 'Durum', sortable: true, width: '110px', filterable: false },
+    { field: 'ogrenci', header: 'ACTIVITIES.COLUMN_STUDENT', sortable: true, filterable: false },
+    { field: 'sinif', header: 'ACTIVITIES.COLUMN_CLASSROOM', sortable: true, width: '100px', filterable: false },
+    { field: 'veli', header: 'ACTIVITIES.COLUMN_PARENT', sortable: true, filterable: false },
+    { field: 'telefon', header: 'ACTIVITIES.COLUMN_PHONE', width: '120px', filterable: false },
+    { field: 'durum', header: 'ACTIVITIES.STATUS', sortable: true, width: '110px', filterable: false },
   ];
 
   activityColumns: ColumnDef<ActivityInterface>[] = [
@@ -490,44 +490,6 @@ export class ActivitiesComponent {
     return parts.join(', ');
   }
 
-  /** Sınıf değerinden (ör: "2-A") grade etiketini (ör: "2. Sınıf") döndür */
-  getGradeLabelForClass(classValue: string): string {
-    for (const group of this.classroomGroups) {
-      if (group.items.some((item) => item.value === classValue)) {
-        return group.label.replace('lar', '').replace('ler', '');
-      }
-    }
-    return '';
-  }
-
-  /** Tablodaki sınıf hücresi için gruplanmış özet string */
-  getTableClassroomSummary(classroom: string): string {
-    if (!classroom || classroom === 'Tüm Sınıflar')
-      return this.translate.instant('ACTIVITIES.ALL_CLASSES');
-
-    const classes = classroom.split(', ');
-    const counts = new Map<string, number>();
-
-    for (const cls of classes) {
-      const gradeLabel = this.getGradeLabelForClass(cls);
-      if (gradeLabel) {
-        counts.set(gradeLabel, (counts.get(gradeLabel) || 0) + 1);
-      }
-    }
-
-    if (counts.size === 0) return classroom;
-    return Array.from(counts.entries())
-      .map(([label, count]) => `${label}: ${count}`)
-      .join(', ');
-  }
-
-  /** Tablodaki tooltip için tam liste */
-  getTableClassroomFull(classroom: string): string {
-    if (!classroom || classroom === 'Tüm Sınıflar')
-      return this.translate.instant('ACTIVITIES.ALL_CLASSES');
-    return classroom;
-  }
-
   /** Grubu aç/kapat: hepsi seçiliyse kaldır, değilse hepsini ekle */
   toggleGroup(group: { label: string; items: { label: string; value: string }[] }): void {
     const ctrl = this.activityForm.get('classroom')!;
@@ -724,10 +686,10 @@ export class ActivitiesComponent {
       oKod3: '',
       oKod4: '',
       oKod5: '',
-      startDate: formatDate(formValues.startDate),
-      endDate: formatDate(formValues.endDate),
-      requestStartDate: formatDate(formValues.requestStartDate),
-      requestEndDate: formatDate(formValues.requestEndDate),
+      startDate: formatDateTime(formValues.startDate),
+      endDate: formatDateTime(formValues.endDate),
+      requestStartDate: formatDateTime(formValues.requestStartDate),
+      requestEndDate: formatDateTime(formValues.requestEndDate),
     };
 
     if (!hasClassroom) {

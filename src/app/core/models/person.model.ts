@@ -268,6 +268,7 @@ export interface PersonLeaveAssignCampusParams {
   saatlikmi: number; // 0 | 1
   aciklama: string;
   blok: number; // 0 = gün bazlı, 1 = blok (her gün aynı saat)
+  kapi: number;
 }
 
 /**
