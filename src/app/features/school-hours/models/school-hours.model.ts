@@ -1,5 +1,7 @@
 export interface SchoolHours {
   Id: number;
+  CampusId: number;
+  SınıfId: number;
   SinifSeviyesi: string;
   Aciklama?: string;
 

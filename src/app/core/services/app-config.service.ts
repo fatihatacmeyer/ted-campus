@@ -18,6 +18,7 @@ export const APP_CONFIG = new InjectionToken<AppConfig>('APP_CONFIG');
 export interface RuntimeConfig {
   apiUrl?: string;
   reportBaseUrl?: string;
+  photoBaseUrl?: string;
 }
 
 /**
@@ -44,6 +45,9 @@ export async function loadRuntimeConfig(): Promise<void> {
     }
     if (runtime.reportBaseUrl !== undefined) {
       environment.reportBaseUrl = runtime.reportBaseUrl;
+    }
+    if (runtime.photoBaseUrl !== undefined) {
+      environment.photoBaseUrl = runtime.photoBaseUrl;
     }
   } catch (error) {
     console.warn(

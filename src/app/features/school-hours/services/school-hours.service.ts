@@ -1,15 +1,17 @@
 import { Injectable, inject } from '@angular/core';
-import { Observable } from 'rxjs';
+import { Observable, forkJoin } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { ApiHelperService } from '../../../core/services/api-helper.service';
 import { SchoolHours, DBResult } from '../models/school-hours.model';
 import { unwrapResponse } from '../../../shared/utils/response.utils';
+import { TypesService, DropdownItem } from '../../persons/services/types.service';
 
 @Injectable({
   providedIn: 'root',
 })
 export class SchoolHoursService {
   private api = inject(ApiHelperService);
+  private typesService = inject(TypesService);
 
   private readonly days = [
     'Pazartesi',
@@ -22,17 +24,26 @@ export class SchoolHoursService {
   ];
   private readonly timeTypes = ['Bas', 'Bit', 'EtutluBas', 'EtutluBit'];
 
-  getSchoolHours(): Observable<SchoolHours[]> {
+  getSchoolHours(CampusId: number, SinifId: number | string): Observable<SchoolHours[]> {
     return this.api
-      .callEndpoint<SchoolHours[]>('Dynamic', {
-        point: 'CikisSaatleriCampus',
-        islemtipi: 's',
-      })
+      .callEndpoint<SchoolHours[] | { islemsonuc?: string | number; sunucucevap?: string }>(
+        'Dynamic',
+        {
+          point: 'CikisSaatleriCampus',
+          islemtipi: 's',
+          CampusId: CampusId,
+          SinifId: SinifId,
+        },
+      )
       .pipe(
-        map((rows) => {
-          const data = rows || [];
+        map((raw) => {
+          // Backend başarılı iken dizi, kayıt yoksa/hata durumunda tekil işlem nesnesi döner.
+          // Tekil nesneyi boş sonuç ([]) olarak ele al; dizi dışı bir yapı tabloyu asla bozmamalı.
+          if (!Array.isArray(raw)) {
+            return [];
+          }
           // Gelen verilerdeki saniyeleri (15:50:00 -> 15:50) temizle
-          data.forEach((row: any) => {
+          raw.forEach((row: any) => {
             this.days.forEach((day) => {
               this.timeTypes.forEach((t) => {
                 const val = row[day + t];
@@ -42,9 +53,29 @@ export class SchoolHoursService {
               });
             });
           });
-          return data;
+          return raw;
         }),
       );
+  }
+
+  getCampuses(): Observable<DropdownItem[]> {
+    return this.typesService
+      .getDropdownList('cbo_firma')
+      .pipe(map((items) => (items || []).filter((i) => i.id !== 0)));
+  }
+
+  getClasses(): Observable<DropdownItem[]> {
+    // Sadece id 10'dan sonrasını (id > 10) dikkate al; diğerleri atlanır
+    return this.typesService
+      .getDropdownList('cbo_bolum')
+      .pipe(map((items) => (items || []).filter((i) => i.id > 10)));
+  }
+
+  getFilterData(): Observable<{ campuses: DropdownItem[]; classes: DropdownItem[] }> {
+    return forkJoin({
+      campuses: this.getCampuses(),
+      classes: this.getClasses(),
+    });
   }
 
   updateSchoolHours(data: SchoolHours): Observable<{ sonuc: number; sunucuCevap: string }> {
@@ -89,10 +120,7 @@ export class SchoolHoursService {
         map((response) => {
           const unwrapped = unwrapResponse(response) as any;
           const sonucVal =
-            unwrapped?.Sonuc ??
-            unwrapped?.sonuc ??
-            unwrapped?.islemsonuc ??
-            unwrapped?.islemSonuc;
+            unwrapped?.Sonuc ?? unwrapped?.sonuc ?? unwrapped?.islemsonuc ?? unwrapped?.islemSonuc;
           const sunucuCevapVal =
             unwrapped?.SunucuCevap ??
             unwrapped?.sunucuCevap ??
@@ -101,9 +129,7 @@ export class SchoolHoursService {
             unwrapped?.aciklama;
           return {
             sonuc: sonucVal != null ? Number(sonucVal) : 1,
-            sunucuCevap: sunucuCevapVal
-              ? String(sunucuCevapVal)
-              : 'Saatler başarıyla güncellendi.',
+            sunucuCevap: sunucuCevapVal ? String(sunucuCevapVal) : 'Saatler başarıyla güncellendi.',
           };
         }),
       );

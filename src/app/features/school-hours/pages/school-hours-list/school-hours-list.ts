@@ -14,11 +14,26 @@ import { ButtonModule } from 'primeng/button';
 import { TooltipModule } from 'primeng/tooltip';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { ConfirmationService } from 'primeng/api';
+import { TabsModule } from 'primeng/tabs';
+import { SelectModule } from 'primeng/select';
+import { ToggleSwitchModule } from 'primeng/toggleswitch';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 
 import { NotificationService } from '../../../../core/services/notification.service';
 import { SchoolHoursService } from '../../services/school-hours.service';
 import { SchoolHours } from '../../models/school-hours.model';
+import { DropdownItem } from '../../../persons/services/types.service';
+
+/**
+ * Sınıf seçim seçeneği.
+ * Düz mod: Tüm Sınıflar + tek tek sınıflar
+ * Gruplu mod: Tüm Sınıflar + seviye başlıkları (1. Sınıfların Tümü, ...)
+ * Her iki modda da value number (tek sınıf) veya string (virgülle ayrılmış çoklu id) olabilir.
+ */
+interface ClassOption {
+  value?: number | string;
+  label: string;
+}
 
 @Component({
   selector: 'app-school-hours-list',
@@ -30,6 +45,9 @@ import { SchoolHours } from '../../models/school-hours.model';
     ButtonModule,
     TooltipModule,
     ConfirmDialogModule,
+    TabsModule,
+    SelectModule,
+    ToggleSwitchModule,
     TranslatePipe,
   ],
   providers: [ConfirmationService],
@@ -40,6 +58,18 @@ import { SchoolHours } from '../../models/school-hours.model';
 export class SchoolHoursListComponent implements OnInit {
   hours: SchoolHours[] = [];
   loading = false;
+
+  // Kampüsler ve sınıflar
+  campuses: DropdownItem[] = [];
+  classes: DropdownItem[] = [];
+  activeCampusId: number | undefined;
+
+  // Seçili sınıf id'si (number = tek sınıf, string = virgülle ayrılmış çoklu sınıf id'leri)
+  selectedClass: number | string | undefined;
+  classOptions: ClassOption[] = [];
+
+  // 'Grupla' şalteri: açıksa sınıflar seviyelerine göre gruplanmış gösterilir
+  grouped = false;
 
   // İptal durumunda eski haline çevirebilmek için orijinal verileri tutar
   clonedHours: { [s: number]: SchoolHours } = {};
@@ -64,15 +94,118 @@ export class SchoolHoursListComponent implements OnInit {
 
   ngOnInit(): void {
     this.translate.onLangChange.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => {
+      // Dil değişince tümü seçeneklerinin etiketlerini yeniden üret
+      this.buildClassOptions();
       this.cdr.markForCheck();
     });
+    this.loadFilterData();
+  }
+
+  // Kampüs + sınıf listelerini paralel yükler
+  loadFilterData(): void {
+    this.loading = true;
+    this.cdr.markForCheck();
+    this.schoolHoursService.getFilterData().subscribe({
+      next: ({ campuses, classes }) => {
+        this.campuses = campuses;
+        this.classes = classes;
+        this.buildClassOptions();
+        // İlk kampüsü otomatik seç
+        if (this.campuses.length > 0) {
+          this.activeCampusId = this.campuses[0].id;
+        }
+        this.loading = false;
+        this.cdr.markForCheck();
+      },
+      error: () => {
+        this.notification.error('SCHOOL_HOURS.ERROR_LOAD');
+        this.loading = false;
+        this.cdr.markForCheck();
+      },
+    });
+  }
+
+  // Sınıf listesini; 'grupla' durumuna göre düz veya seviyeye göre gruplu üretir
+  private buildClassOptions(): void {
+    // Sınıf adındaki baştaki tam sayı segmentini bul (örn. '8-A' -> 8)
+    const gradeOf = (ad: string): number | null => {
+      const match = ad.match(/^(\d+)/);
+      return match ? parseInt(match[1], 10) : null;
+    };
+
+    // Tüm sınıf id'lerini virgülle ayır (örn. '11,12,13,...')
+    const allIds = this.classes.map((c) => c.id).join(',');
+    const allLabel = this.translate.instant('SCHOOL_HOURS.ALL_CLASSES');
+
+    // Düz mod: en üste 'Tüm Sınıflar' + tek tek sınıflar
+    if (!this.grouped) {
+      this.classOptions = [
+        { value: allIds, label: allLabel },
+        ...this.classes.map((c) => ({ value: c.id, label: c.ad })),
+      ];
+      return;
+    }
+
+    // Gruplu mod: sadece seviye başlıkları (1. Sınıfların Tümü, 2. Sınıfların Tümü, ...)
+    // Her biri o seviyedeki tüm sınıf id'lerini virgülle gönderir
+    const suffix = this.translate.instant('SCHOOL_HOURS.GRADE_ALL_SUFFIX');
+    const isTr = (this.translate.currentLang() ?? '').toLowerCase().startsWith('tr');
+    const gradeIdMap = new Map<number, number[]>();
+    this.classes.forEach((c) => {
+      const grade = gradeOf(c.ad);
+      if (grade !== null) {
+        if (!gradeIdMap.has(grade)) {
+          gradeIdMap.set(grade, []);
+        }
+        gradeIdMap.get(grade)!.push(c.id);
+      }
+    });
+
+    this.classOptions = [
+      { value: allIds, label: allLabel },
+    ];
+    gradeIdMap.forEach((ids, grade) => {
+      const label = isTr ? `${grade}. Sınıfların ${suffix}` : `Grade ${grade} ${suffix}`;
+      this.classOptions.push({ value: ids.join(','), label });
+    });
+  }
+
+  // 'Grupla' şalteri değiştiğinde seçenekleri yeniden üretir
+  onGroupToggle(grouped: boolean): void {
+    this.grouped = grouped;
+    // Seçili sınıf eşleşmesini koruyarak seçenekleri yeniden üret
+    this.buildClassOptions();
+    this.cdr.markForCheck();
+  }
+
+  // Kampüs sekmesi değiştiğinde
+  onCampusChange(campusId: number | string | undefined): void {
+    if (typeof campusId !== 'number') {
+      return;
+    }
+    this.activeCampusId = campusId;
+    this.selectedClass = undefined;
+    this.hours = [];
+    this.cdr.markForCheck();
+  }
+
+  // Sınıf seçimi değiştiğinde tabloyu yükler
+  onClassChange(): void {
+    if (this.activeCampusId === undefined || this.selectedClass === undefined) {
+      this.hours = [];
+      this.cdr.markForCheck();
+      return;
+    }
     this.loadData();
   }
 
   loadData(): void {
+    if (this.activeCampusId === undefined || this.selectedClass === undefined) {
+      return;
+    }
     this.loading = true;
     this.cdr.markForCheck();
-    this.schoolHoursService.getSchoolHours().subscribe({
+    this.schoolHoursService.getSchoolHours(this.activeCampusId, this.selectedClass).subscribe({
       next: (data) => {
         this.hours = [...data];
         this.loading = false;

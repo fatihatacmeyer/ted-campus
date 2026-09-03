@@ -49,7 +49,6 @@ export class PersonProfileComponent implements OnChanges {
   showFullPhoto = false;
   photoUrl: string | null = null;
   photoFailed = false;
-  private readonly basePhotoUrl = 'http://localhost/MeCampus/ProfilFotograflari';
 
   ngOnChanges(changes: SimpleChanges): void {
     // Farklı bir kişiye tıklandığında veya modal açıldığında hata durumunu sıfırlıyoruz

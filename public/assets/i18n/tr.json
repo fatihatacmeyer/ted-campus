@@ -523,6 +523,13 @@
   "SCHOOL_HOURS": {
     "PAGE_TITLE": "Giriş ve Çıkış Saatleri Yönetimi",
     "GRADE_LEVEL": "Sınıf Seviyesi",
+    "CAMPUS_TAB_LABEL": "Kampüs",
+    "SELECT_CLASS_LABEL": "Sınıf",
+    "SELECT_CLASS_PROMPT": "Sınıf seçiniz",
+    "FILTER_PROMPT": "Ara...",
+    "GRADE_ALL_SUFFIX": "Sınıflar tümü",
+    "GROUP_LABEL": "Grupla",
+    "ALL_CLASSES": "Tüm Sınıflar",
     "NORMAL_HOURS_LABEL": "N:",
     "NORMAL_HOURS_HINT": "Normal Saatler",
     "STUDY_HOURS_LABEL": "E:",

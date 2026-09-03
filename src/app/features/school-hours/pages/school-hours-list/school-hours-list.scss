@@ -12,7 +12,75 @@
   margin-bottom: 24px;
 }
 
+/* ── Filtre Çubuğu (Sınıf Seçimi) ── */
+.filter-bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+  padding: 12px 16px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+
+  .filter-label {
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: #475569;
+    white-space: nowrap;
+  }
+
+  .class-select {
+    min-width: 260px;
+  }
+
+  .group-toggle {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-left: 8px;
+
+    .group-toggle-label {
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: #475569;
+      white-space: nowrap;
+    }
+  }
+}
+
 :host ::ng-deep {
+  /* ── Kampüs Sekmeleri ── */
+  .p-tabs {
+    .p-tablist {
+      border-bottom: 2px solid #e2e8f0;
+      margin-bottom: 20px;
+
+      .p-tablist-tab-list {
+        gap: 4px;
+      }
+
+      .p-tab {
+        font-weight: 600;
+        color: #64748b;
+        padding: 0.75rem 1.25rem;
+        border-radius: 8px 8px 0 0;
+        transition: color 0.15s ease, background-color 0.15s ease;
+
+        &:hover {
+          color: #dc2134;
+          background-color: #fef2f2;
+        }
+
+        &.p-tab-active {
+          color: #dc2134;
+          background-color: #fff;
+          border-bottom: 2px solid #dc2134;
+        }
+      }
+    }
+  }
+
   .p-datatable.admin-table {
     border-radius: 8px;
     border: 1px solid #e2e8f0;

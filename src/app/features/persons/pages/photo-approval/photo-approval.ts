@@ -107,14 +107,18 @@ export class PhotoApprovalComponent implements OnInit {
   // --- Yardımcı Metodlar (UI için) ---
 
   getPhotoUrl(fileName: string): string {
-    const baseUrl = this.config.photoBaseUrl || 'http://localhost/MeCampus/ProfilFotograflari';
+    const baseUrl = this.config.photoBaseUrl; //|| 'http://localhost/MeCampus/ProfilFotograflari';
     const fullUrl = `${baseUrl}/${fileName}`;
     console.log('Resim Tam URL:', fullUrl);
     return `${baseUrl}/${fileName}`;
   }
 
   getPersonName(photo: PhotoApproval): string {
-    return photo.SicilAdSoyad || photo.VekilAdSoyad || this.translate.instant('PHOTO_APPROVAL.UNKNOWN_PERSON');
+    return (
+      photo.SicilAdSoyad ||
+      photo.VekilAdSoyad ||
+      this.translate.instant('PHOTO_APPROVAL.UNKNOWN_PERSON')
+    );
   }
 
   getPersonType(photo: PhotoApproval): string {

@@ -521,6 +521,12 @@
   "SCHOOL_HOURS": {
     "PAGE_TITLE": "School Hours Management",
     "GRADE_LEVEL": "Grade Level",
+    "CAMPUS_TAB_LABEL": "Campus",
+    "SELECT_CLASS_LABEL": "Class",
+    "SELECT_CLASS_PROMPT": "Select a class",
+    "GRADE_ALL_SUFFIX": "- all",
+    "GROUP_LABEL": "Group",
+    "ALL_CLASSES": "All Classes",
     "NORMAL_HOURS_LABEL": "N:",
     "NORMAL_HOURS_HINT": "Normal Hours",
     "STUDY_HOURS_LABEL": "S:",
