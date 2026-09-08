@@ -236,21 +236,8 @@ export class PersonFormComponent implements OnChanges, OnInit {
   selectedPhoto: string | null = null;
   photoFileName = '';
 
-  readonly genderOptions = [
-    { label: 'PERSON.GENDER_MALE', value: 'E' },
-    { label: 'PERSON.GENDER_FEMALE', value: 'K' },
-  ];
-
-  readonly bloodTypeOptions = [
-    { label: 'A+', value: 'A+' },
-    { label: 'A-', value: 'A-' },
-    { label: 'B+', value: 'B+' },
-    { label: 'B-', value: 'B-' },
-    { label: 'AB+', value: 'AB+' },
-    { label: 'AB-', value: 'AB-' },
-    { label: 'O+', value: 'O+' },
-    { label: 'O-', value: 'O-' },
-  ];
+  genderOptions: { label: string; value: string }[] = [];
+  bloodTypeOptions: { label: string; value: string }[] = [];
 
   // Kurumsal dropdown seçenekleri (TypesService'den yüklenir)
   firmaOptions: DropdownItem[] = [];
@@ -309,6 +296,18 @@ export class PersonFormComponent implements OnChanges, OnInit {
           return of([] as DropdownItem[]);
         }),
       ),
+      sys_cinsiyet: this.typesService.getGenderOptions().pipe(
+        catchError((err) => {
+          console.error('Cinsiyet seçenekleri yüklenirken hata:', err);
+          return of([] as DropdownItem[]);
+        }),
+      ),
+      sys_KanGrubu: this.typesService.getBloodTypes().pipe(
+        catchError((err) => {
+          console.error('Kan grubu seçenekleri yüklenirken hata:', err);
+          return of([] as DropdownItem[]);
+        }),
+      ),
     })
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(
@@ -320,6 +319,8 @@ export class PersonFormComponent implements OnChanges, OnInit {
           cbo_altfirma,
           cbo_direktorluk,
           cbo_yaka,
+          sys_cinsiyet,
+          sys_KanGrubu,
         }) => {
           this.firmaOptions = cbo_firma;
           this.bolumOptions = cbo_bolum;
@@ -328,6 +329,20 @@ export class PersonFormComponent implements OnChanges, OnInit {
           this.altfirmaOptions = cbo_altfirma;
           this.direktorlukOptions = cbo_direktorluk;
           this.yakaOptions = cbo_yaka;
+
+          const genderLabelMap: Record<string, string> = {
+            E: 'PERSON.GENDER_MALE',
+            K: 'PERSON.GENDER_FEMALE',
+          };
+          this.genderOptions = sys_cinsiyet.map((item) => ({
+            label: genderLabelMap[item.ad] ?? item.ad,
+            value: item.ad,
+          }));
+
+          this.bloodTypeOptions = sys_KanGrubu.map((item) => ({
+            label: item.ad,
+            value: item.ad,
+          }));
         },
       );
   }

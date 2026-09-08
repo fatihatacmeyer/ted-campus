@@ -16,9 +16,20 @@
   }
 }
 
-.classroom-group-header {
-  &:hover {
-    background-color: var(--p-primary-50);
+::ng-deep {
+  .p-multiselect-option-group {
+    padding: 0.35rem 0.6rem !important;
+    cursor: pointer;
+  }
+
+  .classroom-group-header {
+    user-select: none;
+    border-radius: 4px;
+    transition: background-color 0.15s ease;
+
+    &:hover {
+      background-color: var(--p-primary-50, rgba(0, 102, 204, 0.08));
+    }
   }
 }
 

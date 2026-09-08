@@ -247,6 +247,7 @@ export class PersonService {
     const type = (row.UserType || '').toUpperCase();
     if (type.includes('OGRENCI') || type.includes('ÖĞRENCİ')) return UserDef.Ogrenci;
     if (type.includes('VELI') || type.includes('VELİ')) return UserDef.Veli;
+    if (type.includes('YETKILI') || type.includes('YETKİLİ')) return UserDef.Authority;
     if (type.includes('OGRETMEN') || type.includes('ÖĞRETMEN')) return UserDef.Ogretmen;
     return 0;
   }

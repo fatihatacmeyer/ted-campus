@@ -1,14 +1,17 @@
 /** Backend'deki userdef değerlerini temsil eden enum. */
 export enum UserDef {
   Ogrenci = 11,
-  Ogretmen = 13,
   Veli = 12,
+  Authority = 13,
+  Ogretmen = 14,
 }
 
 export function getUserDefLabel(userdef: number): string {
   switch (userdef) {
     case UserDef.Ogrenci:
       return 'Öğrenci';
+    case UserDef.Authority:
+      return 'Yetkili';
     case UserDef.Ogretmen:
       return 'Öğretmen';
     case UserDef.Veli:
@@ -23,6 +26,8 @@ export function getUserDefLabelKey(userdef: number): string {
   switch (userdef) {
     case UserDef.Ogrenci:
       return 'USERDEF.STUDENT';
+    case UserDef.Authority:
+      return 'USERDEF.AUTHORITY';
     case UserDef.Ogretmen:
       return 'USERDEF.TEACHER';
     case UserDef.Veli:
@@ -36,6 +41,8 @@ export function getUserDefBadgeClass(userdef: number): string {
   switch (userdef) {
     case UserDef.Ogrenci:
       return 'badge-student';
+    case UserDef.Authority:
+      return 'badge-authority';
     case UserDef.Ogretmen:
       return 'badge-teacher';
     case UserDef.Veli:

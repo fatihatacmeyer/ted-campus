@@ -40,9 +40,15 @@ interface ActivityRow {
   Aciklama: string;
   MaksOgrenciSayisi: number;
   MaksVeliSayisi: number;
+  VeliBasinaMisafirSayisi?: number;
   UlasimTipi: string;
   SorumluAdSoyad: string;
   EgitimDuzeyi?: string;
+  CampusId?: number;
+  CampusAdi?: string;
+  SorumluSicilId?: number;
+  YasSiniri?: string;
+  SinifId?: string;
   Okod1: string;
   Okod2: string;
   Okod3: string;
@@ -117,9 +123,15 @@ export class ActivityService {
       description: row.Aciklama,
       maxStudentCount: row.MaksOgrenciSayisi,
       studentParentCount: row.MaksVeliSayisi,
+      maxGuestPerParent: row.VeliBasinaMisafirSayisi,
       transportation: row.UlasimTipi,
       eventManager: row.SorumluAdSoyad,
       educationLevel: row.EgitimDuzeyi,
+      campus: row.CampusAdi ?? '',
+      campusId: row.CampusId,
+      sorumluSicilId: row.SorumluSicilId,
+      yasSiniri: row.YasSiniri ?? '',
+      sinifId: row.SinifId ?? '',
       oKod1: row.Okod1,
       oKod2: row.Okod2,
       oKod3: row.Okod3,
@@ -216,17 +228,16 @@ export class ActivityService {
       Aciklama: (activity.description as string) || '',
       MaksOgrenciSayisi: (activity.maxStudentCount as number) ?? '',
       MaksVeliSayisi: (activity.studentParentCount as number) ?? '',
-      // SorumluSicilId formda henüz seçilmiyor; şimdilik giriş yapmış kullanıcının
-      // sicil id'si default gider (şu anki kullanıcı 233). İleride formdan sorumlu
-      // seçimi eklenince gerçek değer buraya düşecek.
-      SorumluSicilId:
-        (activity['sorumluSicilId'] as number) ??
-        this.authService.currentUserValue?.xsicilid ??
-        233,
+      // SorumluSicilId formda seçilmiyor; ad soyad serbest metin olarak
+      // SorumluAdSoyad'a yazılıyor (etkinlik sorumlusu alanı). SicilId default 0.
+      SorumluSicilId: 0,
+      SorumluAdSoyad: (activity.eventManager as string) || '',
       UlasimId: (activity['ulasimId'] as number) ?? '',
       YasSiniri: (activity['yasSiniri'] as string) || '',
       EgitimDuzeyiId: (activity['egitimDuzeyiId'] as number) ?? '',
-      SinifId: (activity['sinifId'] as number) ?? '',
+      SinifId: activity.sinifId ?? '',
+      VeliBasinaMisafirSayisi: (activity['maxGuestPerParent'] as number) ?? '',
+      CampusId: (activity['campusId'] as number) ?? (activity['firmaId'] as number) ?? '',
       Okod1: activity.oKod1 || '',
       Okod2: activity.oKod2 || '',
       Okod3: activity.oKod3 || '',

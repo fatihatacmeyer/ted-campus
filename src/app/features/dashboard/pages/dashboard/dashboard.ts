@@ -6,6 +6,8 @@ import {
   DestroyRef,
   inject,
 } from '@angular/core';
+import { BehaviorSubject, timer } from 'rxjs';
+import { switchMap } from 'rxjs/operators';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Router } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
@@ -25,6 +27,7 @@ import {
   EarlyLeaver,
   LateArrival,
   Absentee,
+  AccessTransaction,
 } from '../../services/dashboard.service';
 import { ButtonModule } from 'primeng/button';
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
@@ -34,25 +37,18 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 
-/** Geçiş cihazı işlem satırı模拟类型 — gerçek API bağlandığında Person veya ayrı bir interface ile değiştirilecek. */
-export interface AccessTransaction {
-  id: number;
-  personName: string;
-  sicilno: string;
-  userdef: number;
-  badgeClass: string;
-  badgeLabel: string;
-  cardid: string;
-  time: string;
-  direction: string;
-  device: string;
-  result: string;
-}
-
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [ButtonModule, ProgressSpinnerModule, DialogModule, TooltipModule, CommonModule, FormsModule, TranslatePipe],
+  imports: [
+    ButtonModule,
+    ProgressSpinnerModule,
+    DialogModule,
+    TooltipModule,
+    CommonModule,
+    FormsModule,
+    TranslatePipe,
+  ],
   templateUrl: './dashboard.html',
   styleUrl: './dashboard.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -87,10 +83,11 @@ export class DashboardComponent implements OnInit {
   lateArrivals: LateArrival[] = [];
   absentees: Absentee[] = [];
 
-  /** Son 100 işlem mock */
   recentTransactions: AccessTransaction[] = [];
   displayedTransactions: AccessTransaction[] = [];
   showAllTransactions = false;
+
+  private refreshTrigger$ = new BehaviorSubject<void>(undefined);
 
   /** Etkinlik kişi listesi (mock) */
   eventPersons: {
@@ -128,6 +125,7 @@ export class DashboardComponent implements OnInit {
       this.authService.currentUserValue?.loginname ||
       this.translate.instant('DASHBOARD.USER');
     this.fetchData();
+    this.initTransactionStream();
   }
 
   /* ── Data ──────────────────────────────────────────────── */
@@ -160,9 +158,6 @@ export class DashboardComponent implements OnInit {
 
           this.absentees = absenteeData;
 
-          // İşlem listesi mock
-          this.generateMockTransactions();
-
           // Etkinlik listesi mock
           this.generateMockEventList();
 
@@ -176,39 +171,36 @@ export class DashboardComponent implements OnInit {
           this.cdr.markForCheck();
         },
       });
+
+    this.refreshTrigger$.next();
   }
 
-  private generateMockTransactions(): void {
-    const names = [...this.students, ...this.teachers, ...this.parents];
-    const devices = [
-      'DASHBOARD.DEVICE_MAIN_ENTRANCE',
-      'DASHBOARD.DEVICE_SIDE_ENTRANCE',
-      'DASHBOARD.DEVICE_GARDEN_GATE',
-      'DASHBOARD.DEVICE_PARKING',
-      'DASHBOARD.DEVICE_VIP_ENTRANCE',
-    ];
-    const base = new Date();
+  private initTransactionStream(): void {
+    this.refreshTrigger$
+      .pipe(
+        switchMap(() => timer(0, 1500)),
+        switchMap(() => {
+          const limit = this.showAllTransactions || this.txnDialogVisible ? 100 : 10;
+          return this.dashboardService.getRecentTransactions(limit);
+        }),
+        takeUntilDestroyed(this.destroyRef),
+      )
+      .subscribe({
+        next: (data) => {
+          this.recentTransactions = data;
+          this.displayedTransactions = data;
+          this.cdr.markForCheck();
+        },
+        error: (err) => {
+          console.error('Son hareketler alınamadı:', err);
+        },
+      });
+  }
 
-    this.recentTransactions = Array.from({ length: 100 }, (_, i) => {
-      const person = names[Math.floor(Math.random() * names.length)];
-      const t = new Date(base.getTime() - i * 120000 + Math.floor(Math.random() * 60000));
-      const userdef = person?.userdef ?? 0;
-      return {
-        id: i + 1,
-        personName: person?.adsoyad ?? this.translate.instant('DASHBOARD.UNKNOWN'),
-        sicilno: person?.sicilno ?? '',
-        userdef,
-        badgeClass: getUserDefBadgeClass(userdef),
-        badgeLabel: getUserDefLabelKey(userdef),
-        cardid: person?.cardid ?? '',
-        time: `${String(t.getHours()).padStart(2, '0')}:${String(t.getMinutes()).padStart(2, '0')}:${String(t.getSeconds()).padStart(2, '0')}`,
-        direction: Math.random() > 0.5 ? 'in' : 'out',
-        device: devices[Math.floor(Math.random() * devices.length)],
-        result: Math.random() > 0.05 ? 'success' : 'failed',
-      };
-    });
-
-    this.displayedTransactions = this.recentTransactions.slice(0, 10);
+  /** Tam Ekran İşlemler Tablosu Dialog'u Açar */
+  openTxnDialog(): void {
+    this.txnDialogVisible = true;
+    this.refreshTrigger$.next(); // 100 limitli veriyi anında çekmek için tetikle
   }
 
   private generateMockEventList(): void {
@@ -252,9 +244,10 @@ export class DashboardComponent implements OnInit {
   /* ── UI actions ────────────────────────────────────────── */
   toggleAllTransactions(): void {
     this.showAllTransactions = !this.showAllTransactions;
-    this.displayedTransactions = this.showAllTransactions
-      ? this.recentTransactions
-      : this.recentTransactions.slice(0, 10);
+    // this.displayedTransactions = this.showAllTransactions
+    //   ? this.recentTransactions
+    //   : this.recentTransactions.slice(0, 10);
+    this.refreshTrigger$.next();
   }
 
   navigateTo(path: string): void {

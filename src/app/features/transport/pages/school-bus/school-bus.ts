@@ -22,9 +22,8 @@ import {
   ColumnCellDirective,
   ColumnDef,
 } from '../../../../shared/components/customizable-table/customizable-table';
-import { SchoolBusService } from '../../services/school-bus.service';
+import { SchoolBusService, BusDashboardStats, AuthorityAssignment } from '../../services/school-bus.service';
 import { NotificationService } from '../../../../core/services/notification.service';
-import { BusDashboardStats } from '../../services/school-bus.service';
 import { PersonService } from '../../../persons/services/person.service';
 import { Person, UserDef } from '../../../../core/models/person.model';
 
@@ -87,6 +86,12 @@ export class SchoolBusComponent implements OnInit {
   protected readonly studentAssignDeleting = signal<StudentAssignment | null>(null);
   protected readonly studentAssignDirectionTab = signal<ServisYonu>(1);
 
+  // ── Yetkili Atama (araca bağlı) — Detay dialog'u içinde ──
+  protected readonly allAuthorityAssignments = signal<AuthorityAssignment[]>([]);
+  protected readonly authorityAssignDeleteVisible = signal(false);
+  protected readonly authorityAssignDeleting = signal<AuthorityAssignment | null>(null);
+  protected readonly authorities = signal<Person[]>([]);
+
   // ── Search Terms ───────────────────────────────────────
   protected assignmentBusSearchValue = '';
   protected readonly assignmentBusSearch = signal('');
@@ -106,6 +111,10 @@ export class SchoolBusComponent implements OnInit {
   protected readonly studentAssignForm: FormGroup = this.fb.group({
     ogrenciSicilId: [null, Validators.required],
     yon: [1, Validators.required],
+  });
+
+  protected readonly authorityAssignForm: FormGroup = this.fb.group({
+    authoritySicilId: [null, Validators.required],
   });
 
   // ── Dashboard Computed ─────────────────────────────────
@@ -128,6 +137,11 @@ export class SchoolBusComponent implements OnInit {
     { field: 'kampus', header: 'Kampüs', sortable: true },
   ];
 
+  // ── Table Columns: Bir araca atanmış yetkililer ──────
+  // ── Yetkili atama: servis bazlı filtreleme ──────────────
+  protected readonly authorityAssignmentsForBus = (servisId: number) =>
+    this.allAuthorityAssignments().filter((a) => a.servisId === servisId);
+
   // ── Filtered Lists ─────────────────────────────────────
   protected readonly filteredAssignmentBuses = computed(() => {
     const term = this.assignmentBusSearch().toLowerCase();
@@ -146,6 +160,13 @@ export class SchoolBusComponent implements OnInit {
     this.students().map((s) => ({
       label: s.bolumad ? `${s.adsoyad} — ${s.bolumad}` : s.adsoyad,
       value: s.id,
+    })),
+  );
+
+  protected readonly authorityOptions = computed(() =>
+    this.authorities().map((y) => ({
+      label: y.bolumad ? `${y.adsoyad} — ${y.bolumad}` : y.adsoyad,
+      value: y.id,
     })),
   );
 
@@ -199,6 +220,13 @@ export class SchoolBusComponent implements OnInit {
     this.personService.getPersonListCampus().subscribe({
       next: (people) => this.students.set(people.filter((p) => p.userdef === UserDef.Ogrenci)),
       error: (err) => console.error('Öğrenci listesi alınamadı:', err),
+    });
+  }
+
+  private loadAuthorities(): void {
+    this.personService.getPersonListCampus().subscribe({
+      next: (people) => this.authorities.set(people.filter((p) => p.userdef === UserDef.Authority)),
+      error: (err) => console.error('Yetkili listesi alınamadı:', err),
     });
   }
 
@@ -323,6 +351,12 @@ export class SchoolBusComponent implements OnInit {
     if (this.students().length === 0) {
       this.loadStudents();
     }
+    // Yetkili listesi (person) hazır olsun — atanan yetkililer servis bazlı
+    // allAuthorityAssignments üzerinden filtrelenir (ayrıca yüklenmez).
+    this.authorityAssignForm.reset({ authoritySicilId: null });
+    if (this.authorities().length === 0) {
+      this.loadAuthorities();
+    }
     this.studentAssignVisible.set(true);
   }
 
@@ -335,6 +369,9 @@ export class SchoolBusComponent implements OnInit {
     this.studentAssignBus.set(null);
     this.studentAssignments.set([]);
     this.studentAssignForm.reset({ ogrenciSicilId: null, yon: 1 });
+    // Yetkili bölümü durumu da sıfırlanır
+    this.authorityAssignForm.reset({ authoritySicilId: null });
+    this.closeAuthorityAssignDelete();
   }
 
   private loadStudentAssignments(servisId: number): void {
@@ -412,8 +449,84 @@ export class SchoolBusComponent implements OnInit {
     });
   }
 
+  // ════════════════════════════════════════════════════════
+  //  YETKİLİ SERVİS ATAMASI (araca bağlı)
+  // ════════════════════════════════════════════════════════
+
+  private loadAllAuthorityAssignments(): void {
+    this.busService.getAuthorityAssignments().subscribe({
+      next: (rows) => this.allAuthorityAssignments.set(rows),
+      error: (err) => {
+        this.notification.error('Yetkili atamaları alınırken bir hata oluştu.');
+        console.error(err);
+      },
+    });
+  }
+
+  submitAuthorityAssign(): void {
+    if (this.authorityAssignForm.invalid) return;
+    const bus = this.studentAssignBus();
+    if (!bus) return;
+    const v = this.authorityAssignForm.value;
+
+    this.busService.assignAuthorityToBus(v.authoritySicilId, bus.id).subscribe({
+      next: (result) => {
+        if (result.sonuc === 1) {
+          this.notification.success(result.sunucuCevap || 'Yetkili servise başarıyla atandı.');
+          this.loadAllAuthorityAssignments();
+          this.authorityAssignForm.reset({ authoritySicilId: null });
+        } else {
+          this.notification.error(result.sunucuCevap || 'Yetkili atanırken bir hata oluştu.');
+        }
+      },
+      error: (err) => {
+        this.notification.error('Sunucuyla iletişim kurulurken bir hata oluştu.');
+        console.error(err);
+      },
+    });
+  }
+
+  protected confirmAuthorityAssignDelete(row: AuthorityAssignment): void {
+    this.authorityAssignDeleting.set(row);
+    this.authorityAssignDeleteVisible.set(true);
+  }
+
+  protected closeAuthorityAssignDelete(): void {
+    this.authorityAssignDeleteVisible.set(false);
+    this.authorityAssignDeleting.set(null);
+  }
+
+  protected deleteAuthorityAssign(): void {
+    const target = this.authorityAssignDeleting();
+    if (!target) return;
+
+    this.busService.removeAuthorityAssignment(target.id).subscribe({
+      next: (result) => {
+        if (result.sonuc === 1) {
+          this.notification.success(result.sunucuCevap || 'Kayıt başarıyla silindi.');
+          this.loadAllAuthorityAssignments();
+          this.closeAuthorityAssignDelete();
+        } else {
+          this.notification.error(result.sunucuCevap || 'Kayıt silinirken bir hata oluştu.');
+        }
+      },
+      error: (err) => {
+        this.notification.error('Sunucuyla iletişim kurulurken bir hata oluştu.');
+        console.error(err);
+        this.closeAuthorityAssignDelete();
+      },
+    });
+  }
+
   // ── Helpers ────────────────────────────────────────────
   protected setTab(tab: TabKey): void {
     this.activeTab.set(tab);
+    // Atamalar sekmesi açılırken servis bazlı yetkili listesi tazelenir
+    if (tab === 'assignments') {
+      this.loadAllAuthorityAssignments();
+      if (this.authorities().length === 0) {
+        this.loadAuthorities();
+      }
+    }
   }
 }

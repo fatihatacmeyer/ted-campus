@@ -1,6 +1,15 @@
-import { Component, ChangeDetectionStrategy, Input, Output, EventEmitter } from '@angular/core';
+import {
+  Component,
+  ChangeDetectionStrategy,
+  Input,
+  Output,
+  EventEmitter,
+  inject,
+  OnInit,
+} from '@angular/core';
 import { RouterLink, RouterLinkActive } from '@angular/router';
 import { TranslatePipe } from '@ngx-translate/core';
+import { AuthService } from '../../../../../core/services/auth.service';
 
 interface NavItem {
   labelKey: string;
@@ -16,12 +25,14 @@ interface NavItem {
   styleUrl: './sidebar.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class SidebarComponent {
+export class SidebarComponent implements OnInit {
   @Input() isOpen = true;
 
   @Output() sidebarToggle = new EventEmitter<void>();
 
-  protected readonly navItems: NavItem[] = [
+  private authService = inject(AuthService);
+
+  private readonly allNavItems: NavItem[] = [
     { labelKey: 'MENU.HOME', route: '/home', icon: 'dashboard' },
     { labelKey: 'MENU.STUDENTS', route: '/home/students', icon: 'school' },
     { labelKey: 'MENU.PARENTS', route: '/home/parents', icon: 'group' },
@@ -33,4 +44,16 @@ export class SidebarComponent {
     { labelKey: 'MENU.PHOTO_APPROVAL', route: '/home/photo-approval', icon: 'photo_camera' },
     { labelKey: 'MENU.SCHOOL_HOURS', route: '/home/school-hours', icon: 'alarm' },
   ];
+
+  protected navItems: NavItem[] = [];
+
+  ngOnInit(): void {
+    const user = this.authService.currentUserValue;
+    const isAdmin = user?.admin === true; //|| user?.admin === 1;
+
+    // Adminse hepsini göster, değilse sadece /home rotasını (Anasayfa) göster
+    this.navItems = isAdmin
+      ? this.allNavItems
+      : this.allNavItems.filter((item) => item.route === '/home');
+  }
 }

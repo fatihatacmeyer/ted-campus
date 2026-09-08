@@ -103,7 +103,9 @@
             [class.is-invalid]="isFieldInvalid('name')"
           />
           @if (activityForm.get('name')?.touched && activityForm.get('name')?.invalid) {
-            <small class="form-field-error">{{ 'ACTIVITIES.ERROR_REQUIRED_FIELD' | translate }}</small>
+            <small class="form-field-error">{{
+              'ACTIVITIES.ERROR_REQUIRED_FIELD' | translate
+            }}</small>
           }
         </div>
         <div class="w-100 d-flex flex-column gap-1">
@@ -122,7 +124,9 @@
           @if (
             activityForm.get('activityType')?.touched && activityForm.get('activityType')?.invalid
           ) {
-            <small class="form-field-error">{{ 'ACTIVITIES.ERROR_REQUIRED_FIELD' | translate }}</small>
+            <small class="form-field-error">{{
+              'ACTIVITIES.ERROR_REQUIRED_FIELD' | translate
+            }}</small>
           }
         </div>
       </div>
@@ -171,7 +175,9 @@
             [showIcon]="true"
           ></p-datepicker>
           @if (activityForm.get('startDate')?.touched && activityForm.get('startDate')?.invalid) {
-            <small class="form-field-error">{{ 'ACTIVITIES.ERROR_REQUIRED_FIELD' | translate }}</small>
+            <small class="form-field-error">{{
+              'ACTIVITIES.ERROR_REQUIRED_FIELD' | translate
+            }}</small>
           }
         </div>
         <div class="w-100 d-flex flex-column gap-1">
@@ -190,7 +196,9 @@
             [showIcon]="true"
           ></p-datepicker>
           @if (activityForm.get('endDate')?.touched && activityForm.get('endDate')?.invalid) {
-            <small class="form-field-error">{{ 'ACTIVITIES.ERROR_REQUIRED_FIELD' | translate }}</small>
+            <small class="form-field-error">{{
+              'ACTIVITIES.ERROR_REQUIRED_FIELD' | translate
+            }}</small>
           }
           @if (activityForm.touched && activityForm.errors?.['dateRange']) {
             <small class="form-field-error">{{ 'ACTIVITIES.ERROR_DATE_RANGE' | translate }}</small>
@@ -217,7 +225,9 @@
             activityForm.get('requestStartDate')?.touched &&
             activityForm.get('requestStartDate')?.invalid
           ) {
-            <small class="form-field-error">{{ 'ACTIVITIES.ERROR_REQUIRED_FIELD' | translate }}</small>
+            <small class="form-field-error">{{
+              'ACTIVITIES.ERROR_REQUIRED_FIELD' | translate
+            }}</small>
           }
         </div>
         <div class="w-100 d-flex flex-column gap-1">
@@ -239,10 +249,14 @@
             activityForm.get('requestEndDate')?.touched &&
             activityForm.get('requestEndDate')?.invalid
           ) {
-            <small class="form-field-error">{{ 'ACTIVITIES.ERROR_REQUIRED_FIELD' | translate }}</small>
+            <small class="form-field-error">{{
+              'ACTIVITIES.ERROR_REQUIRED_FIELD' | translate
+            }}</small>
           }
           @if (activityForm.touched && activityForm.errors?.['dateRangeRequest']) {
-            <small class="form-field-error">{{ 'ACTIVITIES.ERROR_REQUEST_DATE_RANGE' | translate }}</small>
+            <small class="form-field-error">{{
+              'ACTIVITIES.ERROR_REQUEST_DATE_RANGE' | translate
+            }}</small>
           }
         </div>
       </div>
@@ -339,8 +353,25 @@
             [class.is-invalid]="isFieldInvalid('fee')"
           />
           @if (activityForm.get('fee')?.touched && activityForm.get('fee')?.invalid) {
-            <small class="form-field-error">{{ 'ACTIVITIES.ERROR_REQUIRED_FIELD' | translate }}</small>
+            <small class="form-field-error">{{
+              'ACTIVITIES.ERROR_REQUIRED_FIELD' | translate
+            }}</small>
           }
+        </div>
+      </div>
+      <div class="d-flex gap-3">
+        <div class="w-50 d-flex flex-column gap-1">
+          <label for="maxGuestPerParent" class="fw-semibold small text-muted"
+            >{{ 'ACTIVITIES.MAX_GUEST_PER_PARENT' | translate }}</label
+          >
+          <input
+            pInputText
+            type="number"
+            id="maxGuestPerParent"
+            formControlName="maxGuestPerParent"
+            [class.is-invalid]="isFieldInvalid('maxGuestPerParent')"
+            min="0"
+          />
         </div>
       </div>
     </div>
@@ -409,47 +440,48 @@
           [styleClass]="'w-100' + (isFieldInvalid('classroom') ? ' is-invalid' : '')"
           [disabled]="isAllClassesSelected"
         >
-          <!-- Grup header template: dropdown içinde de toplu seçim -->
-          <ng-template let-group pTemplate="group">
+          <!-- Grup header template: dropdown içinde checkbox ile toplu seçim -->
+          <ng-template #group let-group pTemplate="group">
             <div
               role="button"
               tabindex="0"
-              class="d-flex align-items-center justify-content-between w-100 px-3 py-2 cursor-pointer classroom-group-header"
+              class="d-flex align-items-center justify-content-between w-100 px-2 py-1 cursor-pointer classroom-group-header"
               (click)="toggleGroup(group); $event.stopPropagation()"
               (keyup.enter)="toggleGroup(group); $event.stopPropagation()"
+              (keydown.space)="
+                toggleGroup(group); $event.preventDefault(); $event.stopPropagation()
+              "
             >
+              <span class="fw-semibold">{{ group.label }}</span>
               <div class="d-flex align-items-center gap-2">
-                <span
-                  class="d-inline-flex align-items-center justify-content-center border rounded"
-                  [style.width]="'18px'"
-                  [style.height]="'18px'"
-                  [style.background-color]="
-                    isGroupSelected(group) ? 'var(--p-primary-color)' : 'transparent'
-                  "
-                  [style.border-color]="
-                    isGroupSelected(group) ? 'var(--p-primary-color)' : '#adb5bd'
-                  "
-                >
-                  @if (isGroupSelected(group)) {
-                    <i class="pi pi-check text-white" style="font-size: 0.65rem"></i>
-                  }
+                <span class="text-muted small">
+                  {{ getGroupSelectedCount(group) }}/{{ group.items.length }}
                 </span>
-                <span class="fw-semibold">{{ group.label }}</span>
+                <p-checkbox
+                  [binary]="true"
+                  [ngModel]="isGroupSelected(group)"
+                  [indeterminate]="isGroupIndeterminate(group)"
+                  [ngModelOptions]="{ standalone: true }"
+                  [readonly]="true"
+                  tabindex="-1"
+                  style="pointer-events: none"
+                />
               </div>
-              <span class="text-muted small">
-                {{ getGroupSelectedCount(group) }}/{{ group.items.length }}
-              </span>
             </div>
           </ng-template>
         </p-multiSelect>
         @if (isFieldInvalid('classroom')) {
-          <small class="form-field-error">{{ 'ACTIVITIES.ERROR_CLASSROOM_REQUIRED' | translate }}</small>
+          <small class="form-field-error">{{
+            'ACTIVITIES.ERROR_CLASSROOM_REQUIRED' | translate
+          }}</small>
         }
       </div>
 
-      <!-- Eğitim Düzeyi — cbo_direktorluk lookup'undan doldurulur -->
+      <!-- Eğitim Düzeyi — cbo_altfirma lookup'undan doldurulur -->
       <div class="d-flex flex-column gap-1 mb-3">
-        <label for="educationLevel" class="fw-semibold small text-muted">{{ 'ACTIVITIES.EDUCATION_LEVEL' | translate }}</label>
+        <label for="educationLevel" class="fw-semibold small text-muted">{{
+          'ACTIVITIES.EDUCATION_LEVEL' | translate
+        }}</label>
         <p-select
           formControlName="educationLevel"
           inputId="educationLevel"
@@ -462,10 +494,28 @@
         ></p-select>
       </div>
 
+      <!-- Kampüs Bilgisi — cbo_firma lookup'undan doldurulur -->
+      <div class="d-flex flex-column gap-1 mb-3">
+        <label for="campus" class="fw-semibold small text-muted">{{
+          'ACTIVITIES.CAMPUS' | translate
+        }}</label>
+        <p-select
+          formControlName="campus"
+          inputId="campus"
+          [options]="campusOptions"
+          optionLabel="ad"
+          optionValue="ad"
+          appendTo="body"
+          styleClass="w-100"
+          [placeholder]="'ACTIVITIES.CAMPUS_PLACEHOLDER' | translate"
+        ></p-select>
+      </div>
+
       <!-- Ulaşım Bilgisi — UlasimCampus lookup'undan doldurulur -->
       <div class="d-flex flex-column gap-1 mb-3">
         <label for="transportation" class="fw-semibold small text-muted"
-          >{{ 'ACTIVITIES.COLUMN_TRANSPORTATION' | translate }} <span class="text-primary">*</span></label
+          >{{ 'ACTIVITIES.COLUMN_TRANSPORTATION' | translate }}
+          <span class="text-primary">*</span></label
         >
         <p-select
           formControlName="transportation"
@@ -480,12 +530,16 @@
         @if (
           activityForm.get('transportation')?.touched && activityForm.get('transportation')?.invalid
         ) {
-          <small class="form-field-error">{{ 'ACTIVITIES.ERROR_REQUIRED_FIELD' | translate }}</small>
+          <small class="form-field-error">{{
+            'ACTIVITIES.ERROR_REQUIRED_FIELD' | translate
+          }}</small>
         }
       </div>
 
       <div class="w-100 d-flex flex-column gap-1 mb-3">
-        <label for="description" class="fw-semibold small text-muted">{{ 'ACTIVITIES.DESCRIPTION' | translate }}</label>
+        <label for="description" class="fw-semibold small text-muted">{{
+          'ACTIVITIES.DESCRIPTION' | translate
+        }}</label>
         <textarea
           pTextarea
           id="description"
@@ -498,7 +552,7 @@
 
     <!-- Butonlar -->
     <div class="d-flex justify-content-end gap-2 mt-2 pt-3 border-top bg-white sticky-bottom">
-      @if (formSubmitted && activityForm.invalid) {
+      @if (formSubmitted() && activityForm.invalid) {
         <div class="me-auto d-flex align-items-center gap-2 form-field-error">
           <i class="pi pi-exclamation-circle"></i>
           <span>{{ 'ACTIVITIES.ERROR_FILL_REQUIRED_FIELDS' | translate }}</span>

@@ -13,9 +13,15 @@ export interface ActivityInterface {
   description: string; // açıklama
   maxStudentCount: number; // etkinliğe katılabilecek maksimum öğrenci sayısı
   studentParentCount: number; // öğrencinin getirebileceği veli sayısı
+  maxGuestPerParent?: number; // veli başına maksimum misafir sayısı (VeliBasinaMisafirSayisi)
   transportation: string; // ulaşım
   educationLevel?: string; // eğitim düzeyi (cbo_direktorluk lookup'ından, ekranda ad saklanır)
+  campus?: string; // kampüs bilgisi (cbo_firma lookup'ından, ekranda ad saklanır)
+  campusId?: number; // kampüs id'si (CampusId) — _s prosedürü döndüğünden beri edit'te korunur
   eventManager: string; // etkinlik yöneticisi
+  sorumluSicilId?: number; // etkinlik sorumlusunun sicil id'si (SorumluSicilId)
+  yasSiniri?: string; // yaş sınırı (YasSiniri)
+  sinifId?: string; // ';' ile ayrılmış sınıf id listesi (SinifId)
   oKod1: string; // ekstra alanlar 1
   oKod2: string;
   oKod3: string;

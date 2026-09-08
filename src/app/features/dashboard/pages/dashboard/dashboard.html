@@ -287,7 +287,9 @@
             </div>
             <div>
               <h3>{{ 'DASHBOARD.ABSENTEES' | translate }}</h3>
-              <span class="detail-subtitle">{{ absentees.length }} {{ 'COMMON.PERSON' | translate }}</span>
+              <span class="detail-subtitle"
+                >{{ absentees.length }} {{ 'COMMON.PERSON' | translate }}</span
+              >
             </div>
           </div>
           <button
@@ -358,14 +360,25 @@
           </div>
           <div>
             <h3>{{ 'DASHBOARD.RECENT_TRANSACTIONS' | translate }}</h3>
-            <span class="detail-subtitle">{{ 'DASHBOARD.LAST_TRANSACTIONS' | translate: { count: showAllTransactions ? '100' : '10' } }}</span>
+            <span class="detail-subtitle">{{
+              'DASHBOARD.LAST_TRANSACTIONS'
+                | translate: { count: showAllTransactions ? '100' : '10' }
+            }}</span>
           </div>
         </div>
         <div class="header-actions">
           <button
             pButton
-            [label]="showAllTransactions ? ('DASHBOARD.COLLAPSE' | translate) : ('DASHBOARD.SHOW_ALL' | translate)"
-            [attr.aria-label]="showAllTransactions ? ('DASHBOARD.COLLAPSE' | translate) : ('DASHBOARD.SHOW_ALL' | translate)"
+            [label]="
+              showAllTransactions
+                ? ('DASHBOARD.COLLAPSE' | translate)
+                : ('DASHBOARD.SHOW_ALL' | translate)
+            "
+            [attr.aria-label]="
+              showAllTransactions
+                ? ('DASHBOARD.COLLAPSE' | translate)
+                : ('DASHBOARD.SHOW_ALL' | translate)
+            "
             class="p-button-outlined p-button-sm"
             (click)="toggleAllTransactions()"
           ></button>
@@ -395,12 +408,14 @@
           </thead>
           <tbody>
             @for (txn of displayedTransactions; track txn.id) {
+              <!-- Eğer sonuç başarısızsa satırı kırmızı vurgular -->
               <tr [class.txn-failed]="txn.result === 'failed'">
                 <td class="txn-id">{{ txn.id }}</td>
                 <td>
                   <div class="txn-person">
+                    <!-- Rozet (ÖĞRENCİ/VELİ) metni doğrudan DB'den basılıyor -->
                     <span class="person-badge" [class]="txn.badgeClass">
-                      {{ txn.badgeLabel | translate }}
+                      {{ txn.badgeLabel }}
                     </span>
                     {{ txn.personName }}
                   </div>
@@ -408,6 +423,7 @@
                 <td class="txn-sicil">{{ txn.sicilno }}</td>
                 <td class="txn-card">{{ txn.cardid }}</td>
                 <td>
+                  <!-- Giriş/Çıkış yazısı doğrudan DB'den (rawDirectionText) basılıyor -->
                   <span
                     class="txn-direction"
                     [class.direction-in]="txn.direction === 'in'"
@@ -416,75 +432,26 @@
                     <span class="material-symbols-outlined">{{
                       txn.direction === 'in' ? 'login' : 'logout'
                     }}</span>
-                    {{ directionLabel(txn.direction) | translate }}
+                    {{ txn.rawDirectionText }}
                   </span>
                 </td>
-                <td>{{ txn.device | translate }}</td>
+                <!-- Cihaz Adı: (Çeviri | translate pipeline'ını sildik çünkü veritabanı "Ana Kapı" veriyor) -->
+                <td>{{ txn.device }}</td>
                 <td class="txn-time">{{ txn.time }}</td>
                 <td>
+                  <!-- "Geçiş Onaylandı" gibi gerçek sonuç metni basılıyor -->
                   <span
                     class="txn-result"
                     [class.result-ok]="txn.result === 'success'"
                     [class.result-fail]="txn.result === 'failed'"
                   >
-                    {{ resultLabel(txn.result) | translate }}
+                    {{ txn.rawResultText }}
                   </span>
                 </td>
               </tr>
             }
           </tbody>
         </table>
-      </div>
-    </div>
-
-    <!-- ════════════════════════════════════════════════════ -->
-    <!-- Row 4 — Etkinlik Kişi Listesi (tam genişlik)         -->
-    <!-- ════════════════════════════════════════════════════ -->
-    <div class="full-card">
-      <div class="detail-card-header">
-        <div class="detail-card-title">
-          <div class="detail-icon icon-cyan">
-            <span class="material-symbols-outlined">event_available</span>
-          </div>
-          <div>
-            <h3>{{ 'DASHBOARD.EVENT_PARTICIPANTS' | translate }}</h3>
-            <span class="detail-subtitle">{{ eventPersons.length }} {{ 'DASHBOARD.PARTICIPANT' | translate }}</span>
-          </div>
-        </div>
-        <button
-          pButton
-          class="p-button-text p-button-sm p-button-rounded"
-          icon="pi pi-expand"
-          pTooltip="{{ 'COMMON.VIEW_FULL' | translate }}"
-          aria-label="{{ 'COMMON.VIEW_FULL' | translate }}"
-          (click)="eventDialogVisible = true"
-        ></button>
-      </div>
-      <div class="detail-card-body">
-        @if (eventPersons.length === 0) {
-          <div class="empty-state">
-            <span class="material-symbols-outlined">info</span>
-            <p>{{ 'DASHBOARD.NO_EVENT_PARTICIPANTS' | translate }}</p>
-          </div>
-        } @else {
-          <div class="event-grid">
-            @for (ep of eventPersons; track ep.name) {
-              <div class="event-person-card">
-                <div class="person-avatar avatar-event">
-                  {{ ep.initials }}
-                </div>
-                <div class="event-person-info">
-                  <span class="person-name">{{ ep.name }}</span>
-                  <span class="person-meta">{{ ep.role | translate }}</span>
-                </div>
-                <div class="event-person-task">{{ ep.task | translate }}</div>
-                <span class="event-status-badge" [class]="ep.statusClass">
-                  {{ statusLabel(ep.status) | translate }}
-                </span>
-              </div>
-            }
-          </div>
-        }
       </div>
     </div>
   }
@@ -563,7 +530,6 @@
 </p-dialog>
 
 <!-- Erken Çıkanlar Dialog -->
-<!-- Erken Çıkanlar Dialog -->
 <p-dialog
   header="{{ 'DASHBOARD.EARLY_LEAVERS' | translate }}"
   [(visible)]="earlyLeaverDialogVisible"
@@ -586,9 +552,7 @@
           <span class="person-meta">{{ person.className }} &middot; {{ person.schoolName }}</span>
         </div>
 
-        <span class="person-badge badge-student">{{
-          'USERDEF.STUDENT' | translate
-        }}</span>
+        <span class="person-badge badge-student">{{ 'USERDEF.STUDENT' | translate }}</span>
 
         <!-- Saatleri sağ tarafa alt alta aldık -->
         <div class="d-flex flex-column align-items-end justify-content-center" style="gap: 2px">
@@ -628,11 +592,8 @@
           <span class="person-meta">{{ late.className }} &middot; {{ late.schoolName }}</span>
         </div>
 
-        <span class="person-badge badge-student">{{
-          'USERDEF.STUDENT' | translate
-        }}</span>
+        <span class="person-badge badge-student">{{ 'USERDEF.STUDENT' | translate }}</span>
 
-        <!-- Saatleri sağ tarafa alt alta aldık -->
         <div class="d-flex flex-column align-items-end justify-content-center" style="gap: 2px">
           <span class="person-exit-time" style="color: #ea580c; font-weight: 600">
             <span class="material-symbols-outlined" style="font-size: 16px">login</span>
@@ -642,34 +603,6 @@
             Beklenen: {{ late.expectedEntryTime }}
           </span>
         </div>
-      </div>
-    }
-  </div>
-</p-dialog>
-
-<!-- Etkinlik Listesi Dialog -->
-<p-dialog
-  header="{{ 'DASHBOARD.EVENT_PARTICIPANTS' | translate }}"
-  [(visible)]="eventDialogVisible"
-  [modal]="true"
-  [style]="{ width: '60vw', maxHeight: '80vh' }"
-  [draggable]="false"
-  [resizable]="false"
-  styleClass="dashboard-dialog"
->
-  <div class="person-list dialog-list">
-    @for (ep of eventPersons; track ep.name) {
-      <div class="person-row">
-        <div class="person-avatar avatar-event">
-          {{ ep.initials }}
-        </div>
-        <div class="person-info">
-          <span class="person-name">{{ ep.name }}</span>
-          <span class="person-meta">{{ ep.role | translate }} &middot; {{ ep.task | translate }}</span>
-        </div>
-        <span class="event-status-badge" [class]="ep.statusClass">
-          {{ statusLabel(ep.status) | translate }}
-        </span>
       </div>
     }
   </div>

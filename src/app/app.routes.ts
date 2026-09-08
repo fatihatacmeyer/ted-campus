@@ -1,5 +1,6 @@
 import { Routes } from '@angular/router';
 import { AuthGuard } from './core/guards/auth.guard';
+import { adminGuard } from './core/guards/admin.guard';
 import { UserDef } from './core/models/person.model';
 
 export const routes: Routes = [
@@ -26,6 +27,7 @@ export const routes: Routes = [
       },
       {
         path: 'students',
+        canActivate: [adminGuard],
         data: { userDef: UserDef.Ogrenci, titleKey: 'MENU.STUDENTS' },
         loadComponent: () =>
           import('./features/persons/pages/person-crud/person-crud').then(
@@ -34,6 +36,7 @@ export const routes: Routes = [
       },
       {
         path: 'teachers',
+        canActivate: [adminGuard],
         data: { userDef: UserDef.Ogretmen, titleKey: 'MENU.TEACHERS' },
         loadComponent: () =>
           import('./features/persons/pages/person-crud/person-crud').then(
@@ -42,6 +45,7 @@ export const routes: Routes = [
       },
       {
         path: 'proxies',
+        canActivate: [adminGuard],
         data: { titleKey: 'MENU.PROXIES' },
         loadComponent: () =>
           import('./features/persons/pages/proxy-list/proxy-list').then(
@@ -50,6 +54,7 @@ export const routes: Routes = [
       },
       {
         path: 'parents',
+        canActivate: [adminGuard],
         data: { userDef: UserDef.Veli, titleKey: 'MENU.PARENTS' },
         loadComponent: () =>
           import('./features/persons/pages/person-crud/person-crud').then(
@@ -58,6 +63,7 @@ export const routes: Routes = [
       },
       {
         path: 'transport',
+        canActivate: [adminGuard],
         data: { titleKey: 'MENU.TRANSPORT', scrollable: true },
         loadComponent: () =>
           import('./features/transport/pages/school-bus/school-bus').then(
@@ -66,6 +72,7 @@ export const routes: Routes = [
       },
       {
         path: 'activities',
+        canActivate: [adminGuard],
         data: { titleKey: 'MENU.ACTIVITIES' },
         loadComponent: () =>
           import('./features/activities/pages/activities-list/activities-list').then(
@@ -74,6 +81,7 @@ export const routes: Routes = [
       },
       {
         path: 'attendance',
+        canActivate: [adminGuard],
         data: { titleKey: 'MENU.STUDENT_ATTENDANCE' },
         loadComponent: () =>
           import('./features/attendance/pages/attendance-list/attendance-list').then(
@@ -82,6 +90,7 @@ export const routes: Routes = [
       },
       {
         path: 'photo-approval',
+        canActivate: [adminGuard],
         data: { titleKey: 'MENU.PHOTO_APPROVAL', scrollable: true }, // Varsa i18n key'in
         loadComponent: () =>
           import('./features/persons/pages/photo-approval/photo-approval').then(
@@ -90,6 +99,7 @@ export const routes: Routes = [
       },
       {
         path: 'school-hours',
+        canActivate: [adminGuard],
         data: { titleKey: 'MENU.SCHOOL_HOURS', scrollable: true },
         loadComponent: () =>
           import('./features/school-hours/pages/school-hours-list/school-hours-list').then(

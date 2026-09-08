@@ -87,6 +87,33 @@ export interface Absentee {
   schoolName: string;
 }
 
+export interface AccessTransaction {
+  id: number;
+  personName: string;
+  sicilno: string;
+  userdef: number;
+  badgeClass: string;
+  badgeLabel: string;
+  cardid: string;
+  time: string;
+  direction: 'in' | 'out';
+  device: string;
+  result: 'success' | 'failed';
+  rawDirectionText: string;
+  rawResultText: string;
+}
+
+interface SonHareketlerRow {
+  userDef: string;
+  adSoyad: string;
+  EventTime: string;
+  SicilNo: string;
+  CardID: string;
+  Ad: string;
+  terminalAdi: string;
+  Sonuc: string;
+}
+
 @Injectable({
   providedIn: 'root',
 })
@@ -181,5 +208,60 @@ export class DashboardService {
           })),
         ),
       );
+  }
+
+  getRecentTransactions(adet: number = 10): Observable<AccessTransaction[]> {
+    return this.api
+      .callEndpoint<SonHareketlerRow[]>('Dynamic', {
+        point: 'SonHareketlerCampus',
+        islemtipi: 's',
+        Adet: adet,
+      })
+      .pipe(
+        map((rows) =>
+          (rows || []).map((row, index) => {
+            // SQL'den gelen metinlere göre UI sınıflarını (renk/ikon) belirliyoruz
+            const isSuccess =
+              (row.Sonuc || '').toLowerCase().includes('onay') ||
+              (row.Sonuc || '').toLowerCase() === 'başarılı' ||
+              (row.Sonuc || '').toLowerCase().includes('geçiş');
+            const isIn = (row.Ad || '').toLowerCase().includes('giriş');
+            const isStudent =
+              (row.userDef || '').toUpperCase().includes('ÖĞRENCİ') ||
+              (row.userDef || '').toUpperCase().includes('OGRENCI');
+
+            return {
+              id: index + 1, // Satır numarası olarak kullanıyoruz
+              personName: row.adSoyad || '-',
+              sicilno: row.SicilNo || '-',
+              userdef: isStudent ? 11 : 12, // UI renk ayrımları için
+              badgeClass: isStudent ? 'badge-student' : 'badge-parent',
+              badgeLabel: row.userDef || '-',
+              cardid: row.CardID || '-',
+              time: this.formatEventTime(row.EventTime),
+              direction: isIn ? 'in' : 'out',
+              rawDirectionText: row.Ad || '-',
+              device: row.terminalAdi || '-',
+              result: isSuccess ? 'success' : 'failed',
+              rawResultText: row.Sonuc || '-',
+            };
+          }),
+        ),
+      );
+  }
+
+  // ISO veya SQL DateTime formatından sadece saat kısmını (HH:mm:ss) alır
+  private formatEventTime(dateStr: string): string {
+    if (!dateStr) return '-';
+    try {
+      const date = new Date(dateStr);
+      if (isNaN(date.getTime())) return dateStr.split(' ')[1] || dateStr;
+      const hours = String(date.getHours()).padStart(2, '0');
+      const minutes = String(date.getMinutes()).padStart(2, '0');
+      const seconds = String(date.getSeconds()).padStart(2, '0');
+      return `${hours}:${minutes}:${seconds}`;
+    } catch {
+      return dateStr;
+    }
   }
 }

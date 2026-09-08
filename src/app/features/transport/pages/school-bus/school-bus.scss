@@ -511,6 +511,55 @@ $radius-full: 9999px;
   }
 }
 
+/* ── Bus Yetkilileri (servis bazlı, çoklu) ─────────────── */
+.bus-authorities {
+  margin-bottom: 14px;
+
+  .bus-authorities-header {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: $text-secondary;
+    margin-bottom: 8px;
+
+    .material-symbols-outlined {
+      font-size: 16px;
+    }
+  }
+
+  .bus-authorities-empty {
+    font-size: 0.8rem;
+    color: $text-muted;
+  }
+
+  .bus-authorities-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+
+    .bus-authority-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 4px 10px;
+      font-size: 0.8rem;
+      font-weight: 500;
+      color: #059669;
+      background: #ecfdf5;
+      border: 1px solid #a7f3d0;
+      border-radius: $radius-full;
+      box-shadow: $shadow-sm;
+
+      .material-symbols-outlined {
+        font-size: 15px;
+        color: #059669;
+      }
+    }
+  }
+}
+
 /* ── Bus Actions ───────────────────────────────────────── */
 .bus-actions {
   display: flex;
@@ -631,6 +680,24 @@ $radius-full: 9999px;
   padding: 24px;
 }
 
+.dialog-section-divider {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 28px;
+  margin-bottom: 16px;
+  padding-top: 20px;
+  border-top: 1px solid $border-light;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: $text-primary;
+
+  .material-symbols-outlined {
+    font-size: 18px;
+    color: $text-muted;
+  }
+}
+
 /* ── Entity Form ───────────────────────────────────────── */
 .entity-form {
   display: flex;
@@ -656,10 +723,66 @@ $radius-full: 9999px;
       color: $text-muted;
     }
   }
+}
 
-  .w-full {
-    width: 100%;
+/* ── Dialog içi yetkili chip listesi ───────────────────── */
+.authority-chip-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 16px;
+
+  .authority-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 8px 6px 12px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: #059669;
+    background: #ecfdf5;
+    border: 1px solid #a7f3d0;
+    border-radius: $radius-full;
+    box-shadow: $shadow-sm;
+
+    .material-symbols-outlined {
+      font-size: 16px;
+      color: #059669;
+    }
+
+    .authority-chip-remove {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 20px;
+      height: 20px;
+      padding: 0;
+      border: none;
+      border-radius: $radius-full;
+      background: transparent;
+      color: $text-muted;
+      cursor: pointer;
+      transition: background 0.2s, color 0.2s;
+
+      &:hover {
+        background: rgba(220, 38, 38, 0.12);
+        color: #dc2626;
+      }
+
+      .material-symbols-outlined {
+        font-size: 15px;
+      }
+    }
   }
+
+  .authority-chip-empty {
+    font-size: 0.85rem;
+    color: $text-muted;
+  }
+}
+
+.w-full {
+  width: 100%;
 }
 
 .form-row-2 {

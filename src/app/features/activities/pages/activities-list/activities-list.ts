@@ -172,10 +172,22 @@ export class ActivitiesComponent {
   participantColumns: ColumnDef<ActivityParticipant>[] = [
     // { field: 'id', header: '#', sortable: true, width: '60px' },
     { field: 'ogrenci', header: 'ACTIVITIES.COLUMN_STUDENT', sortable: true, filterable: false },
-    { field: 'sinif', header: 'ACTIVITIES.COLUMN_CLASSROOM', sortable: true, width: '100px', filterable: false },
+    {
+      field: 'sinif',
+      header: 'ACTIVITIES.COLUMN_CLASSROOM',
+      sortable: true,
+      width: '100px',
+      filterable: false,
+    },
     { field: 'veli', header: 'ACTIVITIES.COLUMN_PARENT', sortable: true, filterable: false },
     { field: 'telefon', header: 'ACTIVITIES.COLUMN_PHONE', width: '120px', filterable: false },
-    { field: 'durum', header: 'ACTIVITIES.STATUS', sortable: true, width: '110px', filterable: false },
+    {
+      field: 'durum',
+      header: 'ACTIVITIES.STATUS',
+      sortable: true,
+      width: '110px',
+      filterable: false,
+    },
   ];
 
   activityColumns: ColumnDef<ActivityInterface>[] = [
@@ -259,10 +271,12 @@ export class ActivitiesComponent {
       maxStudentCount: [null, [Validators.required, Validators.min(1)]],
       isParentRequired: [false],
       studentParentCount: [0],
+      maxGuestPerParent: [null],
       isPaid: [false],
       fee: [{ value: null, disabled: true }],
       transportation: ['', Validators.required],
       educationLevel: [''],
+      campus: [''],
       eventManager: [''],
       description: [''],
       classroom: [[], minClassroomValidator],
@@ -362,14 +376,27 @@ export class ActivitiesComponent {
           return of([] as DropdownItem[]);
         }),
       ),
+      cbo_altfirma: this.typesService.getDropdownList('cbo_altfirma').pipe(
+        catchError((err) => {
+          console.error('Altfirma yüklenirken hata:', err);
+          return of([] as DropdownItem[]);
+        }),
+      ),
+      cbo_firma: this.typesService.getDropdownList('cbo_firma').pipe(
+        catchError((err) => {
+          console.error('Kampüs bilgileri yüklenirken hata:', err);
+          return of([] as DropdownItem[]);
+        }),
+      ),
     })
       .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe(({ TurCampus, UlasimCampus, cbo_bolum, cbo_direktorluk }) => {
+      .subscribe(({ TurCampus, UlasimCampus, cbo_bolum, cbo_direktorluk, cbo_altfirma, cbo_firma }) => {
         this.typeOptions = TurCampus;
         this.transportationOptions = UlasimCampus;
         this.classroomOptions = cbo_bolum;
         this.classroomGroups = this.buildClassroomGroups(cbo_bolum);
-        this.educationLevelOptions = cbo_direktorluk;
+        this.educationLevelOptions = cbo_altfirma;
+        this.campusOptions = cbo_firma;
       });
   }
 
@@ -414,8 +441,11 @@ export class ActivitiesComponent {
   /** Ulaşım bilgileri — UlasimCampus lookup'undan doldurulur. */
   transportationOptions: DropdownItem[] = [];
 
-  /** Eğitim düzeyleri — cbo_direktorluk lookup'undan doldurulur. */
+  /** Eğitim düzeyleri — cbo_altfirma lookup'undan doldurulur. */
   educationLevelOptions: DropdownItem[] = [];
+
+  /** Kampüs seçenekleri — cbo_firma lookup'undan doldurulur. */
+  campusOptions: DropdownItem[] = [];
 
   /** Ham sınıf listesi — cbo_bolum lookup'undan doldurulur. */
   classroomOptions: DropdownItem[] = [];
@@ -427,6 +457,15 @@ export class ActivitiesComponent {
   isGroupSelected(group: { label: string; items: { label: string; value: string }[] }): boolean {
     const selected: string[] = this.activityForm.get('classroom')?.value || [];
     return group.items.length > 0 && group.items.every((item) => selected.includes(item.value));
+  }
+
+  /** Grup içindeki şubelerin bir kısmı mı seçili? (Indeterminate checkbox durumu için) */
+  isGroupIndeterminate(group: {
+    label: string;
+    items: { label: string; value: string }[];
+  }): boolean {
+    const selectedCount = this.getGroupSelectedCount(group);
+    return selectedCount > 0 && selectedCount < group.items.length;
   }
 
   /** Grup içinde kaç şube seçili? */
@@ -453,12 +492,16 @@ export class ActivitiesComponent {
   /** Tüm sınıfları seç */
   selectAllClasses(): void {
     const allValues = this.classroomGroups.flatMap((g) => g.items.map((i) => i.value));
-    this.activityForm.get('classroom')!.setValue(allValues);
+    const ctrl = this.activityForm.get('classroom')!;
+    ctrl.setValue(allValues);
+    ctrl.markAsDirty();
   }
 
   /** Seçimi temizle */
   clearAllClasses(): void {
-    this.activityForm.get('classroom')!.setValue([]);
+    const ctrl = this.activityForm.get('classroom')!;
+    ctrl.setValue([]);
+    ctrl.markAsDirty();
   }
 
   /** Tüm sınıflar toggle */
@@ -504,6 +547,7 @@ export class ActivitiesComponent {
       const merged = [...new Set([...current, ...group.items.map((i) => i.value)])];
       ctrl.setValue(merged);
     }
+    ctrl.markAsDirty();
   }
 
   get dialogTitle(): string {
@@ -527,7 +571,10 @@ export class ActivitiesComponent {
       isParentRequired: false,
       maxStudentCount: null,
       studentParentCount: 0,
+      maxGuestPerParent: null,
       classroom: [],
+      educationLevel: '',
+      campus: '',
     });
     this.isDialogVisible.set(true);
   }
@@ -671,6 +718,9 @@ export class ActivitiesComponent {
     const selectedEducationLevel = this.educationLevelOptions.find(
       (o) => o.ad === formValues.educationLevel,
     );
+    const selectedCampus = this.campusOptions.find(
+      (o) => o.ad === formValues.campus,
+    );
 
     const payload = {
       ...formValues,
@@ -679,8 +729,17 @@ export class ActivitiesComponent {
       fee: formValues.isPaid ? formValues.fee : null,
       turId: selectedType?.id ?? '',
       ulasimId: selectedTransportation?.id ?? '',
-      sinifId: classIdList.join(';'),
+      // Edit'te lookup boşsa (sınıf silinmiş vb.) DB'den gelen orijinal SinifId korunur.
+      sinifId:
+        classIdList.length > 0
+          ? classIdList.join(';')
+          : this.editingActivity()?.sinifId ?? '',
       egitimDuzeyiId: selectedEducationLevel?.id ?? '',
+      campus: formValues.campus || '',
+      campusId: selectedCampus?.id ?? this.editingActivity()?.campusId ?? '',
+      firmaId: selectedCampus?.id ?? '',
+      maxGuestPerParent: formValues.maxGuestPerParent ?? '',
+      yasSiniri: this.editingActivity()?.yasSiniri ?? '',
       oKod1: '',
       oKod2: '',
       oKod3: '',

@@ -236,6 +236,26 @@
                 </div>
               </div>
 
+              <!-- Servis Yetkilileri (servis bazlı, çoklu) -->
+              <div class="bus-authorities">
+                <div class="bus-authorities-header">
+                  <span class="material-symbols-outlined">badge</span>
+                  Yetkililer
+                </div>
+                @if (authorityAssignmentsForBus(bus.id).length === 0) {
+                  <span class="bus-authorities-empty">Atanmış yetkili yok</span>
+                } @else {
+                  <div class="bus-authorities-list">
+                    @for (authority of authorityAssignmentsForBus(bus.id); track authority.id) {
+                      <span class="bus-authority-chip"
+                        ><span class="material-symbols-outlined">badge</span>
+                        {{ authority.authorityName }}</span
+                      >
+                    }
+                  </div>
+                }
+              </div>
+
               <!-- Actions -->
               <div class="bus-actions">
                 <button
@@ -530,6 +550,73 @@
             </div>
           </div>
 
+          <!-- Servis Yetkilisi bölümü (öğrenci seçiminin üstünde) -->
+          <div class="dialog-section-divider">
+            <span class="material-symbols-outlined">badge</span>
+            Servis Yetkilisi
+          </div>
+
+          <!-- Bu araca atanmış yetkililer (çoklu) -->
+          <div class="authority-chip-list">
+            @for (authority of authorityAssignmentsForBus(bus.id); track authority.id) {
+              <span class="authority-chip">
+                <span class="material-symbols-outlined">badge</span>
+                {{ authority.authorityName }}
+                <button
+                  class="authority-chip-remove"
+                  (click)="confirmAuthorityAssignDelete(authority)"
+                  pTooltip="Atamayı kaldır"
+                  aria-label="Atamayı kaldır"
+                >
+                  <span class="material-symbols-outlined">close</span>
+                </button>
+              </span>
+            } @empty {
+              <span class="authority-chip-empty">Bu araca atanmış yetkili yok.</span>
+            }
+          </div>
+
+          <form
+            [formGroup]="authorityAssignForm"
+            (ngSubmit)="submitAuthorityAssign()"
+            class="entity-form"
+          >
+            <div class="form-field">
+              <label for="assignAuthority"
+                ><span class="material-symbols-outlined">badge</span> Yetkili</label
+              >
+              <p-select
+                inputId="assignAuthority"
+                formControlName="authoritySicilId"
+                [options]="authorityOptions()"
+                optionLabel="label"
+                optionValue="value"
+                [filter]="true"
+                filterBy="label"
+                placeholder="Yetkili seçin..."
+                styleClass="w-full"
+                appendTo="body"
+              />
+              @if (
+                authorityAssignForm.get('authoritySicilId')?.invalid &&
+                authorityAssignForm.get('authoritySicilId')?.touched
+              ) {
+                <small class="field-error">Yetkili seçimi zorunludur.</small>
+              }
+            </div>
+            <div class="form-actions">
+              <button
+                type="submit"
+                pButton
+                label="Yetkiliyi Ata"
+                aria-label="Yetkiliyi Ata"
+                icon="pi pi-check"
+                class="p-button-success"
+                [disabled]="authorityAssignForm.invalid"
+              ></button>
+            </div>
+          </form>
+
           <!-- Öğrenci atama formu -->
           <form
             [formGroup]="studentAssignForm"
@@ -695,6 +782,62 @@
               icon="pi pi-trash"
               class="p-button-danger"
               (click)="deleteStudentAssign()"
+              aria-label="Kaldır"
+            ></button>
+          </div>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- ══════════════════════════════════════════════════════════ -->
+  <!-- DIALOG: Yetkili Servis Ataması Silme Onayı                 -->
+  <!-- ══════════════════════════════════════════════════════════ -->
+  @if (authorityAssignDeleteVisible() && authorityAssignDeleting(); as deleting) {
+    <div
+      class="dialog-overlay"
+      (click)="closeAuthorityAssignDelete()"
+      (keyup.enter)="closeAuthorityAssignDelete()"
+      role="presentation"
+    >
+      <div
+        class="dialog-content delete-dialog"
+        (click)="$event.stopPropagation()"
+        (keyup.enter)="$event.stopPropagation()"
+        tabindex="-1"
+      >
+        <div class="dialog-header">
+          <h3><span class="material-symbols-outlined delete-icon">warning</span> Atamayı Kaldır</h3>
+          <button class="dialog-close" (click)="closeAuthorityAssignDelete()">
+            <span class="material-symbols-outlined">close</span>
+          </button>
+        </div>
+        <div class="dialog-body">
+          <div class="delete-confirm-content">
+            <div class="delete-warning">
+              <span class="material-symbols-outlined">error</span>
+              <p>
+                <strong>{{ deleting.authorityName }}</strong> adlı yetkilinin servis atamasını
+                kaldırmak üzeresiniz.
+              </p>
+            </div>
+            <p class="delete-note">Bu işlem geri alınamaz.</p>
+          </div>
+          <div class="form-actions">
+            <button
+              pButton
+              label="İptal"
+              icon="pi pi-times"
+              class="p-button-text"
+              (click)="closeAuthorityAssignDelete()"
+              aria-label="İptal"
+            ></button>
+            <button
+              pButton
+              label="Kaldır"
+              icon="pi pi-trash"
+              class="p-button-danger"
+              (click)="deleteAuthorityAssign()"
               aria-label="Kaldır"
             ></button>
           </div>

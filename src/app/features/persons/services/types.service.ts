@@ -23,6 +23,14 @@ export class TypesService {
     });
   }
 
+  getBloodTypes(): Observable<DropdownItem[]> {
+    return this.getDropdownList('sys_KanGrubu');
+  }
+
+  getGenderOptions(): Observable<DropdownItem[]> {
+    return this.getDropdownList('sys_cinsiyet');
+  }
+
   getTerminals(): Observable<DropdownItem[]> {
     return this.api
       .callEndpoint<any[]>('Dynamic', {

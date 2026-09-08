@@ -58,6 +58,34 @@ interface DBInsertResult {
   SunucuCevap: string;
 }
 
+/**
+ * sp_yetkiliservis_s'ten dönen ham DB satırı.
+ * Kolon adları DB'den geldiği gibi (PascalCase) tutulur; AuthorityAssignment
+ * modeline çevrim getAuthorityAssignments içinde yapılır.
+ */
+interface AuthorityServisRow {
+  Id: number;
+  YetkiliSicilId: number;
+  YetkiliAdSoyad: string;
+  ServisId: number;
+  Plaka: string;
+  Marka: string;
+  Model: string;
+  CreatedDate: string | null;
+}
+
+/** Bir yetkilinin bir servise (araca) atanma kaydının frontend karşılığı. */
+export interface AuthorityAssignment {
+  id: number;
+  authoritySicilId: number;
+  authorityName: string;
+  servisId: number;
+  plaka: string;
+  marka: string;
+  model: string;
+  createdDate: string | null;
+}
+
 @Injectable({
   providedIn: 'root',
 })
@@ -287,22 +315,78 @@ export class SchoolBusService {
   //     );
   // }
 
-  // /** point=ogrenciserviscampus & islemtipi=d -> sp_ogrenciserviscampus_d */
-  // removeStudentAssignment(id: number): Observable<{ sonuc: number; sunucuCevap: string }> {
-  //   return this.api
-  //     .callEndpoint<DBInsertResult[]>('Dynamic', {
-  //       point: 'ogrenciserviscampus',
-  //       islemtipi: 'd',
-  //       Id: id,
-  //     })
-  //     .pipe(
-  //       map((response) => {
-  //         const unwrapped = unwrapResponse(response);
-  //         return {
-  //           sonuc: unwrapped ? Number(unwrapped.Sonuc) : -1,
-  //           sunucuCevap: unwrapped ? String(unwrapped.SunucuCevap) : 'Sunucudan yanıt alınamadı.',
-  //         };
-  //       }),
-  //     );
-  // }
+  // ════════════════════════════════════════════════════════
+  //  YETKİLİ SERVİS ATAMALARI (sp_yetkiliservis_*)
+  // ════════════════════════════════════════════════════════
+
+  /**
+   * point=yetkiliservis & islemtipi=s -> sp_yetkiliservis_s
+   * Prosedür tüm atamaları döner; her satır kendi ServisId'sini içerir.
+   * Araca göre filtreleme frontend'te (authorityAssignmentsForBus) yapılır.
+   * Not: YetkiliSicilId/ServisId parametresi GÖNDERİLMEMELİ — boş string
+   * gönderilirse prosedür veri döndürmez.
+   */
+  getAuthorityAssignments(): Observable<AuthorityAssignment[]> {
+    return this.api
+      .callEndpoint<AuthorityServisRow[]>('Dynamic', {
+        point: 'yetkiliservis',
+        islemtipi: 's',
+      })
+      .pipe(
+        map((rows) =>
+          (rows || []).map((row) => ({
+            id: row.Id,
+            authoritySicilId: row.YetkiliSicilId,
+            authorityName: row.YetkiliAdSoyad,
+            servisId: row.ServisId,
+            plaka: row.Plaka,
+            marka: row.Marka,
+            model: row.Model,
+            createdDate: row.CreatedDate,
+          })),
+        ),
+      );
+  }
+
+  /** point=yetkiliservis & islemtipi=i -> sp_yetkiliservis_i */
+  assignAuthorityToBus(
+    authoritySicilId: number,
+    servisId: number,
+  ): Observable<{ sonuc: number; sunucuCevap: string }> {
+    return this.api
+      .callEndpoint<DBInsertResult[]>('Dynamic', {
+        point: 'yetkiliservis',
+        islemtipi: 'i',
+        YetkiliSicilId: authoritySicilId,
+        ServisId: servisId,
+      })
+      .pipe(
+        map((response) => {
+          const unwrapped = unwrapResponse(response);
+          return {
+            sonuc: unwrapped ? Number(unwrapped.Sonuc) : -1,
+            sunucuCevap: unwrapped ? String(unwrapped.SunucuCevap) : 'Sunucudan yanıt alınamadı.',
+          };
+        }),
+      );
+  }
+
+  /** point=yetkiliservis & islemtipi=d -> sp_yetkiliservis_d */
+  removeAuthorityAssignment(id: number): Observable<{ sonuc: number; sunucuCevap: string }> {
+    return this.api
+      .callEndpoint<DBInsertResult[]>('Dynamic', {
+        point: 'yetkiliservis',
+        islemtipi: 'd',
+        Id: id,
+      })
+      .pipe(
+        map((response) => {
+          const unwrapped = unwrapResponse(response);
+          return {
+            sonuc: unwrapped ? Number(unwrapped.Sonuc) : -1,
+            sunucuCevap: unwrapped ? String(unwrapped.SunucuCevap) : 'Sunucudan yanıt alınamadı.',
+          };
+        }),
+      );
+  }
 }
