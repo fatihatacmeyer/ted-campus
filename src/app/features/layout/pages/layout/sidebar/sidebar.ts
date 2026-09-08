@@ -43,6 +43,7 @@ export class SidebarComponent implements OnInit {
     { labelKey: 'MENU.ATTENDANCE', route: '/home/attendance', icon: 'schedule' },
     { labelKey: 'MENU.PHOTO_APPROVAL', route: '/home/photo-approval', icon: 'photo_camera' },
     { labelKey: 'MENU.SCHOOL_HOURS', route: '/home/school-hours', icon: 'alarm' },
+    { labelKey: 'MENU.LAST_PASS', route: '/home/last-pass', icon: 'transfer_within_a_station' },
   ];
 
   protected navItems: NavItem[] = [];

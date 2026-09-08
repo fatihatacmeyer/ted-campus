@@ -136,6 +136,7 @@
             class="p-button-text p-button-sm p-button-rounded"
             icon="pi pi-expand"
             pTooltip="{{ 'COMMON.VIEW_FULL' | translate }}"
+            tooltipPosition="bottom"
             aria-label="{{ 'COMMON.VIEW_FULL' | translate }}"
             (click)="earlyLeaverDialogVisible = true"
           ></button>
@@ -229,6 +230,7 @@
             class="p-button-text p-button-sm p-button-rounded"
             icon="pi pi-expand"
             pTooltip="{{ 'COMMON.VIEW_FULL' | translate }}"
+            tooltipPosition="bottom"
             aria-label="{{ 'COMMON.VIEW_FULL' | translate }}"
             (click)="lateDialogVisible = true"
           ></button>
@@ -297,6 +299,7 @@
             class="p-button-text p-button-sm p-button-rounded"
             icon="pi pi-expand"
             pTooltip="{{ 'COMMON.VIEW_FULL' | translate }}"
+            tooltipPosition="bottom"
             aria-label="{{ 'COMMON.VIEW_FULL' | translate }}"
             (click)="absentDialogVisible = true"
           ></button>
@@ -387,6 +390,7 @@
             class="p-button-text p-button-sm p-button-rounded"
             icon="pi pi-expand"
             pTooltip="{{ 'COMMON.VIEW_FULL' | translate }}"
+            tooltipPosition="bottom"
             aria-label="{{ 'COMMON.VIEW_FULL' | translate }}"
             (click)="txnDialogVisible = true"
           ></button>
@@ -601,6 +605,41 @@
           </span>
           <span style="font-size: 0.7rem; color: #6b7280; white-space: nowrap">
             Beklenen: {{ late.expectedEntryTime }}
+          </span>
+        </div>
+      </div>
+    }
+  </div>
+</p-dialog>
+
+<!-- Devamsızlar (Hiç Gelmeyenler) Dialog -->
+<p-dialog
+  header="{{ 'DASHBOARD.ABSENTEES' | translate }}"
+  [(visible)]="absentDialogVisible"
+  [modal]="true"
+  [style]="{ width: '60vw', maxHeight: '80vh' }"
+  [draggable]="false"
+  [resizable]="false"
+  styleClass="dashboard-dialog"
+>
+  <div class="person-list dialog-list">
+    @for (absent of absentees; track $index) {
+      <div class="person-row">
+        <div class="person-avatar avatar-student">
+          {{ absent.fullName ? absent.fullName.charAt(0) : '?' }}
+        </div>
+
+        <div class="person-info">
+          <span class="person-name">{{ absent.fullName }}</span>
+          <span class="person-meta">{{ absent.className }} &middot; {{ absent.schoolName }}</span>
+        </div>
+
+        <span class="person-badge badge-student">{{ 'USERDEF.STUDENT' | translate }}</span>
+
+        <div class="d-flex flex-column align-items-end justify-content-center" style="gap: 2px">
+          <span class="person-exit-time" style="color: #6b7280; font-weight: 600">
+            <span class="material-symbols-outlined" style="font-size: 16px">close</span>
+            {{ 'DASHBOARD.NO_ENTRY' | translate }}
           </span>
         </div>
       </div>

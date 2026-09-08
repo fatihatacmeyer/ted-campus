@@ -13,7 +13,8 @@
     "STUDENT_ATTENDANCE": "Student Attendance",
     "PROXIES": "Proxies",
     "PHOTO_APPROVAL": "Photo Management",
-    "SCHOOL_HOURS": "School Hours"
+    "SCHOOL_HOURS": "School Hours",
+    "LAST_PASS": "Last Passes"
   },
   "HEADER": {
     "MENU": "MENU",
@@ -567,6 +568,13 @@
     "SUCCESS": "Operation successful.",
     "FAILED": "Operation failed.",
     "ERROR_SERVER": "Server error occurred."
+  },
+  "LAST_PASS": {
+    "TITLE": "Last Passes",
+    "TERMINAL_GROUP": "Terminal Group",
+    "SELECT_GROUP": "Select Group",
+    "NO_DATA": "No recent passes found.",
+    "UNKNOWN_PERSON": "Unknown Person"
   },
   "NOTIFICATIONS": {
     "SUCCESS": "Success",

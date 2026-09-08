@@ -1,0 +1,92 @@
+<div class="last-pass-container">
+  <!-- Header & Filters -->
+  <div class="header-section">
+    <h2>{{ 'LAST_PASS.TITLE' | translate }}</h2>
+
+    <div class="filters">
+      <div class="filter-group">
+        <label for="terminalGroup">{{ 'LAST_PASS.TERMINAL_GROUP' | translate }}:</label>
+        <p-select
+          id="terminalGroup"
+          [options]="terminalGroups()"
+          optionLabel="name"
+          optionValue="id"
+          [ngModel]="selectedGroupId()"
+          (ngModelChange)="onGroupChange($event)"
+          [placeholder]="'LAST_PASS.SELECT_GROUP' | translate"
+          styleClass="w-240"
+        >
+        </p-select>
+      </div>
+    </div>
+  </div>
+
+  <!-- Passes Grid / Loading -->
+  @if (isLoading()) {
+    <div class="loading-container">
+      <p-progressSpinner strokeWidth="4" animationDuration=".8s" />
+    </div>
+  } @else {
+    <div class="passes-grid">
+      @for (record of recentPasses(); track record.personId) {
+        <div
+          class="pass-card"
+          [ngClass]="{ 'status-success': record.status === 1, 'status-fail': record.status !== 1 }"
+        >
+          <div class="card-left">
+            <img
+              [src]="getPhotoUrl(record.photoBase64)"
+              (error)="onPhotoError($event)"
+              alt="Profil Fotoğrafı"
+              class="profile-img"
+            />
+            <span class="status-ribbon">
+              <span class="material-symbols-outlined">
+                {{ record.status === 1 ? 'check_circle' : 'cancel' }}
+              </span>
+            </span>
+          </div>
+
+          <div class="card-right">
+            <div class="person-info">
+              <h4 class="name">{{ record.fullName || ('LAST_PASS.UNKNOWN_PERSON' | translate) }}</h4>
+              <span class="identity">{{ record.identityNo }}</span>
+            </div>
+
+            <div class="meta-info">
+              @if (record.department) {
+                <span class="department">{{ record.department }}</span>
+              }
+              @if (record.company) {
+                <span class="company">{{ record.company }}</span>
+              }
+              @if (record.position) {
+                <span class="position">{{ record.position }}</span>
+              }
+            </div>
+
+            <div class="pass-details">
+              <div class="detail terminal">
+                <span class="material-symbols-outlined icon">door_front</span>
+                {{ record.terminalName }}
+              </div>
+              <div class="detail time">
+                <span class="material-symbols-outlined icon">schedule</span>
+                {{ record.passTime | date: 'HH:mm:ss' }}
+              </div>
+            </div>
+
+            <div class="message-badge" [ngClass]="{ 'badge-fail': record.status !== 1 }">
+              {{ record.message }}
+            </div>
+          </div>
+        </div>
+      } @empty {
+        <div class="empty-state">
+          <span class="material-symbols-outlined">inbox</span>
+          <p>{{ 'LAST_PASS.NO_DATA' | translate }}</p>
+        </div>
+      }
+    </div>
+  }
+</div>

@@ -106,6 +106,13 @@ export const routes: Routes = [
             (m) => m.SchoolHoursListComponent,
           ),
       },
+      {
+        path: 'last-pass',
+        // canActivate: [adminGuard],
+        data: { titleKey: 'MENU.LAST_PASS', scrollable: true },
+        loadComponent: () =>
+          import('./features/last-pass/pages/last-pass/last-pass').then((m) => m.LastPassComponent),
+      },
     ],
   },
   {

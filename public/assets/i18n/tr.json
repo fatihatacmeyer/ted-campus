@@ -13,7 +13,8 @@
     "STUDENT_ATTENDANCE": "Öğrenci Devam",
     "PROXIES": "Vekiller",
     "PHOTO_APPROVAL": "Fotoğraf Yönetimi",
-    "SCHOOL_HOURS": "Okul Saatleri"
+    "SCHOOL_HOURS": "Okul Saatleri",
+    "LAST_PASS": "Son Geçenler"
   },
   "HEADER": {
     "MENU": "MENÜ",
@@ -570,6 +571,13 @@
     "SUCCESS": "İşlem başarılı.",
     "FAILED": "İşlem başarısız.",
     "ERROR_SERVER": "Sunucu hatası oluştu."
+  },
+  "LAST_PASS": {
+    "TITLE": "Son Geçiş Yapanlar",
+    "TERMINAL_GROUP": "Terminal Grubu",
+    "SELECT_GROUP": "Grup Seçin",
+    "NO_DATA": "Son geçiş bulunamadı.",
+    "UNKNOWN_PERSON": "Bilinmeyen Kişi"
   },
   "NOTIFICATIONS": {
     "SUCCESS": "Başarılı",
