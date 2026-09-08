@@ -84,6 +84,46 @@ export class ProxyListComponent implements OnInit {
     this.showProfileModal = true;
   }
 
+  /**
+   * "Bilgileri Gönder" butonu (vekil profili).
+   * sp_vekilloginsendcampus_d çağrılır: vekil login kaydı silinir ve yeni
+   * parola SMS ile gönderilir. `${person.id}` aslında VekilCampusId'dir.
+   */
+  onForgotPasswordRequest(person: Person): void {
+    this.isLoading = true;
+    this.cdr.markForCheck();
+
+    this.proxyService
+      .sendProxyLogin(person.id)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (res) => {
+          this.isLoading = false;
+
+          // SP durum kodları: 1 = başarılı (yeni parola SMS ile gönderildi),
+          // 2 = login silindi ama vekil pasif/süresi dolmuş (yeniden açılmayacak),
+          // -1 = vekil login kaydı bulunamadı.
+          if (res.result === 1) {
+            this.notification.success(res.serverMessage || 'PROXIES.SUCCESS');
+          } else if (res.result === 2) {
+            this.notification.info(res.serverMessage || 'PROXIES.SUCCESS');
+          } else {
+            this.notification.error(res.serverMessage || 'PROXIES.FAILED');
+          }
+
+          this.showProfileModal = false;
+          this.cdr.markForCheck();
+        },
+        error: () => {
+          this.isLoading = false;
+          this.notification.error('PROXIES.ERROR_SERVER');
+          // Öğrenci akışıyla aynı davranış: istek hata da dönse modal kapanır.
+          this.showProfileModal = false;
+          this.cdr.markForCheck();
+        },
+      });
+  }
+
   // --- Filtre Sekmeleri (PDKS mantığı) ---
   activeTab = signal<ProxyApprovalStatus | null>(null);
 

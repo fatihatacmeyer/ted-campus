@@ -98,4 +98,33 @@ export class ProxyService {
         }),
       );
   }
+
+  /**
+   * Deletes the proxy login record (LoginMeCampus) and triggers sending a new
+   * password via SMS.
+   * Calls sp_vekilloginsendcampus_d — the proxy counterpart of the student
+   * flow sendPasswordReminder (sp_loginsendcampus_d).
+   */
+  sendProxyLogin(
+    proxyCampusId: number,
+  ): Observable<{ result: number; serverMessage: string }> {
+    return this.api
+      .callEndpoint<DBInsertResult[]>('Dynamic', {
+        point: 'vekilloginsendcampus',
+        islemtipi: 'd',
+        // NOTE: API payload key matches the SP parameter @vekilCampusId.
+        vekilCampusId: proxyCampusId,
+      })
+      .pipe(
+        map((response) => {
+          const unwrapped = unwrapResponse(response);
+          return {
+            result: unwrapped ? Number(unwrapped.Sonuc) : -1,
+            serverMessage: unwrapped
+              ? String(unwrapped.SunucuCevap)
+              : 'Could not reach the server.',
+          };
+        }),
+      );
+  }
 }

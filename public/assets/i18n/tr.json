@@ -576,7 +576,9 @@
     "TITLE": "Son Geçiş Yapanlar",
     "TERMINAL_GROUP": "Terminal Grubu",
     "SELECT_GROUP": "Grup Seçin",
+    "GRID_COUNT": "Grid Sayısı",
     "NO_DATA": "Son geçiş bulunamadı.",
+    "NO_RECENT_PASS": "Bu terminalde son geçiş yok",
     "UNKNOWN_PERSON": "Bilinmeyen Kişi"
   },
   "NOTIFICATIONS": {

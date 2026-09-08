@@ -573,7 +573,9 @@
     "TITLE": "Last Passes",
     "TERMINAL_GROUP": "Terminal Group",
     "SELECT_GROUP": "Select Group",
+    "GRID_COUNT": "Grid Count",
     "NO_DATA": "No recent passes found.",
+    "NO_RECENT_PASS": "No recent pass at this terminal",
     "UNKNOWN_PERSON": "Unknown Person"
   },
   "NOTIFICATIONS": {

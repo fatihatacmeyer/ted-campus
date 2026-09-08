@@ -110,21 +110,21 @@
         </div>
 
         <div class="profile-actions-right">
-          @if (!isProxyPerson) {
-            <!-- Şifre Hatırlat Butonu -->
-            <button
-              pButton
-              type="button"
-              class="p-button-help p-button-outlined p-button-sm"
-              icon="pi pi-key"
-              (click)="onForgotPasswordClick()"
-              pTooltip="Kullanıcı Bilgilerini Gönder"
-              tooltipPosition="top"
-            >
-              Bilgileri Gönder
-            </button>
+          <!-- Şifre Hatırlat / Bilgileri Gönder Butonu (Öğrenci, Veli ve Vekil) -->
+          <button
+            pButton
+            type="button"
+            class="p-button-help p-button-outlined p-button-sm"
+            icon="pi pi-key"
+            (click)="onForgotPasswordClick()"
+            pTooltip="Kullanıcı Bilgilerini Gönder"
+            tooltipPosition="top"
+          >
+            Bilgileri Gönder
+          </button>
 
-            <!-- Düzenle Butonu (Birincil Eylem) -->
+          <!-- Düzenle Butonu (Birincil Eylem) — vekil profillerde gösterilmez -->
+          @if (!isProxyPerson) {
             <button
               pButton
               type="button"

@@ -18,6 +18,30 @@
         >
         </p-select>
       </div>
+
+      <div class="filter-group">
+        <label>{{ 'LAST_PASS.GRID_COUNT' | translate }}:</label>
+        <p-select
+          inputId="gridSize"
+          [options]="gridOptions"
+          optionLabel="label"
+          optionValue="value"
+          [ngModel]="gridSize()"
+          (ngModelChange)="onGridSizeChange($event)"
+          styleClass="w-120"
+          appendTo="body"
+        />
+      </div>
+
+      <button
+        type="button"
+        class="fullscreen-enter-btn"
+        (click)="toggleFullScreen()"
+        pTooltip="Tam Ekran"
+        tooltipPosition="bottom"
+      >
+        <span class="material-symbols-outlined" style="font-size: 28px">fullscreen</span>
+      </button>
     </div>
   </div>
 
@@ -27,62 +51,178 @@
       <p-progressSpinner strokeWidth="4" animationDuration=".8s" />
     </div>
   } @else {
-    <div class="passes-grid">
-      @for (record of recentPasses(); track record.personId) {
-        <div
-          class="pass-card"
-          [ngClass]="{ 'status-success': record.status === 1, 'status-fail': record.status !== 1 }"
-        >
-          <div class="card-left">
-            <img
-              [src]="getPhotoUrl(record.photoBase64)"
-              (error)="onPhotoError($event)"
-              alt="Profil Fotoğrafı"
-              class="profile-img"
-            />
-            <span class="status-ribbon">
-              <span class="material-symbols-outlined">
-                {{ record.status === 1 ? 'check_circle' : 'cancel' }}
-              </span>
-            </span>
+    <div class="last-pass-grid" [ngClass]="gridClass()">
+      <!-- @if (isFullScreen()) { -->
+      <button
+        class="exit-fullscreen-btn"
+        (click)="toggleFullScreen()"
+        pTooltip="Tam Ekrandan Çık"
+        tooltipPosition="left"
+      >
+        <span class="material-symbols-outlined">close</span>
+      </button>
+      <!-- } -->
+      @for (record of visibleRecords(); track trackByIndex($index, record)) {
+        <div class="pass-card">
+          <div class="pass-photo">
+            @if (isIdleTerminal(record)) {
+              <div class="photo-fallback idle-fallback">
+                <svg
+                  viewBox="0 0 24 24"
+                  width="72"
+                  height="72"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.5"
+                >
+                  <circle cx="12" cy="12" r="9"></circle>
+                  <polyline points="12 7 12 12 16 14"></polyline>
+                </svg>
+              </div>
+            } @else if (record.photoBase64) {
+              <img
+                class="photo-img"
+                [src]="getPhotoUrl(record.photoBase64)"
+                (error)="onPhotoError($event)"
+                [alt]="record.fullName"
+              />
+            } @else {
+              <div class="photo-fallback">
+                <svg
+                  viewBox="0 0 24 24"
+                  width="72"
+                  height="72"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.5"
+                >
+                  <circle cx="12" cy="8" r="4"></circle>
+                  <path d="M4 20c0-4.4 3.6-7 8-7s8 2.6 8 7"></path>
+                </svg>
+              </div>
+            }
+
+            @if (!isIdleTerminal(record)) {
+              <div class="badge" [class.badge-fail]="record.status !== 1">
+                @if (record.status === 1) {
+                  <svg
+                    viewBox="0 0 24 24"
+                    width="13"
+                    height="13"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2.5"
+                  >
+                    <polyline points="20 6 9 17 4 12"></polyline>
+                  </svg>
+                } @else {
+                  <svg
+                    viewBox="0 0 24 24"
+                    width="13"
+                    height="13"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2.5"
+                  >
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                  </svg>
+                }
+                {{ record.message }}
+              </div>
+
+              <div class="time-pill">
+                <svg
+                  viewBox="0 0 24 24"
+                  width="13"
+                  height="13"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                >
+                  <circle cx="12" cy="12" r="9"></circle>
+                  <polyline points="12 7 12 12 16 14"></polyline>
+                </svg>
+                {{
+                  record.passTime
+                    | date
+                      : (gridClass() === 'grid-1' || gridClass() === 'grid-2'
+                          ? 'dd.MM.yyyy - HH:mm:ss'
+                          : 'HH:mm:ss')
+                }}
+              </div>
+            }
           </div>
 
-          <div class="card-right">
-            <div class="person-info">
-              <h4 class="name">{{ record.fullName || ('LAST_PASS.UNKNOWN_PERSON' | translate) }}</h4>
-              <span class="identity">{{ record.identityNo }}</span>
-            </div>
+          <div class="pass-info">
+            <p class="pass-name" [class.pass-name-idle]="isIdleTerminal(record)">
+              @if (isIdleTerminal(record)) {
+                {{ 'LAST_PASS.NO_RECENT_PASS' | translate }}
+              } @else {
+                {{ record.fullName || ('LAST_PASS.UNKNOWN_PERSON' | translate) }}
+              }
+            </p>
 
-            <div class="meta-info">
-              @if (record.department) {
-                <span class="department">{{ record.department }}</span>
-              }
-              @if (record.company) {
-                <span class="company">{{ record.company }}</span>
-              }
-              @if (record.position) {
-                <span class="position">{{ record.position }}</span>
-              }
-            </div>
+            @if (!isIdleTerminal(record)) {
+              <div class="pass-tags">
+                @if (record.department) {
+                  <span>
+                    <svg
+                      viewBox="0 0 24 24"
+                      width="14"
+                      height="14"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2"
+                    >
+                      <path d="M17 21v-2a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4v2"></path>
+                      <circle cx="9" cy="7" r="4"></circle>
+                      <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                      <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                    </svg>
+                    {{ record.department }}
+                  </span>
+                }
+                @if (record.company) {
+                  <span>
+                    <svg
+                      viewBox="0 0 24 24"
+                      width="14"
+                      height="14"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2"
+                    >
+                      <rect x="4" y="2" width="16" height="20" rx="1"></rect>
+                      <line x1="8" y1="6" x2="8" y2="6"></line>
+                      <line x1="12" y1="6" x2="12" y2="6"></line>
+                      <line x1="16" y1="6" x2="16" y2="6"></line>
+                    </svg>
+                    {{ record.company }}
+                  </span>
+                }
+              </div>
 
-            <div class="pass-details">
-              <div class="detail terminal">
-                <span class="material-symbols-outlined icon">door_front</span>
+              <div class="pass-terminal">
+                <svg
+                  viewBox="0 0 24 24"
+                  width="14"
+                  height="14"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                >
+                  <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"></path>
+                  <polyline points="10 17 15 12 10 7"></polyline>
+                  <line x1="15" y1="12" x2="3" y2="12"></line>
+                </svg>
                 {{ record.terminalName }}
               </div>
-              <div class="detail time">
-                <span class="material-symbols-outlined icon">schedule</span>
-                {{ record.passTime | date: 'HH:mm:ss' }}
-              </div>
-            </div>
-
-            <div class="message-badge" [ngClass]="{ 'badge-fail': record.status !== 1 }">
-              {{ record.message }}
-            </div>
+            }
           </div>
         </div>
       } @empty {
-        <div class="empty-state">
+        <div class="pass-card pass-card-empty">
           <span class="material-symbols-outlined">inbox</span>
           <p>{{ 'LAST_PASS.NO_DATA' | translate }}</p>
         </div>
