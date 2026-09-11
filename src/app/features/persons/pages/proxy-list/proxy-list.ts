@@ -214,6 +214,8 @@ export class ProxyListComponent implements OnInit {
           if (res.sonuc === 1) {
             proxy.isActive = newActiveState;
             this.notification.success(res.sunucuCevap || 'PROXIES.SUCCESS');
+
+            this.loadProxies();
           } else {
             this.notification.error(res.sunucuCevap || 'PROXIES.FAILED');
           }

@@ -203,8 +203,15 @@ export class CustomizableTableComponent<T extends object = Record<string, unknow
       }
     }
     // Filtre popup'ı açıkken herhangi bir kaydırma (sayfa veya tablo içi) popup'ı kapatır
-    const onScroll = (): void => {
+    const onScroll = (event: Event): void => {
       if (this.filterPopup) {
+        const target = event.target as HTMLElement | null;
+
+        // Eğer kaydırılan alan dropdown listesi veya popup'ın kendisiyse kapatma
+        if (target?.closest && target.closest('.col-filter-popup, .p-select-overlay')) {
+          return;
+        }
+
         this.filterPopup = null;
       }
     };

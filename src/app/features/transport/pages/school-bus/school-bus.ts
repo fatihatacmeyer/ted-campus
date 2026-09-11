@@ -22,10 +22,15 @@ import {
   ColumnCellDirective,
   ColumnDef,
 } from '../../../../shared/components/customizable-table/customizable-table';
-import { SchoolBusService, BusDashboardStats, AuthorityAssignment } from '../../services/school-bus.service';
+import {
+  SchoolBusService,
+  BusDashboardStats,
+  AuthorityAssignment,
+} from '../../services/school-bus.service';
 import { NotificationService } from '../../../../core/services/notification.service';
 import { PersonService } from '../../../persons/services/person.service';
 import { Person, UserDef } from '../../../../core/models/person.model';
+import { forkJoin } from 'rxjs';
 
 type TabKey = 'dashboard' | 'buses' | 'assignments';
 
@@ -170,10 +175,22 @@ export class SchoolBusComponent implements OnInit {
     })),
   );
 
-  protected readonly yonOptions: { label: string; value: ServisYonu }[] = [
+  protected readonly yonOptions: { label: string; value: number }[] = [
     { label: 'Gidiş', value: 1 },
     { label: 'Dönüş', value: 2 },
+    { label: 'Gidiş/Dönüş', value: 3 },
   ];
+
+  protected checkAssignButtonDisabled(bus: Bus): boolean {
+    if (this.studentAssignForm.invalid) return true;
+    const yon = this.studentAssignForm.value.yon;
+
+    if (yon === 1) return bus.bosKoltukGidis <= 0;
+    if (yon === 2) return bus.bosKoltukDonus <= 0;
+    if (yon === 3) return bus.bosKoltukGidis <= 0 || bus.bosKoltukDonus <= 0;
+
+    return false;
+  }
 
   // İki ayrı liste: Gidiş (Yön=1) ve Dönüş (Yön=2)
   protected readonly studentAssignGidisList = computed(() =>
@@ -395,22 +412,52 @@ export class SchoolBusComponent implements OnInit {
     if (!bus) return;
     const v = this.studentAssignForm.value;
 
-    this.busService.assignStudentToBus(v.ogrenciSicilId, bus.id, v.yon).subscribe({
-      next: (result) => {
-        if (result.sonuc === 1) {
-          this.notification.success(result.sunucuCevap || 'Öğrenci servise başarıyla atandı.');
+    if (v.yon === 3) {
+      // Hem Gidiş Hem Dönüş seçildiyse iki isteği aynı anda at
+      this.studentAssignLoading.set(true);
+
+      forkJoin([
+        this.busService.assignStudentToBus(v.ogrenciSicilId, bus.id, 1 as ServisYonu),
+        this.busService.assignStudentToBus(v.ogrenciSicilId, bus.id, 2 as ServisYonu),
+      ]).subscribe({
+        next: (results) => {
+          const allSuccess = results.every((res) => res.sonuc === 1);
+
+          if (allSuccess) {
+            this.notification.success('Öğrenci hem gidiş hem dönüş için başarıyla atandı.');
+          } else {
+            this.notification.info('Atama yapıldı ancak yönlerin birinde hata oluşmuş olabilir.');
+          }
+
           this.loadStudentAssignments(bus.id);
-          this.loadBuses(); // dolu/boş koltuk sayıları güncellensin
-          this.studentAssignForm.reset({ ogrenciSicilId: null, yon: v.yon });
-        } else {
-          this.notification.error(result.sunucuCevap || 'Öğrenci atanırken bir hata oluştu.');
-        }
-      },
-      error: (err) => {
-        this.notification.error('Sunucuyla iletişim kurulurken bir hata oluştu.');
-        console.error(err);
-      },
-    });
+          this.loadBuses();
+          this.studentAssignForm.reset({ ogrenciSicilId: null, yon: 1 });
+        },
+        error: (err) => {
+          this.notification.error('Sunucuyla iletişim kurulurken bir hata oluştu.');
+          console.error(err);
+          this.studentAssignLoading.set(false);
+        },
+      });
+    } else {
+      // Sadece Gidiş veya Sadece Dönüş
+      this.busService.assignStudentToBus(v.ogrenciSicilId, bus.id, v.yon).subscribe({
+        next: (result) => {
+          if (result.sonuc === 1) {
+            this.notification.success(result.sunucuCevap || 'Öğrenci servise başarıyla atandı.');
+            this.loadStudentAssignments(bus.id);
+            this.loadBuses();
+            this.studentAssignForm.reset({ ogrenciSicilId: null, yon: v.yon });
+          } else {
+            this.notification.error(result.sunucuCevap || 'Öğrenci atanırken bir hata oluştu.');
+          }
+        },
+        error: (err) => {
+          this.notification.error('Sunucuyla iletişim kurulurken bir hata oluştu.');
+          console.error(err);
+        },
+      });
+    }
   }
 
   protected confirmStudentAssignDelete(row: StudentAssignment): void {

@@ -99,14 +99,13 @@
 
 <app-person-form
   [(visible)]="showAddDialog"
-  [userdef]="USERDEF"
+  [userdef]="currentFormUserDef"
   [editPerson]="editPerson"
   [allPersons]="allPersons"
   [titleKey]="formTitleKey"
   (visibleChange)="onEditDialogClose()"
   (saved)="onPersonSaved($event)"
 ></app-person-form>
-
 <app-person-exit-dialog
   [(visible)]="showExitDialog"
   [person]="exitPerson"

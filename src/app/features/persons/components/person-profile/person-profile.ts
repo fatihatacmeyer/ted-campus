@@ -59,6 +59,11 @@ export class PersonProfileComponent implements OnChanges {
     }
   }
 
+  get isStudent(): boolean {
+    const ctx = this.person?.userdef ?? this.userdefContext;
+    return ctx === UserDef.Ogrenci;
+  }
+
   private loadProfilePhoto(): void {
     if (!this.person) return;
 

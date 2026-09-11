@@ -108,7 +108,7 @@ export const routes: Routes = [
       },
       {
         path: 'last-pass',
-        // canActivate: [adminGuard],
+        canActivate: [AuthGuard],
         data: { titleKey: 'MENU.LAST_PASS', scrollable: true },
         loadComponent: () =>
           import('./features/last-pass/pages/last-pass/last-pass').then((m) => m.LastPassComponent),

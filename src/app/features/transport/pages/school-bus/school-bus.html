@@ -638,6 +638,8 @@
                 placeholder="Öğrenci seçin..."
                 styleClass="w-full"
                 appendTo="body"
+                [virtualScroll]="true"
+                [virtualScrollItemSize]="38"
               />
               @if (
                 studentAssignForm.get('ogrenciSicilId')?.invalid &&
@@ -672,12 +674,7 @@
                 aria-label="Öğrenciyi Ata"
                 icon="pi pi-check"
                 class="p-button-success"
-                [disabled]="
-                  studentAssignForm.invalid ||
-                  (studentAssignDirectionTab() === 1
-                    ? bus.bosKoltukGidis <= 0
-                    : bus.bosKoltukDonus <= 0)
-                "
+                [disabled]="checkAssignButtonDisabled(bus)"
               ></button>
             </div>
           </form>

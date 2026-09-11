@@ -106,10 +106,15 @@ export class PersonCrudComponent implements OnInit {
     return 'PERSON.ADD_' + getUserDefLabelKey(this.USERDEF).split('.')[1];
   }
 
+  get currentFormUserDef(): number {
+    return this.editPerson?.userdef || this.USERDEF;
+  }
+
   get formTitleKey(): string {
+    const targetUserDef = this.currentFormUserDef;
     return this.editPerson
-      ? 'PERSON.EDIT_' + getUserDefLabelKey(this.USERDEF).split('.')[1]
-      : 'PERSON.ADD_' + getUserDefLabelKey(this.USERDEF).split('.')[1];
+      ? 'PERSON.EDIT_' + getUserDefLabelKey(targetUserDef).split('.')[1]
+      : 'PERSON.ADD_' + getUserDefLabelKey(targetUserDef).split('.')[1];
   }
 
   get descriptionTextKey(): string {

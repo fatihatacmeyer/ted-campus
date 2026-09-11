@@ -1,7 +1,9 @@
 <div class="admin-wrapper">
   <div class="admin-card">
     <div class="d-flex justify-content-between align-items-center mb-3">
-      <h4 class="fw-bold mb-0" style="color: #dc2134">{{ 'PHOTO_APPROVAL.PAGE_TITLE' | translate }}</h4>
+      <h4 class="fw-bold mb-0" style="color: #dc2134">
+        {{ 'PHOTO_APPROVAL.PAGE_TITLE' | translate }}
+      </h4>
       <button
         pButton
         icon="pi pi-refresh"
@@ -57,10 +59,10 @@
             <div class="photo-info">
               <h5 class="person-name">{{ getPersonName(photo) }}</h5>
               <div class="d-flex justify-content-between align-items-center mb-2">
-                <p-tag
+                <!-- <p-tag
                   [value]="getPersonType(photo) | translate"
                   [severity]="getPersonTypeSeverity(photo)"
-                ></p-tag>
+                ></p-tag> -->
                 <span class="upload-date" [title]="'PHOTO_APPROVAL.UPLOAD_DATE' | translate">
                   <i class="pi pi-calendar"></i>
                   {{ photo.YuklemeTarihi | date: 'dd.MM.yyyy HH:mm' }}

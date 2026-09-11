@@ -53,12 +53,7 @@
   } @else {
     <div class="last-pass-grid" [ngClass]="gridClass()">
       <!-- @if (isFullScreen()) { -->
-      <button
-        class="exit-fullscreen-btn"
-        (click)="toggleFullScreen()"
-        pTooltip="Tam Ekrandan Çık"
-        tooltipPosition="left"
-      >
+      <button class="exit-fullscreen-btn" (click)="toggleFullScreen()">
         <span class="material-symbols-outlined">close</span>
       </button>
       <!-- } -->
@@ -192,11 +187,21 @@
                       fill="none"
                       stroke="currentColor"
                       stroke-width="2"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
                     >
+                      <!-- Binanın Dış Çerçevesi -->
                       <rect x="4" y="2" width="16" height="20" rx="1"></rect>
+                      <!-- Üst Pencereler -->
                       <line x1="8" y1="6" x2="8" y2="6"></line>
                       <line x1="12" y1="6" x2="12" y2="6"></line>
                       <line x1="16" y1="6" x2="16" y2="6"></line>
+                      <!-- Alt Pencereler -->
+                      <line x1="8" y1="10" x2="8" y2="10"></line>
+                      <line x1="12" y1="10" x2="12" y2="10"></line>
+                      <line x1="16" y1="10" x2="16" y2="10"></line>
+                      <!-- Kapı -->
+                      <path d="M9 22v-4h6v4"></path>
                     </svg>
                     {{ record.company }}
                   </span>

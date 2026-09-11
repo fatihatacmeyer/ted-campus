@@ -196,9 +196,35 @@ export class PersonFormComponent implements OnChanges, OnInit {
         pozisyon: !isOgrenci,
         gorev: !isOgrenci,
       },
+      // labels: {
+      //   sicilno: isOgrenci ? 'PERSON.IDENTITY_STUDENT' : 'PERSON.IDENTITY_DEFAULT',
+      //   personelno: isOgrenci ? 'PERSON.SCHOOL_NO' : 'PERSON.PERSONNEL_NO',
+      //   firma: 'PERSON.CAMPUS',
+      //   direktorluk: isOgrenci ? 'PERSON.EDU_LEVEL' : 'PERSON.DIRECTORATE',
+      //   bolum: isOgrenci ? 'PERSON.CLASS' : 'PERSON.DEPARTMENT',
+      //   pozisyon: isOgretmen ? 'PERSON.BRANCH' : 'PERSON.POSITION',
+      //   gorev: 'PERSON.TASK',
+      //   altfirma: 'PERSON.SUB_CAMPUS',
+      // },
+      // placeholders: {
+      //   sicilno: isOgrenci
+      //     ? 'PERSON.IDENTITY_STUDENT_PLACEHOLDER'
+      //     : 'PERSON.IDENTITY_DEFAULT_PLACEHOLDER',
+      //   personelno: isOgrenci ? 'PERSON.SCHOOL_NO_PLACEHOLDER' : 'PERSON.PERSONNEL_NO_PLACEHOLDER',
+      //   firma: 'PERSON.CAMPUS_PLACEHOLDER',
+      //   direktorluk: isOgrenci ? 'PERSON.EDU_LEVEL_PLACEHOLDER' : 'PERSON.DIRECTORATE_PLACEHOLDER',
+      //   bolum: isOgrenci ? 'PERSON.CLASS_PLACEHOLDER' : 'PERSON.DEPARTMENT_PLACEHOLDER',
+      //   pozisyon: isOgretmen ? 'PERSON.BRANCH_PLACEHOLDER' : 'PERSON.POSITION_PLACEHOLDER',
+      //   gorev: 'PERSON.TASK_PLACEHOLDER',
+      //   altfirma: 'PERSON.SUB_CAMPUS_PLACEHOLDER',
+      // },
       labels: {
-        sicilno: isOgrenci ? 'PERSON.IDENTITY_STUDENT' : 'PERSON.IDENTITY_DEFAULT',
-        personelno: isOgrenci ? 'PERSON.SCHOOL_NO' : 'PERSON.PERSONNEL_NO',
+        // Öğrenciyse "Okul No", değilse "Sicil/TC No"
+        sicilno: isOgrenci ? 'PERSON.SCHOOL_NO' : 'PERSON.IDENTITY_DEFAULT',
+
+        // Öğrenciyse "TC Kimlik", değilse "Personel No"
+        personelno: isOgrenci ? 'PERSON.IDENTITY_STUDENT' : 'PERSON.PERSONNEL_NO',
+
         firma: 'PERSON.CAMPUS',
         direktorluk: isOgrenci ? 'PERSON.EDU_LEVEL' : 'PERSON.DIRECTORATE',
         bolum: isOgrenci ? 'PERSON.CLASS' : 'PERSON.DEPARTMENT',
@@ -207,10 +233,12 @@ export class PersonFormComponent implements OnChanges, OnInit {
         altfirma: 'PERSON.SUB_CAMPUS',
       },
       placeholders: {
-        sicilno: isOgrenci
+        sicilno: isOgrenci ? 'PERSON.SCHOOL_NO_PLACEHOLDER' : 'PERSON.IDENTITY_DEFAULT_PLACEHOLDER',
+
+        personelno: isOgrenci
           ? 'PERSON.IDENTITY_STUDENT_PLACEHOLDER'
-          : 'PERSON.IDENTITY_DEFAULT_PLACEHOLDER',
-        personelno: isOgrenci ? 'PERSON.SCHOOL_NO_PLACEHOLDER' : 'PERSON.PERSONNEL_NO_PLACEHOLDER',
+          : 'PERSON.PERSONNEL_NO_PLACEHOLDER',
+
         firma: 'PERSON.CAMPUS_PLACEHOLDER',
         direktorluk: isOgrenci ? 'PERSON.EDU_LEVEL_PLACEHOLDER' : 'PERSON.DIRECTORATE_PLACEHOLDER',
         bolum: isOgrenci ? 'PERSON.CLASS_PLACEHOLDER' : 'PERSON.DEPARTMENT_PLACEHOLDER',
@@ -238,6 +266,22 @@ export class PersonFormComponent implements OnChanges, OnInit {
 
   genderOptions: { label: string; value: string }[] = [];
   bloodTypeOptions: { label: string; value: string }[] = [];
+  // Ham DB değerinden (örn. 'E', 'A RH+') seçenek ID'sine çeviri için arama tabloları.
+  // Edit modunda form.patchValue ham değeri alır; bu map ile item.id'ye çevrilir.
+  private genderIdByAd = new Map<string, number>();
+  private bloodTypeIdByAd = new Map<string, number>();
+
+  /** DropdownItem listesinden "ad → id" arama tablosu üretir. */
+  private idLookup(items: DropdownItem[]): Map<string, number> {
+    return new Map(items.map((item) => [item.ad, item.id]));
+  }
+
+  /** Ham DB değerini (örn. 'E') seçenek ID'sine çevirir; eşleşmezse olduğu gibi döner. */
+  private toOptionId(lookup: Map<string, number>, raw: unknown): string | null {
+    if (raw == null || raw === '') return null;
+    const id = lookup.get(String(raw));
+    return id != null ? String(id) : String(raw);
+  }
 
   // Kurumsal dropdown seçenekleri (TypesService'den yüklenir)
   firmaOptions: DropdownItem[] = [];
@@ -334,15 +378,18 @@ export class PersonFormComponent implements OnChanges, OnInit {
             E: 'PERSON.GENDER_MALE',
             K: 'PERSON.GENDER_FEMALE',
           };
+          // Backend'e seçenek ID'si gidiyor (item.id), görünen etiket item.ad kalıyor.
           this.genderOptions = sys_cinsiyet.map((item) => ({
             label: genderLabelMap[item.ad] ?? item.ad,
-            value: item.ad,
+            value: String(item.id),
           }));
+          this.genderIdByAd = this.idLookup(sys_cinsiyet);
 
           this.bloodTypeOptions = sys_KanGrubu.map((item) => ({
             label: item.ad,
-            value: item.ad,
+            value: String(item.id),
           }));
+          this.bloodTypeIdByAd = this.idLookup(sys_KanGrubu);
         },
       );
   }
@@ -378,8 +425,8 @@ export class PersonFormComponent implements OnChanges, OnInit {
       ad: p.ad || '',
       soyad: p.soyad || '',
       dogumtarih: parseDate(p.dogumtarih ?? null),
-      cinsiyet: p.cinsiyet ?? null,
-      kangrubu: p.kangrubu ?? null,
+      cinsiyet: this.toOptionId(this.genderIdByAd, p.cinsiyet),
+      kangrubu: this.toOptionId(this.bloodTypeIdByAd, p.kangrubu),
       sicilno: p.sicilno || '',
       personelno: p.personelno || '',
       cardid: p.cardid || '',

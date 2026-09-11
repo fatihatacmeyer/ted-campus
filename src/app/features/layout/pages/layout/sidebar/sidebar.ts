@@ -55,6 +55,8 @@ export class SidebarComponent implements OnInit {
     // Adminse hepsini göster, değilse sadece /home rotasını (Anasayfa) göster
     this.navItems = isAdmin
       ? this.allNavItems
-      : this.allNavItems.filter((item) => item.route === '/home');
+      : this.allNavItems.filter(
+          (item) => item.route === '/home' || item.route === '/home/last-pass',
+        );
   }
 }

@@ -18,6 +18,13 @@ import { TranslatePipe } from '@ngx-translate/core';
 
 import { LastPassService } from '../../services/last-pass.service';
 import { LastPassRecord, TerminalGroup } from '../../models/last-pass.model';
+import { TooltipModule } from 'primeng/tooltip';
+
+// --- Kalıcı ayarlar (localStorage) ---
+// Kullanıcının son seçtiği terminal grubu ve grid sayısı oturumlar arası
+// korunur, böylece sayfa her açılışında aynı seçimler tekrarlanmaz.
+const STORAGE_KEY_SELECTED_GROUP = 'lastPass.selectedGroupId';
+const STORAGE_KEY_GRID_SIZE = 'lastPass.gridSize';
 
 // import { ElementRef, ViewChild, effect } from '@angular/core';
 // import { computeOptimalGrid } from '../../../../core/utils/grid-layout.util';
@@ -25,7 +32,14 @@ import { LastPassRecord, TerminalGroup } from '../../models/last-pass.model';
 @Component({
   selector: 'app-last-pass',
   standalone: true,
-  imports: [CommonModule, SelectModule, ProgressSpinnerModule, FormsModule, TranslatePipe],
+  imports: [
+    CommonModule,
+    SelectModule,
+    ProgressSpinnerModule,
+    FormsModule,
+    TranslatePipe,
+    TooltipModule,
+  ],
   templateUrl: './last-pass.html',
   styleUrl: './last-pass.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -48,7 +62,9 @@ export class LastPassComponent implements OnInit {
   selectedGroupId = signal<number | null>(null);
   recentPasses = signal<LastPassRecord[]>([]);
   isLoading = signal<boolean>(false);
-  gridSize = signal<number>(4);
+  gridSize = signal<number>(
+    Math.min(6, Math.max(1, LastPassComponent.readSavedNumber(STORAGE_KEY_GRID_SIZE, 4))),
+  );
 
   readonly gridOptions: { label: string; value: number }[] = [1, 2, 3, 4, 5, 6].map((n) => ({
     label: String(n),
@@ -166,6 +182,7 @@ export class LastPassComponent implements OnInit {
 
   onGroupChange(groupId: number): void {
     this.selectedGroupId.set(groupId);
+    LastPassComponent.writeSavedNumber(STORAGE_KEY_SELECTED_GROUP, groupId);
     this.startPolling();
   }
 
@@ -178,7 +195,11 @@ export class LastPassComponent implements OnInit {
         next: (groups) => {
           this.terminalGroups.set(groups);
           if (groups.length > 0) {
-            this.selectedGroupId.set(groups[0].id);
+            const savedGroupId = LastPassComponent.readSavedNumber(STORAGE_KEY_SELECTED_GROUP, -1);
+            // Kayıtlı grup hâlâ listedeyse onu seç, silinmişse ilk gruba düş
+            const groupId = groups.some((g) => g.id === savedGroupId) ? savedGroupId : groups[0].id;
+            this.selectedGroupId.set(groupId);
+            LastPassComponent.writeSavedNumber(STORAGE_KEY_SELECTED_GROUP, groupId);
             this.startPolling();
           }
           this.isLoading.set(false);
@@ -241,12 +262,35 @@ export class LastPassComponent implements OnInit {
     return /^[A-Za-z0-9+/]+={0,2}$/.test(trimmed);
   }
 
+  // --- Kalıcı ayarlar (localStorage) ---
+  // Kullanıcının son seçtiği terminal grubu ve grid sayısı saklanır;
+  // geçersiz/erişilemez durumlarda fallback değer kullanılır ve hata sessizce yutulur.
+  private static readSavedNumber(key: string, fallback: number): number {
+    try {
+      const raw = localStorage.getItem(key);
+      if (raw === null) return fallback;
+      const parsed = Number(raw);
+      return Number.isInteger(parsed) ? parsed : fallback;
+    } catch {
+      return fallback;
+    }
+  }
+
+  private static writeSavedNumber(key: string, value: number): void {
+    try {
+      localStorage.setItem(key, String(value));
+    } catch {
+      // Depolama erişilemezse (gizli mod, kota) sessizce yoksay
+    }
+  }
+
   trackByIndex(index: number, _record: LastPassRecord): number {
     return index;
   }
 
   onGridSizeChange(size: number): void {
     this.gridSize.set(size);
+    LastPassComponent.writeSavedNumber(STORAGE_KEY_GRID_SIZE, size);
   }
 
   isIdleTerminal(record: LastPassRecord): boolean {

@@ -434,6 +434,8 @@
     <!-- Okul / Kurum Bilgileri -->
     <div class="form-section">
       <h5>{{ 'PERSON.SCHOOL_INFO_TITLE' | translate }}</h5>
+
+      <!-- Herkes için Kampüs alanı (Veli de okul seçebilmeli) -->
       <div class="field">
         <label for="firma">{{ formConfig.labels.firma | translate }}</label>
         <p-select
@@ -449,106 +451,83 @@
         />
       </div>
 
-      <!-- Okul / Kurum Bilgileri (Komple Veli'den Gizlenir) -->
+      <!-- Detaylı Kurum Bilgileri (Veli'den Gizlenir, Sadece Öğrenci/Öğretmen Görür) -->
       @if (formConfig.show.kurumsal) {
-        <div class="form-section">
-          <h5>{{ 'PERSON.SCHOOL_INFO_TITLE' | translate }}</h5>
-
+        <div class="field-row">
           <div class="field">
-            <label for="firma">{{ formConfig.labels.firma | translate }}</label>
+            <label for="bolum">{{ formConfig.labels.bolum | translate }}</label>
             <p-select
-              id="firma"
-              formControlName="firma"
-              [options]="firmaOptions"
+              id="bolum"
+              formControlName="bolum"
+              [options]="bolumOptions"
               optionLabel="ad"
               optionValue="id"
-              [placeholder]="formConfig.placeholders.firma | translate"
+              [placeholder]="formConfig.placeholders.bolum | translate"
               [showClear]="true"
               appendTo="body"
               styleClass="w-100"
             />
           </div>
-
-          <div class="field-row">
+          @if (formConfig.show.pozisyon) {
             <div class="field">
-              <label for="bolum">{{ formConfig.labels.bolum | translate }}</label>
+              <label for="pozisyon">{{ formConfig.labels.pozisyon | translate }}</label>
               <p-select
-                id="bolum"
-                formControlName="bolum"
-                [options]="bolumOptions"
+                id="pozisyon"
+                formControlName="pozisyon"
+                [options]="pozisyonOptions"
                 optionLabel="ad"
                 optionValue="id"
-                [placeholder]="formConfig.placeholders.bolum | translate"
+                [placeholder]="formConfig.placeholders.pozisyon | translate"
                 [showClear]="true"
                 appendTo="body"
                 styleClass="w-100"
               />
             </div>
-
-            @if (formConfig.show.pozisyon) {
-              <div class="field">
-                <label for="pozisyon">{{ formConfig.labels.pozisyon | translate }}</label>
-                <p-select
-                  id="pozisyon"
-                  formControlName="pozisyon"
-                  [options]="pozisyonOptions"
-                  optionLabel="ad"
-                  optionValue="id"
-                  [placeholder]="formConfig.placeholders.pozisyon | translate"
-                  [showClear]="true"
-                  appendTo="body"
-                  styleClass="w-100"
-                />
-              </div>
-            }
-
-            @if (formConfig.show.gorev) {
-              <div class="field">
-                <label for="gorev">{{ formConfig.labels.gorev | translate }}</label>
-                <p-select
-                  id="gorev"
-                  formControlName="gorev"
-                  [options]="gorevOptions"
-                  optionLabel="ad"
-                  optionValue="id"
-                  [placeholder]="formConfig.placeholders.gorev | translate"
-                  [showClear]="true"
-                  appendTo="body"
-                  styleClass="w-100"
-                />
-              </div>
-            }
-
+          }
+          @if (formConfig.show.gorev) {
             <div class="field">
-              <label for="altfirma">{{ formConfig.labels.altfirma | translate }}</label>
+              <label for="gorev">{{ formConfig.labels.gorev | translate }}</label>
               <p-select
-                id="altfirma"
-                formControlName="altfirma"
-                [options]="altfirmaOptions"
+                id="gorev"
+                formControlName="gorev"
+                [options]="gorevOptions"
                 optionLabel="ad"
                 optionValue="id"
-                [placeholder]="formConfig.placeholders.altfirma | translate"
+                [placeholder]="formConfig.placeholders.gorev | translate"
                 [showClear]="true"
                 appendTo="body"
                 styleClass="w-100"
               />
             </div>
-          </div>
-
+          }
           <div class="field">
-            <label for="direktorluk">{{ formConfig.labels.direktorluk | translate }}</label>
+            <label for="altfirma">{{ formConfig.labels.altfirma | translate }}</label>
             <p-select
-              id="direktorluk"
-              formControlName="direktorluk"
-              [options]="direktorlukOptions"
+              id="altfirma"
+              formControlName="altfirma"
+              [options]="altfirmaOptions"
               optionLabel="ad"
               optionValue="id"
-              [placeholder]="formConfig.placeholders.direktorluk | translate"
+              [placeholder]="formConfig.placeholders.altfirma | translate"
               [showClear]="true"
               appendTo="body"
               styleClass="w-100"
             />
           </div>
+        </div>
+        <div class="field">
+          <label for="direktorluk">{{ formConfig.labels.direktorluk | translate }}</label>
+          <p-select
+            id="direktorluk"
+            formControlName="direktorluk"
+            [options]="direktorlukOptions"
+            optionLabel="ad"
+            optionValue="id"
+            [placeholder]="formConfig.placeholders.direktorluk | translate"
+            [showClear]="true"
+            appendTo="body"
+            styleClass="w-100"
+          />
         </div>
       }
     </div>

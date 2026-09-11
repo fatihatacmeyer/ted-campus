@@ -37,10 +37,12 @@
           <span class="info-label">Ad Soyad</span>
           <span class="info-value">{{ person.adsoyad }}</span>
         </div>
-        <div class="info-row">
-          <span class="info-label">Sicil No</span>
-          <span class="info-value">{{ person.sicilno || '-' }}</span>
-        </div>
+        @if (isStudent) {
+          <div class="info-row">
+            <span class="info-label">Okul No</span>
+            <span class="info-value">{{ person.sicilno || '-' }}</span>
+          </div>
+        }
         <div class="info-row">
           <span class="info-label">Telefon</span>
           <span class="info-value">{{ person.ceptelefon || '-' }}</span>
