@@ -74,10 +74,10 @@
                   <polyline points="12 7 12 12 16 14"></polyline>
                 </svg>
               </div>
-            } @else if (record.photoBase64) {
+            } @else if (getPhotoSource(record)) {
               <img
                 class="photo-img"
-                [src]="getPhotoUrl(record.photoBase64)"
+                [src]="getPhotoSource(record)"
                 (error)="onPhotoError($event)"
                 [alt]="record.fullName"
               />

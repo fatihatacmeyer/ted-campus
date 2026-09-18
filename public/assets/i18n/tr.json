@@ -296,7 +296,12 @@
     "NO_ENTRY": "Giriş yok",
     "STATUS_APPROVED": "Onaylandı",
     "STATUS_PENDING": "Beklemede",
-    "STATUS_COMPLETED": "Tamamlandı"
+    "STATUS_COMPLETED": "Tamamlandı",
+    "STUDENTS_INSIDE": "Okulda Olan Öğrenciler",
+    "PARENTS_INSIDE": "Okulda Olan Veliler",
+    "PEOPLE_INSIDE": "Okulda Olan Kişiler",
+    "NO_ONE_INSIDE": "Şu an okulda kimse bulunmuyor.",
+    "NO_SEARCH_RESULT": "Arama sonucu bulunamadı."
   },
   "ATTENDANCE": {
     "TITLE": "PDKS — Personel Devam Kontrol",

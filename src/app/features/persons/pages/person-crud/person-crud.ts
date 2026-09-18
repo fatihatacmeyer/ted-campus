@@ -35,6 +35,7 @@ import { ProgressSpinnerModule } from 'primeng/progressspinner';
 import { NotificationService } from '../../../../core/services/notification.service';
 import { TranslatePipe } from '@ngx-translate/core';
 import { OperationResultResponse } from '../../../../core/models/person.model';
+import { PersonBusAssignDialogComponent } from '../../components/person-bus-assign-dialog/person-bus-assign-dialog';
 
 @Component({
   selector: 'app-person-crud',
@@ -50,6 +51,7 @@ import { OperationResultResponse } from '../../../../core/models/person.model';
     TooltipModule,
     ProgressSpinnerModule,
     TranslatePipe,
+    PersonBusAssignDialogComponent,
   ],
   templateUrl: './person-crud.html',
   styleUrl: './person-crud.scss',
@@ -73,6 +75,9 @@ export class PersonCrudComponent implements OnInit {
   leavePerson: Person | null = null;
   showProfileModal = false;
   selectedProfilePerson: Person | null = null;
+
+  showBusAssignDialog = false;
+  busAssignPerson: Person | null = null;
 
   /** Veli sayfası: veliId → çocukları (sp_relationcampus_s tip=0'dan tek çağrıda kurulur). */
   childrenMap = new Map<number, Person[]>();
@@ -145,7 +150,11 @@ export class PersonCrudComponent implements OnInit {
       ];
     }
     if (this.USERDEF === UserDef.Veli) {
-      return [{ field: 'veliAdSoyad', header: 'Çocuklar' }];
+      return [
+        { field: 'veliAdSoyad', header: 'Çocuklar' },
+        { field: 'personelno', header: 'TC Kimlik' }, // Sütun adını TC Kimlik yaptık
+        { field: 'sicilno', header: 'Sicil No' },
+      ];
     }
     if (this.USERDEF === UserDef.Ogretmen) {
       return [
@@ -161,17 +170,25 @@ export class PersonCrudComponent implements OnInit {
   /** Tablo ilk açıldığında veya varsayılanlara dönüldüğünde gösterilecek sütunlar. */
   get currentDefaultFields(): string[] {
     if (this.USERDEF === UserDef.Ogrenci) {
-      // Ad, Soyad, Kampüs, Sınıf, Telefon, Eğitim Düzeyi, Veliler, Sicil No, Personel No, Pozisyon
-      return ['ad', 'soyad', 'firmaad', 'bolumad', 'ceptelefon', 'direktorlukad', 'veliAdSoyad'];
+      return [
+        'ad',
+        'soyad',
+        'cardid',
+        'firmaad',
+        'bolumad',
+        'ceptelefon',
+        'direktorlukad',
+        'veliAdSoyad',
+        'gelisServisPlaka',
+        'donusServisPlaka',
+      ];
     }
 
     if (this.USERDEF === UserDef.Veli) {
-      // Veli ekranı için mantıklı olan varsayılanlar
-      return ['ad', 'soyad', 'ceptelefon', 'veliAdSoyad'];
+      return ['ad', 'soyad', 'personelno', 'ceptelefon', 'veliAdSoyad', 'cardid'];
     }
 
     if (this.USERDEF === UserDef.Ogretmen) {
-      // Öğretmen ekranı için mantıklı olan varsayılanlar
       return ['ad', 'soyad', 'personelno', 'firmaad', 'bolumad', 'pozisyonad', 'ceptelefon'];
     }
 
@@ -445,5 +462,16 @@ export class PersonCrudComponent implements OnInit {
     this.exitPerson = person;
     this.exitMode = 'restore';
     this.showExitDialog = true;
+  }
+
+  onBusAssignRequest(event: Event, person: Person): void {
+    event.stopPropagation();
+    this.busAssignPerson = person;
+    this.showBusAssignDialog = true;
+  }
+
+  onBusAssignDialogClose(): void {
+    this.showBusAssignDialog = false;
+    this.busAssignPerson = null;
   }
 }

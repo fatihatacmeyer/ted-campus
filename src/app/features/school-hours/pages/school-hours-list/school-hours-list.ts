@@ -133,25 +133,50 @@ export class SchoolHoursListComponent implements OnInit {
       return match ? parseInt(match[1], 10) : null;
     };
 
+    // Sınıfları sayı ve harf önceliğine göre mantıksal sıralama
+    const sortedClasses = [...this.classes].sort((a, b) => {
+      // Örn: "8-A", "10/B", "1 A" gibi stringleri parse etmek için
+      const regex = /^(\d+)[-/\s]*(.*)$/;
+      const matchA = a.ad.match(regex);
+      const matchB = b.ad.match(regex);
+
+      if (matchA && matchB) {
+        const numA = parseInt(matchA[1], 10);
+        const numB = parseInt(matchB[1], 10);
+
+        // Önce sayılara göre sırala (Örn: 8 < 10)
+        if (numA !== numB) return numA - numB;
+
+        // Sayılar eşitse harfe göre sırala (Örn: A < B)
+        return matchA[2].localeCompare(matchB[2], 'tr');
+      }
+
+      // Rakam içermeyen (Örn: ANA) veya format uyuşmazlığı olan adlar için varsayılan Türkçe sıralama
+      return a.ad.localeCompare(b.ad, 'tr', { numeric: true });
+    });
+
     // Tüm sınıf id'lerini virgülle ayır (örn. '11,12,13,...')
-    const allIds = this.classes.map((c) => c.id).join(',');
+    const allIds = sortedClasses.map((c) => c.id).join(',');
     const allLabel = this.translate.instant('SCHOOL_HOURS.ALL_CLASSES');
 
-    // Düz mod: en üste 'Tüm Sınıflar' + tek tek sınıflar
+    // Düz mod: en üstte 'Tüm Sınıflar' + tek tek sıralı sınıflar
     if (!this.grouped) {
       this.classOptions = [
-        { value: allIds, label: allLabel },
-        ...this.classes.map((c) => ({ value: c.id, label: c.ad })),
+        { value: allIds, label: allLabel }, // Tüm sınıflar her zaman 0. index'te kalarak en başta görünür
+        ...sortedClasses.map((c) => ({ value: c.id, label: c.ad })),
       ];
       return;
     }
 
-    // Gruplu mod: sadece seviye başlıkları (1. Sınıfların Tümü, 2. Sınıfların Tümü, ...)
+    // Gruplu mod: sadece seviye başlıkları (1. Sınıflar, 2. Sınıflar, ...)
     // Her biri o seviyedeki tüm sınıf id'lerini virgülle gönderir
     const suffix = this.translate.instant('SCHOOL_HOURS.GRADE_ALL_SUFFIX');
     const isTr = (this.translate.currentLang() ?? '').toLowerCase().startsWith('tr');
+
     const gradeIdMap = new Map<number, number[]>();
-    this.classes.forEach((c) => {
+
+    // Map ekleme sırasını korur, sortedClasses sıralı olduğu için ID'ler de gruplara sıralı düşecektir
+    sortedClasses.forEach((c) => {
       const grade = gradeOf(c.ad);
       if (grade !== null) {
         if (!gradeIdMap.has(grade)) {
@@ -161,9 +186,8 @@ export class SchoolHoursListComponent implements OnInit {
       }
     });
 
-    this.classOptions = [
-      { value: allIds, label: allLabel },
-    ];
+    this.classOptions = [{ value: allIds, label: allLabel }];
+
     gradeIdMap.forEach((ids, grade) => {
       const label = isTr ? `${grade}. Sınıfların ${suffix}` : `Grade ${grade} ${suffix}`;
       this.classOptions.push({ value: ids.join(','), label });

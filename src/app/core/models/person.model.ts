@@ -113,6 +113,9 @@ export interface Person {
   il?: string | null;
   ilce?: string | null;
   giristarih?: string | null;
+
+  gelisServisPlaka?: string;
+  donusServisPlaka?: string;
 }
 
 /**

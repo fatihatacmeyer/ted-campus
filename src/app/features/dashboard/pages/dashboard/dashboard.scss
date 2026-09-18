@@ -333,6 +333,7 @@ $radius-full: 9999px;
 .dialog-list {
   max-height: 60vh;
   overflow-y: auto;
+  overscroll-behavior: contain; /* liste sonuna gelince arka sayfanın kaymasını engeller */
   padding: 4px 0;
 }
 
@@ -365,6 +366,7 @@ $radius-full: 9999px;
   &.avatar-teacher { background: #eff6ff; color: #2563eb; }
   &.avatar-late { background: #fff7ed; color: #ea580c; }
   &.avatar-event { background: #f5f3ff; color: #7c3aed; }
+  &.avatar-parent { background: #fff7ed; color: #ea580c; }
 
   .material-symbols-outlined {
     font-size: 18px;
@@ -690,6 +692,46 @@ $radius-full: 9999px;
         background: $bg-muted;
       }
     }
+  }
+}
+
+/* ── Kişi Listesi Modalı (sabit boyut + arama) ────────────
+   Dialog'a sabit height verildiği için içerik flex-column;
+   liste kalan tüm alanı doldurur, taşarsa kendi içinde kayar. */
+.dashboard-kisi-dialog {
+  .p-dialog-content {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    overflow: hidden;
+  }
+
+  .kisi-arama {
+    position: relative;
+    margin-bottom: 14px;
+    flex-shrink: 0;
+
+    .material-symbols-outlined {
+      position: absolute;
+      left: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 18px;
+      color: $text-muted;
+      pointer-events: none;
+    }
+
+    input {
+      width: 100%;
+      padding-left: 40px;
+    }
+  }
+
+  .dialog-list {
+    flex: 1 1 auto;
+    min-height: 0;
+    max-height: none; /* 60vh sınırı yerine dialog içinde kalan alanın tamamı */
+    overflow-y: auto;
   }
 }
 

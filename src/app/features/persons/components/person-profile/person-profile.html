@@ -37,12 +37,28 @@
           <span class="info-label">Ad Soyad</span>
           <span class="info-value">{{ person.adsoyad }}</span>
         </div>
+
         @if (isStudent) {
           <div class="info-row">
             <span class="info-label">Okul No</span>
             <span class="info-value">{{ person.sicilno || '-' }}</span>
           </div>
+          <div class="info-row">
+            <span class="info-label">TC Kimlik</span>
+            <span class="info-value">{{ person.personelno || '-' }}</span>
+          </div>
+        } @else if (!isProxyPerson) {
+          <!-- VELİ VE ÖĞRETMENLER İÇİN -->
+          <div class="info-row">
+            <span class="info-label">TC Kimlik</span>
+            <span class="info-value">{{ person.personelno || '-' }}</span>
+          </div>
+          <div class="info-row">
+            <span class="info-label">Sicil No</span>
+            <span class="info-value">{{ person.sicilno || '-' }}</span>
+          </div>
         }
+
         <div class="info-row">
           <span class="info-label">Telefon</span>
           <span class="info-value">{{ person.ceptelefon || '-' }}</span>
@@ -156,3 +172,6 @@
 >
   <img [src]="photoUrl" alt="Büyük Profil Fotoğrafı" class="full-size-img" />
 </p-dialog>
+
+<p-confirmDialog appendTo="body" [style]="{ width: '450px' }" [baseZIndex]="10010">
+</p-confirmDialog>

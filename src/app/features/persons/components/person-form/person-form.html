@@ -171,12 +171,15 @@
       <div class="field-row">
         <div class="field">
           <label for="ceptelefon">{{ 'PERSON.PHONE' | translate }}</label>
-          <input
-            pInputText
+          <p-inputMask
             id="ceptelefon"
             formControlName="ceptelefon"
-            placeholder="05XX XXX XX XX"
-          />
+            mask="0 (999) 999 99 99"
+            placeholder="0 (5XX) XXX XX XX"
+            [unmask]="true"
+            styleClass="w-100"
+          >
+          </p-inputMask>
         </div>
         <!-- <div class="field">
           <label for="telefon1">Telefon</label>

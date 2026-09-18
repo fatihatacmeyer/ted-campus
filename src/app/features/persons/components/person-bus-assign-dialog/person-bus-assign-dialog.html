@@ -1,0 +1,60 @@
+<p-dialog
+  [header]="'Servis Ata: ' + (person?.ad || '') + ' ' + (person?.soyad || '')"
+  [modal]="true"
+  [style]="{ width: '400px' }"
+  [draggable]="false"
+  [visible]="visible"
+  (visibleChange)="close()"
+>
+  <div class="d-flex flex-column gap-3 py-3">
+    <div class="field d-flex flex-column gap-1">
+      <label class="font-bold text-sm text-secondary"
+        >Araç Seçin <span class="text-danger">*</span></label
+      >
+      <p-select
+        [options]="busOptions"
+        optionLabel="label"
+        optionValue="value"
+        [(ngModel)]="selectedBusId"
+        placeholder="Araç seçin..."
+        styleClass="w-100"
+        appendTo="body"
+      ></p-select>
+    </div>
+
+    <div class="field d-flex flex-column gap-1">
+      <label class="font-bold text-sm text-secondary"
+        >Yön Seçin <span class="text-danger">*</span></label
+      >
+      <p-select
+        [options]="yonOptions"
+        optionLabel="label"
+        optionValue="value"
+        [(ngModel)]="selectedYon"
+        placeholder="Yön seçin..."
+        styleClass="w-100"
+        appendTo="body"
+      ></p-select>
+    </div>
+  </div>
+
+  <ng-template pTemplate="footer">
+    <div class="d-flex justify-content-end gap-2 mt-2">
+      <button
+        pButton
+        label="İptal"
+        class="p-button-text"
+        (click)="close()"
+        [disabled]="isProcessing"
+      ></button>
+      <button
+        pButton
+        label="Ata"
+        class="p-button-success"
+        icon="pi pi-check"
+        (click)="onConfirm()"
+        [disabled]="!selectedBusId || isProcessing"
+      ></button>
+    </div>
+  </ng-template>
+</p-dialog>

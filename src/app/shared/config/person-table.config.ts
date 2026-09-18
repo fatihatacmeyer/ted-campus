@@ -55,6 +55,8 @@ export const PERSON_COLUMNS: ColumnDef<Person>[] = [
   { field: 'cardid', header: 'Kart ID' },
   { field: 'yetkistr', header: 'Yetki Str' },
   { field: 'yetkistrad', header: 'Yetki Str Adı' },
+  { field: 'gelisServisPlaka', header: 'Gidiş Servisi', sortable: true },
+  { field: 'donusServisPlaka', header: 'Dönüş Servisi', sortable: true },
 ];
 
 /** Varsayılan görünür sütunlar (kullanıcı tercihi olmadığında / sıfırlamada) */

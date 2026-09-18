@@ -87,6 +87,17 @@ export interface Absentee {
   schoolName: string;
 }
 
+/** "O an okulda olan" kişi listesi (sp_DashboardKisilerCampus_s). */
+export interface DashboardKisiler {
+  id: number;
+  fullName: string;
+  tur: string;
+  className: string | null;
+  schoolName: string | null;
+  sicilNo: string | null;
+  okulda: boolean;
+}
+
 export interface AccessTransaction {
   id: number;
   personName: string;
@@ -112,6 +123,26 @@ interface SonHareketlerRow {
   Ad: string;
   terminalAdi: string;
   Sonuc: string;
+}
+
+/**
+ * sp_DashboardKisilerCampus_s'ten dönen ham DB satırı (Türkçe/DB sütun adları).
+ *
+ * Backend'deki generic "Dynamic" dispatcher, point + islemtipi kombinasyonuna
+ * göre ilgili prosedürü çağırıyor:
+ *   point=DashboardKisilerCampus & islemtipi=s -> sp_DashboardKisilerCampus_s
+ *
+ * SadeceOkulda=1 sabiti ile yalnızca son geçişi giriş (IO=2) olan, yani "o an
+ * okulda olan" kişiler döner; kayıtlı olup okulda olmayanlar listeye girmez.
+ */
+interface DashboardKisilerRow {
+  SicilId: number;
+  AdSoyad: string;
+  Tur: string;
+  Sinif: string | null;
+  Okul: string | null;
+  SicilNo: string | null;
+  Okulda: number;
 }
 
 @Injectable({
@@ -205,6 +236,35 @@ export class DashboardService {
             fullName: row.AdSoyad,
             className: row.Sinif,
             schoolName: row.Okul,
+          })),
+        ),
+      );
+  }
+
+  /**
+   * sp_DashboardKisilerCampus_s üzerinden "o an okulda olan" kişi listesini
+   * çeker. SadeceOkulda=1 sabiti, yalnızca son geçişi giriş (IO=2) olan
+   * kişileri döndürür — kayıtlı olup okulda olmayanlar listeye girmez.
+   * islemno bilinçli olarak gönderilmez; backend oturumdan çözer.
+   */
+  getKisilerCampus(tip: 'OGRENCI' | 'VELI' | null): Observable<DashboardKisiler[]> {
+    return this.api
+      .callEndpoint<DashboardKisilerRow[]>('Dynamic', {
+        point: 'DashboardKisilerCampus',
+        islemtipi: 's',
+        Tip: tip ?? undefined,
+        SadeceOkulda: 1,
+      })
+      .pipe(
+        map((rows) =>
+          (rows || []).map((row) => ({
+            id: row.SicilId,
+            fullName: row.AdSoyad,
+            tur: row.Tur,
+            className: row.Sinif,
+            schoolName: row.Okul,
+            sicilNo: row.SicilNo,
+            okulda: row.Okulda === 1,
           })),
         ),
       );

@@ -49,8 +49,8 @@
       <!-- Öğrenci — Kayıtlı / Okulda -->
       <div
         class="stat-card stat-student"
-        (click)="navigateTo('students')"
-        (keyup.enter)="navigateTo('students')"
+        (click)="openKisilerModal('OGRENCI')"
+        (keyup.enter)="openKisilerModal('OGRENCI')"
         tabindex="0"
         role="button"
       >
@@ -73,8 +73,8 @@
       <!-- Veli — Kayıtlı / Okulda -->
       <div
         class="stat-card stat-parent"
-        (click)="navigateTo('parents')"
-        (keyup.enter)="navigateTo('parents')"
+        (click)="openKisilerModal('VELI')"
+        (keyup.enter)="openKisilerModal('VELI')"
         tabindex="0"
         role="button"
       >
@@ -94,8 +94,14 @@
         <span class="material-symbols-outlined stat-arrow">arrow_forward</span>
       </div>
 
-      <!-- Toplam Kayıtlı — Kayıtlı / Okulda -->
-      <div class="stat-card stat-total">
+      <!-- Toplam Kayıtlı — Kayıtlı / Okulda (tıklanınca içeridekiler listesi) -->
+      <div
+        class="stat-card stat-total"
+        (click)="openKisilerModal(null)"
+        (keyup.enter)="openKisilerModal(null)"
+        tabindex="0"
+        role="button"
+      >
         <div class="stat-icon icon-purple">
           <span class="material-symbols-outlined">badge</span>
         </div>
@@ -645,4 +651,78 @@
       </div>
     }
   </div>
+</p-dialog>
+
+<!-- Okulda Olan Kişiler Dialog (sp_DashboardKisilerCampus_s) -->
+<p-dialog
+  header="{{
+    kisiDialog.tip === 'OGRENCI'
+      ? ('DASHBOARD.STUDENTS_INSIDE' | translate)
+      : kisiDialog.tip === 'VELI'
+        ? ('DASHBOARD.PARENTS_INSIDE' | translate)
+        : ('DASHBOARD.PEOPLE_INSIDE' | translate)
+  }}"
+  [(visible)]="kisiDialog.visible"
+  [modal]="true"
+  [style]="{ width: '60vw', height: '80vh' }"
+  [draggable]="false"
+  [resizable]="false"
+  styleClass="dashboard-dialog dashboard-kisi-dialog"
+>
+  @if (kisiDialog.loading) {
+    <div class="loading-container">
+      <p-progressSpinner strokeWidth="4" animationDuration=".8s" />
+      <p class="loading-text">{{ 'DASHBOARD.LOADING_DATA' | translate }}</p>
+    </div>
+  } @else if (kisiDialog.error) {
+    <div class="error-banner">
+      <span class="material-symbols-outlined">error</span>
+      <span>{{ 'DASHBOARD.LOAD_ERROR' | translate }}</span>
+    </div>
+  } @else if (kisiDialog.kisiler.length === 0) {
+    <div class="empty-state">{{ 'DASHBOARD.NO_ONE_INSIDE' | translate }}</div>
+  } @else {
+    <div class="kisi-arama">
+      <span class="material-symbols-outlined">search</span>
+      <input
+        pInputText
+        type="text"
+        [(ngModel)]="kisiArama"
+        [placeholder]="'COMMON.SEARCH' | translate"
+      />
+    </div>
+
+    <div class="person-list dialog-list">
+      @for (kisi of kisiFiltreli; track kisi.id) {
+        <div class="person-row">
+          <div
+            class="person-avatar"
+            [class.avatar-student]="kisi.tur === 'OGRENCI'"
+            [class.avatar-parent]="kisi.tur !== 'OGRENCI'"
+          >
+            {{ kisi.fullName ? kisi.fullName.charAt(0) : '?' }}
+          </div>
+
+          <div class="person-info">
+            <span class="person-name">{{ kisi.fullName }}</span>
+            <span class="person-meta">{{ kisiMeta(kisi) }}</span>
+          </div>
+
+          <span
+            class="person-badge"
+            [class.badge-student]="kisi.tur === 'OGRENCI'"
+            [class.badge-parent]="kisi.tur !== 'OGRENCI'"
+          >
+            {{
+              kisi.tur === 'OGRENCI'
+                ? ('USERDEF.STUDENT' | translate)
+                : ('USERDEF.PARENT' | translate)
+            }}
+          </span>
+        </div>
+      } @empty {
+        <div class="empty-state">{{ 'DASHBOARD.NO_SEARCH_RESULT' | translate }}</div>
+      }
+    </div>
+  }
 </p-dialog>

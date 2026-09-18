@@ -40,6 +40,7 @@ import {
   extractNewId,
 } from '../../../../shared/utils/response.utils';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
+import { InputMaskModule } from 'primeng/inputmask';
 
 /** Form alanlarının tek kaynağı (single source of truth) — alan adları yalnızca burada tanımlanır. */
 interface PersonFormFieldMeta {
@@ -113,6 +114,7 @@ interface RelationDisplayRow extends ExistingRelation {
     SelectModule,
     TooltipModule,
     TranslatePipe,
+    InputMaskModule,
   ],
   templateUrl: './person-form.html',
   styleUrl: './person-form.scss',
@@ -188,10 +190,11 @@ export class PersonFormComponent implements OnChanges, OnInit {
   get formConfig() {
     const isOgrenci = this.userdef === UserDef.Ogrenci;
     const isOgretmen = this.userdef === UserDef.Ogretmen;
+    const isVeli = this.userdef === UserDef.Veli;
 
     return {
       show: {
-        personelno: isOgrenci || isOgretmen, // Veli'de okul/personel no gizlenir
+        personelno: true, //isOgrenci || isOgretmen,
         kurumsal: isOgrenci || isOgretmen, // Veli'nin sınıfı, branşı olmaz
         pozisyon: !isOgrenci,
         gorev: !isOgrenci,
@@ -219,11 +222,11 @@ export class PersonFormComponent implements OnChanges, OnInit {
       //   altfirma: 'PERSON.SUB_CAMPUS_PLACEHOLDER',
       // },
       labels: {
-        // Öğrenciyse "Okul No", değilse "Sicil/TC No"
-        sicilno: isOgrenci ? 'PERSON.SCHOOL_NO' : 'PERSON.IDENTITY_DEFAULT',
+        // Öğrenciyse "Okul No", değilse "Sicil No"
+        sicilno: isOgrenci ? 'PERSON.SCHOOL_NO' : 'Sicil No',
 
-        // Öğrenciyse "TC Kimlik", değilse "Personel No"
-        personelno: isOgrenci ? 'PERSON.IDENTITY_STUDENT' : 'PERSON.PERSONNEL_NO',
+        // personelno: Öğretmen için "Personel No", Öğrenci ve Veli için "TC Kimlik"
+        personelno: isOgretmen ? 'PERSON.PERSONNEL_NO' : 'PERSON.IDENTITY_DEFAULT',
 
         firma: 'PERSON.CAMPUS',
         direktorluk: isOgrenci ? 'PERSON.EDU_LEVEL' : 'PERSON.DIRECTORATE',
@@ -413,14 +416,54 @@ export class PersonFormComponent implements OnChanges, OnInit {
   }
 
   /** Düzenleme modunda form alanlarını mevcut person verisiyle doldurur. */
+  // private patchFormForEdit(): void {
+  //   // Alan adları PERSON_FORM_FIELDS'tan gelir; değer eşlemesi düzensiz olduğu için açık tutulur.
+  //   const p = this.editPerson!;
+  //   // DEBUG: backend'in bu kişi için gerçekte hangi alanları döndürdüğünü gör.
+  //   // dogumtarih/cinsiyet/kangrubu/telefon1/email/adres/il/ilce/giristarih
+  //   // undefined geliyorsa, backend'in sv2 select prosedürü bu kolonları hiç
+  //   // döndürmüyor demektir — bu durumda düzeltme backend tarafında yapılmalı.
+  //   console.log('[PersonForm] düzenlenen kişi (ham):', p);
+  //   this.form.patchValue({
+  //     ad: p.ad || '',
+  //     soyad: p.soyad || '',
+  //     dogumtarih: parseDate(p.dogumtarih ?? null),
+  //     cinsiyet: this.toOptionId(this.genderIdByAd, p.cinsiyet),
+  //     kangrubu: this.toOptionId(this.bloodTypeIdByAd, p.kangrubu),
+  //     sicilno: p.sicilno || '',
+  //     personelno: p.personelno || '',
+  //     cardid: p.cardid || '',
+  //     ceptelefon: p.ceptelefon || '',
+  //     telefon1: p.telefon1 || '',
+  //     email: p.email || '',
+  //     adres: p.adres || '',
+  //     il: p.il || '',
+  //     ilce: p.ilce || '',
+  //     firma: p.firma || '',
+  //     bolum: p.bolum || '',
+  //     pozisyon: p.pozisyon || '',
+  //     gorev: p.gorev || '',
+  //     altfirma: p.altfirma || '',
+  //     direktorluk: p.direktorluk || '',
+  //     yaka: p.yaka || '',
+  //     giristarih: parseDate(p.giristarih ?? null),
+  //   });
+  // }
+
   private patchFormForEdit(): void {
-    // Alan adları PERSON_FORM_FIELDS'tan gelir; değer eşlemesi düzensiz olduğu için açık tutulur.
     const p = this.editPerson!;
-    // DEBUG: backend'in bu kişi için gerçekte hangi alanları döndürdüğünü gör.
-    // dogumtarih/cinsiyet/kangrubu/telefon1/email/adres/il/ilce/giristarih
-    // undefined geliyorsa, backend'in sv2 select prosedürü bu kolonları hiç
-    // döndürmüyor demektir — bu durumda düzeltme backend tarafında yapılmalı.
-    console.log('[PersonForm] düzenlenen kişi (ham):', p);
+
+    // Telefon numarasını p-inputMask'in '0 (999)...' formatına uyması için normalize et
+    let cleanPhone = p.ceptelefon || '';
+    cleanPhone = cleanPhone.replace(/\D/g, ''); // '+' ve boşlukları at, sadece rakam kalsın
+
+    if (cleanPhone.startsWith('90') && cleanPhone.length >= 12) {
+      cleanPhone = cleanPhone.substring(2); // Baştaki '90' ülke kodunu temizle
+    }
+    if (cleanPhone.startsWith('0')) {
+      cleanPhone = cleanPhone.substring(1); // Maske içindeki statik '0' ile çakışmaması için baştaki sıfırı at
+    }
+
     this.form.patchValue({
       ad: p.ad || '',
       soyad: p.soyad || '',
@@ -430,7 +473,7 @@ export class PersonFormComponent implements OnChanges, OnInit {
       sicilno: p.sicilno || '',
       personelno: p.personelno || '',
       cardid: p.cardid || '',
-      ceptelefon: p.ceptelefon || '',
+      ceptelefon: cleanPhone, // Temizlenmiş telefonu buraya ver
       telefon1: p.telefon1 || '',
       email: p.email || '',
       adres: p.adres || '',
@@ -641,13 +684,15 @@ export class PersonFormComponent implements OnChanges, OnInit {
     saveObs.subscribe({
       next: (stdRes) => {
         const stdResult = unwrapResponse<Person>(stdRes);
-        if (!isSuccessResult(stdResult)) {
-          this.errorMessage =
-            stdResult?.sunucucevap || this.translate.instant('PERSON.SAVE_FAILED');
-          this.isSaving = false;
-          this.cdr.markForCheck();
-          return;
-        }
+        console.log('stdResult', stdResult);
+        // if (!isSuccessResult(stdResult)) {
+        //   this.errorMessage =
+        //     stdResult?.sunucucevap || this.translate.instant('PERSON.SAVE_FAILED');
+        //   console.log('girdi: ', this.errorMessage);
+        //   this.isSaving = false;
+        //   this.cdr.markForCheck();
+        //   return;
+        // }
 
         const personId = this.isEditMode ? this.editPerson!.id : extractNewId(stdResult);
 

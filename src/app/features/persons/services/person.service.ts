@@ -62,7 +62,7 @@ interface SicilCampusRow {
   GorevAd?: string;
   Yaka?: string;
   YakaAd?: string;
-  CardId?: string;
+  CardID?: string;
   UserDef?: number;
   UserDefAd?: string;
   CikisTarih?: string | null;
@@ -89,6 +89,8 @@ interface SicilCampusRow {
   UserType?: string;
   VeliSicilId?: number | string;
   VeliAdSoyad?: string;
+  GelisServisPlaka?: string;
+  DonusServisPlaka?: string;
 }
 
 @Injectable({
@@ -293,7 +295,7 @@ export class PersonService {
       lkademe: row.Lkademe ?? 0,
       userdef: userdef,
       userdefad: row.UserDefAd || getUserDefLabel(userdef),
-      cardid: row.CardId || '',
+      cardid: row.CardID || '',
       yetkistr: row.YetkiStr || '',
       yetkistrad: row.YetkiStrAd || '',
       islemno: '',
@@ -313,6 +315,8 @@ export class PersonService {
       userType: row.UserType,
       veliSicilId: veliSicilId,
       veliAdSoyad: row.VeliAdSoyad,
+      gelisServisPlaka: row.GelisServisPlaka,
+      donusServisPlaka: row.DonusServisPlaka,
     };
   }
 

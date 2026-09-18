@@ -17,11 +17,14 @@ import { ButtonModule } from 'primeng/button';
 import { Person, LinkedPerson, UserDef } from '../../../../core/models/person.model';
 import { ApiHelperService } from '../../../../core/services/api-helper.service';
 import { AppConfig, APP_CONFIG } from '../../../../core/services/app-config.service';
+import { ConfirmDialogModule } from 'primeng/confirmdialog';
+import { ConfirmationService } from 'primeng/api';
 
 @Component({
   selector: 'app-person-profile',
   standalone: true,
-  imports: [CommonModule, DialogModule, ButtonModule],
+  imports: [CommonModule, DialogModule, ButtonModule, ConfirmDialogModule],
+  providers: [ConfirmationService],
   templateUrl: './person-profile.html',
   styleUrl: './person-profile.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -45,6 +48,7 @@ export class PersonProfileComponent implements OnChanges {
   private cdr = inject(ChangeDetectorRef);
   private destroyRef = inject(DestroyRef);
   private config: AppConfig = inject(APP_CONFIG);
+  private confirmationService = inject(ConfirmationService);
 
   showFullPhoto = false;
   photoUrl: string | null = null;
@@ -212,8 +216,18 @@ export class PersonProfileComponent implements OnChanges {
 
   onForgotPasswordClick(): void {
     if (this.person) {
-      // Şimdilik sadece event fırlatıyoruz, prosedür bağlantısı parent component'te (veya burada servise bağlanarak) yapılacak.
-      this.forgotPasswordRequest.emit(this.person);
+      this.confirmationService.confirm({
+        message: `<strong>${this.person.adsoyad}</strong> adlı kişiye giriş bilgilerini (SMS/E-posta) göndermek istediğinize emin misiniz?`,
+        header: 'Bilgileri Gönder Onayı',
+        icon: 'pi pi-exclamation-triangle',
+        acceptLabel: 'Evet, Gönder',
+        rejectLabel: 'İptal',
+        acceptButtonStyleClass: 'p-button-success',
+        rejectButtonStyleClass: 'p-button-text p-button-danger',
+        accept: () => {
+          this.forgotPasswordRequest.emit(this.person!);
+        },
+      });
     }
   }
 

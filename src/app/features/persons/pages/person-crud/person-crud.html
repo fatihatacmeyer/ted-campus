@@ -66,15 +66,29 @@
           <span class="cell-text">{{ person.cikistarih ?? '-' }}</span>
         </ng-template>
         <ng-template #actionsTpl let-person>
-          <button
-            pButton
-            type="button"
-            icon="pi pi-calendar-plus"
-            class="p-button-text p-button-sm p-button-success"
-            [pTooltip]="'PERSON.LEAVE_REQUEST' | translate"
-            [attr.aria-label]="'PERSON.LEAVE_REQUEST' | translate"
-            (click)="onLeaveRequest($event, person)"
-          ></button>
+          <div class="d-flex align-items-center justify-content-end gap-2">
+            <!-- Mevcut İzin Ata Butonu -->
+            <button
+              pButton
+              type="button"
+              icon="pi pi-calendar-plus"
+              class="p-button-text p-button-sm p-button-success"
+              [pTooltip]="'PERSON.LEAVE_REQUEST' | translate"
+              [attr.aria-label]="'PERSON.LEAVE_REQUEST' | translate"
+              (click)="onLeaveRequest($event, person)"
+            ></button>
+
+            <!-- YENİ: Servis Ata Butonu (Sadece öğrencide showActionsColumn true olduğunda görünür) -->
+            <button
+              pButton
+              type="button"
+              icon="pi pi-car"
+              class="p-button-text p-button-sm p-button-info"
+              pTooltip="Servis Ata"
+              aria-label="Servis Ata"
+              (click)="onBusAssignRequest($event, person)"
+            ></button>
+          </div>
         </ng-template>
       </app-customizable-table>
     }
@@ -120,3 +134,9 @@
   (visibleChange)="onLeaveDialogClose()"
   (confirmed)="onLeaveConfirmed($event)"
 ></app-person-leave-dialog>
+
+<app-person-bus-assign-dialog
+  [(visible)]="showBusAssignDialog"
+  [person]="busAssignPerson"
+  (visibleChange)="onBusAssignDialogClose()"
+></app-person-bus-assign-dialog>

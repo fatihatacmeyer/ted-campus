@@ -31,7 +31,7 @@ export class LastPassService {
   getRecentPassesByGroup(terminalGroupId: number): Observable<LastPassRecord[]> {
     return this.api
       .callEndpoint<any[]>('Dynamic', {
-        point: 'lastpass',
+        point: 'lastpasscampus',
         islemtipi: 'pp',
         terminalgrubu: terminalGroupId,
       })
@@ -40,6 +40,8 @@ export class LastPassService {
           (rows || []).map((row) => ({
             personId: row.SicilId,
             photoBase64: row.FotoImage,
+            profilePhotoFileName: row.ProfilFotoDosyaAdi ?? null,
+            personType: row.KisiTipi ?? null,
             identityNo: row.SicilNo,
             fullName: row.AdSoyad,
             department: row.BolumAdi,

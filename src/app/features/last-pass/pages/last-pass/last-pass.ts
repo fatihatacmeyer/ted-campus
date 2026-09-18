@@ -19,6 +19,7 @@ import { TranslatePipe } from '@ngx-translate/core';
 import { LastPassService } from '../../services/last-pass.service';
 import { LastPassRecord, TerminalGroup } from '../../models/last-pass.model';
 import { TooltipModule } from 'primeng/tooltip';
+import { AppConfig, APP_CONFIG } from '../../../../core/services/app-config.service';
 
 // --- Kalıcı ayarlar (localStorage) ---
 // Kullanıcının son seçtiği terminal grubu ve grid sayısı oturumlar arası
@@ -55,6 +56,7 @@ export class LastPassComponent implements OnInit {
 
   private lastPassService = inject(LastPassService);
   private destroyRef = inject(DestroyRef);
+  private config: AppConfig = inject(APP_CONFIG);
   private resizeObserver?: ResizeObserver;
 
   // State Signals
@@ -62,6 +64,7 @@ export class LastPassComponent implements OnInit {
   selectedGroupId = signal<number | null>(null);
   recentPasses = signal<LastPassRecord[]>([]);
   isLoading = signal<boolean>(false);
+
   gridSize = signal<number>(
     Math.min(6, Math.max(1, LastPassComponent.readSavedNumber(STORAGE_KEY_GRID_SIZE, 4))),
   );
@@ -74,7 +77,6 @@ export class LastPassComponent implements OnInit {
   private pollingSubscription?: Subscription;
   private readonly POLLING_INTERVAL_MS = 3000;
 
-  // Kayıt sayısına karşılık gelen sabit grid yapıları (turnike-monitor mantığı):
   // 1 → 1 sütun, 2 → 2 sütun, 3 → 3 sütun, 4 → 2x2, 5 → 3+2, 6 → 3x2
   private static readonly GRID_CLASSES = [
     '',
@@ -98,6 +100,8 @@ export class LastPassComponent implements OnInit {
           ({
             personId: 0,
             photoBase64: null,
+            profilePhotoFileName: null,
+            personType: null,
             identityNo: '',
             fullName: '',
             department: '',
@@ -240,16 +244,24 @@ export class LastPassComponent implements OnInit {
 
   private static readonly DEFAULT_AVATAR = 'assets/images/default-avatar.png';
 
-  // Helper for UI — only emits a data URI for plausible base64 data,
-  // otherwise falls back to the default avatar so no broken image flickers.
-  getPhotoUrl(base64Data: string | null | undefined): string {
-    if (this.isValidBase64Photo(base64Data)) {
-      return `data:image/jpeg;base64,${base64Data!.trim()}`;
+  // Helper for UI — returns a photo URL (file-based or data URI),
+  // or null when no photo is available so the template falls back to icon.
+  getPhotoSource(record: LastPassRecord): string | null {
+    // 1. Campus onaylı/aktif fotoğraf varsa → dosya URL'i
+    const fileName = record.profilePhotoFileName?.trim();
+    if (fileName) {
+      const baseUrl = this.config.photoBaseUrl || 'http://localhost/MeCampus/ProfilFotograflari';
+      return `${baseUrl}/${fileName}`;
     }
-    return LastPassComponent.DEFAULT_AVATAR;
+    // 2. Sicil foto base64 varsa → data URI
+    if (this.isValidBase64Photo(record.photoBase64)) {
+      return `data:image/jpeg;base64,${record.photoBase64!.trim()}`;
+    }
+    // 3. Fotoğraf yok
+    return null;
   }
 
-  // Fallback when an image still fails to load (e.g. corrupt base64).
+  // Fallback when an image still fails to load (e.g. corrupt file or network error).
   onPhotoError(event: Event): void {
     const img = event.target as HTMLImageElement;
     img.src = LastPassComponent.DEFAULT_AVATAR;
@@ -294,6 +306,6 @@ export class LastPassComponent implements OnInit {
   }
 
   isIdleTerminal(record: LastPassRecord): boolean {
-    return record.personId === 0;
+    return record.personId === 0 && !record.personType;
   }
 }

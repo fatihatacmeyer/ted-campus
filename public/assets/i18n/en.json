@@ -294,7 +294,12 @@
     "NO_ENTRY": "No entry",
     "STATUS_APPROVED": "Approved",
     "STATUS_PENDING": "Pending",
-    "STATUS_COMPLETED": "Completed"
+    "STATUS_COMPLETED": "Completed",
+    "STUDENTS_INSIDE": "Students at School",
+    "PARENTS_INSIDE": "Parents at School",
+    "PEOPLE_INSIDE": "People at School",
+    "NO_ONE_INSIDE": "No one is at school right now.",
+    "NO_SEARCH_RESULT": "No results found."
   },
   "ATTENDANCE": {
     "TITLE": "PDKS — Attendance Control",

@@ -9,7 +9,6 @@ import {
 import { BehaviorSubject, timer } from 'rxjs';
 import { switchMap } from 'rxjs/operators';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { Router } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { forkJoin } from 'rxjs';
 import { PersonService } from '../../../persons/services/person.service';
@@ -28,11 +27,13 @@ import {
   LateArrival,
   Absentee,
   AccessTransaction,
+  DashboardKisiler,
 } from '../../services/dashboard.service';
 import { ButtonModule } from 'primeng/button';
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
 import { DialogModule } from 'primeng/dialog';
 import { TooltipModule } from 'primeng/tooltip';
+import { InputTextModule } from 'primeng/inputtext';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
@@ -45,6 +46,7 @@ import { TranslatePipe, TranslateService } from '@ngx-translate/core';
     ProgressSpinnerModule,
     DialogModule,
     TooltipModule,
+    InputTextModule,
     CommonModule,
     FormsModule,
     TranslatePipe,
@@ -108,11 +110,22 @@ export class DashboardComponent implements OnInit {
   eventDialogVisible = false;
   absentDialogVisible = false;
 
+  /** "O an okulda olan" kişi listesi modalı (sp_DashboardKisilerCampus_s). */
+  kisiDialog: {
+    visible: boolean;
+    tip: 'OGRENCI' | 'VELI' | null;
+    kisiler: DashboardKisiler[];
+    loading: boolean;
+    error: boolean;
+  } = { visible: false, tip: null, kisiler: [], loading: false, error: false };
+
+  /** Kişi listesi modalındaki arama metni (isim / sınıf / okul / sicil). */
+  kisiArama = '';
+
   /* ── Inject ────────────────────────────────────────────── */
   private personService = inject(PersonService);
   private dashboardService = inject(DashboardService);
   private authService = inject(AuthService);
-  private router = inject(Router);
   private cdr = inject(ChangeDetectorRef);
   private destroyRef = inject(DestroyRef);
   private translate = inject(TranslateService);
@@ -250,8 +263,36 @@ export class DashboardComponent implements OnInit {
     this.refreshTrigger$.next();
   }
 
-  navigateTo(path: string): void {
-    this.router.navigate(['/home', path]);
+  /**
+   * Kartlara tıklanınca "o an okulda olan" kişi listesini modalda gösterir.
+   * sp_DashboardKisilerCampus_s çağrılır (SadeceOkulda=1 sabit — sadece
+   * içeridekiler). tip: 'OGRENCI' | 'VELI' | null (ikisi birden).
+   */
+  openKisilerModal(tip: 'OGRENCI' | 'VELI' | null): void {
+    this.kisiArama = '';
+    this.kisiDialog = {
+      visible: true,
+      tip,
+      kisiler: [],
+      loading: true,
+      error: false,
+    };
+    this.cdr.markForCheck();
+
+    this.dashboardService
+      .getKisilerCampus(tip)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (kisiler) => {
+          this.kisiDialog = { ...this.kisiDialog, kisiler, loading: false };
+          this.cdr.markForCheck();
+        },
+        error: (err) => {
+          console.error('Okulda olan kişiler alınamadı:', err);
+          this.kisiDialog = { ...this.kisiDialog, loading: false, error: true };
+          this.cdr.markForCheck();
+        },
+      });
   }
 
   private buildGreeting(): string {
@@ -281,6 +322,24 @@ export class DashboardComponent implements OnInit {
 
   getUserdefBadgeClass(userdef: number): string {
     return getUserDefBadgeClass(userdef);
+  }
+
+  /** Kişi listesi satırı için "Sınıf · Okul" meta metni (null alanları atlar). */
+  kisiMeta(kisi: DashboardKisiler): string {
+    return [kisi.className, kisi.schoolName].filter(Boolean).join(' · ');
+  }
+
+  /** Arama metnine göre filtrelenmiş kişi listesi (isim, sınıf, okul, sicil). */
+  get kisiFiltreli(): DashboardKisiler[] {
+    const q = this.kisiArama.trim().toLocaleLowerCase('tr-TR');
+    if (!q) return this.kisiDialog.kisiler;
+    return this.kisiDialog.kisiler.filter(
+      (k) =>
+        k.fullName.toLocaleLowerCase('tr-TR').includes(q) ||
+        (k.schoolName ?? '').toLocaleLowerCase('tr-TR').includes(q) ||
+        (k.className ?? '').toLocaleLowerCase('tr-TR').includes(q) ||
+        (k.sicilNo ?? '').toLocaleLowerCase('tr-TR').includes(q),
+    );
   }
 
   saveAbsentee(): void {
