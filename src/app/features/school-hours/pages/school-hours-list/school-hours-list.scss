@@ -181,6 +181,20 @@
   white-space: nowrap;
 }
 
+.etut-time {
+  font-size: 0.75rem;
+  color: #6b7280;
+  margin-top: 2px;
+  white-space: nowrap;
+}
+
+.closed-label {
+  color: #9ca3af;
+  font-size: 0.8rem;
+  font-style: italic;
+  white-space: nowrap;
+}
+
 /* ── Düzenleme Modu (Input Box Yapısı) ── */
 .time-edit-box {
   display: flex;
@@ -235,5 +249,141 @@
 
   &::placeholder {
     color: #cbd5e1;
+  }
+}
+
+
+/* ── DÜZENLEME MODU ÖĞRENCİ LİSTESİ (ÇOK PROFESYONEL GÖRÜNÜM) ── */
+
+.student-expansion-row {
+  background: #f1f5f9;
+  
+  > td {
+    padding: 16px 20px !important;
+  }
+}
+
+.student-list-container {
+  background-color: #ffffff;
+  border-radius: 12px;
+  border: 1px solid #cbd5e1;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.08), 0 8px 10px -6px rgba(0, 0, 0, 0.04);
+  overflow: hidden;
+  
+  /* Üst araç çubuğu (Header) */
+  .student-list-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 24px;
+    background-color: #ffffff;
+    border-bottom: 1px solid #e2e8f0;
+  }
+
+  /* Saf HTML Tablosu Özel Stili */
+  .sub-html-table {
+    border-collapse: collapse;
+    width: 100%;
+    table-layout: fixed;
+    
+    /* Sütun genişlik ayarları */
+    .student-name-col { width: 220px; text-align: left; }
+    .day-col { width: 130px; }
+    .action-col { width: 95px; } 
+
+    thead {
+      background-color: #f8fafc;
+      
+      th {
+        padding: 16px 20px;
+        color: #475569;
+        font-weight: 700;
+        font-size: 0.85rem;
+        border-bottom: 2px solid #e2e8f0;
+        white-space: nowrap;
+      }
+    }
+
+    tbody {
+      tr {
+        transition: background-color 0.2s ease;
+        &:hover {
+          background-color: #fef2f2;
+        }
+
+        td {
+          padding: 16px 20px;
+          border-bottom: 1px dashed #e2e8f0;
+          font-size: 0.9rem;
+          color: #334155;
+          vertical-align: middle;
+
+          &.student-name {
+            font-weight: 600;
+          }
+        }
+
+        &:last-child td {
+          border-bottom: none;
+        }
+      }
+    }
+  }
+
+  /* Öğrenci adının yanındaki minik harf avatarı */
+  .student-avatar {
+    width: 32px;
+    height: 32px;
+    background-color: #e2e8f0;
+    color: #475569;
+    font-weight: 800;
+    font-size: 0.85rem;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 12px;
+    flex-shrink: 0;
+  }
+
+  .empty-message-cell {
+    text-align: center;
+    padding: 60px 20px !important;
+    color: #64748b !important;
+    background-color: #f8fafc;
+  }
+}
+
+/* .student-list-container altına veya dosya sonuna ekleyebilirsiniz */
+.search-input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+
+  .search-icon {
+    position: absolute;
+    left: 10px;
+    color: #94a3b8;
+    font-size: 0.9rem;
+  }
+
+  .search-input {
+    padding: 8px 12px 8px 32px;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    outline: none;
+    font-size: 0.85rem;
+    color: #334155;
+    width: 240px;
+    transition: border-color 0.2s, box-shadow 0.2s;
+
+    &:focus {
+      border-color: #3b82f6;
+      box-shadow: 0 0 0 1px rgba(59, 130, 246, 0.2);
+    }
+    
+    &::placeholder {
+      color: #94a3b8;
+    }
   }
 }

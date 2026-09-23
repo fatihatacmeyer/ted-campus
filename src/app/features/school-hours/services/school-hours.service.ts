@@ -24,25 +24,32 @@ export class SchoolHoursService {
   ];
   private readonly timeTypes = ['Bas', 'Bit', 'EtutluBas', 'EtutluBit'];
 
-  getSchoolHours(CampusId: number, SinifId: number | string): Observable<SchoolHours[]> {
+  getSchoolHours(
+    CampusId: number,
+    SinifId: number | string,
+    SicilId?: number,
+  ): Observable<SchoolHours[]> {
+    const payload: any = {
+      point: 'CikisSaatleriCampus',
+      islemtipi: 's',
+      CampusId: CampusId,
+      SinifId: SinifId,
+    };
+
+    if (SicilId != null) {
+      payload.SicilId = SicilId;
+    }
+
     return this.api
       .callEndpoint<SchoolHours[] | { islemsonuc?: string | number; sunucucevap?: string }>(
         'Dynamic',
-        {
-          point: 'CikisSaatleriCampus',
-          islemtipi: 's',
-          CampusId: CampusId,
-          SinifId: SinifId,
-        },
+        payload,
       )
       .pipe(
         map((raw) => {
-          // Backend başarılı iken dizi, kayıt yoksa/hata durumunda tekil işlem nesnesi döner.
-          // Tekil nesneyi boş sonuç ([]) olarak ele al; dizi dışı bir yapı tabloyu asla bozmamalı.
           if (!Array.isArray(raw)) {
             return [];
           }
-          // Gelen verilerdeki saniyeleri (15:50:00 -> 15:50) temizle
           raw.forEach((row: any) => {
             this.days.forEach((day) => {
               this.timeTypes.forEach((t) => {
@@ -65,7 +72,6 @@ export class SchoolHoursService {
   }
 
   getClasses(): Observable<DropdownItem[]> {
-    // Sadece id 10'dan sonrasını (id > 10) dikkate al; diğerleri atlanır
     return this.typesService
       .getDropdownList('cbo_bolum')
       .pipe(map((items) => (items || []).filter((i) => i.id > 10)));
@@ -115,6 +121,9 @@ export class SchoolHoursService {
         PazarBit: data.PazarBit,
         PazarEtutluBas: data.PazarEtutluBas,
         PazarEtutluBit: data.PazarEtutluBit,
+
+        // Yeni Toplu Format Alanı
+        GunlerVeSiciller: data.GunlerVeSiciller !== undefined ? data.GunlerVeSiciller : null,
       })
       .pipe(
         map((response) => {

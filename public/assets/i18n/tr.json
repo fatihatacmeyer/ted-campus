@@ -52,6 +52,8 @@
     "NO": "Hayır",
     "BACK": "Geri",
     "ALL": "Tümü",
+    "SHOW_LIST": "Öğrenci listesini göster",
+    "HIDE_LIST": "Öğrenci listesini gizle",
     "PERSON": "kişi",
     "VIEW_FULL": "Tam Ekranda Gör",
     "CLEAR": "Temizle",

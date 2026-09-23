@@ -52,6 +52,8 @@
     "NO": "No",
     "BACK": "Back",
     "ALL": "All",
+    "SHOW_LIST": "Show student list",
+    "HIDE_LIST": "Hide student list",
     "PERSON": "person",
     "VIEW_FULL": "View Full Screen",
     "CLEAR": "Clear",

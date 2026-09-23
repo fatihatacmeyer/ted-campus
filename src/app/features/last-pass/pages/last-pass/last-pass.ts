@@ -7,32 +7,70 @@ import {
   computed,
   DestroyRef,
 } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
-import { timer, Subscription, Observable } from 'rxjs';
-import { switchMap } from 'rxjs/operators';
+import { timer, switchMap, filter } from 'rxjs';
 import { SelectModule } from 'primeng/select';
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
 import { FormsModule } from '@angular/forms';
 import { TranslatePipe } from '@ngx-translate/core';
+import { TooltipModule } from 'primeng/tooltip';
 
 import { LastPassService } from '../../services/last-pass.service';
 import { LastPassRecord, TerminalGroup } from '../../models/last-pass.model';
-import { TooltipModule } from 'primeng/tooltip';
 import { AppConfig, APP_CONFIG } from '../../../../core/services/app-config.service';
+import { LastPassIconComponent } from './last-pass-icon';
 
-// --- Kalıcı ayarlar (localStorage) ---
 // Kullanıcının son seçtiği terminal grubu ve grid sayısı oturumlar arası
-// korunur, böylece sayfa her açılışında aynı seçimler tekrarlanmaz.
+// localStorage'da korunur; sayfa her açılışında aynı seçimler tekrarlanmaz.
 const STORAGE_KEY_SELECTED_GROUP = 'lastPass.selectedGroupId';
 const STORAGE_KEY_GRID_SIZE = 'lastPass.gridSize';
+const POLLING_INTERVAL_MS = 3000;
+const DEFAULT_AVATAR = 'assets/images/default-avatar.png';
 
-// import { ElementRef, ViewChild, effect } from '@angular/core';
-// import { computeOptimalGrid } from '../../../../core/utils/grid-layout.util';
+// 1 → 1 sütun, 2 → 2 sütun, 3 → 3 sütun, 4 → 2x2, 5 → 3+2, 6 → 3x2
+const GRID_CLASSES = ['', 'grid-1', 'grid-2', 'grid-3', 'grid-4', 'grid-5', 'grid-6'];
+
+function createIdleRecord(): LastPassRecord {
+  return {
+    personId: 0,
+    photoBase64: null,
+    profilePhotoFileName: null,
+    personType: null,
+    identityNo: '',
+    fullName: '',
+    department: '',
+    company: '',
+    position: '',
+    passTime: '',
+    terminalId: 0,
+    terminalName: '',
+    message: '',
+    status: 0,
+  } as LastPassRecord;
+}
+
+function readSavedNumber(key: string, fallback: number): number {
+  try {
+    const raw = localStorage.getItem(key);
+    if (raw === null) return fallback;
+    const parsed = Number(raw);
+    return Number.isInteger(parsed) ? parsed : fallback;
+  } catch {
+    return fallback;
+  }
+}
+
+function writeSavedNumber(key: string, value: number): void {
+  try {
+    localStorage.setItem(key, String(value));
+  } catch {
+    // Depolama erişilemezse (gizli mod, kota) sessizce yoksay
+  }
+}
 
 @Component({
   selector: 'app-last-pass',
-  standalone: true,
   imports: [
     CommonModule,
     SelectModule,
@@ -40,154 +78,127 @@ const STORAGE_KEY_GRID_SIZE = 'lastPass.gridSize';
     FormsModule,
     TranslatePipe,
     TooltipModule,
+    LastPassIconComponent,
   ],
   templateUrl: './last-pass.html',
   styleUrl: './last-pass.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class LastPassComponent implements OnInit {
-  // @ViewChild('gridContainer') gridContainer!: ElementRef<HTMLElement>;
-  // cardBox = signal<{ w: number; h: number }>({ w: 0, h: 0 });
-  isFullScreen = signal<boolean>(false);
+  private readonly lastPassService = inject(LastPassService);
+  private readonly destroyRef = inject(DestroyRef);
+  private readonly config: AppConfig = inject(APP_CONFIG);
 
-  private fullscreenListener = () => {
-    this.isFullScreen.set(!!document.fullscreenElement);
-  };
-
-  private lastPassService = inject(LastPassService);
-  private destroyRef = inject(DestroyRef);
-  private config: AppConfig = inject(APP_CONFIG);
-  private resizeObserver?: ResizeObserver;
-
-  // State Signals
+  // --- State ---
+  isFullScreen = signal(false);
   terminalGroups = signal<TerminalGroup[]>([]);
   selectedGroupId = signal<number | null>(null);
   recentPasses = signal<LastPassRecord[]>([]);
-  isLoading = signal<boolean>(false);
+  isLoading = signal(false);
+  gridSize = signal(Math.min(6, Math.max(1, readSavedNumber(STORAGE_KEY_GRID_SIZE, 4))));
 
-  gridSize = signal<number>(
-    Math.min(6, Math.max(1, LastPassComponent.readSavedNumber(STORAGE_KEY_GRID_SIZE, 4))),
-  );
+  readonly gridOptions = [1, 2, 3, 4, 5, 6].map((n) => ({ label: String(n), value: n }));
 
-  readonly gridOptions: { label: string; value: number }[] = [1, 2, 3, 4, 5, 6].map((n) => ({
-    label: String(n),
-    value: n,
-  }));
-
-  private pollingSubscription?: Subscription;
-  private readonly POLLING_INTERVAL_MS = 3000;
-
-  // 1 → 1 sütun, 2 → 2 sütun, 3 → 3 sütun, 4 → 2x2, 5 → 3+2, 6 → 3x2
-  private static readonly GRID_CLASSES = [
-    '',
-    'grid-1',
-    'grid-2',
-    'grid-3',
-    'grid-4',
-    'grid-5',
-    'grid-6',
-  ];
-
-  // Görünür kayıtlar: Eksik kalan alanları boş (idle) kartlarla doldurarak grid yapısını sabitler
+  // Eksik kalan alanları boş (idle) kartlarla doldurarak grid yapısını sabitler
   visibleRecords = computed<LastPassRecord[]>(() => {
     const records = this.recentPasses().slice(0, this.gridSize());
     const paddingCount = this.gridSize() - records.length;
-
-    // Eğer gelen veri seçili grid boyutundan azsa, boş yerleri "Bekleniyor" kartı ile doldur
-    if (paddingCount > 0) {
-      const idleRecords = Array.from({ length: paddingCount }).map(
-        () =>
-          ({
-            personId: 0,
-            photoBase64: null,
-            profilePhotoFileName: null,
-            personType: null,
-            identityNo: '',
-            fullName: '',
-            department: '',
-            company: '',
-            position: '',
-            passTime: '',
-            terminalId: 0,
-            terminalName: '',
-            message: '',
-            status: 0,
-          }) as LastPassRecord,
-      );
-
-      return [...records, ...idleRecords];
-    }
-
-    return records;
+    return paddingCount > 0
+      ? [...records, ...Array.from({ length: paddingCount }, createIdleRecord)]
+      : records;
   });
 
-  // Grid sınıfını veri sayısına göre değil, DİREKT olarak kullanıcının seçtiği grid boyutuna göre ayarlar
-  gridClass = computed<string>(() => {
-    return LastPassComponent.GRID_CLASSES[this.gridSize()] ?? 'grid-1';
-  });
+  // Grid sınıfını veri sayısına göre değil, kullanıcının seçtiği grid boyutuna göre ayarlar
+  gridClass = computed(() => GRID_CLASSES[this.gridSize()] ?? 'grid-1');
+
+  private readonly fullscreenListener = () => {
+    this.isFullScreen.set(!!document.fullscreenElement);
+  };
+
+  constructor() {
+    // selectedGroupId değiştikçe (ilk yükleme dahil) 3 saniyede bir yoklama
+    // (polling) başlatır/yeniler. Eski RxJS Subscription alanı yerine tek bir
+    // reaktif zincir: toObservable + switchMap + takeUntilDestroyed.
+    toObservable(this.selectedGroupId)
+      .pipe(
+        filter((groupId): groupId is number => groupId !== null),
+        switchMap((groupId) =>
+          timer(0, POLLING_INTERVAL_MS).pipe(
+            switchMap(() => this.lastPassService.getRecentPassesByGroup(groupId)),
+          ),
+        ),
+        takeUntilDestroyed(),
+      )
+      .subscribe({
+        next: (records) => this.recentPasses.set(records),
+        error: (err) => console.error('Polling error', err),
+      });
+
+    // document seviyesindeki listener bir @HostListener ile yakalanamaz;
+    // temizliği DestroyRef.onDestroy ile yapıyoruz, ayrı bir ngOnDestroy'a gerek kalmıyor.
+    document.addEventListener('fullscreenchange', this.fullscreenListener);
+    this.destroyRef.onDestroy(() =>
+      document.removeEventListener('fullscreenchange', this.fullscreenListener),
+    );
+  }
 
   ngOnInit(): void {
     this.loadTerminalGroups();
-
-    document.addEventListener('fullscreenchange', this.fullscreenListener);
-  }
-
-  // ngAfterViewInit(): void {
-  //   this.resizeObserver = new ResizeObserver(() => this.recalculateGrid());
-  //   this.resizeObserver.observe(this.gridContainer.nativeElement);
-  //   this.recalculateGrid();
-  // }
-
-  ngOnDestroy(): void {
-    this.resizeObserver?.disconnect();
-
-    document.removeEventListener('fullscreenchange', this.fullscreenListener);
   }
 
   toggleFullScreen(): void {
-    // if (!document.fullscreenElement) {
-    //   this.gridContainer.nativeElement.requestFullscreen().catch((err) => {
-    //     console.error(`Tam ekrana geçiş hatası: ${err.message}`);
-    //   });
-    // } else {
-    //   // Tam ekrandan çık
-    //   document.exitFullscreen();
-    // }
-
     if (!document.fullscreenElement) {
-      // Doğrudan DOM elemanını class üzerinden seçerek tam ekrana gönder
       document
         .querySelector('.last-pass-grid')
         ?.requestFullscreen()
-        .catch((err) => {
-          console.error(`Tam ekrana geçiş hatası: ${err.message}`);
-        });
+        .catch((err) => console.error(`Tam ekrana geçiş hatası: ${err.message}`));
     } else {
       document.exitFullscreen();
     }
   }
 
-  // private recalculateGrid(): void {
-  //   const el = this.gridContainer.nativeElement;
-  //   const { cardWidth, cardHeight } = computeOptimalGrid(
-  //     this.gridSize(),
-  //     el.clientWidth,
-  //     el.clientHeight,
-  //   );
-  //   this.cardBox.set({ w: cardWidth, h: cardHeight });
-  // }
-
-  // constructor() {
-  //   effect(() => {
-  //     this.gridSize(); // dependency
-  //     queueMicrotask(() => this.recalculateGrid());
-  //   });
-  // }
-
   onGroupChange(groupId: number): void {
     this.selectedGroupId.set(groupId);
-    LastPassComponent.writeSavedNumber(STORAGE_KEY_SELECTED_GROUP, groupId);
-    this.startPolling();
+    writeSavedNumber(STORAGE_KEY_SELECTED_GROUP, groupId);
+  }
+
+  onGridSizeChange(size: number): void {
+    this.gridSize.set(size);
+    writeSavedNumber(STORAGE_KEY_GRID_SIZE, size);
+  }
+
+  // Bir fotoğraf URL'i (dosya bazlı ya da data URI) döner,
+  // fotoğraf yoksa template'in ikona düşmesi için null döner.
+  getPhotoSource(record: LastPassRecord): string | null {
+    const fileName = record.profilePhotoFileName?.trim();
+    if (fileName) {
+      const baseUrl = this.config.photoBaseUrl || 'http://localhost/MeCampus/ProfilFotograflari';
+      return `${baseUrl}/${fileName}`;
+    }
+    if (this.isValidBase64Photo(record.photoBase64)) {
+      return `data:image/jpeg;base64,${record.photoBase64!.trim()}`;
+    }
+    return null;
+  }
+
+  // Fotoğraf yüklenemediğinde (bozuk dosya, ağ hatası vb.) varsayılan avatara düşer.
+  onPhotoError(event: Event): void {
+    (event.target as HTMLImageElement).src = DEFAULT_AVATAR;
+  }
+
+  trackByIndex(index: number, _record: LastPassRecord): number {
+    return index;
+  }
+
+  isIdleTerminal(record: LastPassRecord): boolean {
+    return record.personId === 0 && !record.personType;
+  }
+
+  private isValidBase64Photo(value: string | null | undefined): boolean {
+    const trimmed = (value ?? '').trim();
+    // Anlamsız kısa değerleri ele; sadece base64 karakter setine (padding '=' dahil) izin ver.
+    if (trimmed.length < 16) return false;
+    return /^[A-Za-z0-9+/]+={0,2}$/.test(trimmed);
   }
 
   private loadTerminalGroups(): void {
@@ -199,12 +210,11 @@ export class LastPassComponent implements OnInit {
         next: (groups) => {
           this.terminalGroups.set(groups);
           if (groups.length > 0) {
-            const savedGroupId = LastPassComponent.readSavedNumber(STORAGE_KEY_SELECTED_GROUP, -1);
+            const savedGroupId = readSavedNumber(STORAGE_KEY_SELECTED_GROUP, -1);
             // Kayıtlı grup hâlâ listedeyse onu seç, silinmişse ilk gruba düş
             const groupId = groups.some((g) => g.id === savedGroupId) ? savedGroupId : groups[0].id;
             this.selectedGroupId.set(groupId);
-            LastPassComponent.writeSavedNumber(STORAGE_KEY_SELECTED_GROUP, groupId);
-            this.startPolling();
+            writeSavedNumber(STORAGE_KEY_SELECTED_GROUP, groupId);
           }
           this.isLoading.set(false);
         },
@@ -213,99 +223,5 @@ export class LastPassComponent implements OnInit {
           this.isLoading.set(false);
         },
       });
-  }
-
-  private startPolling(): void {
-    if (this.pollingSubscription) {
-      this.pollingSubscription.unsubscribe();
-    }
-
-    const source = this.pollByGroup();
-    if (!source) return;
-
-    this.pollingSubscription = timer(0, this.POLLING_INTERVAL_MS)
-      .pipe(
-        switchMap(() => source()),
-        takeUntilDestroyed(this.destroyRef),
-      )
-      .subscribe({
-        next: (records) => {
-          this.recentPasses.set(records);
-        },
-        error: (err) => console.error('Polling error', err),
-      });
-  }
-
-  private pollByGroup(): (() => Observable<LastPassRecord[]>) | null {
-    const groupId = this.selectedGroupId();
-    if (groupId === null) return null;
-    return () => this.lastPassService.getRecentPassesByGroup(groupId);
-  }
-
-  private static readonly DEFAULT_AVATAR = 'assets/images/default-avatar.png';
-
-  // Helper for UI — returns a photo URL (file-based or data URI),
-  // or null when no photo is available so the template falls back to icon.
-  getPhotoSource(record: LastPassRecord): string | null {
-    // 1. Campus onaylı/aktif fotoğraf varsa → dosya URL'i
-    const fileName = record.profilePhotoFileName?.trim();
-    if (fileName) {
-      const baseUrl = this.config.photoBaseUrl || 'http://localhost/MeCampus/ProfilFotograflari';
-      return `${baseUrl}/${fileName}`;
-    }
-    // 2. Sicil foto base64 varsa → data URI
-    if (this.isValidBase64Photo(record.photoBase64)) {
-      return `data:image/jpeg;base64,${record.photoBase64!.trim()}`;
-    }
-    // 3. Fotoğraf yok
-    return null;
-  }
-
-  // Fallback when an image still fails to load (e.g. corrupt file or network error).
-  onPhotoError(event: Event): void {
-    const img = event.target as HTMLImageElement;
-    img.src = LastPassComponent.DEFAULT_AVATAR;
-  }
-
-  private isValidBase64Photo(value: string | null | undefined): boolean {
-    const trimmed = (value ?? '').trim();
-    // Must be non-trivial and consist only of base64 characters (allow padding '=').
-    if (trimmed.length < 16) return false;
-    return /^[A-Za-z0-9+/]+={0,2}$/.test(trimmed);
-  }
-
-  // --- Kalıcı ayarlar (localStorage) ---
-  // Kullanıcının son seçtiği terminal grubu ve grid sayısı saklanır;
-  // geçersiz/erişilemez durumlarda fallback değer kullanılır ve hata sessizce yutulur.
-  private static readSavedNumber(key: string, fallback: number): number {
-    try {
-      const raw = localStorage.getItem(key);
-      if (raw === null) return fallback;
-      const parsed = Number(raw);
-      return Number.isInteger(parsed) ? parsed : fallback;
-    } catch {
-      return fallback;
-    }
-  }
-
-  private static writeSavedNumber(key: string, value: number): void {
-    try {
-      localStorage.setItem(key, String(value));
-    } catch {
-      // Depolama erişilemezse (gizli mod, kota) sessizce yoksay
-    }
-  }
-
-  trackByIndex(index: number, _record: LastPassRecord): number {
-    return index;
-  }
-
-  onGridSizeChange(size: number): void {
-    this.gridSize.set(size);
-    LastPassComponent.writeSavedNumber(STORAGE_KEY_GRID_SIZE, size);
-  }
-
-  isIdleTerminal(record: LastPassRecord): boolean {
-    return record.personId === 0 && !record.personType;
   }
 }

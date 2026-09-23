@@ -1,7 +1,7 @@
 export interface SchoolHours {
   Id: number;
   CampusId: number;
-  SınıfId: number;
+  SinifId: number;
   SinifSeviyesi: string;
   Aciklama?: string;
 
@@ -33,6 +33,8 @@ export interface SchoolHours {
   PazarBit?: string;
   PazarEtutluBas?: string;
   PazarEtutluBit?: string;
+
+  GunlerVeSiciller?: string;
 }
 
 export interface DBResult {
