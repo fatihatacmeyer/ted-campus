@@ -149,16 +149,16 @@
                                 {{ $any(row)[day.key + 'Bas'] }} - {{ $any(row)[day.key + 'Bit'] }}
                               </div>
                             }
-                            @if (hasEtutTime(row, day.key)) {
+                            @if (hasStudyTime(row, day.key)) {
                               <div
-                                class="etut-time"
+                                class="study-time"
                                 style="font-size: 0.75rem; color: #6b7280; margin-top: 2px"
                               >
                                 (E: {{ $any(row)[day.key + 'EtutluBas'] }} -
                                 {{ $any(row)[day.key + 'EtutluBit'] }})
                               </div>
                             }
-                            @if (!hasNormalTime(row, day.key) && !hasEtutTime(row, day.key)) {
+                            @if (!hasNormalTime(row, day.key) && !hasStudyTime(row, day.key)) {
                               <span class="closed-label text-muted">Kapalı</span>
                             }
                           </div>
@@ -203,137 +203,159 @@
                   </td>
                 </tr>
 
-                <!-- ALT SATIR: ÖĞRENCİ ETÜT LİSTESİ -->
+                <!-- ALT SATIR: ÖĞRENCİ LİSTESİ -->
                 @if (editingRows[row.Id]) {
                   <tr class="student-expansion-row">
                     <td [attr.colspan]="days.length + 2" class="p-0 border-0">
-                      <div class="student-list-container">
-                        <div class="student-list-header">
-                          <h6
-                            class="m-0 text-primary fw-bold d-flex align-items-center"
-                            style="font-size: 1rem"
-                          >
-                            <i class="pi pi-users me-2"></i>
-                            {{ row.SinifSeviyesi }} Öğrenci Etüt Seçimi
-                          </h6>
-                          <div class="d-flex gap-3 align-items-center">
-                            <!-- Arama Alanı -->
-                            <div class="search-input-wrapper">
-                              <i class="pi pi-search search-icon"></i>
-                              <input
-                                type="text"
-                                [(ngModel)]="studentSearchText"
-                                placeholder="Öğrenci adı ile ara..."
-                                class="search-input"
-                              />
-                            </div>
-
-                            <div class="d-flex gap-2">
-                              <button
-                                pButton
-                                label="Tümünü Seç"
-                                icon="pi pi-check-square"
-                                class="p-button-sm p-button-success p-button-outlined"
-                                (click)="selectAll(row.Id, row.CampusId, row.SinifId)"
-                              ></button>
-                              <button
-                                pButton
-                                label="Temizle"
-                                icon="pi pi-stop"
-                                class="p-button-sm p-button-danger p-button-outlined"
-                                (click)="clearAll(row.Id, row.CampusId, row.SinifId)"
-                              ></button>
+                      <!-- EĞER HERHANGİ BİR GÜNDE ETÜT VARSA LİSTEYİ GÖSTER -->
+                      @if (hasAnyStudyTime(row)) {
+                        <div class="student-list-container">
+                          <!-- ... (Mevcut header ve arama inputu kodlarınız aynı kalacak) ... -->
+                          <div class="student-list-header">
+                            <h6
+                              class="m-0 text-primary fw-bold d-flex align-items-center"
+                              style="font-size: 1rem"
+                            >
+                              <i class="pi pi-users me-2"></i>
+                              {{ row.SinifSeviyesi }} Öğrenci Etüt Seçimi
+                            </h6>
+                            <div class="d-flex gap-3 align-items-center">
+                              <div class="search-input-wrapper">
+                                <i class="pi pi-search search-icon"></i>
+                                <input
+                                  type="text"
+                                  [(ngModel)]="studentSearchText"
+                                  placeholder="Öğrenci adı ile ara..."
+                                  class="search-input"
+                                />
+                              </div>
+                              <div class="d-flex gap-2">
+                                <button
+                                  pButton
+                                  label="Tümünü Seç"
+                                  icon="pi pi-check-square"
+                                  class="p-button-sm p-button-success p-button-outlined"
+                                  (click)="selectAll(row.Id, row.CampusId, row.SinifId)"
+                                ></button>
+                                <button
+                                  pButton
+                                  label="Temizle"
+                                  icon="pi pi-stop"
+                                  class="p-button-sm p-button-danger p-button-outlined"
+                                  (click)="clearAll(row.Id, row.CampusId, row.SinifId)"
+                                ></button>
+                              </div>
                             </div>
                           </div>
-                        </div>
 
-                        <div class="table-responsive">
-                          <table class="w-100 sub-html-table">
-                            <thead>
-                              <tr>
-                                <th class="student-name-col">Öğrenci Adı Soyadı</th>
-                                @for (day of days; track day.key) {
-                                  <th class="day-col text-center">
-                                    <div class="d-flex flex-column align-items-center gap-1">
-                                      <span>{{ day.headerKey | translate }}</span>
-                                      <p-checkbox
-                                        [binary]="true"
-                                        [ngModel]="
-                                          isDayAllSelected(
-                                            row.Id,
-                                            row.CampusId,
-                                            row.SinifId,
-                                            day.index
-                                          )
-                                        "
-                                        (onChange)="
-                                          toggleDaySelection(
-                                            row.Id,
-                                            row.CampusId,
-                                            row.SinifId,
-                                            day.index,
-                                            $event.checked
-                                          )
-                                        "
-                                        [pTooltip]="'Bu gün için tüm öğrencileri seç/kaldır'"
-                                      ></p-checkbox>
-                                    </div>
-                                  </th>
-                                }
-                                <th class="action-col"></th>
-                              </tr>
-                            </thead>
-                            <tbody>
-                              <!-- Track işlemi ve ID yakalaması güncellendi (Filtreli Liste) -->
-                              @for (
-                                student of getFilteredStudents(row.CampusId, row.SinifId);
-                                track getStudentId(student)
-                              ) {
+                          <div class="table-responsive">
+                            <table class="w-100 sub-html-table">
+                              <thead>
                                 <tr>
-                                  <td class="student-name">
-                                    <div class="d-flex align-items-center">
-                                      <div class="student-avatar">
-                                        {{ (student.ad || 'O').charAt(0) | uppercase }}
-                                      </div>
-                                      <span>{{
-                                        student.adsoyad || student.ad + ' ' + student.soyad
-                                      }}</span>
-                                    </div>
-                                  </td>
+                                  <th class="student-name-col">Öğrenci Adı Soyadı</th>
                                   @for (day of days; track day.key) {
-                                    <td class="text-center">
-                                      <div
-                                        class="d-flex justify-content-center align-items-center w-100 h-100"
-                                      >
-                                        <p-checkbox
-                                          [binary]="true"
-                                          [(ngModel)]="
-                                            selections[row.Id][day.index][getStudentId(student)]
-                                          "
-                                        ></p-checkbox>
+                                    <th class="day-col text-center">
+                                      <div class="d-flex flex-column align-items-center gap-1">
+                                        <span>{{ day.headerKey | translate }}</span>
+                                        <!-- YALNIZCA O GÜN ETÜT VARSA TÜMÜNÜ SEÇ GÖSTER -->
+                                        @if (hasStudyTime(row, day.key)) {
+                                          <p-checkbox
+                                            [binary]="true"
+                                            [ngModel]="
+                                              isDayAllSelected(
+                                                row.Id,
+                                                row.CampusId,
+                                                row.SinifId,
+                                                day.index
+                                              )
+                                            "
+                                            (onChange)="
+                                              toggleDaySelection(
+                                                row.Id,
+                                                row.CampusId,
+                                                row.SinifId,
+                                                day.index,
+                                                $event.checked
+                                              )
+                                            "
+                                            [pTooltip]="'Bu gün için tüm öğrencileri seç/kaldır'"
+                                          ></p-checkbox>
+                                        }
+                                      </div>
+                                    </th>
+                                  }
+                                  <th class="action-col"></th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                @for (
+                                  student of getFilteredStudents(row.CampusId, row.SinifId);
+                                  track getStudentId(student)
+                                ) {
+                                  <tr>
+                                    <td class="student-name">
+                                      <div class="d-flex align-items-center">
+                                        <div class="student-avatar">
+                                          {{ (student.ad || 'O').charAt(0) | uppercase }}
+                                        </div>
+                                        <span>{{
+                                          student.adsoyad || student.ad + ' ' + student.soyad
+                                        }}</span>
                                       </div>
                                     </td>
-                                  }
-                                  <td></td>
-                                </tr>
-                              }
+                                    @for (day of days; track day.key) {
+                                      <td class="text-center">
+                                        <div
+                                          class="d-flex justify-content-center align-items-center w-100 h-100"
+                                        >
+                                          <!-- YALNIZCA O GÜN ETÜT VARSA CHECKBOX GÖSTER -->
+                                          @if (hasStudyTime(row, day.key)) {
+                                            <p-checkbox
+                                              [binary]="true"
+                                              [(ngModel)]="
+                                                selections[row.Id][day.index][getStudentId(student)]
+                                              "
+                                            ></p-checkbox>
+                                          } @else {
+                                            <span style="color: #cbd5e1; font-size: 0.8rem">-</span>
+                                          }
+                                        </div>
+                                      </td>
+                                    }
+                                    <td></td>
+                                  </tr>
+                                }
 
-                              @if (getFilteredStudents(row.CampusId, row.SinifId).length === 0) {
-                                <tr>
-                                  <td [attr.colspan]="days.length + 2" class="empty-message-cell">
-                                    <i
-                                      class="pi pi-search mb-3"
-                                      style="font-size: 2rem; color: #94a3b8"
-                                    ></i
-                                    ><br />
-                                    Aranan kritere uygun öğrenci bulunamadı.
-                                  </td>
-                                </tr>
-                              }
-                            </tbody>
-                          </table>
+                                @if (getFilteredStudents(row.CampusId, row.SinifId).length === 0) {
+                                  <tr>
+                                    <td [attr.colspan]="days.length + 2" class="empty-message-cell">
+                                      <i
+                                        class="pi pi-search mb-3"
+                                        style="font-size: 2rem; color: #94a3b8"
+                                      ></i
+                                      ><br />
+                                      Aranan kritere uygun öğrenci bulunamadı.
+                                    </td>
+                                  </tr>
+                                }
+                              </tbody>
+                            </table>
+                          </div>
                         </div>
-                      </div>
+                      } @else {
+                        <div class="empty-study-container">
+                          <div class="icon-wrapper">
+                            <i class="pi pi-info-circle"></i>
+                          </div>
+                          <div class="text-content">
+                            <h6>Etüt Saati Tanımlanmamış</h6>
+                            <p>
+                              Öğrenci seçimi yapabilmek için yukarıdaki tablodan en az bir güne etüt
+                              (E) saati giriniz.
+                            </p>
+                          </div>
+                        </div>
+                      }
                     </td>
                   </tr>
                 }

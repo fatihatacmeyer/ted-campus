@@ -123,7 +123,7 @@ export class CustomizableTableComponent<T extends object = Record<string, unknow
   @Input() selectedRows: T[] = [];
   /** Seçim değiştiğinde parent'a yeni seçim listesini bildirir */
 
-  @Input() displayMode: 'paginated' | 'scroll' = 'paginated';
+  @Input() displayMode: 'paginated' | 'scroll' | 'fit' = 'paginated';
   @Input() scrollHeight = 'calc(100vh - 240px)';
 
   @HostBinding('class.mode-paginated')

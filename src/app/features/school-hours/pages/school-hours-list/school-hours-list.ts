@@ -628,8 +628,13 @@ export class SchoolHoursListComponent implements OnInit {
       let h = Math.min(parseInt(raw.slice(0, 2), 10), 23);
       let m = Math.min(parseInt(raw.slice(2, 4), 10), 59);
       const formatted = `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}`;
+
       row[fieldKey] = formatted;
       input.value = formatted;
+
+      if (!this.validateTimeInterval(row, fieldKey)) {
+        input.value = '';
+      }
     } else {
       row[fieldKey] = input.value;
     }
@@ -667,21 +672,65 @@ export class SchoolHoursListComponent implements OnInit {
       row[fieldKey] = formatted;
       input.value = formatted;
     }
+    if (!this.validateTimeInterval(row, fieldKey)) {
+      input.value = '';
+    }
   }
 
   isValidTime(val: string | null | undefined): boolean {
     if (!val || typeof val !== 'string') return false;
     const trimmed = val.trim();
-    return !['', '00:00', '00:00:00', '0:00', '-'].includes(trimmed);
+    // Tam bir saat formatı mı kontrol et (Örn: 08:30, 15:45)
+    const timeRegex = /^([01][0-9]|2[0-3]):([0-5][0-9])$/;
+    return timeRegex.test(trimmed) && trimmed !== '00:00';
+  }
+
+  private validateTimeInterval(row: any, fieldKey: string): boolean {
+    let day = '';
+    let isEtut = fieldKey.includes('Etutlu');
+
+    for (const d of this.days) {
+      if (fieldKey.startsWith(d.key)) {
+        day = d.key;
+        break;
+      }
+    }
+
+    if (!day) return true;
+
+    const basField = isEtut ? `${day}EtutluBas` : `${day}Bas`;
+    const bitField = isEtut ? `${day}EtutluBit` : `${day}Bit`;
+
+    const basTime = row[basField];
+    const bitTime = row[bitField];
+
+    // İki alan da eksiksiz girilmişse kıyasla
+    if (this.isValidTime(basTime) && this.isValidTime(bitTime)) {
+      if (basTime >= bitTime) {
+        // Hata durumunda bildirim ver ve son girilen hatalı alanı temizle
+        this.notification.error(
+          `${day} ${isEtut ? 'Etüt' : 'Normal'} bitiş saati, başlangıç saatinden ileri (büyük) olmalıdır.`,
+        );
+        row[fieldKey] = '';
+        this.cdr.markForCheck();
+        return false;
+      }
+    }
+
+    return true;
   }
 
   hasNormalTime(row: any, dayKey: string): boolean {
     return this.isValidTime(row[dayKey + 'Bas']) && this.isValidTime(row[dayKey + 'Bit']);
   }
 
-  hasEtutTime(row: any, dayKey: string): boolean {
+  hasStudyTime(row: any, dayKey: string): boolean {
     return (
       this.isValidTime(row[dayKey + 'EtutluBas']) && this.isValidTime(row[dayKey + 'EtutluBit'])
     );
+  }
+
+  hasAnyStudyTime(row: any): boolean {
+    return this.days.some((day) => this.hasStudyTime(row, day.key));
   }
 }

@@ -47,7 +47,7 @@
         [exportFilename]="'person_liste_' + USERDEF.toString()"
         [actionsTemplate]="showActionsColumn ? actionsTpl : null"
         (rowClick)="onRowClick($event)"
-        displayMode="scroll"
+        displayMode="fit"
       >
         <ng-template appColumnCell="veliAdSoyad" let-person>
           <span

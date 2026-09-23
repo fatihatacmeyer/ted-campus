@@ -115,7 +115,7 @@
         exportFilename="servis_araclari"
         [showRowNumbers]="true"
         [actionsTemplate]="busActionsTpl"
-        displayMode="scroll"
+        displayMode="fit"
       >
         <ng-template appColumnCell="plate" let-bus>
           <strong>{{ bus.plate }}</strong>
@@ -711,7 +711,7 @@
                 : 'Dönüş için atanmış öğrenci yok.'
             "
             [actionsTemplate]="studentAssignActionsTpl"
-            displayMode="scroll"
+            displayMode="fit"
           >
             <ng-template #studentAssignActionsTpl let-row>
               <div class="row-actions">
