@@ -1,1 +1,14 @@
 /* Styles handled globally in styles.scss */
+:host {
+  display: block;
+  height: 100%;
+  overflow-y: auto;
+}
+
+/* styles.scss'den gelen 'overflow: hidden' kısıtlamasını ezer */
+.admin-wrapper {
+  height: auto !important;
+  min-height: 100%;
+  overflow: visible !important;
+  padding-bottom: 24px; /* Yatay scroll'un en alta yapışıp ezilmesini önler */
+}

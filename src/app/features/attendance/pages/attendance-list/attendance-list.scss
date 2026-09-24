@@ -1,4 +1,76 @@
-/* ── PDKS listesi: dönem araç çubuğu ────────────────────────── */
+/* Sayfanın dış taşmasını engelle ve tam ekran esnek yapı kur */
+:host {
+  display: block;
+  height: 100%;
+  overflow: hidden;
+}
+
+.admin-wrapper {
+  height: 100% !important;
+  min-height: 0 !important;
+  overflow: hidden !important;
+  display: flex;
+  flex-direction: column;
+  padding-bottom: 12px;
+}
+
+/* ── Sayfa düzeni: tablo alanı ───────────────────── */
+.attendance-layout {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 0;
+  min-height: 0;
+  height: 100%;
+
+  .attendance-table-card {
+    flex: 1 1 0;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    margin-bottom: 0 !important;
+
+    /* Üst filtre ve arama satırı sabit kalır */
+    > div:first-child {
+      flex-shrink: 0;
+    }
+
+    /* Tablo bileşeni kalan yüksekliği tam doldurur */
+    app-customizable-table {
+      flex: 1 1 0;
+      min-height: 0;
+      display: flex;
+      flex-direction: column;
+    }
+  }
+}
+
+/* PrimeNG tablo sargısının esnemesi ve scroll'un en alta konumlanması */
+:host ::ng-deep {
+  .admin-table {
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 0;
+    min-height: 0;
+  }
+
+  .p-datatable {
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 0;
+    min-height: 0;
+  }
+
+  .p-datatable-wrapper {
+    flex: 1 1 0 !important;
+    height: auto !important;
+    max-height: none !important;
+    overflow-y: auto !important;
+    overflow-x: auto !important;
+  }
+}
+
+/* ── Dönem ve Filtre Stilleri ────────────────────────── */
 .period-toolbar {
   .range-label {
     min-width: 170px;
@@ -6,7 +78,6 @@
   }
 }
 
-/* Dönem segment butonları (Gün/Hafta/Ay) */
 .period-segment {
   border: 1px solid #dee2e6;
   border-radius: 6px;
@@ -29,7 +100,6 @@
   }
 }
 
-/* Liste sekme butonları (Genel / İzinliler / Erken Çıkanlar / Geç Gelenler) */
 .filter-tabs {
   .p-button.active {
     background-color: #dc2134;
@@ -38,59 +108,11 @@
   }
 }
 
-/* Geç gelen / erken çıkan uyarı hücresi */
 .cell-red {
   color: #dc2134;
   font-weight: 600;
 }
 
-/* İzinli etiketi */
 .izinli-tag {
   white-space: nowrap;
-}
-
-/* ── Sayfa düzeni: tablo + sağ yan panel ───────────────────── */
-.attendance-layout {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: stretch;
-  gap: 1rem;
-
-  /* Viewport'tan üst kartın (başlık + dönem) yüksekliğini çıkar */
-  height: calc(100vh - 180px);
-
-  .attendance-table-card {
-    flex: 1 1 0;
-    min-width: 0;
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-
-    /* Filter-sekme + İzin Ata satırı sabit kalır */
-    > div:first-child {
-      flex-shrink: 0;
-    }
-
-    /* Tablo bileşeni kalan alanı doldurur */
-    app-customizable-table {
-      flex: 1 1 0;
-      min-height: 0;
-      display: flex;
-      flex-direction: column;
-    }
-  }
-
-  .izinlerim-panel {
-    flex: 0 0 380px;
-    width: 380px;
-    align-self: flex-start;
-  }
-}
-
-/* Dar ekranlarda yan panel listenin altına iner */
-@media (max-width: 1200px) {
-  .attendance-layout .izinlerim-panel {
-    flex-basis: 100%;
-    width: 100%;
-  }
 }

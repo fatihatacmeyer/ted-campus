@@ -23,7 +23,7 @@
       [actionsTemplate]="actionsTpl"
       [rowClickable]="true"
       (rowClick)="openDetailDialog($event)"
-      displayMode="fit"
+      displayMode="scroll"
     >
       <ng-template appColumnCell="classroom" let-activity>
         <span
@@ -361,9 +361,9 @@
       </div>
       <div class="d-flex gap-3">
         <div class="w-50 d-flex flex-column gap-1">
-          <label for="maxGuestPerParent" class="fw-semibold small text-muted"
-            >{{ 'ACTIVITIES.MAX_GUEST_PER_PARENT' | translate }}</label
-          >
+          <label for="maxGuestPerParent" class="fw-semibold small text-muted">{{
+            'ACTIVITIES.MAX_GUEST_PER_PARENT' | translate
+          }}</label>
           <input
             pInputText
             type="number"

@@ -45,101 +45,101 @@
     }
 
     @if (showColumnSelector) {
-    <div class="col-selector-wrapper">
-      <button
-        pButton
-        icon="pi pi-list"
-        class="p-button-text p-button-xl col-toggle-btn"
-        [pTooltip]="'COMMON.COLUMNS' | translate"
-        [attr.aria-label]="'COMMON.COLUMNS' | translate"
-        tooltipPosition="bottom"
-        (click)="showColumnPanel = !showColumnPanel; $event.stopPropagation()"
-      ></button>
+      <div class="col-selector-wrapper">
+        <button
+          pButton
+          icon="pi pi-list"
+          class="p-button-text p-button-xl col-toggle-btn"
+          [pTooltip]="'COMMON.COLUMNS' | translate"
+          [attr.aria-label]="'COMMON.COLUMNS' | translate"
+          tooltipPosition="bottom"
+          (click)="showColumnPanel = !showColumnPanel; $event.stopPropagation()"
+        ></button>
 
-      @if (showColumnPanel) {
-        <div
-          class="col-panel"
-          role="button"
-          tabindex="0"
-          (click)="$event.stopPropagation()"
-          (keyup.enter)="$event.stopPropagation()"
-        >
-          <div class="col-panel-header">
-            <span class="col-panel-title">{{ 'COMMON.COLUMNS' | translate }}</span>
-            <button
-              pButton
-              icon="pi pi-refresh"
-              class="p-button-text p-button-sm p-button-rounded"
-              [pTooltip]="'COMMON.RESET_DEFAULT' | translate"
-              [attr.aria-label]="'COMMON.RESET_DEFAULT' | translate"
-              tooltipPosition="left"
-              (click)="onClearColumns()"
-            ></button>
-          </div>
-          <div class="col-panel-body">
-            <div class="col-panel-section">
-              @for (field of selectedColumnFields; track field; let i = $index) {
-                <div
-                  class="col-panel-item"
-                  [class.col-item-dragging]="draggedIndex === i"
-                  [class.col-item-drop-target]="
-                    dragOverIndex === i && dragOverIndex !== draggedIndex
-                  "
-                  draggable="true"
-                  (dragstart)="onDragStart($event, i)"
-                  (dragover)="onDragOver($event, i)"
-                  (dragleave)="onDragLeave()"
-                  (drop)="onDrop($event, i)"
-                  (dragend)="onDragEnd()"
-                >
-                  <span class="drag-handle">⠿</span>
-                  <span class="col-label">{{ getColDisplayName(field) | translate }}</span>
-                  @if (isAlwaysVisible(field)) {
-                    <span class="col-locked">
-                      <i class="pi pi-lock" style="font-size: 10px"></i>
-                    </span>
-                  } @else {
-                    <label
-                      class="col-toggle"
-                      role="button"
-                      tabindex="0"
-                      (click)="$event.stopPropagation()"
-                      (keyup.enter)="$event.stopPropagation()"
-                    >
-                      <input type="checkbox" checked (change)="toggleColumn(field)" />
-                      <span class="col-toggle-track"></span>
-                    </label>
+        @if (showColumnPanel) {
+          <div
+            class="col-panel"
+            role="button"
+            tabindex="0"
+            (click)="$event.stopPropagation()"
+            (keyup.enter)="$event.stopPropagation()"
+          >
+            <div class="col-panel-header">
+              <span class="col-panel-title">{{ 'COMMON.COLUMNS' | translate }}</span>
+              <button
+                pButton
+                icon="pi pi-refresh"
+                class="p-button-text p-button-sm p-button-rounded"
+                [pTooltip]="'COMMON.RESET_DEFAULT' | translate"
+                [attr.aria-label]="'COMMON.RESET_DEFAULT' | translate"
+                tooltipPosition="left"
+                (click)="onClearColumns()"
+              ></button>
+            </div>
+            <div class="col-panel-body">
+              <div class="col-panel-section">
+                @for (field of selectedColumnFields; track field; let i = $index) {
+                  <div
+                    class="col-panel-item"
+                    [class.col-item-dragging]="draggedIndex === i"
+                    [class.col-item-drop-target]="
+                      dragOverIndex === i && dragOverIndex !== draggedIndex
+                    "
+                    draggable="true"
+                    (dragstart)="onDragStart($event, i)"
+                    (dragover)="onDragOver($event, i)"
+                    (dragleave)="onDragLeave()"
+                    (drop)="onDrop($event, i)"
+                    (dragend)="onDragEnd()"
+                  >
+                    <span class="drag-handle">⠿</span>
+                    <span class="col-label">{{ getColDisplayName(field) | translate }}</span>
+                    @if (isAlwaysVisible(field)) {
+                      <span class="col-locked">
+                        <i class="pi pi-lock" style="font-size: 10px"></i>
+                      </span>
+                    } @else {
+                      <label
+                        class="col-toggle"
+                        role="button"
+                        tabindex="0"
+                        (click)="$event.stopPropagation()"
+                        (keyup.enter)="$event.stopPropagation()"
+                      >
+                        <input type="checkbox" checked (change)="toggleColumn(field)" />
+                        <span class="col-toggle-track"></span>
+                      </label>
+                    }
+                  </div>
+                }
+              </div>
+              @if (hiddenColumns.length) {
+                <div class="col-panel-divider"></div>
+                <div class="col-panel-section col-panel-section--hidden">
+                  @for (field of hiddenColumns; track field) {
+                    <div class="col-panel-item col-panel-item--off">
+                      <span class="drag-handle drag-handle--placeholder"></span>
+                      <span class="col-label col-label--dim">{{
+                        getColDisplayName(field) | translate
+                      }}</span>
+                      <label
+                        class="col-toggle"
+                        role="button"
+                        tabindex="0"
+                        (click)="$event.stopPropagation()"
+                        (keyup.enter)="$event.stopPropagation()"
+                      >
+                        <input type="checkbox" (change)="toggleColumn(field)" />
+                        <span class="col-toggle-track"></span>
+                      </label>
+                    </div>
                   }
                 </div>
               }
             </div>
-            @if (hiddenColumns.length) {
-              <div class="col-panel-divider"></div>
-              <div class="col-panel-section col-panel-section--hidden">
-                @for (field of hiddenColumns; track field) {
-                  <div class="col-panel-item col-panel-item--off">
-                    <span class="drag-handle drag-handle--placeholder"></span>
-                    <span class="col-label col-label--dim">{{
-                      getColDisplayName(field) | translate
-                    }}</span>
-                    <label
-                      class="col-toggle"
-                      role="button"
-                      tabindex="0"
-                      (click)="$event.stopPropagation()"
-                      (keyup.enter)="$event.stopPropagation()"
-                    >
-                      <input type="checkbox" (change)="toggleColumn(field)" />
-                      <span class="col-toggle-track"></span>
-                    </label>
-                  </div>
-                }
-              </div>
-            }
           </div>
-        </div>
-      }
-    </div>
+        }
+      </div>
     }
   </div>
 </div>

@@ -45,7 +45,8 @@
 }
 
 :host ::ng-deep .admin-table .p-datatable-wrapper {
-  overflow-x: auto;
+overflow-x: auto;
+  max-height: calc(100vh - 200px);
 }
 
 :host ::ng-deep .admin-table th,

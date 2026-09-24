@@ -23,7 +23,9 @@ html, body {
   max-width: 97%;
   margin: 0 auto;
   background: #f4f6fa;
-  min-height: 100%;
+  min-height: 100%; /* height: 100% yerine */
+  overflow-y: auto; /* overflow: hidden yerine */
+  padding-bottom: 24px;
 }
 
 .admin-card {
@@ -32,8 +34,6 @@ html, body {
   padding: 6px 10px 12px 10px;
   box-shadow: 0 12px 32px rgba(0, 0, 0, 0.08);
   margin-bottom: 32px;
-  /* Flex-parent içindeyken (sayfa-içi scroll düzenleri) kart daralmasın */
-  flex-shrink: 0;
 }
 
 /* ── Admin Table ─────────────────────────────────────────── */

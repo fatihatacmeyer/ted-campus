@@ -32,14 +32,17 @@
       tableId="proxy_list_grid"
       exportFilename="vekil_listesi"
       [showRowNumbers]="true"
-      displayMode="fit"
+      displayMode="scroll"
       [actionsTemplate]="actionsTpl"
       [rowClickable]="true"
       (rowClick)="onRowClick($event)"
     >
       <!-- Durum Kolonu -->
       <ng-template appColumnCell="onayDurumu" let-row>
-        <p-tag [value]="getStatusLabel(row.onayDurumu) | translate" [severity]="getSeverity(row.onayDurumu)"></p-tag>
+        <p-tag
+          [value]="getStatusLabel(row.onayDurumu) | translate"
+          [severity]="getSeverity(row.onayDurumu)"
+        ></p-tag>
       </ng-template>
 
       <!-- İşlemler (Onay/Red) Kolonu -->

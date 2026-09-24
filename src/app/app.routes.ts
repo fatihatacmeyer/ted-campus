@@ -37,7 +37,7 @@ export const routes: Routes = [
       {
         path: 'teachers',
         canActivate: [adminGuard],
-        data: { userDef: UserDef.Ogretmen, titleKey: 'MENU.TEACHERS', scrollable: true },
+        data: { userDef: UserDef.Ogretmen, titleKey: 'MENU.TEACHERS' },
         loadComponent: () =>
           import('./features/persons/pages/person-crud/person-crud').then(
             (m) => m.PersonCrudComponent,
@@ -46,7 +46,7 @@ export const routes: Routes = [
       {
         path: 'proxies',
         canActivate: [adminGuard],
-        data: { titleKey: 'MENU.PROXIES', scrollable: true },
+        data: { titleKey: 'MENU.PROXIES' },
         loadComponent: () =>
           import('./features/persons/pages/proxy-list/proxy-list').then(
             (m) => m.ProxyListComponent,
@@ -55,7 +55,7 @@ export const routes: Routes = [
       {
         path: 'parents',
         canActivate: [adminGuard],
-        data: { userDef: UserDef.Veli, titleKey: 'MENU.PARENTS', scrollable: true },
+        data: { userDef: UserDef.Veli, titleKey: 'MENU.PARENTS' },
         loadComponent: () =>
           import('./features/persons/pages/person-crud/person-crud').then(
             (m) => m.PersonCrudComponent,
@@ -73,7 +73,7 @@ export const routes: Routes = [
       {
         path: 'activities',
         canActivate: [adminGuard],
-        data: { titleKey: 'MENU.ACTIVITIES', scrollable: true },
+        data: { titleKey: 'MENU.ACTIVITIES' },
         loadComponent: () =>
           import('./features/activities/pages/activities-list/activities-list').then(
             (m) => m.ActivitiesComponent,
@@ -82,7 +82,7 @@ export const routes: Routes = [
       {
         path: 'attendance',
         canActivate: [adminGuard],
-        data: { titleKey: 'MENU.STUDENT_ATTENDANCE', scrollable: true },
+        data: { titleKey: 'MENU.STUDENT_ATTENDANCE' },
         loadComponent: () =>
           import('./features/attendance/pages/attendance-list/attendance-list').then(
             (m) => m.AttendanceListComponent,
