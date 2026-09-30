@@ -3,6 +3,7 @@ import { Observable, forkJoin } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { ApiHelperService } from '../../../core/services/api-helper.service';
 import { SchoolHours, DBResult } from '../models/school-hours.model';
+import { TIME_FIELD_SUFFIXES, WEEKDAYS, timeField } from '../models/weekday.model';
 import { unwrapResponse } from '../../../shared/utils/response.utils';
 import { TypesService, DropdownItem } from '../../persons/services/types.service';
 
@@ -13,31 +14,20 @@ export class SchoolHoursService {
   private api = inject(ApiHelperService);
   private typesService = inject(TypesService);
 
-  private readonly days = [
-    'Pazartesi',
-    'Sali',
-    'Carsamba',
-    'Persembe',
-    'Cuma',
-    'Cumartesi',
-    'Pazar',
-  ];
-  private readonly timeTypes = ['Bas', 'Bit', 'EtutluBas', 'EtutluBit'];
-
   getSchoolHours(
     CampusId: number,
     SinifId: number | string,
     SicilId?: number,
   ): Observable<SchoolHours[]> {
-    const payload: any = {
+    const payload: Record<string, string | number | null | undefined> = {
       point: 'CikisSaatleriCampus',
       islemtipi: 's',
-      CampusId: CampusId,
-      SinifId: SinifId,
+      CampusId,
+      SinifId,
     };
 
     if (SicilId != null) {
-      payload.SicilId = SicilId;
+      payload['SicilId'] = SicilId;
     }
 
     return this.api
@@ -45,24 +35,7 @@ export class SchoolHoursService {
         'Dynamic',
         payload,
       )
-      .pipe(
-        map((raw) => {
-          if (!Array.isArray(raw)) {
-            return [];
-          }
-          raw.forEach((row: any) => {
-            this.days.forEach((day) => {
-              this.timeTypes.forEach((t) => {
-                const val = row[day + t];
-                if (val && typeof val === 'string' && val.length >= 5) {
-                  row[day + t] = val.substring(0, 5);
-                }
-              });
-            });
-          });
-          return raw;
-        }),
-      );
+      .pipe(map((raw) => (Array.isArray(raw) ? raw.map(truncateTimeFields) : [])));
   }
 
   getCampuses(): Observable<DropdownItem[]> {
@@ -92,38 +65,9 @@ export class SchoolHoursService {
         Id: data.Id,
         SinifSeviyesi: data.SinifSeviyesi,
         Aciklama: data.Aciklama,
-
-        PazartesiBas: data.PazartesiBas,
-        PazartesiBit: data.PazartesiBit,
-        PazartesiEtutluBas: data.PazartesiEtutluBas,
-        PazartesiEtutluBit: data.PazartesiEtutluBit,
-        SaliBas: data.SaliBas,
-        SaliBit: data.SaliBit,
-        SaliEtutluBas: data.SaliEtutluBas,
-        SaliEtutluBit: data.SaliEtutluBit,
-        CarsambaBas: data.CarsambaBas,
-        CarsambaBit: data.CarsambaBit,
-        CarsambaEtutluBas: data.CarsambaEtutluBas,
-        CarsambaEtutluBit: data.CarsambaEtutluBit,
-        PersembeBas: data.PersembeBas,
-        PersembeBit: data.PersembeBit,
-        PersembeEtutluBas: data.PersembeEtutluBas,
-        PersembeEtutluBit: data.PersembeEtutluBit,
-        CumaBas: data.CumaBas,
-        CumaBit: data.CumaBit,
-        CumaEtutluBas: data.CumaEtutluBas,
-        CumaEtutluBit: data.CumaEtutluBit,
-        CumartesiBas: data.CumartesiBas,
-        CumartesiBit: data.CumartesiBit,
-        CumartesiEtutluBas: data.CumartesiEtutluBas,
-        CumartesiEtutluBit: data.CumartesiEtutluBit,
-        PazarBas: data.PazarBas,
-        PazarBit: data.PazarBit,
-        PazarEtutluBas: data.PazarEtutluBas,
-        PazarEtutluBit: data.PazarEtutluBit,
-
+        ...collectDayTimeFields(data),
         // Yeni Toplu Format Alanı
-        GunlerVeSiciller: data.GunlerVeSiciller !== undefined ? data.GunlerVeSiciller : null,
+        GunlerVeSiciller: data.GunlerVeSiciller ?? null,
       })
       .pipe(
         map((response) => {
@@ -143,4 +87,31 @@ export class SchoolHoursService {
         }),
       );
   }
+}
+
+/** Backend bazen "HH:MM:SS" döndürebiliyor; görüntüde/inputlarda hep "HH:MM" kullanıyoruz. */
+function truncateTimeFields(row: SchoolHours): SchoolHours {
+  const copy = { ...row } as unknown as Record<string, unknown>;
+  for (const day of WEEKDAYS) {
+    for (const suffix of TIME_FIELD_SUFFIXES) {
+      const field = timeField(day.key, suffix);
+      const val = copy[field];
+      if (typeof val === 'string' && val.length >= 5) {
+        copy[field] = val.substring(0, 5);
+      }
+    }
+  }
+  return copy as unknown as SchoolHours;
+}
+
+/** 28 satırlık elle yazılmış alan listesi yerine WEEKDAYS üzerinden üretilir. */
+function collectDayTimeFields(data: SchoolHours): Record<string, string | undefined> {
+  const fields: Record<string, string | undefined> = {};
+  for (const day of WEEKDAYS) {
+    for (const suffix of TIME_FIELD_SUFFIXES) {
+      const field = timeField(day.key, suffix);
+      fields[field] = (data as unknown as Record<string, unknown>)[field] as string | undefined;
+    }
+  }
+  return fields;
 }

@@ -1,0 +1,102 @@
+<div class="student-list-container">
+  <div class="student-list-header">
+    <h6 class="panel-title">
+      <i class="pi pi-users"></i>
+      {{ gradeLabel() }} Öğrenci Etüt Seçimi
+    </h6>
+
+    <div class="panel-tools">
+      <div class="search-input-wrapper">
+        <i class="pi pi-search search-icon"></i>
+        <input
+          type="text"
+          [ngModel]="searchText()"
+          (ngModelChange)="searchText.set($event)"
+          placeholder="Öğrenci adı ile ara..."
+          class="search-input"
+        />
+      </div>
+
+      <div class="panel-actions">
+        <button
+          pButton
+          type="button"
+          label="Tümünü Seç"
+          icon="pi pi-check-square"
+          class="p-button-sm p-button-success p-button-outlined"
+          (click)="selectAll()"
+        ></button>
+        <button
+          pButton
+          type="button"
+          label="Temizle"
+          icon="pi pi-stop"
+          class="p-button-sm p-button-danger p-button-outlined"
+          (click)="clearAll()"
+        ></button>
+      </div>
+    </div>
+  </div>
+
+  <div class="table-scroll">
+    <table class="sub-html-table">
+      <thead>
+        <tr>
+          <th class="student-name-col">Öğrenci Adı Soyadı</th>
+          @for (day of days; track day.key) {
+            <th class="day-col text-center">
+              <div class="day-col-head">
+                <span>{{ day.headerKey | translate }}</span>
+                @if (hasStudyDay(day.index)) {
+                  <p-checkbox
+                    [binary]="true"
+                    [ngModel]="isDaySelectedForAll(day.index)"
+                    (onChange)="toggleDay(day.index, $event.checked)"
+                    pTooltip="Bu gün için tüm öğrencileri seç/kaldır"
+                  ></p-checkbox>
+                }
+              </div>
+            </th>
+          }
+          <th class="action-col"></th>
+        </tr>
+      </thead>
+
+      <tbody>
+        @for (student of filteredStudents(); track studentId(student)) {
+          <tr>
+            <td class="student-name" data-label="Öğrenci">
+              <div class="student-cell">
+                <div class="student-avatar">{{ (student.ad || 'O').charAt(0) | uppercase }}</div>
+                <span>{{ studentDisplayName(student) }}</span>
+              </div>
+            </td>
+            @for (day of days; track day.key) {
+              <td class="text-center" [attr.data-label]="day.headerKey | translate">
+                @if (hasStudyDay(day.index)) {
+                  <p-checkbox
+                    [binary]="true"
+                    [ngModel]="isStudentDayChecked(day.index, studentId(student))"
+                    (onChange)="setStudentDay(day.index, studentId(student), $event.checked)"
+                  ></p-checkbox>
+                } @else {
+                  <span class="no-study">-</span>
+                }
+              </td>
+            }
+            <td></td>
+          </tr>
+        }
+
+        @if (filteredStudents().length === 0) {
+          <tr>
+            <td [attr.colspan]="days.length + 2" class="empty-message-cell">
+              <i class="pi pi-search"></i><br />
+              Aranan kritere uygun öğrenci bulunamadı.
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+</div>

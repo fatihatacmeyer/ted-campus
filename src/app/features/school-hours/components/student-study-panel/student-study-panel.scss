@@ -1,0 +1,238 @@
+:host {
+  display: block;
+}
+
+.student-list-container {
+  background: #ffffff;
+  border-radius: 12px;
+  border: 1px solid #cbd5e1;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.08), 0 8px 10px -6px rgba(0, 0, 0, 0.04);
+  overflow: hidden;
+  margin: 16px 20px;
+}
+
+.student-list-header {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 16px;
+  border-bottom: 1px solid #e2e8f0;
+
+  .panel-title {
+    margin: 0;
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--sh-accent, #dc2134);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .panel-tools {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    align-items: center;
+  }
+
+  .panel-actions {
+    display: flex;
+    gap: 8px;
+  }
+}
+
+.search-input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+
+  .search-icon {
+    position: absolute;
+    left: 10px;
+    color: #94a3b8;
+    font-size: 0.9rem;
+  }
+
+  .search-input {
+    padding: 6px 12px 6px 32px;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    outline: none;
+    font-size: 0.85rem;
+    color: #334155;
+    width: 240px;
+    max-width: 100%;
+    transition: border-color 0.2s, box-shadow 0.2s;
+
+    &:focus {
+      border-color: #3b82f6;
+      box-shadow: 0 0 0 1px rgba(59, 130, 246, 0.2);
+    }
+    &::placeholder {
+      color: #94a3b8;
+    }
+  }
+}
+
+.table-scroll {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.sub-html-table {
+  border-collapse: collapse;
+  width: 100%;
+  min-width: 640px;
+
+  .student-name-col {
+    width: 220px;
+    text-align: left;
+  }
+  .day-col {
+    width: 120px;
+  }
+  .action-col {
+    width: 60px;
+  }
+
+  thead {
+    background: #f8fafc;
+
+    th {
+      padding: 14px 16px;
+      color: #475569;
+      font-weight: 700;
+      font-size: 0.85rem;
+      border-bottom: 2px solid #e2e8f0;
+      white-space: nowrap;
+    }
+  }
+
+  .day-col-head {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+  }
+
+  tbody tr {
+    transition: background-color 0.15s ease;
+
+    &:hover {
+      background: #fef2f2;
+    }
+
+    td {
+      padding: 12px 16px;
+      border-bottom: 1px dashed #e2e8f0;
+      font-size: 0.9rem;
+      color: #334155;
+      vertical-align: middle;
+
+      &.student-name {
+        font-weight: 600;
+      }
+    }
+
+    &:last-child td {
+      border-bottom: none;
+    }
+  }
+
+  .student-cell {
+    display: flex;
+    align-items: center;
+  }
+
+  .student-avatar {
+    width: 32px;
+    height: 32px;
+    background: #e2e8f0;
+    color: #475569;
+    font-weight: 800;
+    font-size: 0.85rem;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 12px;
+    flex-shrink: 0;
+  }
+
+  .no-study {
+    color: #cbd5e1;
+    font-size: 0.8rem;
+  }
+
+  .empty-message-cell {
+    text-align: center;
+    padding: 48px 20px;
+    color: #64748b;
+    background: #f8fafc;
+
+    i {
+      font-size: 2rem;
+      color: #94a3b8;
+    }
+  }
+}
+
+/* ── 640px altında: tablo yerine satır başına kart görünümü ── */
+@media (max-width: 640px) {
+  .student-list-container {
+    margin: 12px;
+  }
+
+  .search-input {
+    width: 100%;
+  }
+
+  .panel-tools {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .sub-html-table {
+    min-width: 0;
+
+    thead {
+      display: none;
+    }
+
+    tbody tr {
+      display: block;
+      padding: 12px 16px;
+      border-bottom: 1px solid #e2e8f0;
+    }
+
+    tbody td {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 6px 0;
+      border: none;
+
+      &.student-name {
+        padding-top: 0;
+      }
+
+      &::before {
+        content: attr(data-label);
+        font-size: 0.75rem;
+        font-weight: 700;
+        color: #94a3b8;
+        margin-right: 12px;
+      }
+
+      &.student-name::before {
+        content: '';
+      }
+
+      &:empty {
+        display: none;
+      }
+    }
+  }
+}

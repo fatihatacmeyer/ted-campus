@@ -3,18 +3,29 @@
 }
 
 .admin-wrapper {
-  height: auto;
   min-height: 100%;
-  overflow: visible;
 }
 
 .admin-card {
   margin-bottom: 24px;
 }
 
-/* ── Filtre Çubuğu (Sınıf Seçimi) ── */
+.admin-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.page-title {
+  font-weight: 700;
+  margin: 0;
+  color: var(--sh-accent, #dc2134);
+}
+
 .filter-bar {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: 12px;
   margin-bottom: 16px;
@@ -32,13 +43,13 @@
 
   .class-select {
     min-width: 260px;
+    flex: 1 1 260px;
   }
 
   .group-toggle {
     display: flex;
     align-items: center;
     gap: 8px;
-    margin-left: 8px;
 
     .group-toggle-label {
       font-size: 0.85rem;
@@ -50,33 +61,33 @@
 }
 
 :host ::ng-deep {
-  /* ── Kampüs Sekmeleri ── */
-  .p-tabs {
-    .p-tablist {
-      border-bottom: 2px solid #e2e8f0;
-      margin-bottom: 20px;
+  .p-tabs .p-tablist {
+    border-bottom: 2px solid #e2e8f0;
+    margin-bottom: 20px;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
 
-      .p-tablist-tab-list {
-        gap: 4px;
+    .p-tablist-tab-list {
+      gap: 4px;
+    }
+
+    .p-tab {
+      font-weight: 600;
+      color: #64748b;
+      padding: 0.75rem 1.25rem;
+      border-radius: 8px 8px 0 0;
+      white-space: nowrap;
+      transition: color 0.15s ease, background-color 0.15s ease;
+
+      &:hover {
+        color: #dc2134;
+        background-color: #fef2f2;
       }
 
-      .p-tab {
-        font-weight: 600;
-        color: #64748b;
-        padding: 0.75rem 1.25rem;
-        border-radius: 8px 8px 0 0;
-        transition: color 0.15s ease, background-color 0.15s ease;
-
-        &:hover {
-          color: #dc2134;
-          background-color: #fef2f2;
-        }
-
-        &.p-tab-active {
-          color: #dc2134;
-          background-color: #fff;
-          border-bottom: 2px solid #dc2134;
-        }
+      &.p-tab-active {
+        color: #dc2134;
+        background-color: #fff;
+        border-bottom: 2px solid #dc2134;
       }
     }
   }
@@ -90,7 +101,7 @@
 
   .p-datatable.admin-table .p-datatable-wrapper {
     overflow-x: auto;
-    overflow-y: hidden;
+    -webkit-overflow-scrolling: touch;
     border-radius: 8px;
 
     &::-webkit-scrollbar {
@@ -128,22 +139,12 @@
     font-weight: 700;
     color: #475569;
     border-bottom: 2px solid #cbd5e1;
-    border-right: 1px solid #e2e8f0;
-
-    &:last-child {
-      border-right: none;
-    }
   }
 
-  .p-datatable.admin-table .p-datatable-tbody > tr:hover {
+  .p-datatable.admin-table .p-datatable-tbody > tr:hover td {
     background-color: #f8fafc;
-
-    td {
-      background-color: #f8fafc;
-    }
   }
 
-  /* ── Sabit Kolonlar (Sticky Columns) ── */
   .p-datatable.admin-table th.sticky-col,
   .p-datatable.admin-table td.sticky-col {
     position: sticky !important;
@@ -174,233 +175,40 @@
   }
 }
 
-/* ── Çıktı Modu (İzleme) ── */
-.normal-time {
-  font-weight: 600;
-  color: #1f2937;
-  white-space: nowrap;
+.grade-col {
+  width: 140px;
+}
+.day-col {
+  min-width: 130px;
+}
+.actions-col {
+  width: 95px;
 }
 
-.study-time {
-  font-size: 0.75rem;
-  color: #6b7280;
-  margin-top: 2px;
-  white-space: nowrap;
-}
-
-.closed-label {
-  color: #9ca3af;
-  font-size: 0.8rem;
-  font-style: italic;
-  white-space: nowrap;
-}
-
-/* ── Düzenleme Modu (Input Box Yapısı) ── */
-.time-edit-box {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  align-items: center;
-}
-
-.time-line {
+.row-actions {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 4px;
-  background: #f8fafc;
-  padding: 2px 4px;
-  border-radius: 4px;
-  border: 1px solid #e2e8f0;
-  width: max-content;
-
-  .lbl {
-    font-size: 10px;
-    font-weight: 700;
-    color: #64748b;
-    width: 12px;
-    cursor: help;
-  }
-
-  .sep {
-    color: #94a3b8;
-    font-size: 12px;
-    margin: 0 -2px;
-  }
+  gap: 2px;
 }
-
-.time-input {
-  width: 44px;
-  height: 22px;
-  padding: 0 4px;
-  font-size: 11px;
-  text-align: center;
-  border: 1px solid #cbd5e1;
-  border-radius: 4px;
-  outline: none;
-  background: #ffffff;
-  color: #1e293b;
-  font-family: monospace;
-
-  &:focus {
-    border-color: #3b82f6;
-    box-shadow: 0 0 0 1px rgba(59, 130, 246, 0.2);
-  }
-
-  &::placeholder {
-    color: #cbd5e1;
-  }
-}
-
-
-/* ── DÜZENLEME MODU ÖĞRENCİ LİSTESİ (ÇOK PROFESYONEL GÖRÜNÜM) ── */
 
 .student-expansion-row {
   background: #f1f5f9;
-  
+
   > td {
-    padding: 16px 20px !important;
+    padding: 0 !important;
   }
 }
-
-.student-list-container {
-  background-color: #ffffff;
-  border-radius: 12px;
-  border: 1px solid #cbd5e1;
-  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.08), 0 8px 10px -6px rgba(0, 0, 0, 0.04);
-  overflow: hidden;
-  
-  /* Üst araç çubuğu (Header) */
-.student-list-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 10px 16px;
-    background-color: #ffffff;
-    border-bottom: 1px solid #e2e8f0;
-  }
-
-  /* Saf HTML Tablosu Özel Stili */
-  .sub-html-table {
-    border-collapse: collapse;
-    width: 100%;
-    table-layout: fixed;
-    
-    /* Sütun genişlik ayarları */
-    .student-name-col { width: 220px; text-align: left; }
-    .day-col { width: 130px; }
-    .action-col { width: 95px; } 
-
-    thead {
-      background-color: #f8fafc;
-      
-      th {
-        padding: 16px 20px;
-        color: #475569;
-        font-weight: 700;
-        font-size: 0.85rem;
-        border-bottom: 2px solid #e2e8f0;
-        white-space: nowrap;
-      }
-    }
-
-    tbody {
-      tr {
-        transition: background-color 0.2s ease;
-        &:hover {
-          background-color: #fef2f2;
-        }
-
-        td {
-          padding: 16px 20px;
-          border-bottom: 1px dashed #e2e8f0;
-          font-size: 0.9rem;
-          color: #334155;
-          vertical-align: middle;
-
-          &.student-name {
-            font-weight: 600;
-          }
-        }
-
-        &:last-child td {
-          border-bottom: none;
-        }
-      }
-    }
-  }
-
-  /* Öğrenci adının yanındaki minik harf avatarı */
-  .student-avatar {
-    width: 32px;
-    height: 32px;
-    background-color: #e2e8f0;
-    color: #475569;
-    font-weight: 800;
-    font-size: 0.85rem;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin-right: 12px;
-    flex-shrink: 0;
-  }
-
-  .empty-message-cell {
-    text-align: center;
-    padding: 60px 20px !important;
-    color: #64748b !important;
-    background-color: #f8fafc;
-  }
-}
-
-/* .student-list-container altına veya dosya sonuna ekleyebilirsiniz */
-.search-input-wrapper {
-  position: relative;
-  display: flex;
-  align-items: center;
-
-  .search-icon {
-    position: absolute;
-    left: 10px;
-    color: #94a3b8;
-    font-size: 0.9rem;
-  }
-
-  .search-input {
-    padding: 6px 12px 6px 32px; 
-    border: 1px solid #cbd5e1;
-    border-radius: 6px;
-    outline: none;
-    font-size: 0.85rem;
-    color: #334155;
-    width: 240px;
-    transition: border-color 0.2s, box-shadow 0.2s;
-    
-    &:focus {
-      border-color: #3b82f6;
-      box-shadow: 0 0 0 1px rgba(59, 130, 246, 0.2);
-    }
-    
-    &::placeholder {
-      color: #94a3b8;
-    }
-  }
-}
-
-// school-hours-list.scss
 
 .empty-study-container {
   display: flex;
   align-items: center;
-  justify-content: center;
   gap: 12px;
   padding: 12px 20px;
-  background-color: #f8fafc;
-  border: 1px solid #e2e8f0; // Dashed yerine düz, ince bir çizgi
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
   border-radius: 6px;
-  margin: 12px 16px; // Dış boşlukları biraz azalttık
-  box-shadow: inset 0 2px 4px 0 rgba(0, 0, 0, 0.02); // Çok hafif bir iç gölge
+  margin: 16px 20px;
 
   .icon-wrapper {
     display: flex;
@@ -408,9 +216,10 @@
     justify-content: center;
     width: 32px;
     height: 32px;
-    background-color: #e2e8f0;
+    background: #e2e8f0;
     border-radius: 50%;
-    
+    flex-shrink: 0;
+
     i {
       font-size: 1.1rem;
       color: #64748b;
@@ -419,7 +228,7 @@
 
   .text-content {
     display: flex;
-    flex-direction: row; // Yan yana dizilim
+    flex-wrap: wrap;
     align-items: center;
     gap: 8px;
 
@@ -428,19 +237,41 @@
       font-weight: 600;
       color: #475569;
       margin: 0;
-      white-space: nowrap; // Başlığın alt satıra kaymasını önler
     }
-
     p {
       font-size: 0.85rem;
       color: #64748b;
       margin: 0;
-      
+
       &::before {
         content: '-';
         margin-right: 8px;
         color: #cbd5e1;
       }
+    }
+  }
+}
+
+/* ── Responsive ── */
+@media (max-width: 640px) {
+  .filter-bar {
+    flex-direction: column;
+    align-items: stretch;
+
+    .class-select {
+      min-width: 0;
+    }
+    .group-toggle {
+      justify-content: space-between;
+    }
+  }
+
+  .empty-study-container .text-content {
+    flex-direction: column;
+    align-items: flex-start;
+
+    p::before {
+      content: none;
     }
   }
 }

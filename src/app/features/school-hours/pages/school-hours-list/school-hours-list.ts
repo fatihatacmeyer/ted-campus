@@ -1,14 +1,8 @@
-import {
-  Component,
-  OnInit,
-  inject,
-  ChangeDetectionStrategy,
-  ChangeDetectorRef,
-  DestroyRef,
-} from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, OnInit, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { forkJoin } from 'rxjs';
+
 import { TableModule } from 'primeng/table';
 import { ButtonModule } from 'primeng/button';
 import { TooltipModule } from 'primeng/tooltip';
@@ -18,14 +12,18 @@ import { TabsModule } from 'primeng/tabs';
 import { SelectModule } from 'primeng/select';
 import { ToggleSwitchModule } from 'primeng/toggleswitch';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
+
 import { NotificationService } from '../../../../core/services/notification.service';
 import { SchoolHoursService } from '../../services/school-hours.service';
 import { SchoolHours } from '../../models/school-hours.model';
+import { WEEKDAYS } from '../../models/weekday.model';
 import { DropdownItem } from '../../../persons/services/types.service';
 import { PersonService } from '../../../persons/services/person.service';
 import { Person, UserDef } from '../../../../core/models/person.model';
-import { CheckboxModule } from 'primeng/checkbox';
-import { forkJoin } from 'rxjs';
+import { isValidTime } from '../../../../shared/utils/time.utils';
+
+import { DayHoursCellComponent } from '../../components/day-hours-cell/day-hours-cell';
+import { RowSelections, StudentStudyPanelComponent } from '../../components/student-study-panel/student-study-panel';
 
 interface ClassOption {
   value?: number | string;
@@ -36,7 +34,6 @@ interface ClassOption {
   selector: 'app-school-hours-list',
   standalone: true,
   imports: [
-    CommonModule,
     FormsModule,
     TableModule,
     ButtonModule,
@@ -46,7 +43,8 @@ interface ClassOption {
     SelectModule,
     ToggleSwitchModule,
     TranslatePipe,
-    CheckboxModule,
+    DayHoursCellComponent,
+    StudentStudyPanelComponent,
   ],
   providers: [ConfirmationService],
   templateUrl: './school-hours-list.html',
@@ -54,165 +52,117 @@ interface ClassOption {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class SchoolHoursListComponent implements OnInit {
-  hours: SchoolHours[] = [];
-  loading = false;
-  studentSearchText: string = '';
+  protected readonly days = WEEKDAYS;
 
-  campuses: DropdownItem[] = [];
-  classes: DropdownItem[] = [];
+  // ---- reaktif ekran durumu (hepsi signal — CD tetiklemek için ChangeDetectorRef gerekmiyor) ----
+  protected readonly hours = signal<SchoolHours[]>([]);
+  protected readonly loading = signal(false);
+  protected readonly campuses = signal<DropdownItem[]>([]);
+  protected readonly classes = signal<DropdownItem[]>([]);
+  protected readonly activeCampusId = signal<number | undefined>(undefined);
+  protected readonly selectedClass = signal<number | string | undefined>(undefined);
+  protected readonly classOptions = signal<ClassOption[]>([]);
+  protected readonly grouped = signal(false);
+  protected readonly editingRows = signal<Record<string, boolean>>({});
+  protected readonly editingRowId = signal<number | null>(null);
+  protected readonly studentsMap = signal<Map<string, Person[]>>(new Map());
+  /** Satır düzenlemeye açıldığında sunucudan gelen önceki etüt seçimleri (tek seferlik aktarım). */
+  protected readonly prefillByRow = signal<Record<number, RowSelections>>({});
 
-  activeCampusId: number | undefined;
-  previousCampusId: number | undefined;
-  selectedClass: number | string | undefined;
-  previousClass: number | string | undefined;
-  classOptions: ClassOption[] = [];
-  grouped = false;
-  clonedHours: { [s: number]: SchoolHours } = {};
+  private previousCampusId: number | undefined;
+  private previousClass: number | string | undefined;
+  private clonedHours: Record<number, SchoolHours> = {};
+  /** Panel bileşenleriyle iki yönlü bağlanan, canlı düzenlenen seçim önbelleği. */
+  protected selectionsMap: Record<number, RowSelections> = {};
 
-  expandedRows: { [key: string]: boolean } = {};
-  editingRows: { [key: string]: boolean } = {};
-  editingRowId: number | null = null;
-
-  studentsMap = new Map<string, Person[]>();
-  selections: Record<number, Record<number, Record<number, boolean>>> = {};
-
-  private personService = inject(PersonService);
-  private schoolHoursService = inject(SchoolHoursService);
-  private confirmationService = inject(ConfirmationService);
-  private notification = inject(NotificationService);
-  private translate = inject(TranslateService);
-  private cdr = inject(ChangeDetectorRef);
-  private destroyRef = inject(DestroyRef);
-
-  days = [
-    { key: 'Pazartesi', headerKey: 'DAYS.MONDAY', index: 1 },
-    { key: 'Sali', headerKey: 'DAYS.TUESDAY', index: 2 },
-    { key: 'Carsamba', headerKey: 'DAYS.WEDNESDAY', index: 3 },
-    { key: 'Persembe', headerKey: 'DAYS.THURSDAY', index: 4 },
-    { key: 'Cuma', headerKey: 'DAYS.FRIDAY', index: 5 },
-    { key: 'Cumartesi', headerKey: 'DAYS.SATURDAY', index: 6 },
-    { key: 'Pazar', headerKey: 'DAYS.SUNDAY', index: 7 },
-  ];
+  private readonly personService = inject(PersonService);
+  private readonly schoolHoursService = inject(SchoolHoursService);
+  private readonly confirmationService = inject(ConfirmationService);
+  private readonly notification = inject(NotificationService);
+  private readonly translate = inject(TranslateService);
+  private readonly destroyRef = inject(DestroyRef);
 
   ngOnInit(): void {
     this.translate.onLangChange.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => {
       this.buildClassOptions();
-      this.cdr.markForCheck();
     });
     this.loadFilterData();
     this.loadStudents();
   }
 
-  getStudentId(student: any): number {
-    return student.id ?? student.Id ?? student.sicilId ?? student.sicilid;
+  // ---- öğrenciler -----------------------------------------------------
+  protected getStudents(campusId: number | string, sinifId: number | string): Person[] {
+    return this.studentsMap().get(`${campusId}_${sinifId}`) ?? [];
   }
 
-  loadStudents(): void {
+  private loadStudents(): void {
     this.personService.getPersonListCampus().subscribe({
       next: (data) => {
-        const ogrenciler = data.filter((p) => p.userdef === UserDef.Ogrenci);
-        this.studentsMap.clear();
-        ogrenciler.forEach((ogr) => {
-          const key = `${ogr.firma}_${ogr.bolum}`;
-          if (!this.studentsMap.has(key)) {
-            this.studentsMap.set(key, []);
-          }
-          this.studentsMap.get(key)!.push(ogr);
-        });
-        this.cdr.markForCheck();
+        const map = new Map<string, Person[]>();
+        data
+          .filter((p) => p.userdef === UserDef.Ogrenci)
+          .forEach((ogr) => {
+            const key = `${ogr.firma}_${ogr.bolum}`;
+            const bucket = map.get(key) ?? [];
+            bucket.push(ogr);
+            map.set(key, bucket);
+          });
+        this.studentsMap.set(map);
       },
       error: (err) => console.error('Öğrenciler yüklenemedi:', err),
     });
   }
 
-  getStudents(campusId: number | string, sinifId: number | string): Person[] {
-    const key = `${campusId}_${sinifId}`;
-    return this.studentsMap.get(key) || [];
+  // ---- satır bazlı etüt/gün yardımcıları -------------------------------
+  protected hasStudyTime(row: SchoolHours, dayKey: string): boolean {
+    const r = row as unknown as Record<string, string | undefined>;
+    return isValidTime(r[dayKey + 'EtutluBas']) && isValidTime(r[dayKey + 'EtutluBit']);
   }
 
-  initSelections(rowId: number, campusId: number, sinifId: number): void {
-    if (!this.selections[rowId]) {
-      this.selections[rowId] = {};
-    }
-    const students = this.getStudents(campusId, sinifId);
-    this.days.forEach((d) => {
-      this.selections[rowId][d.index] = this.selections[rowId][d.index] || {};
-      students.forEach((s) => {
-        const sId = this.getStudentId(s);
-        if (this.selections[rowId][d.index][sId] === undefined) {
-          this.selections[rowId][d.index][sId] = false;
-        }
-      });
-    });
+  protected hasAnyStudyTime(row: SchoolHours): boolean {
+    return this.days.some((d) => this.hasStudyTime(row, d.key));
   }
 
-  selectAll(rowId: number, campusId: number, sinifId: number): void {
-    const students = this.getFilteredStudents(campusId, sinifId);
-    if (!this.selections[rowId]) this.initSelections(rowId, campusId, sinifId);
-
-    students.forEach((s) => {
-      const sId = this.getStudentId(s);
-      this.days.forEach((d) => {
-        this.selections[rowId][d.index][sId] = true;
-      });
-    });
-    this.cdr.markForCheck();
+  protected studyDayIndexes(row: SchoolHours): number[] {
+    return this.days.filter((d) => this.hasStudyTime(row, d.key)).map((d) => d.index);
   }
 
-  clearAll(rowId: number, campusId: number, sinifId: number): void {
-    const students = this.getFilteredStudents(campusId, sinifId);
-    if (!this.selections[rowId]) this.initSelections(rowId, campusId, sinifId);
-
-    students.forEach((s) => {
-      const sId = this.getStudentId(s);
-      this.days.forEach((d) => {
-        this.selections[rowId][d.index][sId] = false;
-      });
-    });
-    this.cdr.markForCheck();
-  }
-
-  onRowEditInit(row: SchoolHours) {
-    if (this.editingRowId !== null && this.editingRowId !== row.Id) {
+  // ---- satır düzenleme yaşam döngüsü -----------------------------------
+  protected onRowEditInit(row: SchoolHours): void {
+    if (this.editingRowId() !== null && this.editingRowId() !== row.Id) {
       this.notification.info('Aynı anda sadece bir sınıf düzenlenebilir.');
       return;
     }
 
-    this.studentSearchText = '';
-    this.editingRowId = row.Id;
+    this.editingRowId.set(row.Id);
     this.clonedHours[row.Id] = { ...row };
-    this.initSelections(row.Id, row.CampusId, row.SinifId);
 
     const students = this.getStudents(row.CampusId, row.SinifId);
     if (students.length > 0) {
-      const requests = students.map((s) => {
-        const sId = this.getStudentId(s);
-        return this.schoolHoursService.getSchoolHours(row.CampusId, row.SinifId, sId);
-      });
+      const requests = students.map((s) =>
+        this.schoolHoursService.getSchoolHours(row.CampusId, row.SinifId, s.id),
+      );
 
       forkJoin(requests).subscribe((results) => {
+        const prefill: RowSelections = {};
         results.forEach((res, index) => {
-          const s = students[index];
-          const sId = this.getStudentId(s);
-          if (res && res.length > 0 && (res[0] as any).Gunler) {
-            const parts = (res[0] as any).Gunler.split(',');
-            parts.forEach((val: string, idx: number) => {
-              if (idx < 7) {
-                this.selections[row.Id][idx + 1][sId] = val === '1';
-              }
-            });
-          }
+          const gunler = (res?.[0] as any)?.Gunler as string | undefined;
+          if (!gunler) return;
+          const sId = students[index].id;
+          gunler.split(',').forEach((val, idx) => {
+            if (idx >= 7) return;
+            const dayIndex = idx + 1;
+            prefill[dayIndex] = { ...(prefill[dayIndex] ?? {}), [sId]: val === '1' };
+          });
         });
-        this.cdr.markForCheck();
+        this.prefillByRow.update((m) => ({ ...m, [row.Id]: prefill }));
       });
     }
 
-    this.expandedRows = { ...this.expandedRows, [String(row.Id)]: true };
-    this.editingRows = { ...this.editingRows, [String(row.Id)]: true };
-    this.cdr.markForCheck();
+    this.editingRows.update((rows) => ({ ...rows, [row.Id]: true }));
   }
 
-  onRowEditSave(row: SchoolHours) {
+  protected onRowEditSave(row: SchoolHours): void {
     this.confirmationService.confirm({
       message: this.translate.instant('SCHOOL_HOURS.CONFIRM_MESSAGE', { grade: row.SinifSeviyesi }),
       header: this.translate.instant('SCHOOL_HOURS.CONFIRM_TITLE'),
@@ -221,153 +171,129 @@ export class SchoolHoursListComponent implements OnInit {
       rejectLabel: this.translate.instant('SCHOOL_HOURS.CONFIRM_REJECT'),
       acceptButtonStyleClass: 'p-button-success',
       rejectButtonStyleClass: 'p-button-text p-button-danger',
-      accept: () => {
-        this.updateRow(row);
-      },
+      accept: () => this.updateRow(row),
       reject: () => {
         this.revertRow(row);
-        this.collapseRow(row.Id);
-        this.clearEditingState(row.Id);
+        this.finishEditing(row.Id);
       },
     });
   }
 
-  onRowEditCancel(row: SchoolHours) {
+  protected onRowEditCancel(row: SchoolHours): void {
     this.revertRow(row);
-    this.clearSelections(row.Id);
-    this.collapseRow(row.Id);
-    this.clearEditingState(row.Id);
+    this.finishEditing(row.Id);
   }
 
-  private clearSelections(rowId: number) {
-    if (this.selections[rowId]) {
-      delete this.selections[rowId];
-      this.cdr.markForCheck();
-    }
+  protected onRowSelectionsChange(rowId: number, value: RowSelections): void {
+    this.selectionsMap[rowId] = value;
   }
 
-  private collapseRow(rowId: number) {
-    const newExpanded = { ...this.expandedRows };
-    delete newExpanded[String(rowId)];
-    this.expandedRows = newExpanded;
-    this.cdr.markForCheck();
-  }
-
-  private clearEditingState(rowId: number) {
-    const newEditing = { ...this.editingRows };
-    delete newEditing[String(rowId)];
-    this.editingRows = newEditing;
-    this.editingRowId = null;
-    this.cdr.markForCheck();
-  }
-
-  // YENİ JSON OLUŞTURUCU (Tüm öğrencileri tek bir stringe dönüştürür)
-  private updateRow(row: SchoolHours, onComplete?: () => void) {
-    this.loading = true;
-    this.cdr.markForCheck();
+  private updateRow(row: SchoolHours, onComplete?: () => void): void {
+    this.loading.set(true);
 
     const students = this.getStudents(row.CampusId, row.SinifId);
+    const rowSel = this.selectionsMap[row.Id] ?? {};
     let combinedString = '';
 
     if (students.length > 0) {
-      const parts: string[] = [];
-      students.forEach((s) => {
-        const sId = this.getStudentId(s);
-        const gunlerArr = [];
-        for (let i = 1; i <= 7; i++) {
-          // Seçili değilse bile 0 olarak array'e atıyoruz. (0,0,0,0,0,0,0)
-          gunlerArr.push(this.selections[row.Id]?.[i]?.[sId] ? '1' : '0');
-        }
-        parts.push(`${sId};${gunlerArr.join(',')}`);
-      });
-      // "SicilId;1,0,0,1,0,0,0-SicilId2;1,1,1..." formatında birleşir.
-      combinedString = parts.join('-');
+      combinedString = students
+        .map((s) => {
+          const sId = s.id;
+          const flags = this.days.map((d) => (rowSel[d.index]?.[sId] ? '1' : '0'));
+          return `${sId};${flags.join(',')}`;
+        })
+        .join('-');
     }
 
-    const payload = {
-      ...row,
-      GunlerVeSiciller: combinedString || undefined,
-    };
+    const payload: SchoolHours = { ...row, GunlerVeSiciller: combinedString || undefined };
 
-    // Tek bir istek ile her şeyi yolluyoruz (Deadlock tehlikesi sıfırlandı)
     this.schoolHoursService.updateSchoolHours(payload).subscribe({
       next: (res) => {
+        this.loading.set(false);
         if (res.sonuc === 1 || res.sonuc === 0) {
           this.notification.success('Saatler ve öğrenci etütleri başarıyla kaydedildi.');
-          delete this.clonedHours[row.Id];
-          this.collapseRow(row.Id);
-          this.clearEditingState(row.Id);
+          this.finishEditing(row.Id);
           this.loadData();
-          if (onComplete) onComplete();
+          onComplete?.();
         } else {
           this.notification.error(res.sunucuCevap || 'SCHOOL_HOURS.ERROR_UPDATE');
           this.revertRow(row);
-          this.loading = false;
-          this.cdr.markForCheck();
         }
       },
       error: () => {
+        this.loading.set(false);
         this.notification.error('SCHOOL_HOURS.ERROR_SERVER');
         this.revertRow(row);
-        this.loading = false;
-        this.cdr.markForCheck();
       },
     });
   }
 
-  private revertRow(row: SchoolHours) {
-    const index = this.hours.findIndex((h) => h.Id === row.Id);
-    if (index !== -1) {
-      this.hours[index] = this.clonedHours[row.Id];
-    }
-    delete this.clonedHours[row.Id];
-    this.cdr.markForCheck();
+  private revertRow(row: SchoolHours): void {
+    const original = this.clonedHours[row.Id];
+    if (!original) return;
+    this.hours.update((list) => list.map((h) => (h.Id === row.Id ? original : h)));
   }
 
-  onCampusSelect(newCampusId: number | string | undefined) {
+  private finishEditing(rowId: number): void {
+    delete this.clonedHours[rowId];
+    delete this.selectionsMap[rowId];
+    this.prefillByRow.update((m) => {
+      const copy = { ...m };
+      delete copy[rowId];
+      return copy;
+    });
+    this.editingRows.update((rows) => {
+      const copy = { ...rows };
+      delete copy[rowId];
+      return copy;
+    });
+    this.editingRowId.set(null);
+  }
+
+  // ---- kampüs / sınıf filtreleri (kaydedilmemiş değişiklik kontrolü dahil) ----
+  protected onCampusSelect(newCampusId: number | string | undefined): void {
     if (typeof newCampusId !== 'number') return;
-    if (this.editingRowId !== null) {
+
+    if (this.editingRowId() !== null) {
       this.promptUnsavedChanges(
         () => {
-          this.activeCampusId = newCampusId;
           this.previousCampusId = newCampusId;
-          this.onCampusChange(newCampusId);
+          this.activeCampusId.set(newCampusId);
+          this.onCampusChange();
         },
-        () => {
-          this.activeCampusId = this.previousCampusId;
-          this.cdr.markForCheck();
-        },
+        () => this.activeCampusId.set(this.previousCampusId),
       );
     } else {
       this.previousCampusId = newCampusId;
-      this.activeCampusId = newCampusId;
-      this.onCampusChange(newCampusId);
+      this.activeCampusId.set(newCampusId);
+      this.onCampusChange();
     }
   }
 
-  onClassSelect(newClassVal: number | string | undefined) {
-    if (this.editingRowId !== null) {
+  protected onClassSelect(newClassVal: number | string | undefined): void {
+    if (this.editingRowId() !== null) {
       this.promptUnsavedChanges(
         () => {
-          this.selectedClass = newClassVal;
           this.previousClass = newClassVal;
+          this.selectedClass.set(newClassVal);
           this.onClassChange();
         },
-        () => {
-          this.selectedClass = this.previousClass;
-          this.cdr.markForCheck();
-        },
+        () => this.selectedClass.set(this.previousClass),
       );
     } else {
-      this.selectedClass = newClassVal;
       this.previousClass = newClassVal;
+      this.selectedClass.set(newClassVal);
       this.onClassChange();
     }
   }
 
-  private promptUnsavedChanges(onSaveAndProceed: () => void, onCancelFilterChange: () => void) {
-    const rowId = this.editingRowId!;
-    const row = this.hours.find((h) => h.Id === rowId);
+  private promptUnsavedChanges(onProceed: () => void, onCancel: () => void): void {
+    const rowId = this.editingRowId();
+    if (rowId === null) {
+      onProceed();
+      return;
+    }
+    const row = this.hours().find((h) => h.Id === rowId);
 
     this.confirmationService.confirm({
       message:
@@ -375,90 +301,76 @@ export class SchoolHoursListComponent implements OnInit {
       header: 'Kaydedilmemiş Değişiklikler',
       icon: 'pi pi-exclamation-triangle',
       acceptLabel: 'Kaydet ve Devam Et',
-      rejectLabel: 'İptal Et (Değişiklikleri Çöpe At)', // Metni biraz daha netleştirebiliriz
+      rejectLabel: 'İptal Et (Değişiklikleri Çöpe At)',
       acceptButtonStyleClass: 'p-button-success',
-      rejectButtonStyleClass: 'p-button-text p-button-danger', // Rengi kırmızı yapalım ki silindiği anlaşılsın
+      rejectButtonStyleClass: 'p-button-text p-button-danger',
       accept: () => {
         if (row) {
-          this.updateRow(row, onSaveAndProceed);
+          this.updateRow(row, onProceed);
         } else {
-          this.clearSelections(rowId); // Her ihtimale karşı
-          this.clearEditingState(rowId);
-          onSaveAndProceed();
+          this.finishEditing(rowId);
+          onProceed();
         }
       },
       reject: () => {
-        // YENİ EKLENEN KISIM: İptal dendiğinde değişiklikleri geri al ve seçimleri temizle
-        if (row) {
-          this.revertRow(row);
-        }
-        this.clearSelections(rowId);
-        this.collapseRow(rowId);
-        this.clearEditingState(rowId);
-        onCancelFilterChange();
+        if (row) this.revertRow(row);
+        this.finishEditing(rowId);
+        onCancel();
       },
     });
   }
 
-  getFilteredStudents(campusId: number | string, sinifId: number | string): Person[] {
-    const students = this.getStudents(campusId, sinifId);
-    if (!this.studentSearchText || this.studentSearchText.trim() === '') {
-      return students;
+  private onCampusChange(): void {
+    this.selectedClass.set(undefined);
+    this.previousClass = undefined;
+    this.hours.set([]);
+  }
+
+  private onClassChange(): void {
+    if (this.activeCampusId() === undefined || this.selectedClass() === undefined) {
+      this.hours.set([]);
+      return;
     }
-
-    const term = this.studentSearchText.toLocaleLowerCase('tr');
-    return students.filter((s) => {
-      const fullName = (s.adsoyad || s.ad + ' ' + s.soyad).toLocaleLowerCase('tr');
-      return fullName.includes(term);
-    });
+    this.loadData();
   }
 
-  isDayAllSelected(rowId: number, campusId: number, sinifId: number, dayIndex: number): boolean {
-    const students = this.getFilteredStudents(campusId, sinifId);
-    if (students.length === 0) return false;
-    if (!this.selections[rowId] || !this.selections[rowId][dayIndex]) return false;
-
-    return students.every((s) => this.selections[rowId][dayIndex][this.getStudentId(s)]);
-  }
-
-  toggleDaySelection(
-    rowId: number,
-    campusId: number,
-    sinifId: number,
-    dayIndex: number,
-    checked: boolean,
-  ): void {
-    const students = this.getFilteredStudents(campusId, sinifId);
-    if (!this.selections[rowId]) this.initSelections(rowId, campusId, sinifId);
-
-    students.forEach((s) => {
-      const sId = this.getStudentId(s);
-      this.selections[rowId][dayIndex][sId] = checked;
-    });
-    this.cdr.markForCheck();
-  }
-
-  loadFilterData(): void {
-    this.loading = true;
-    this.cdr.markForCheck();
-    this.schoolHoursService.getFilterData().subscribe({
-      next: ({ campuses, classes }) => {
-        this.campuses = campuses;
-        this.classes = classes;
-        this.buildClassOptions();
-        if (this.campuses.length > 0) {
-          this.activeCampusId = this.campuses[0].id;
-          this.previousCampusId = this.activeCampusId;
-        }
-        this.loading = false;
-        this.cdr.markForCheck();
+  private loadData(): void {
+    this.loading.set(true);
+    this.schoolHoursService.getSchoolHours(this.activeCampusId()!, this.selectedClass()!).subscribe({
+      next: (data) => {
+        this.hours.set([...data]);
+        this.loading.set(false);
       },
       error: () => {
         this.notification.error('SCHOOL_HOURS.ERROR_LOAD');
-        this.loading = false;
-        this.cdr.markForCheck();
+        this.loading.set(false);
       },
     });
+  }
+
+  private loadFilterData(): void {
+    this.loading.set(true);
+    this.schoolHoursService.getFilterData().subscribe({
+      next: ({ campuses, classes }) => {
+        this.campuses.set(campuses);
+        this.classes.set(classes);
+        this.buildClassOptions();
+        if (campuses.length > 0) {
+          this.activeCampusId.set(campuses[0].id);
+          this.previousCampusId = campuses[0].id;
+        }
+        this.loading.set(false);
+      },
+      error: () => {
+        this.notification.error('SCHOOL_HOURS.ERROR_LOAD');
+        this.loading.set(false);
+      },
+    });
+  }
+
+  protected onGroupToggle(grouped: boolean): void {
+    this.grouped.set(grouped);
+    this.buildClassOptions();
   }
 
   private buildClassOptions(): void {
@@ -466,7 +378,8 @@ export class SchoolHoursListComponent implements OnInit {
       const match = ad.match(/^(\d+)/);
       return match ? parseInt(match[1], 10) : null;
     };
-    const sortedClasses = [...this.classes].sort((a, b) => {
+
+    const sortedClasses = [...this.classes()].sort((a, b) => {
       const regex = /^(\d+)[-/\s]*(.*)$/;
       const matchA = a.ad.match(regex);
       const matchB = b.ad.match(regex);
@@ -482,11 +395,11 @@ export class SchoolHoursListComponent implements OnInit {
     const allIds = sortedClasses.map((c) => c.id).join(',');
     const allLabel = this.translate.instant('SCHOOL_HOURS.ALL_CLASSES');
 
-    if (!this.grouped) {
-      this.classOptions = [
+    if (!this.grouped()) {
+      this.classOptions.set([
         { value: allIds, label: allLabel },
         ...sortedClasses.map((c) => ({ value: c.id, label: c.ad })),
-      ];
+      ]);
       return;
     }
 
@@ -497,240 +410,17 @@ export class SchoolHoursListComponent implements OnInit {
     sortedClasses.forEach((c) => {
       const grade = gradeOf(c.ad);
       if (grade !== null) {
-        if (!gradeIdMap.has(grade)) {
-          gradeIdMap.set(grade, []);
-        }
-        gradeIdMap.get(grade)!.push(c.id);
+        const ids = gradeIdMap.get(grade) ?? [];
+        ids.push(c.id);
+        gradeIdMap.set(grade, ids);
       }
     });
 
-    this.classOptions = [{ value: allIds, label: allLabel }];
+    const options: ClassOption[] = [{ value: allIds, label: allLabel }];
     gradeIdMap.forEach((ids, grade) => {
       const label = isTr ? `${grade}. Sınıfların ${suffix}` : `Grade ${grade} ${suffix}`;
-      this.classOptions.push({ value: ids.join(','), label });
+      options.push({ value: ids.join(','), label });
     });
-  }
-
-  onGroupToggle(grouped: boolean): void {
-    this.grouped = grouped;
-    this.buildClassOptions();
-    this.cdr.markForCheck();
-  }
-
-  onCampusChange(campusId: number | string | undefined): void {
-    this.selectedClass = undefined;
-    this.previousClass = undefined;
-    this.hours = [];
-    this.cdr.markForCheck();
-  }
-
-  onClassChange(): void {
-    if (this.activeCampusId === undefined || this.selectedClass === undefined) {
-      this.hours = [];
-      this.cdr.markForCheck();
-      return;
-    }
-    this.loadData();
-  }
-
-  loadData(): void {
-    this.loading = true;
-    this.cdr.markForCheck();
-    this.schoolHoursService.getSchoolHours(this.activeCampusId!, this.selectedClass!).subscribe({
-      next: (data) => {
-        this.hours = [...data];
-        this.loading = false;
-        this.cdr.markForCheck();
-      },
-      error: () => {
-        this.notification.error('SCHOOL_HOURS.ERROR_LOAD');
-        this.loading = false;
-        this.cdr.markForCheck();
-      },
-    });
-  }
-
-  onTimeFocus(event: FocusEvent): void {
-    const input = event.target as HTMLInputElement;
-    input.select();
-  }
-
-  onTimeKeyDown(event: KeyboardEvent, row: any, fieldKey: string): void {
-    const input = event.target as HTMLInputElement;
-    const key = event.key;
-    if (
-      event.ctrlKey ||
-      event.metaKey ||
-      event.altKey ||
-      ['Tab', 'Enter', 'ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(key)
-    )
-      return;
-
-    const val = input.value || '';
-    const selStart = input.selectionStart ?? 0;
-    const selEnd = input.selectionEnd ?? 0;
-    const hasSelection = selEnd > selStart;
-
-    if (/^[0-9]$/.test(key)) {
-      if (hasSelection) return;
-      if (val.length === 5 && val[2] === ':') {
-        event.preventDefault();
-        const chars = val.split('');
-        let nextCursor = selStart;
-        if (selStart === 0) {
-          chars[0] = key;
-          nextCursor = 1;
-        } else if (selStart === 1) {
-          chars[1] = key;
-          nextCursor = 3;
-        } else if (selStart === 2 || selStart === 3) {
-          chars[3] = key;
-          nextCursor = 4;
-        } else if (selStart === 4) {
-          chars[4] = key;
-          nextCursor = 5;
-        } else return;
-        const newVal = chars.join('');
-        row[fieldKey] = newVal;
-        input.value = newVal;
-        input.setSelectionRange(nextCursor, nextCursor);
-        return;
-      }
-    }
-
-    if (key === 'Backspace' && !hasSelection && val.length === 5 && val[2] === ':') {
-      if (selStart === 3) {
-        event.preventDefault();
-        const chars = val.split('');
-        chars[1] = '0';
-        row[fieldKey] = chars.join('');
-        input.value = chars.join('');
-        input.setSelectionRange(1, 1);
-        return;
-      } else if (selStart === 1 || selStart === 4 || selStart === 5) {
-        event.preventDefault();
-        const chars = val.split('');
-        const targetIdx = selStart === 5 ? 4 : selStart - 1;
-        chars[targetIdx] = '0';
-        row[fieldKey] = chars.join('');
-        input.value = chars.join('');
-        input.setSelectionRange(targetIdx, targetIdx);
-        return;
-      }
-    }
-  }
-
-  onTimeInput(event: Event, row: any, fieldKey: string): void {
-    const input = event.target as HTMLInputElement;
-    let raw = (input.value || '').replace(/[^0-9]/g, '').substring(0, 4);
-
-    if (raw.length === 4) {
-      let h = Math.min(parseInt(raw.slice(0, 2), 10), 23);
-      let m = Math.min(parseInt(raw.slice(2, 4), 10), 59);
-      const formatted = `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}`;
-
-      row[fieldKey] = formatted;
-      input.value = formatted;
-
-      if (!this.validateTimeInterval(row, fieldKey)) {
-        input.value = '';
-      }
-    } else {
-      row[fieldKey] = input.value;
-    }
-  }
-
-  onTimeBlur(event: Event, row: any, fieldKey: string): void {
-    const input = event.target as HTMLInputElement;
-    const val = (input.value || '').trim();
-
-    if (!val || ['00:00', '00:00:00', '-'].includes(val)) {
-      row[fieldKey] = '';
-      input.value = '';
-      return;
-    }
-
-    const digits = val.replace(/[^0-9]/g, '');
-    if (digits.length === 0) {
-      row[fieldKey] = '';
-      input.value = '';
-    } else if (digits.length <= 2) {
-      let h = Math.min(parseInt(digits, 10), 23);
-      const formatted = `${h.toString().padStart(2, '0')}:00`;
-      row[fieldKey] = formatted;
-      input.value = formatted;
-    } else if (digits.length === 3) {
-      const h = parseInt(digits.slice(0, 1), 10);
-      let m = Math.min(parseInt(digits.slice(1), 10), 59);
-      const formatted = `0${h}:${m.toString().padStart(2, '0')}`;
-      row[fieldKey] = formatted;
-      input.value = formatted;
-    } else if (digits.length >= 4) {
-      let h = Math.min(parseInt(digits.slice(0, 2), 10), 23);
-      let m = Math.min(parseInt(digits.slice(2, 4), 10), 59);
-      const formatted = `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}`;
-      row[fieldKey] = formatted;
-      input.value = formatted;
-    }
-    if (!this.validateTimeInterval(row, fieldKey)) {
-      input.value = '';
-    }
-  }
-
-  isValidTime(val: string | null | undefined): boolean {
-    if (!val || typeof val !== 'string') return false;
-    const trimmed = val.trim();
-    // Tam bir saat formatı mı kontrol et (Örn: 08:30, 15:45)
-    const timeRegex = /^([01][0-9]|2[0-3]):([0-5][0-9])$/;
-    return timeRegex.test(trimmed) && trimmed !== '00:00';
-  }
-
-  private validateTimeInterval(row: any, fieldKey: string): boolean {
-    let day = '';
-    let isEtut = fieldKey.includes('Etutlu');
-
-    for (const d of this.days) {
-      if (fieldKey.startsWith(d.key)) {
-        day = d.key;
-        break;
-      }
-    }
-
-    if (!day) return true;
-
-    const basField = isEtut ? `${day}EtutluBas` : `${day}Bas`;
-    const bitField = isEtut ? `${day}EtutluBit` : `${day}Bit`;
-
-    const basTime = row[basField];
-    const bitTime = row[bitField];
-
-    // İki alan da eksiksiz girilmişse kıyasla
-    if (this.isValidTime(basTime) && this.isValidTime(bitTime)) {
-      if (basTime >= bitTime) {
-        // Hata durumunda bildirim ver ve son girilen hatalı alanı temizle
-        this.notification.error(
-          `${day} ${isEtut ? 'Etüt' : 'Normal'} bitiş saati, başlangıç saatinden ileri (büyük) olmalıdır.`,
-        );
-        row[fieldKey] = '';
-        this.cdr.markForCheck();
-        return false;
-      }
-    }
-
-    return true;
-  }
-
-  hasNormalTime(row: any, dayKey: string): boolean {
-    return this.isValidTime(row[dayKey + 'Bas']) && this.isValidTime(row[dayKey + 'Bit']);
-  }
-
-  hasStudyTime(row: any, dayKey: string): boolean {
-    return (
-      this.isValidTime(row[dayKey + 'EtutluBas']) && this.isValidTime(row[dayKey + 'EtutluBit'])
-    );
-  }
-
-  hasAnyStudyTime(row: any): boolean {
-    return this.days.some((day) => this.hasStudyTime(row, day.key));
+    this.classOptions.set(options);
   }
 }

@@ -1,0 +1,28 @@
+@if (editing()) {
+  <div class="time-edit-box">
+    <div class="time-line">
+      <span class="lbl" [title]="normalHint()">N</span>
+      <app-time-range-input [(value)]="normalStart" (finalized)="checkInterval('normal')" />
+      <span class="sep">-</span>
+      <app-time-range-input [(value)]="normalEnd" (finalized)="checkInterval('normal')" />
+    </div>
+    <div class="time-line">
+      <span class="lbl" [title]="studyHint()">E</span>
+      <app-time-range-input [(value)]="studyStart" (finalized)="checkInterval('study')" />
+      <span class="sep">-</span>
+      <app-time-range-input [(value)]="studyEnd" (finalized)="checkInterval('study')" />
+    </div>
+  </div>
+} @else {
+  <div class="time-output">
+    @if (hasNormalTime()) {
+      <div class="normal-time">{{ normalStart() }} - {{ normalEnd() }}</div>
+    }
+    @if (hasStudyTime()) {
+      <div class="study-time">(E: {{ studyStart() }} - {{ studyEnd() }})</div>
+    }
+    @if (!hasNormalTime() && !hasStudyTime()) {
+      <span class="closed-label">Kapalı</span>
+    }
+  </div>
+}
