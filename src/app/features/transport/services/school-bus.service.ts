@@ -2,8 +2,16 @@ import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { ApiHelperService } from '../../../core/services/api-helper.service';
-import { Bus, ServisYonu, StudentAssignment } from '../pages/school-bus/mock-data';
 import { unwrapResponse } from '../../../shared/utils/response.utils';
+import {
+  Bus,
+  ServisYonu,
+  StudentAssignment,
+  StudentAssignmentFilter,
+  BusDashboardStats,
+  AuthorityAssignment,
+  DBInsertResult,
+} from '../models/school-bus.model';
 
 interface ServisCampusRow {
   Id: number;
@@ -19,11 +27,6 @@ interface ServisCampusRow {
   Durum: string;
 }
 
-/**
- * sp_ogrenciserviscampus_s'ten dönen ham DB satırı.
- * Kolon adları DB'den geldiği gibi (PascalCase) tutulur; StudentAssignment
- * modeline çevrim getStudentAssignments içinde yapılır.
- */
 interface OgrenciServisCampusRow {
   Id: number;
   OgrenciSicilId: number;
@@ -38,31 +41,6 @@ interface OgrenciServisCampusRow {
   YonAciklama: string;
 }
 
-export interface StudentAssignmentFilter {
-  id?: number;
-  ogrenciSicilId?: number;
-  servisId?: number;
-  yon?: number;
-}
-
-export interface BusDashboardStats {
-  totalPassengers: number;
-  totalBuses: number;
-  activeBuses: number;
-  maintenanceBuses: number;
-  passiveBuses: number;
-}
-
-interface DBInsertResult {
-  Sonuc: number | string;
-  SunucuCevap: string;
-}
-
-/**
- * sp_yetkiliservis_s'ten dönen ham DB satırı.
- * Kolon adları DB'den geldiği gibi (PascalCase) tutulur; AuthorityAssignment
- * modeline çevrim getAuthorityAssignments içinde yapılır.
- */
 interface AuthorityServisRow {
   Id: number;
   YetkiliSicilId: number;
@@ -74,18 +52,6 @@ interface AuthorityServisRow {
   CreatedDate: string | null;
 }
 
-/** Bir yetkilinin bir servise (araca) atanma kaydının frontend karşılığı. */
-export interface AuthorityAssignment {
-  id: number;
-  authoritySicilId: number;
-  authorityName: string;
-  servisId: number;
-  plaka: string;
-  marka: string;
-  model: string;
-  createdDate: string | null;
-}
-
 @Injectable({
   providedIn: 'root',
 })
@@ -94,10 +60,7 @@ export class SchoolBusService {
 
   getDashboardStats(): Observable<BusDashboardStats> {
     return this.api
-      .callEndpoint<any[]>('Dynamic', {
-        point: 'ServisDashboard',
-        islemtipi: 's',
-      })
+      .callEndpoint<any[]>('Dynamic', { point: 'ServisDashboard', islemtipi: 's' })
       .pipe(
         map((rows) => {
           const row = rows && rows.length > 0 ? rows[0] : {};
@@ -114,10 +77,7 @@ export class SchoolBusService {
 
   getBuses(): Observable<Bus[]> {
     return this.api
-      .callEndpoint<ServisCampusRow[]>('Dynamic', {
-        point: 'serviscampus',
-        islemtipi: 's',
-      })
+      .callEndpoint<ServisCampusRow[]>('Dynamic', { point: 'serviscampus', islemtipi: 's' })
       .pipe(
         map((rows) =>
           (rows || []).map((row) => ({
@@ -149,15 +109,7 @@ export class SchoolBusService {
         aciklama: bus.description,
         durum: bus.status,
       })
-      .pipe(
-        map((response) => {
-          const unwrapped = unwrapResponse(response);
-          return {
-            sonuc: unwrapped ? Number(unwrapped.Sonuc) : -1,
-            sunucuCevap: unwrapped ? String(unwrapped.SunucuCevap) : 'Sunucudan yanıt alınamadı.',
-          };
-        }),
-      );
+      .pipe(map(this.mapStandardResponse));
   }
 
   updateBus(id: number, bus: Omit<Bus, 'id'>): Observable<{ sonuc: number; sunucuCevap: string }> {
@@ -173,50 +125,15 @@ export class SchoolBusService {
         aciklama: bus.description,
         durum: bus.status,
       })
-      .pipe(
-        map((response) => {
-          console.log('[updateBus] raw response:', response);
-          const unwrapped = unwrapResponse(response);
-          console.log('[updateBus] unwrapped:', unwrapped);
-          return {
-            sonuc: unwrapped ? Number(unwrapped.Sonuc) : -1,
-            sunucuCevap: unwrapped ? String(unwrapped.SunucuCevap) : 'Sunucudan yanıt alınamadı.',
-          };
-        }),
-      );
+      .pipe(map(this.mapStandardResponse));
   }
 
   deleteBus(id: number): Observable<{ sonuc: number; sunucuCevap: string }> {
     return this.api
-      .callEndpoint<DBInsertResult[]>('Dynamic', {
-        point: 'serviscampus',
-        islemtipi: 'd',
-        Id: id,
-      })
-      .pipe(
-        map((response) => {
-          console.log('[deleteBus] raw response:', response);
-          const unwrapped = unwrapResponse(response);
-          console.log('[deleteBus] unwrapped:', unwrapped);
-          return {
-            sonuc: unwrapped ? Number(unwrapped.Sonuc) : -1,
-            sunucuCevap: unwrapped ? String(unwrapped.SunucuCevap) : 'Sunucudan yanıt alınamadı.',
-          };
-        }),
-      );
+      .callEndpoint<DBInsertResult[]>('Dynamic', { point: 'serviscampus', islemtipi: 'd', Id: id })
+      .pipe(map(this.mapStandardResponse));
   }
 
-  // ════════════════════════════════════════════════════════
-  //  ÖĞRENCİ SERVİS ATAMALARI (sp_ogrenciserviscampus_*)
-  //  Atama artık bağımsız bir varlık değil — doğrudan bir araca
-  //  (ServisId) bağlı olarak yönetilir.
-  // ════════════════════════════════════════════════════════
-
-  /**
-   * point=ogrenciserviscampus & islemtipi=s -> sp_ogrenciserviscampus_s
-   * Filtre verilmezse tüm atamalar döner; servisId verilirse sadece o
-   * araca atanmış öğrenciler döner (araç bazlı atama ekranı bunu kullanır).
-   */
   getStudentAssignments(filter: StudentAssignmentFilter = {}): Observable<StudentAssignment[]> {
     return this.api
       .callEndpoint<OgrenciServisCampusRow[]>('Dynamic', {
@@ -246,7 +163,6 @@ export class SchoolBusService {
       );
   }
 
-  /** point=ogrenciserviscampus & islemtipi=i -> sp_ogrenciserviscampus_i */
   assignStudentToBus(
     ogrenciSicilId: number,
     servisId: number,
@@ -260,18 +176,9 @@ export class SchoolBusService {
         ServisId: servisId,
         Yon: yon,
       })
-      .pipe(
-        map((response) => {
-          const unwrapped = unwrapResponse(response);
-          return {
-            sonuc: unwrapped ? Number(unwrapped.Sonuc) : -1,
-            sunucuCevap: unwrapped ? String(unwrapped.SunucuCevap) : 'Sunucudan yanıt alınamadı.',
-          };
-        }),
-      );
+      .pipe(map(this.mapStandardResponse));
   }
 
-  /** point=ogrenciserviscampus & islemtipi=d -> sp_ogrenciserviscampus_d */
   removeStudentAssignment(id: number): Observable<{ sonuc: number; sunucuCevap: string }> {
     return this.api
       .callEndpoint<DBInsertResult[]>('Dynamic', {
@@ -279,59 +186,12 @@ export class SchoolBusService {
         islemtipi: 'd',
         Id: id,
       })
-      .pipe(
-        map((response) => {
-          const unwrapped = unwrapResponse(response);
-          return {
-            sonuc: unwrapped ? Number(unwrapped.Sonuc) : -1,
-            sunucuCevap: unwrapped ? String(unwrapped.SunucuCevap) : 'Sunucudan yanıt alınamadı.',
-          };
-        }),
-      );
+      .pipe(map(this.mapStandardResponse));
   }
 
-  /** point=ogrenciserviscampus & islemtipi=i -> sp_ogrenciserviscampus_i */
-  // assignStudentToBus(
-  //   ogrenciSicilId: number,
-  //   servisId: number,
-  //   yon: ServisYonu,
-  // ): Observable<{ sonuc: number; sunucuCevap: string }> {
-  //   return this.api
-  //     .callEndpoint<DBInsertResult[]>('Dynamic', {
-  //       point: 'ogrenciserviscampus',
-  //       islemtipi: 'i',
-  //       OgrenciSicilId: ogrenciSicilId,
-  //       servisid: servisId,
-  //       Yon: yon,
-  //     })
-  //     .pipe(
-  //       map((response) => {
-  //         const unwrapped = unwrapResponse(response);
-  //         return {
-  //           sonuc: unwrapped ? Number(unwrapped.Sonuc) : -1,
-  //           sunucuCevap: unwrapped ? String(unwrapped.SunucuCevap) : 'Sunucudan yanıt alınamadı.',
-  //         };
-  //       }),
-  //     );
-  // }
-
-  // ════════════════════════════════════════════════════════
-  //  YETKİLİ SERVİS ATAMALARI (sp_yetkiliservis_*)
-  // ════════════════════════════════════════════════════════
-
-  /**
-   * point=yetkiliservis & islemtipi=s -> sp_yetkiliservis_s
-   * Prosedür tüm atamaları döner; her satır kendi ServisId'sini içerir.
-   * Araca göre filtreleme frontend'te (authorityAssignmentsForBus) yapılır.
-   * Not: YetkiliSicilId/ServisId parametresi GÖNDERİLMEMELİ — boş string
-   * gönderilirse prosedür veri döndürmez.
-   */
   getAuthorityAssignments(): Observable<AuthorityAssignment[]> {
     return this.api
-      .callEndpoint<AuthorityServisRow[]>('Dynamic', {
-        point: 'yetkiliservis',
-        islemtipi: 's',
-      })
+      .callEndpoint<AuthorityServisRow[]>('Dynamic', { point: 'yetkiliservis', islemtipi: 's' })
       .pipe(
         map((rows) =>
           (rows || []).map((row) => ({
@@ -348,7 +208,6 @@ export class SchoolBusService {
       );
   }
 
-  /** point=yetkiliservis & islemtipi=i -> sp_yetkiliservis_i */
   assignAuthorityToBus(
     authoritySicilId: number,
     servisId: number,
@@ -360,33 +219,22 @@ export class SchoolBusService {
         YetkiliSicilId: authoritySicilId,
         ServisId: servisId,
       })
-      .pipe(
-        map((response) => {
-          const unwrapped = unwrapResponse(response);
-          return {
-            sonuc: unwrapped ? Number(unwrapped.Sonuc) : -1,
-            sunucuCevap: unwrapped ? String(unwrapped.SunucuCevap) : 'Sunucudan yanıt alınamadı.',
-          };
-        }),
-      );
+      .pipe(map(this.mapStandardResponse));
   }
 
-  /** point=yetkiliservis & islemtipi=d -> sp_yetkiliservis_d */
   removeAuthorityAssignment(id: number): Observable<{ sonuc: number; sunucuCevap: string }> {
     return this.api
-      .callEndpoint<DBInsertResult[]>('Dynamic', {
-        point: 'yetkiliservis',
-        islemtipi: 'd',
-        Id: id,
-      })
-      .pipe(
-        map((response) => {
-          const unwrapped = unwrapResponse(response);
-          return {
-            sonuc: unwrapped ? Number(unwrapped.Sonuc) : -1,
-            sunucuCevap: unwrapped ? String(unwrapped.SunucuCevap) : 'Sunucudan yanıt alınamadı.',
-          };
-        }),
-      );
+      .callEndpoint<DBInsertResult[]>('Dynamic', { point: 'yetkiliservis', islemtipi: 'd', Id: id })
+      .pipe(map(this.mapStandardResponse));
   }
+
+  private mapStandardResponse = (
+    response: DBInsertResult[] | null,
+  ): { sonuc: number; sunucuCevap: string } => {
+    const unwrapped = unwrapResponse(response);
+    return {
+      sonuc: unwrapped ? Number(unwrapped.Sonuc) : -1,
+      sunucuCevap: unwrapped ? String(unwrapped.SunucuCevap) : 'Sunucudan yanıt alınamadı.',
+    };
+  };
 }

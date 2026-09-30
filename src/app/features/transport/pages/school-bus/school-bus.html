@@ -382,6 +382,7 @@
                 ><span class="material-symbols-outlined">toggle_on</span> Durum</label
               >
               <p-select
+                id="busStatus"
                 inputId="busStatus"
                 formControlName="status"
                 [options]="[
@@ -586,6 +587,7 @@
                 ><span class="material-symbols-outlined">badge</span> Yetkili</label
               >
               <p-select
+                id="assignAuthority"
                 inputId="assignAuthority"
                 formControlName="authoritySicilId"
                 [options]="authorityOptions()"
@@ -628,6 +630,7 @@
                 ><span class="material-symbols-outlined">person</span> Öğrenci</label
               >
               <p-select
+                id="assignOgrenci"
                 inputId="assignOgrenci"
                 formControlName="ogrenciSicilId"
                 [options]="studentOptions()"
@@ -653,6 +656,7 @@
                 ><span class="material-symbols-outlined">swap_horiz</span> Yön</label
               >
               <p-select
+                id="assignYon"
                 inputId="assignYon"
                 formControlName="yon"
                 [options]="yonOptions"

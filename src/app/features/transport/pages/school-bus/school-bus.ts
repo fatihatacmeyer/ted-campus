@@ -7,8 +7,13 @@ import {
   OnInit,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
-import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import {
+  FormBuilder,
+  FormGroup,
+  ReactiveFormsModule,
+  FormsModule,
+  Validators,
+} from '@angular/forms';
 import { CardModule } from 'primeng/card';
 import { TagModule } from 'primeng/tag';
 import { ButtonModule } from 'primeng/button';
@@ -16,21 +21,28 @@ import { TooltipModule } from 'primeng/tooltip';
 import { SelectModule } from 'primeng/select';
 import { InputTextModule } from 'primeng/inputtext';
 import { TextareaModule } from 'primeng/textarea';
-import { Bus, ServisYonu, StudentAssignment } from './mock-data';
+
 import {
   CustomizableTableComponent,
   ColumnCellDirective,
   ColumnDef,
 } from '../../../../shared/components/customizable-table/customizable-table';
-import {
-  SchoolBusService,
-  BusDashboardStats,
-  AuthorityAssignment,
-} from '../../services/school-bus.service';
+import { SchoolBusService } from '../../services/school-bus.service';
 import { NotificationService } from '../../../../core/services/notification.service';
 import { PersonService } from '../../../persons/services/person.service';
 import { Person, UserDef } from '../../../../core/models/person.model';
-import { forkJoin } from 'rxjs';
+
+import { forkJoin, of } from 'rxjs';
+import { catchError } from 'rxjs/operators';
+import {
+  Bus,
+  ServisYonu,
+  StudentAssignment,
+  BusDashboardStats,
+  AuthorityAssignment,
+} from '../../models/school-bus.model';
+import { DestroyRef } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 type TabKey = 'dashboard' | 'buses' | 'assignments';
 
@@ -39,7 +51,6 @@ type TabKey = 'dashboard' | 'buses' | 'assignments';
   standalone: true,
   imports: [
     CommonModule,
-    FormsModule,
     ReactiveFormsModule,
     CardModule,
     TagModule,
@@ -50,6 +61,7 @@ type TabKey = 'dashboard' | 'buses' | 'assignments';
     TextareaModule,
     CustomizableTableComponent,
     ColumnCellDirective,
+    FormsModule,
   ],
   templateUrl: './school-bus.html',
   styleUrl: './school-bus.scss',
@@ -60,8 +72,8 @@ export class SchoolBusComponent implements OnInit {
   private busService = inject(SchoolBusService);
   private personService = inject(PersonService);
   private notification = inject(NotificationService);
+  private destroyRef = inject(DestroyRef);
 
-  // ── Tab State ──────────────────────────────────────────
   protected readonly activeTab = signal<TabKey>('dashboard');
   protected readonly tabs: { key: TabKey; label: string; icon: string }[] = [
     { key: 'dashboard', label: 'Genel Bakış', icon: 'dashboard' },
@@ -69,20 +81,14 @@ export class SchoolBusComponent implements OnInit {
     { key: 'assignments', label: 'Atamalar', icon: 'assignment' },
   ];
 
-  // ── Data State ─────────────────────────────────────────
   protected readonly buses = signal<Bus[]>([]);
   protected readonly students = signal<Person[]>([]);
 
-  // ── ID Counters ────────────────────────────────────────
-  private busNextId = 100;
-
-  // ── Dialog Visibility: Buses ────────────────────────────
   protected readonly busFormVisible = signal(false);
   protected readonly busDeleteVisible = signal(false);
   protected readonly busEditing = signal<Bus | null>(null);
   protected readonly busDeleting = signal<Bus | null>(null);
 
-  // ── Dialog Visibility: Öğrenci Atama (araca bağlı) ──────
   protected readonly studentAssignVisible = signal(false);
   protected readonly studentAssignBus = signal<Bus | null>(null);
   protected readonly studentAssignments = signal<StudentAssignment[]>([]);
@@ -91,19 +97,15 @@ export class SchoolBusComponent implements OnInit {
   protected readonly studentAssignDeleting = signal<StudentAssignment | null>(null);
   protected readonly studentAssignDirectionTab = signal<ServisYonu>(1);
 
-  // ── Yetkili Atama (araca bağlı) — Detay dialog'u içinde ──
   protected readonly allAuthorityAssignments = signal<AuthorityAssignment[]>([]);
   protected readonly authorityAssignDeleteVisible = signal(false);
   protected readonly authorityAssignDeleting = signal<AuthorityAssignment | null>(null);
   protected readonly authorities = signal<Person[]>([]);
 
-  // ── Search Terms ───────────────────────────────────────
   protected assignmentBusSearchValue = '';
   protected readonly assignmentBusSearch = signal('');
-
   protected readonly dashboardStats = signal<BusDashboardStats | null>(null);
 
-  // ── Forms ──────────────────────────────────────────────
   protected readonly busForm: FormGroup = this.fb.group({
     plate: ['', Validators.required],
     brand: ['', Validators.required],
@@ -122,10 +124,6 @@ export class SchoolBusComponent implements OnInit {
     authoritySicilId: [null, Validators.required],
   });
 
-  // ── Dashboard Computed ─────────────────────────────────
-  protected readonly totalBuses = computed(() => this.buses().length);
-
-  // ── Table Columns: Araçlar ──────────────────────────────
   protected readonly busColumns: ColumnDef<Bus>[] = [
     { field: 'plate', header: 'Plaka', sortable: true },
     { field: 'brand', header: 'Marka', sortable: true },
@@ -135,19 +133,15 @@ export class SchoolBusComponent implements OnInit {
     { field: 'status', header: 'Durum', sortable: true },
   ];
 
-  // ── Table Columns: Bir araca atanmış öğrenciler (Gidiş / Dönüş ayrı ayrı) ──
   protected readonly assignedStudentColumns: ColumnDef<StudentAssignment>[] = [
     { field: 'ogrenciAdSoyad', header: 'Öğrenci', sortable: true },
     { field: 'sinif', header: 'Sınıf', sortable: true },
     { field: 'kampus', header: 'Kampüs', sortable: true },
   ];
 
-  // ── Table Columns: Bir araca atanmış yetkililer ──────
-  // ── Yetkili atama: servis bazlı filtreleme ──────────────
   protected readonly authorityAssignmentsForBus = (servisId: number) =>
     this.allAuthorityAssignments().filter((a) => a.servisId === servisId);
 
-  // ── Filtered Lists ─────────────────────────────────────
   protected readonly filteredAssignmentBuses = computed(() => {
     const term = this.assignmentBusSearch().toLowerCase();
     if (!term) return this.buses();
@@ -160,7 +154,6 @@ export class SchoolBusComponent implements OnInit {
     );
   });
 
-  // ── Dropdown Options ───────────────────────────────────
   protected readonly studentOptions = computed(() =>
     this.students().map((s) => ({
       label: s.bolumad ? `${s.adsoyad} — ${s.bolumad}` : s.adsoyad,
@@ -192,7 +185,6 @@ export class SchoolBusComponent implements OnInit {
     return false;
   }
 
-  // İki ayrı liste: Gidiş (Yön=1) ve Dönüş (Yön=2)
   protected readonly studentAssignGidisList = computed(() =>
     this.studentAssignments().filter((a) => a.yon === 1),
   );
@@ -215,62 +207,40 @@ export class SchoolBusComponent implements OnInit {
   private loadDashboardStats(): void {
     this.busService.getDashboardStats().subscribe({
       next: (stats) => this.dashboardStats.set(stats),
-      error: (err) => console.error('Dashboard istatistikleri alınamadı:', err),
+      error: () => this.notification.error('Dashboard istatistikleri alınamadı.'),
     });
   }
 
   private loadBuses(): void {
-    this.busService.getBuses().subscribe({
-      next: (busesData) => {
-        this.buses.set(busesData);
-        if (busesData.length > 0) {
-          this.busNextId = Math.max(...busesData.map((b) => b.id)) + 1;
-        }
-      },
-      error: (err) => {
-        console.error('Failed to load buses from database:', err);
-      },
-    });
+    this.busService
+      .getBuses()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (busesData) => this.buses.set(busesData),
+        error: () => this.notification.error('Araçlar yüklenemedi.'),
+      });
   }
 
   private loadStudents(): void {
     this.personService.getPersonListCampus().subscribe({
       next: (people) => this.students.set(people.filter((p) => p.userdef === UserDef.Ogrenci)),
-      error: (err) => console.error('Öğrenci listesi alınamadı:', err),
+      error: () => this.notification.error('Öğrenci listesi alınamadı.'),
     });
   }
 
   private loadAuthorities(): void {
     this.personService.getPersonListCampus().subscribe({
       next: (people) => this.authorities.set(people.filter((p) => p.userdef === UserDef.Authority)),
-      error: (err) => console.error('Yetkili listesi alınamadı:', err),
+      error: () => this.notification.error('Yetkili listesi alınamadı.'),
     });
   }
-
-  // ════════════════════════════════════════════════════════
-  //  BUS CRUD
-  // ════════════════════════════════════════════════════════
 
   openBusForm(bus?: Bus): void {
     this.busEditing.set(bus ?? null);
     if (bus) {
-      this.busForm.patchValue({
-        plate: bus.plate,
-        brand: bus.brand,
-        model: bus.model,
-        seatCount: bus.seatCount,
-        description: bus.description,
-        status: bus.status,
-      });
+      this.busForm.patchValue(bus);
     } else {
-      this.busForm.reset({
-        plate: '',
-        brand: '',
-        model: '',
-        seatCount: 16,
-        description: '',
-        status: 'Aktif',
-      });
+      this.busForm.reset({ seatCount: 16, status: 'Aktif' });
     }
     this.busFormVisible.set(true);
   }
@@ -286,41 +256,20 @@ export class SchoolBusComponent implements OnInit {
     const v = this.busForm.value;
     const editing = this.busEditing();
 
-    if (editing) {
-      // DÜZENLEME İŞLEMİ (UPDATE)
-      this.busService.updateBus(editing.id, v).subscribe({
-        next: (result) => {
-          if (result.sonuc === 1) {
-            this.notification.success(result.sunucuCevap || 'Araç başarıyla güncellendi.');
-            this.loadBuses(); // Tabloyu sunucudan güncel verilerle yenile
-            this.closeBusForm();
-          } else {
-            this.notification.error(result.sunucuCevap || 'Araç güncellenirken bir hata oluştu.');
-          }
-        },
-        error: (err) => {
-          this.notification.error('Sunucuyla iletişim kurulurken bir hata oluştu.');
-          console.error(err);
-        },
-      });
-    } else {
-      // EKLEME İŞLEMİ (INSERT) - Mevcut haliyle kalıyor
-      this.busService.addBus(v).subscribe({
-        next: (result) => {
-          if (result.sonuc === 1) {
-            this.notification.success(result.sunucuCevap || 'Araç başarıyla eklendi.');
-            this.loadBuses();
-            this.closeBusForm();
-          } else {
-            this.notification.error(result.sunucuCevap || 'Araç eklenirken bir hata oluştu.');
-          }
-        },
-        error: (err) => {
-          this.notification.error('Sunucuyla iletişim kurulurken bir hata oluştu.');
-          console.error(err);
-        },
-      });
-    }
+    const request$ = editing ? this.busService.updateBus(editing.id, v) : this.busService.addBus(v);
+
+    request$.subscribe({
+      next: (result) => {
+        if (result.sonuc === 1) {
+          this.notification.success(result.sunucuCevap || 'İşlem başarılı.');
+          this.loadBuses();
+          this.closeBusForm();
+        } else {
+          this.notification.error(result.sunucuCevap || 'İşlem sırasında hata oluştu.');
+        }
+      },
+      error: () => this.notification.error('Sunucuyla iletişim kurulamadı.'),
+    });
   }
 
   protected confirmBusDelete(bus: Bus): void {
@@ -337,43 +286,31 @@ export class SchoolBusComponent implements OnInit {
     const target = this.busDeleting();
     if (!target) return;
 
-    // SİLME İŞLEMİ (DELETE)
     this.busService.deleteBus(target.id).subscribe({
       next: (result) => {
         if (result.sonuc === 1) {
           this.notification.success(result.sunucuCevap || 'Araç başarıyla silindi.');
-          this.loadBuses(); // Tabloyu yenile
+          this.loadBuses();
           this.closeBusDelete();
         } else {
-          this.notification.error(result.sunucuCevap || 'Araç silinirken bir hata oluştu.');
+          this.notification.error(result.sunucuCevap || 'Araç silinirken hata oluştu.');
         }
       },
-      error: (err) => {
-        this.notification.error('Sunucuyla iletişim kurulurken bir hata oluştu.');
-        console.error(err);
-        this.closeBusDelete();
-      },
+      error: () => this.notification.error('Sunucuyla iletişim kurulamadı.'),
     });
   }
-
-  // ════════════════════════════════════════════════════════
-  //  ÖĞRENCİ SERVİS ATAMASI (araca bağlı)
-  // ════════════════════════════════════════════════════════
 
   protected openStudentAssign(bus: Bus): void {
     this.studentAssignBus.set(bus);
     this.studentAssignForm.reset({ ogrenciSicilId: null, yon: 1 });
     this.studentAssignDirectionTab.set(1);
     this.loadStudentAssignments(bus.id);
-    if (this.students().length === 0) {
-      this.loadStudents();
-    }
-    // Yetkili listesi (person) hazır olsun — atanan yetkililer servis bazlı
-    // allAuthorityAssignments üzerinden filtrelenir (ayrıca yüklenmez).
+
+    if (this.students().length === 0) this.loadStudents();
+
     this.authorityAssignForm.reset({ authoritySicilId: null });
-    if (this.authorities().length === 0) {
-      this.loadAuthorities();
-    }
+    if (this.authorities().length === 0) this.loadAuthorities();
+
     this.studentAssignVisible.set(true);
   }
 
@@ -386,7 +323,6 @@ export class SchoolBusComponent implements OnInit {
     this.studentAssignBus.set(null);
     this.studentAssignments.set([]);
     this.studentAssignForm.reset({ ogrenciSicilId: null, yon: 1 });
-    // Yetkili bölümü durumu da sıfırlanır
     this.authorityAssignForm.reset({ authoritySicilId: null });
     this.closeAuthorityAssignDelete();
   }
@@ -398,9 +334,8 @@ export class SchoolBusComponent implements OnInit {
         this.studentAssignments.set(rows);
         this.studentAssignLoading.set(false);
       },
-      error: (err) => {
-        this.notification.error('Öğrenci atamaları alınırken bir hata oluştu.');
-        console.error(err);
+      error: () => {
+        this.notification.error('Öğrenci atamaları alınamadı.');
         this.studentAssignLoading.set(false);
       },
     });
@@ -413,34 +348,28 @@ export class SchoolBusComponent implements OnInit {
     const v = this.studentAssignForm.value;
 
     if (v.yon === 3) {
-      // Hem Gidiş Hem Dönüş seçildiyse iki isteği aynı anda at
       this.studentAssignLoading.set(true);
-
       forkJoin([
-        this.busService.assignStudentToBus(v.ogrenciSicilId, bus.id, 1 as ServisYonu),
-        this.busService.assignStudentToBus(v.ogrenciSicilId, bus.id, 2 as ServisYonu),
+        this.busService
+          .assignStudentToBus(v.ogrenciSicilId, bus.id, 1 as ServisYonu)
+          .pipe(catchError(() => of({ sonuc: -1, sunucuCevap: 'Gidiş atamasında hata oluştu.' }))),
+        this.busService
+          .assignStudentToBus(v.ogrenciSicilId, bus.id, 2 as ServisYonu)
+          .pipe(catchError(() => of({ sonuc: -1, sunucuCevap: 'Dönüş atamasında hata oluştu.' }))),
       ]).subscribe({
         next: (results) => {
           const allSuccess = results.every((res) => res.sonuc === 1);
-
           if (allSuccess) {
             this.notification.success('Öğrenci hem gidiş hem dönüş için başarıyla atandı.');
           } else {
             this.notification.info('Atama yapıldı ancak yönlerin birinde hata oluşmuş olabilir.');
           }
-
           this.loadStudentAssignments(bus.id);
           this.loadBuses();
           this.studentAssignForm.reset({ ogrenciSicilId: null, yon: 1 });
         },
-        error: (err) => {
-          this.notification.error('Sunucuyla iletişim kurulurken bir hata oluştu.');
-          console.error(err);
-          this.studentAssignLoading.set(false);
-        },
       });
     } else {
-      // Sadece Gidiş veya Sadece Dönüş
       this.busService.assignStudentToBus(v.ogrenciSicilId, bus.id, v.yon).subscribe({
         next: (result) => {
           if (result.sonuc === 1) {
@@ -452,10 +381,7 @@ export class SchoolBusComponent implements OnInit {
             this.notification.error(result.sunucuCevap || 'Öğrenci atanırken bir hata oluştu.');
           }
         },
-        error: (err) => {
-          this.notification.error('Sunucuyla iletişim kurulurken bir hata oluştu.');
-          console.error(err);
-        },
+        error: () => this.notification.error('Sunucuyla iletişim kurulurken bir hata oluştu.'),
       });
     }
   }
@@ -485,28 +411,17 @@ export class SchoolBusComponent implements OnInit {
           }
           this.closeStudentAssignDelete();
         } else {
-          this.notification.error(result.sunucuCevap || 'Kayıt silinirken bir hata oluştu.');
+          this.notification.error(result.sunucuCevap || 'Kayıt silinirken hata oluştu.');
         }
       },
-      error: (err) => {
-        this.notification.error('Sunucuyla iletişim kurulurken bir hata oluştu.');
-        console.error(err);
-        this.closeStudentAssignDelete();
-      },
+      error: () => this.notification.error('Sunucuyla iletişim kurulamadı.'),
     });
   }
-
-  // ════════════════════════════════════════════════════════
-  //  YETKİLİ SERVİS ATAMASI (araca bağlı)
-  // ════════════════════════════════════════════════════════
 
   private loadAllAuthorityAssignments(): void {
     this.busService.getAuthorityAssignments().subscribe({
       next: (rows) => this.allAuthorityAssignments.set(rows),
-      error: (err) => {
-        this.notification.error('Yetkili atamaları alınırken bir hata oluştu.');
-        console.error(err);
-      },
+      error: () => this.notification.error('Yetkili atamaları alınırken hata oluştu.'),
     });
   }
 
@@ -523,13 +438,10 @@ export class SchoolBusComponent implements OnInit {
           this.loadAllAuthorityAssignments();
           this.authorityAssignForm.reset({ authoritySicilId: null });
         } else {
-          this.notification.error(result.sunucuCevap || 'Yetkili atanırken bir hata oluştu.');
+          this.notification.error(result.sunucuCevap || 'Yetkili atanırken hata oluştu.');
         }
       },
-      error: (err) => {
-        this.notification.error('Sunucuyla iletişim kurulurken bir hata oluştu.');
-        console.error(err);
-      },
+      error: () => this.notification.error('Sunucuyla iletişim kurulamadı.'),
     });
   }
 
@@ -554,21 +466,15 @@ export class SchoolBusComponent implements OnInit {
           this.loadAllAuthorityAssignments();
           this.closeAuthorityAssignDelete();
         } else {
-          this.notification.error(result.sunucuCevap || 'Kayıt silinirken bir hata oluştu.');
+          this.notification.error(result.sunucuCevap || 'Kayıt silinirken hata oluştu.');
         }
       },
-      error: (err) => {
-        this.notification.error('Sunucuyla iletişim kurulurken bir hata oluştu.');
-        console.error(err);
-        this.closeAuthorityAssignDelete();
-      },
+      error: () => this.notification.error('Sunucuyla iletişim kurulamadı.'),
     });
   }
 
-  // ── Helpers ────────────────────────────────────────────
   protected setTab(tab: TabKey): void {
     this.activeTab.set(tab);
-    // Atamalar sekmesi açılırken servis bazlı yetkili listesi tazelenir
     if (tab === 'assignments') {
       this.loadAllAuthorityAssignments();
       if (this.authorities().length === 0) {
