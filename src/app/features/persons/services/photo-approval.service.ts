@@ -16,6 +16,7 @@ export interface PhotoApproval {
   IsActive: boolean;
   OnayDurumu: number;
   OnayDurumuMetni: string;
+  UserDef: number;
 }
 
 @Injectable({

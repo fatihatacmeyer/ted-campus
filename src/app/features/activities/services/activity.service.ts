@@ -1,30 +1,16 @@
 import { inject, Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
-import { ActivityApprovalStats, ActivityInterface, ActivityParticipant } from '../../../core/models/activity.model';
+import {
+  ActivityApprovalStats,
+  ActivityInterface,
+  ActivityParticipant,
+} from '../../../core/models/activity.model';
 import { ApiHelperService } from '../../../core/services/api-helper.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { formatDate } from '../../../shared/utils/date.utils';
 
-/**
- * Backend'deki generic "Dynamic" dispatcher, point + islemtipi kombinasyonuna
- * göre ilgili prosedürü çağırıyor:
- *   point=EtkinlikCampus & islemtipi=s -> sp_etkinlikcampus_s (liste)
- *   point=EtkinlikCampus & islemtipi=i -> sp_etkinlikcampus_i (ekle)
- *   point=EtkinlikCampus & islemtipi=u -> sp_etkinlikcampus_u (güncelle)
- *   point=EtkinlikCampus & islemtipi=d -> sp_etkinlikcampus_d (sil)
- *
- * NOT (izintipleridoldur ile birebir aynı desen):
- * param string'i asla encode edilmiyor, tek parça halinde AES ile
- * şifrelenip "Name" query parametresi olarak GET isteğiyle gönderiliyor.
- *
- * Dispatcher, point + islemtipi kombinasyonunu otomatik çözer ve ilgili
- * prosedürü çağırır (sp_etkinlikcampus_{s,i,u,d}). 3.08.2026'da 'i' rutini
- * backend'de hazır değilken aynı istek `islemsonuc:3, sunucucevap:"sub"`
- * döndü; prosedür kaydedildikten sonra insert çalıştı. islemno göndermek
- * bu zarfta hiçbir şeyi değiştirmiyordu (test edildi).
- */
-/** sp_etkinlikcampus_s'den dönen ham DB satırı (Türkçe/DB sütun adları). */
+/** sp_etkinlikcampus_s'den dönen  DB satırı  */
 interface ActivityRow {
   Id: number;
   EtkinlikAdi: string;
@@ -59,7 +45,7 @@ interface ActivityRow {
   Sinif: string;
 }
 
-/** sp_EtkinlikOnayCampus_s'ten dönen ham DB satırı (Türkçe/DB sütun adları). */
+/** sp_EtkinlikOnayCampus_s'ten dönen  DB satırı */
 interface ActivityApprovalRow {
   EtkinlikId: number;
   Bekleyen: number;
@@ -68,7 +54,7 @@ interface ActivityApprovalRow {
   Toplam: number;
 }
 
-/** sp_EtkinlikKatilimcilari_s'ten dönen ham DB satırı. */
+/** sp_EtkinlikKatilimcilari_s'ten dönen  DB satırı. */
 interface ParticipantRow {
   SiraNo: number;
   OgrenciSicilId: number;
@@ -98,15 +84,6 @@ export class ActivityService {
     return this.api.callEndpoint<T>('Dynamic', requestParams);
   }
 
-  /**
-   * sp_etkinlikcampus_s sonuç sütunlarını (Türkçe/DB isimleri) ActivityInterface'e çevirir.
-   * DİKKAT: Bu SP TurId/UlasimId/SinifId/EgitimDuzeyiId yerine metin karşılıklarını
-   * (Tur, UlasimTipi, Sinif, EgitimDuzeyi) döndürüyor -- çünkü join'li bir "görüntüleme"
-   * sorgusu. Ekle/güncelle tarafında ise SP'ler gerçek Id (int) bekliyor. Bu yüzden
-   * satırda "...Id" alanlarını da (varsa) ayrıca saklıyoruz; aksi halde bir kaydı
-   * tekrar kaydederken hangi TurId/UlasimId/SinifId seçili olduğunu bilemeyiz.
-   * Bu ekstra id alanları backend'de _s prosedürüne eklenene kadar burada undefined kalacaktır.
-   */
   private mapRowToActivity(row: ActivityRow): ActivityInterface {
     return {
       id: row.Id,
@@ -150,11 +127,6 @@ export class ActivityService {
     }).pipe(map((rows) => (rows || []).map((row) => this.mapRowToActivity(row))));
   }
 
-  /**
-   * sp_EtkinlikOnayCampus_s: etkinlik bazlı onay istatistiklerini döndürür.
-   * EtkinlikId parametresi gönderildiğinde yalnızca o etkinliğin satırı döner
-   * (parametresiz gönderilirse tüm etkinliklerin satırları döner).
-   */
   getApprovalStats(etkinlikId: number): Observable<ActivityApprovalStats> {
     return this.callDynamic<ActivityApprovalRow[]>({
       point: 'etkinlikonaycampus',
@@ -174,9 +146,6 @@ export class ActivityService {
     );
   }
 
-  /**
-   * sp_EtkinlikKatilimcilari_s: verilen etkinliğe katılan öğrencileri ve velileri döndürür.
-   */
   getParticipants(etkinlikId: number): Observable<ActivityParticipant[]> {
     return this.callDynamic<ParticipantRow[]>({
       point: 'etkinlikkatilimcilari',
@@ -198,11 +167,6 @@ export class ActivityService {
     );
   }
 
-  /**
-   * addActivity/updateActivity ortak payload'ı. Key sırası sabittir (islemtipi,
-   * güncellemede Id, sonra Ad, XSicilId, ...) — sıra değiştirilirse AES şifreli
-   * wire string değişir; sıraya dokunulmaz.
-   */
   private buildActivityParams(
     activity: Partial<ActivityInterface> & Record<string, unknown>,
     islemtipi: 'i' | 'u',
@@ -218,9 +182,6 @@ export class ActivityService {
       TurId: (activity['turId'] as number) ?? '',
       UcretliMi: activity.isPaid ? 1 : 0,
       Ucret: (activity.fee as number) ?? 0,
-      // Backend Durum'u '1'/'0' olarak saklıyor (sp_etkinlikcampus_s "1"/"0" döner).
-      // Form metin tutuyor ('Aktif'/'Pasif'/'İptal'), edit'te ise satırdan '1'/'0' gelir.
-      // → 'Aktif' veya '1' → '1', diğerleri ('Pasif'/'İptal'/'0') → '0'.
       Durum: ['Aktif', '1'].includes(String(activity.status)) ? '1' : '0',
       TalepBas: formatDate(activity.requestStartDate as string),
       TalepBit: formatDate(activity.requestEndDate as string),
@@ -228,8 +189,6 @@ export class ActivityService {
       Aciklama: (activity.description as string) || '',
       MaksOgrenciSayisi: (activity.maxStudentCount as number) ?? '',
       MaksVeliSayisi: (activity.studentParentCount as number) ?? '',
-      // SorumluSicilId formda seçilmiyor; ad soyad serbest metin olarak
-      // SorumluAdSoyad'a yazılıyor (etkinlik sorumlusu alanı). SicilId default 0.
       SorumluSicilId: 0,
       SorumluAdSoyad: (activity.eventManager as string) || '',
       UlasimId: (activity['ulasimId'] as number) ?? '',
@@ -245,11 +204,6 @@ export class ActivityService {
       Okod5: activity.oKod5 || '',
     };
 
-    // Boş tarih parametreleri wire string'de `BasTarih=` (boş string) olur ve
-    // backend'de DATETIME2 parametresine çevrilemediği için insert'i patlatır.
-    // Anahtarı payload'dan tamamen çıkarmak, SP'deki @... DATETIME2 = NULL
-    // default'unun devreye girmesini sağlar (buildParamString null'ı da '' yapar,
-    // bu yüzden sadece null göndermek yetmez).
     for (const key of ['BasTarih', 'BitTarih', 'TalepBas', 'TalepBit'] as const) {
       if (!params[key]) {
         delete params[key];
@@ -259,18 +213,6 @@ export class ActivityService {
     return params;
   }
 
-  /**
-   * @param activity Formdan gelen değerler. TurId/UlasimId/SinifId/EgitimDuzeyiId
-   * artık formdaki seçimlerden (ad → lookup id) doldurulup payload'a ekleniyor
-   * (activities-list.ts saveActivity). SorumluSicilId formda hâlâ yok — şimdilik
-   * giriş yapmış kullanıcının sicil id'si (233) default gönderiliyor.
-   * XSicilId (etkinliği oluşturan): form hiç toplamıyor, giriş yapmış
-   * kullanıcının kendi sicil id'sinden otomatik dolduruluyor.
-   *
-   * NOT: sp_etkinlikcampus_s FK'lara INNER JOIN yaptığı için, NULL kalan bir
-   * satır INSERT olsa da listede görünmeyebilir — bu ayrı bir konu, insert'in
-   * kendisini etkilemez.
-   */
   addActivity(activity: Partial<ActivityInterface> & Record<string, unknown>): Observable<unknown> {
     return this.callDynamic(this.buildActivityParams(activity, 'i'));
   }

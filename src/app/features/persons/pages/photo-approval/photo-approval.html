@@ -10,7 +10,7 @@
         [label]="'COMMON.REFRESH' | translate"
         class="p-button-sm p-button-outlined"
         (click)="loadPendingPhotos()"
-        [loading]="isLoading && !processingId"
+        [loading]="isLoading() && !processingId()"
       ></button>
     </div>
 
@@ -18,12 +18,12 @@
       {{ 'PHOTO_APPROVAL.DESCRIPTION' | translate }}
     </div>
 
-    @if (isLoading && !processingId) {
+    @if (isLoading() && !processingId()) {
       <div class="loading-box">
         <p-progressSpinner strokeWidth="4" animationDuration=".8s"></p-progressSpinner>
         <span class="loading-text">{{ 'PHOTO_APPROVAL.LOADING' | translate }}</span>
       </div>
-    } @else if (pendingPhotos.length === 0) {
+    } @else if (pendingPhotos().length === 0) {
       <div class="empty-state">
         <i class="pi pi-check-circle text-4xl text-green-500 mb-3"></i>
         <h5 class="m-0 text-muted">{{ 'PHOTO_APPROVAL.EMPTY_TITLE' | translate }}</h5>
@@ -32,37 +32,36 @@
     } @else {
       <!-- Kart Izgarası (Grid) -->
       <div class="photo-grid">
-        @for (photo of pendingPhotos; track photo.Id) {
-          <div class="photo-card" [class.processing]="processingId === photo.Id">
+        @for (photo of pendingPhotos(); track photo.Id) {
+          <div class="photo-card" [class.processing]="processingId() === photo.Id">
             <div class="photo-wrapper">
-              @if (failedPhotoIds.has(photo.Id)) {
+              @if (failedPhotoIds().has(photo.Id)) {
                 <div class="default-avatar-wrapper">
                   <i class="pi pi-user"></i>
                 </div>
               } @else {
                 <img
-                  [src]="getPhotoUrl(photo.DosyaAdi)"
+                  [src]="photo.photoUrl"
                   [alt]="'PERSON.PHOTO' | translate"
                   class="profile-img"
                   (error)="onPhotoError(photo.Id)"
                 />
               }
 
-              <div class="photo-overlay" *ngIf="processingId === photo.Id">
-                <p-progressSpinner
-                  strokeWidth="4"
-                  [style]="{ width: '40px', height: '40px' }"
-                ></p-progressSpinner>
-              </div>
+              @if (processingId() === photo.Id) {
+                <div class="photo-overlay">
+                  <p-progressSpinner
+                    strokeWidth="4"
+                    [style]="{ width: '40px', height: '40px' }"
+                  ></p-progressSpinner>
+                </div>
+              }
             </div>
 
             <div class="photo-info">
-              <h5 class="person-name">{{ getPersonName(photo) }}</h5>
+              <h5 class="person-name">{{ photo.displayName }}</h5>
               <div class="d-flex justify-content-between align-items-center mb-2">
-                <!-- <p-tag
-                  [value]="getPersonType(photo) | translate"
-                  [severity]="getPersonTypeSeverity(photo)"
-                ></p-tag> -->
+                <p-tag [value]="photo.personTypeStr" [severity]="photo.personTypeSeverity"></p-tag>
                 <span class="upload-date" [title]="'PHOTO_APPROVAL.UPLOAD_DATE' | translate">
                   <i class="pi pi-calendar"></i>
                   {{ photo.YuklemeTarihi | date: 'dd.MM.yyyy HH:mm' }}
@@ -77,7 +76,7 @@
                 [label]="'PHOTO_APPROVAL.REJECT' | translate"
                 class="p-button-danger p-button-outlined w-100"
                 (click)="rejectPhoto(photo)"
-                [disabled]="processingId !== null"
+                [disabled]="processingId() !== null"
               ></button>
               <button
                 pButton
@@ -85,7 +84,7 @@
                 [label]="'PHOTO_APPROVAL.APPROVE' | translate"
                 class="p-button-success w-100"
                 (click)="approvePhoto(photo)"
-                [disabled]="processingId !== null"
+                [disabled]="processingId() !== null"
               ></button>
             </div>
           </div>

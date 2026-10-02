@@ -6,9 +6,8 @@
 .admin-wrapper {
   height: 100%;
   overflow-y: auto;
-  padding-right: 8px; /* Scrollbar için biraz boşluk bırakıyoruz */
+  padding-right: 8px;
 
-  /* İsteğe bağlı: Scrollbar'ı daha zarif göstermek için */
   &::-webkit-scrollbar {
     width: 6px;
   }
@@ -36,7 +35,9 @@
   border-radius: 12px;
   overflow: hidden;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.04);
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
 
   &:hover {
     transform: translateY(-4px);
@@ -68,7 +69,7 @@
     &:hover {
       transform: scale(1.05);
     }
-    
+
     &.error-img {
       object-fit: contain;
       padding: 20px;
