@@ -88,24 +88,27 @@ export interface Absentee {
 }
 
 /** "O an okulda olan" kişi listesi (sp_DashboardKisilerCampus_s). */
-export interface DashboardKisiler {
+/** Kişi türü filtresi / değeri. Backend karşılıkları: OGRENCI / VELI. */
+export type PersonType = 'STUDENT' | 'PARENT';
+
+export interface InsidePerson {
   id: number;
   fullName: string;
-  tur: string;
+  type: PersonType;
   className: string | null;
   schoolName: string | null;
-  sicilNo: string | null;
-  okulda: boolean;
+  registryNo: string | null;
+  isInside: boolean;
 }
 
 export interface AccessTransaction {
   id: number;
   personName: string;
-  sicilno: string;
+  registryNo: string;
   userdef: number;
   badgeClass: string;
   badgeLabel: string;
-  cardid: string;
+  cardId: string;
   time: string;
   direction: 'in' | 'out';
   device: string;
@@ -114,7 +117,7 @@ export interface AccessTransaction {
   rawResultText: string;
 }
 
-interface SonHareketlerRow {
+interface RecentTransactionRow {
   userDef: string;
   adSoyad: string;
   EventTime: string;
@@ -135,7 +138,7 @@ interface SonHareketlerRow {
  * SadeceOkulda=1 sabiti ile yalnızca son geçişi giriş (IO=2) olan, yani "o an
  * okulda olan" kişiler döner; kayıtlı olup okulda olmayanlar listeye girmez.
  */
-interface DashboardKisilerRow {
+interface InsidePersonRow {
   SicilId: number;
   AdSoyad: string;
   Tur: string;
@@ -144,6 +147,12 @@ interface DashboardKisilerRow {
   SicilNo: string | null;
   Okulda: number;
 }
+
+/** Backend'in beklediği kişi türü değerleri. */
+const PERSON_TYPE_TO_DB: Record<PersonType, string> = {
+  STUDENT: 'OGRENCI',
+  PARENT: 'VELI',
+};
 
 @Injectable({
   providedIn: 'root',
@@ -247,12 +256,12 @@ export class DashboardService {
    * kişileri döndürür — kayıtlı olup okulda olmayanlar listeye girmez.
    * islemno bilinçli olarak gönderilmez; backend oturumdan çözer.
    */
-  getKisilerCampus(tip: 'OGRENCI' | 'VELI' | null): Observable<DashboardKisiler[]> {
+  getInsidePersons(type: PersonType | null): Observable<InsidePerson[]> {
     return this.api
-      .callEndpoint<DashboardKisilerRow[]>('Dynamic', {
+      .callEndpoint<InsidePersonRow[]>('Dynamic', {
         point: 'DashboardKisilerCampus',
         islemtipi: 's',
-        Tip: tip ?? undefined,
+        Tip: type ? PERSON_TYPE_TO_DB[type] : undefined,
         SadeceOkulda: 1,
       })
       .pipe(
@@ -260,11 +269,11 @@ export class DashboardService {
           (rows || []).map((row) => ({
             id: row.SicilId,
             fullName: row.AdSoyad,
-            tur: row.Tur,
+            type: row.Tur === 'OGRENCI' ? 'STUDENT' : 'PARENT',
             className: row.Sinif,
             schoolName: row.Okul,
-            sicilNo: row.SicilNo,
-            okulda: row.Okulda === 1,
+            registryNo: row.SicilNo,
+            isInside: row.Okulda === 1,
           })),
         ),
       );
@@ -272,7 +281,7 @@ export class DashboardService {
 
   getRecentTransactions(adet: number = 10): Observable<AccessTransaction[]> {
     return this.api
-      .callEndpoint<SonHareketlerRow[]>('Dynamic', {
+      .callEndpoint<RecentTransactionRow[]>('Dynamic', {
         point: 'SonHareketlerCampus',
         islemtipi: 's',
         Adet: adet,
@@ -293,11 +302,11 @@ export class DashboardService {
             return {
               id: index + 1, // Satır numarası olarak kullanıyoruz
               personName: row.adSoyad || '-',
-              sicilno: row.SicilNo || '-',
+              registryNo: row.SicilNo || '-',
               userdef: isStudent ? 11 : 12, // UI renk ayrımları için
               badgeClass: isStudent ? 'badge-student' : 'badge-parent',
               badgeLabel: row.userDef || '-',
-              cardid: row.CardID || '-',
+              cardId: row.CardID || '-',
               time: this.formatEventTime(row.EventTime),
               direction: isIn ? 'in' : 'out',
               rawDirectionText: row.Ad || '-',

@@ -2,52 +2,88 @@ import {
   Component,
   OnInit,
   ChangeDetectionStrategy,
-  ChangeDetectorRef,
   DestroyRef,
+  computed,
   inject,
+  signal,
 } from '@angular/core';
-import { BehaviorSubject, timer } from 'rxjs';
-import { switchMap } from 'rxjs/operators';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { HttpErrorResponse } from '@angular/common/http';
-import { forkJoin } from 'rxjs';
-import { PersonService } from '../../../persons/services/person.service';
+import { DOCUMENT, DatePipe, NgTemplateOutlet } from '@angular/common';
+import { FormsModule } from '@angular/forms';
+import { rxResource, takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import {
-  Person,
-  UserDef,
-  getUserDefLabel,
-  getUserDefBadgeClass,
-  getUserDefLabelKey,
-} from '../../../../core/models/person.model';
-import { AuthService } from '../../../../core/services/auth.service';
-import {
-  DashboardService,
-  DashboardCampusStats,
-  EarlyLeaver,
-  LateArrival,
-  Absentee,
-  AccessTransaction,
-  DashboardKisiler,
-} from '../../services/dashboard.service';
+  EMPTY,
+  Subject,
+  Observable,
+  Subscription,
+  catchError,
+  distinctUntilChanged,
+  filter,
+  startWith,
+  switchMap,
+  tap,
+  timer,
+} from 'rxjs';
 import { ButtonModule } from 'primeng/button';
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
 import { DialogModule } from 'primeng/dialog';
 import { TooltipModule } from 'primeng/tooltip';
 import { InputTextModule } from 'primeng/inputtext';
-import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
+import { AuthService } from '../../../../core/services/auth.service';
+import {
+  DashboardService,
+  PersonType,
+  DashboardCampusStats,
+  EarlyLeaver,
+  LateArrival,
+  Absentee,
+  AccessTransaction,
+  InsidePerson,
+} from '../../services/dashboard.service';
+
+interface InsideDialogState {
+  type: PersonType | null;
+  persons: InsidePerson[];
+  loading: boolean;
+  error: boolean;
+}
+
+/** Özet kartlarındaki listelerde gösterilecek maksimum satır sayısı. */
+const PREVIEW_LIMIT = 5;
+/** Son hareketler yenileme aralığı (ms). */
+const TRANSACTION_POLL_MS = 1500;
+const TRANSACTION_LIMIT_DEFAULT = 10;
+const TRANSACTION_LIMIT_FULL = 100;
+
+const EMPTY_STATS: DashboardCampusStats = {
+  studentCount: 0,
+  parentCount: 0,
+  totalRegisteredCount: 0,
+  studentInsideCount: 0,
+  parentInsideCount: 0,
+  totalInsideCount: 0,
+};
+
+const INITIAL_INSIDE_DIALOG: InsideDialogState = {
+  type: null,
+  persons: [],
+  loading: false,
+  error: false,
+};
+
+const toLowerTr = (value: string | null | undefined): string =>
+  (value ?? '').toLocaleLowerCase('tr-TR');
 
 @Component({
   selector: 'app-dashboard',
-  standalone: true,
   imports: [
     ButtonModule,
     ProgressSpinnerModule,
     DialogModule,
     TooltipModule,
     InputTextModule,
-    CommonModule,
+    DatePipe,
+    NgTemplateOutlet,
     FormsModule,
     TranslatePipe,
   ],
@@ -56,250 +92,195 @@ import { TranslatePipe, TranslateService } from '@ngx-translate/core';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class DashboardComponent implements OnInit {
-  readonly UserDef = UserDef;
+  private readonly dashboardService = inject(DashboardService);
+  private readonly authService = inject(AuthService);
+  private readonly destroyRef = inject(DestroyRef);
+  private readonly translate = inject(TranslateService);
+  private readonly document = inject(DOCUMENT);
 
   /* ── State ─────────────────────────────────────────────── */
-  isLoading = false;
-  errorMessage = '';
+  /** Özet sayılar (sp_DashboardCampus_s): Kayıtlı / Okulda */
+  private readonly statsResource = this.createResource(
+    () => this.dashboardService.getDashboardStats(),
+    EMPTY_STATS,
+  );
+  private readonly earlyLeaversResource = this.createResource(
+    () => this.dashboardService.getEarlyLeavers(),
+    [] as EarlyLeaver[],
+  );
+  private readonly lateArrivalsResource = this.createResource(
+    () => this.dashboardService.getLateArrivals(),
+    [] as LateArrival[],
+  );
+  private readonly absenteesResource = this.createResource(
+    () => this.dashboardService.getAbsentees(),
+    [] as Absentee[],
+  );
+  private readonly resources = [
+    this.statsResource,
+    this.earlyLeaversResource,
+    this.lateArrivalsResource,
+    this.absenteesResource,
+  ];
 
-  allPersons: Person[] = [];
-  students: Person[] = [];
-  teachers: Person[] = [];
-  parents: Person[] = [];
+  readonly stats = this.statsResource.value;
+  readonly earlyLeavers = this.earlyLeaversResource.value;
+  readonly lateArrivals = this.lateArrivalsResource.value;
+  readonly absentees = this.absenteesResource.value;
 
-  /** sp_DashboardCampus_s'ten gelen özet sayılar (Kayıtlı / Okulda) */
-  stats: DashboardCampusStats = {
-    studentCount: 0,
-    parentCount: 0,
-    totalRegisteredCount: 0,
-    studentInsideCount: 0,
-    parentInsideCount: 0,
-    totalInsideCount: 0,
-  };
+  readonly isLoading = computed(() => this.resources.some((r) => r.isLoading()));
+  readonly errorMessage = computed(() =>
+    this.resources.some((r) => r.error()) ? 'DASHBOARD.LOAD_ERROR' : '',
+  );
+  readonly transactions = signal<AccessTransaction[]>([]);
+
+  /** Kart önizlemeleri: şablonda her değişiklik denetiminde slice yapmamak için. */
+  readonly earlyLeaversPreview = computed(() => this.earlyLeavers().slice(0, PREVIEW_LIMIT));
+  readonly latePreview = computed(() => this.lateArrivals().slice(0, PREVIEW_LIMIT));
+  readonly absenteesPreview = computed(() => this.absentees().slice(0, PREVIEW_LIMIT));
+  readonly earlyLeaversExtra = computed(() =>
+    Math.max(0, this.earlyLeavers().length - PREVIEW_LIMIT),
+  );
+  readonly absenteesExtra = computed(() => Math.max(0, this.absentees().length - PREVIEW_LIMIT));
+
+  readonly showAllTransactions = signal(false);
+  readonly transactionCount = computed(() =>
+    this.showAllTransactions() ? TRANSACTION_LIMIT_FULL : TRANSACTION_LIMIT_DEFAULT,
+  );
 
   /** Oturum başına bir kez hesaplanan değerler */
-  greeting = '';
-  userName = '';
-
-  earlyLeavers: EarlyLeaver[] = [];
-  lateArrivals: LateArrival[] = [];
-  absentees: Absentee[] = [];
-
-  recentTransactions: AccessTransaction[] = [];
-  displayedTransactions: AccessTransaction[] = [];
-  showAllTransactions = false;
-
-  private refreshTrigger$ = new BehaviorSubject<void>(undefined);
-
-  /** Etkinlik kişi listesi (mock) */
-  eventPersons: {
-    name: string;
-    role: string;
-    task: string;
-    status: string;
-    initials: string;
-    statusClass: string;
-  }[] = [];
-
-  absenteeForm = { className: '', schoolName: '', reason: '' };
+  readonly greeting = this.buildGreeting();
+  readonly userName = signal('');
 
   /* ── Dialog states ─────────────────────────────────────── */
-  txnDialogVisible = false;
-  earlyLeaverDialogVisible = false;
-  lateDialogVisible = false;
-  eventDialogVisible = false;
-  absentDialogVisible = false;
+  readonly txnDialogVisible = signal(false);
+  readonly earlyLeaverDialogVisible = signal(false);
+  readonly lateDialogVisible = signal(false);
+  readonly absentDialogVisible = signal(false);
 
   /** "O an okulda olan" kişi listesi modalı (sp_DashboardKisilerCampus_s). */
-  kisiDialog: {
-    visible: boolean;
-    tip: 'OGRENCI' | 'VELI' | null;
-    kisiler: DashboardKisiler[];
-    loading: boolean;
-    error: boolean;
-  } = { visible: false, tip: null, kisiler: [], loading: false, error: false };
-
+  readonly insideDialogVisible = signal(false);
+  readonly insideDialog = signal<InsideDialogState>(INITIAL_INSIDE_DIALOG);
   /** Kişi listesi modalındaki arama metni (isim / sınıf / okul / sicil). */
-  kisiArama = '';
+  readonly insideSearch = signal('');
 
-  /* ── Inject ────────────────────────────────────────────── */
-  private personService = inject(PersonService);
-  private dashboardService = inject(DashboardService);
-  private authService = inject(AuthService);
-  private cdr = inject(ChangeDetectorRef);
-  private destroyRef = inject(DestroyRef);
-  private translate = inject(TranslateService);
+  /** Arama metnine göre filtrelenmiş kişi listesi (isim, sınıf, okul, sicil). */
+  readonly filteredInsidePersons = computed(() => {
+    const q = toLowerTr(this.insideSearch().trim());
+    const persons = this.insideDialog().persons;
+    if (!q) return persons;
+    return persons.filter(
+      (p) =>
+        toLowerTr(p.fullName).includes(q) ||
+        toLowerTr(p.schoolName).includes(q) ||
+        toLowerTr(p.className).includes(q) ||
+        toLowerTr(p.registryNo).includes(q),
+    );
+  });
+
+  /** Yeniden başlatılan (örn. "Tekrar dene") son hareket yoklama akışı tetikleyicisi. */
+  private readonly refreshTransactions$ = new Subject<void>();
+  private insideRequest?: Subscription;
 
   /* ── Lifecycle ─────────────────────────────────────────── */
   ngOnInit(): void {
-    this.greeting = this.buildGreeting();
-    this.userName =
-      this.authService.currentUserValue?.fullname ||
-      this.authService.currentUserValue?.loginname ||
-      this.translate.instant('DASHBOARD.USER');
-    this.fetchData();
+    const user = this.authService.currentUserValue;
+    this.userName.set(
+      user?.fullname || user?.loginname || this.translate.instant('DASHBOARD.USER'),
+    );
+
     this.initTransactionStream();
   }
 
   /* ── Data ──────────────────────────────────────────────── */
+  /** Kart verilerini yeniden yükler ("Tekrar dene"). */
   fetchData(): void {
-    this.isLoading = true;
-    this.errorMessage = '';
-
-    // Kartlar sp_DashboardCampus_s'ten, alt paneller ise sicil listesinden beslenir.
-    forkJoin({
-      stats: this.dashboardService.getDashboardStats(),
-      persons: this.personService.getPersonListCampus(),
-      earlyLeaversData: this.dashboardService.getEarlyLeavers(),
-      lateArrivalsData: this.dashboardService.getLateArrivals(),
-      absenteeData: this.dashboardService.getAbsentees(),
-    })
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe({
-        next: ({ stats, persons, earlyLeaversData, lateArrivalsData, absenteeData }) => {
-          this.stats = stats;
-          this.allPersons = persons;
-
-          // Gerçek veriye dayalı listeler (erken çıkanlar ve mock paneller için)
-          this.students = persons.filter((p) => p.userdef === UserDef.Ogrenci);
-          this.teachers = persons.filter((p) => p.userdef === UserDef.Ogretmen);
-          this.parents = persons.filter((p) => p.userdef === UserDef.Veli);
-
-          this.earlyLeavers = earlyLeaversData;
-
-          this.lateArrivals = lateArrivalsData;
-
-          this.absentees = absenteeData;
-
-          // Etkinlik listesi mock
-          this.generateMockEventList();
-
-          this.isLoading = false;
-          this.cdr.markForCheck();
-        },
-        error: (err: HttpErrorResponse) => {
-          console.error('Dashboard veri yükleme hatası:', err);
-          this.errorMessage = 'DASHBOARD.LOAD_ERROR';
-          this.isLoading = false;
-          this.cdr.markForCheck();
-        },
-      });
-
-    this.refreshTrigger$.next();
+    this.resources.forEach((r) => r.reload());
   }
 
-  private initTransactionStream(): void {
-    this.refreshTrigger$
-      .pipe(
-        switchMap(() => timer(0, 1500)),
-        switchMap(() => {
-          const limit = this.showAllTransactions || this.txnDialogVisible ? 100 : 10;
-          return this.dashboardService.getRecentTransactions(limit);
-        }),
-        takeUntilDestroyed(this.destroyRef),
-      )
-      .subscribe({
-        next: (data) => {
-          this.recentTransactions = data;
-          this.displayedTransactions = data;
-          this.cdr.markForCheck();
-        },
-        error: (err) => {
-          console.error('Son hareketler alınamadı:', err);
-        },
-      });
-  }
-
-  /** Tam Ekran İşlemler Tablosu Dialog'u Açar */
-  openTxnDialog(): void {
-    this.txnDialogVisible = true;
-    this.refreshTrigger$.next(); // 100 limitli veriyi anında çekmek için tetikle
-  }
-
-  private generateMockEventList(): void {
-    const roles = ['USERDEF.STUDENT', 'USERDEF.TEACHER', 'USERDEF.PARENT', 'USERDEF.STAFF'];
-    const tasks = [
-      'DASHBOARD.TASK_PRESENTATION',
-      'DASHBOARD.TASK_ORGANIZATION',
-      'DASHBOARD.TASK_PARTICIPANT',
-      'DASHBOARD.TASK_COORDINATOR',
-      'DASHBOARD.TASK_JURY',
-    ];
-    const statuses = ['approved', 'pending', 'completed'];
-
-    const source = [...this.students, ...this.teachers, ...this.parents];
-    const shuffled = [...source].sort(() => 0.5 - Math.random());
-    const count = Math.min(12, shuffled.length);
-
-    this.eventPersons = shuffled.slice(0, count).map((p) => {
-      const status = statuses[Math.floor(Math.random() * statuses.length)];
-      return {
-        name: p.adsoyad,
-        role: roles[Math.floor(Math.random() * roles.length)],
-        task: tasks[Math.floor(Math.random() * tasks.length)],
-        status,
-        initials: p.adsoyad
-          .split(' ')
-          .map((n) => n.charAt(0))
-          .join(''),
-        statusClass:
-          status === 'approved'
-            ? 'status-approved'
-            : status === 'pending'
-              ? 'status-pending'
-              : status === 'completed'
-                ? 'status-done'
-                : '',
-      };
+  private createResource<T>(request: () => Observable<T>, defaultValue: T) {
+    return rxResource<T, void>({
+      stream: () =>
+        request().pipe(
+          tap({ error: (err) => console.error('Dashboard veri yükleme hatası:', err) }),
+        ),
+      defaultValue,
     });
   }
 
+  /**
+   * Son hareketleri periyodik yoklar. Sekme arka plandayken istek atılmaz,
+   * hata oluşursa yoklama durmaz, veri değişmediyse yeniden render edilmez.
+   */
+  private initTransactionStream(): void {
+    this.refreshTransactions$
+      .pipe(
+        startWith(undefined),
+        switchMap(() => timer(0, TRANSACTION_POLL_MS)),
+        filter(() => !this.document.hidden),
+        switchMap(() =>
+          this.dashboardService.getRecentTransactions(this.transactionLimit()).pipe(
+            catchError((err) => {
+              console.error('Son hareketler alınamadı:', err);
+              return EMPTY;
+            }),
+          ),
+        ),
+        distinctUntilChanged((a, b) => JSON.stringify(a) === JSON.stringify(b)),
+        takeUntilDestroyed(this.destroyRef),
+      )
+      .subscribe((data) => this.transactions.set(data));
+  }
+
+  private transactionLimit(): number {
+    return this.showAllTransactions() || this.txnDialogVisible()
+      ? TRANSACTION_LIMIT_FULL
+      : TRANSACTION_LIMIT_DEFAULT;
+  }
+
   /* ── UI actions ────────────────────────────────────────── */
+  /** Tam ekran işlemler tablosu dialog'unu açar ve 100 limitli veriyi anında çeker. */
+  openTxnDialog(): void {
+    this.txnDialogVisible.set(true);
+    this.refreshTransactions$.next();
+  }
+
   toggleAllTransactions(): void {
-    this.showAllTransactions = !this.showAllTransactions;
-    // this.displayedTransactions = this.showAllTransactions
-    //   ? this.recentTransactions
-    //   : this.recentTransactions.slice(0, 10);
-    this.refreshTrigger$.next();
+    this.showAllTransactions.update((v) => !v);
+    this.refreshTransactions$.next();
   }
 
   /**
    * Kartlara tıklanınca "o an okulda olan" kişi listesini modalda gösterir.
    * sp_DashboardKisilerCampus_s çağrılır (SadeceOkulda=1 sabit — sadece
-   * içeridekiler). tip: 'OGRENCI' | 'VELI' | null (ikisi birden).
+   * içeridekiler). type: 'STUDENT' | 'PARENT' | null (ikisi birden).
    */
-  openKisilerModal(tip: 'OGRENCI' | 'VELI' | null): void {
-    this.kisiArama = '';
-    this.kisiDialog = {
-      visible: true,
-      tip,
-      kisiler: [],
-      loading: true,
-      error: false,
-    };
-    this.cdr.markForCheck();
+  openInsideDialog(type: PersonType | null): void {
+    this.insideRequest?.unsubscribe();
+    this.insideSearch.set('');
+    this.insideDialog.set({ ...INITIAL_INSIDE_DIALOG, type, loading: true });
+    this.insideDialogVisible.set(true);
 
-    this.dashboardService
-      .getKisilerCampus(tip)
+    this.insideRequest = this.dashboardService
+      .getInsidePersons(type)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
-        next: (kisiler) => {
-          this.kisiDialog = { ...this.kisiDialog, kisiler, loading: false };
-          this.cdr.markForCheck();
-        },
+        next: (persons) => this.insideDialog.update((s) => ({ ...s, persons, loading: false })),
         error: (err) => {
           console.error('Okulda olan kişiler alınamadı:', err);
-          this.kisiDialog = { ...this.kisiDialog, loading: false, error: true };
-          this.cdr.markForCheck();
+          this.insideDialog.update((s) => ({ ...s, loading: false, error: true }));
         },
       });
   }
 
-  private buildGreeting(): string {
-    const hour = new Date().getHours();
-    if (hour < 12) return 'DASHBOARD.GREETING_MORNING';
-    if (hour < 18) return 'DASHBOARD.GREETING_AFTERNOON';
-    return 'DASHBOARD.GREETING_EVENING';
+  /** Detay kartı başlığındaki "genişlet" butonları için sabit referanslar. */
+  readonly openEarlyLeaverDialog = () => this.earlyLeaverDialogVisible.set(true);
+  readonly openLateDialog = () => this.lateDialogVisible.set(true);
+  readonly openAbsentDialog = () => this.absentDialogVisible.set(true);
+
+  /** Kişi listesi satırı için "Sınıf · Okul" meta metni (null alanları atlar). */
+  personMeta(person: InsidePerson): string {
+    return [person.className, person.schoolName].filter(Boolean).join(' · ');
   }
 
   directionLabel(direction: string): string {
@@ -310,41 +291,10 @@ export class DashboardComponent implements OnInit {
     return result === 'success' ? 'DASHBOARD.RESULT_SUCCESS' : 'DASHBOARD.RESULT_FAILED';
   }
 
-  statusLabel(status: string): string {
-    if (status === 'approved') return 'DASHBOARD.STATUS_APPROVED';
-    if (status === 'pending') return 'DASHBOARD.STATUS_PENDING';
-    return 'DASHBOARD.STATUS_COMPLETED';
-  }
-
-  getUserdefBadge(userdef: number): string {
-    return getUserDefLabelKey(userdef);
-  }
-
-  getUserdefBadgeClass(userdef: number): string {
-    return getUserDefBadgeClass(userdef);
-  }
-
-  /** Kişi listesi satırı için "Sınıf · Okul" meta metni (null alanları atlar). */
-  kisiMeta(kisi: DashboardKisiler): string {
-    return [kisi.className, kisi.schoolName].filter(Boolean).join(' · ');
-  }
-
-  /** Arama metnine göre filtrelenmiş kişi listesi (isim, sınıf, okul, sicil). */
-  get kisiFiltreli(): DashboardKisiler[] {
-    const q = this.kisiArama.trim().toLocaleLowerCase('tr-TR');
-    if (!q) return this.kisiDialog.kisiler;
-    return this.kisiDialog.kisiler.filter(
-      (k) =>
-        k.fullName.toLocaleLowerCase('tr-TR').includes(q) ||
-        (k.schoolName ?? '').toLocaleLowerCase('tr-TR').includes(q) ||
-        (k.className ?? '').toLocaleLowerCase('tr-TR').includes(q) ||
-        (k.sicilNo ?? '').toLocaleLowerCase('tr-TR').includes(q),
-    );
-  }
-
-  saveAbsentee(): void {
-    // TODO: Implement save absentee logic
-    this.absentDialogVisible = false;
-    this.absenteeForm = { className: '', schoolName: '', reason: '' };
+  private buildGreeting(): string {
+    const hour = new Date().getHours();
+    if (hour < 12) return 'DASHBOARD.GREETING_MORNING';
+    if (hour < 18) return 'DASHBOARD.GREETING_AFTERNOON';
+    return 'DASHBOARD.GREETING_EVENING';
   }
 }

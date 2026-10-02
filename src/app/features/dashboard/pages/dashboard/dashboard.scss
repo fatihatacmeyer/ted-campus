@@ -23,7 +23,7 @@ $text-secondary: #6b7280;
 $text-muted: #9ca3af;
 $shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.04);
 $shadow-card: 0 2px 12px rgba(0, 0, 0, 0.06);
-$shadow-hover: 0 8px 28px rgba(0, 0, 0, 0.10);
+$shadow-hover: 0 8px 28px rgba(0, 0, 0, 0.1);
 $radius-sm: 10px;
 $radius-md: 16px;
 $radius-lg: 20px;
@@ -183,9 +183,18 @@ $radius-full: 9999px;
     font-size: 26px;
   }
 
-  &.icon-emerald { background: #ecfdf5; color: #059669; }
-  &.icon-orange { background: #fff7ed; color: #ea580c; }
-  &.icon-purple { background: #f5f3ff; color: #7c3aed; }
+  &.icon-emerald {
+    background: #ecfdf5;
+    color: #059669;
+  }
+  &.icon-orange {
+    background: #fff7ed;
+    color: #ea580c;
+  }
+  &.icon-purple {
+    background: #f5f3ff;
+    color: #7c3aed;
+  }
 }
 
 .stat-info {
@@ -297,10 +306,22 @@ $radius-full: 9999px;
     font-size: 22px;
   }
 
-  &.icon-red { background: #fef2f2; color: $brand-red; }
-  &.icon-teal { background: #f0fdfa; color: #0d9488; }
-  &.icon-cyan { background: #ecfeff; color: #0891b2; }
-  &.icon-slate { background: #f1f5f9; color: #475569; }
+  &.icon-red {
+    background: #fef2f2;
+    color: $brand-red;
+  }
+  &.icon-teal {
+    background: #f0fdfa;
+    color: #0d9488;
+  }
+  &.icon-cyan {
+    background: #ecfeff;
+    color: #0891b2;
+  }
+  &.icon-slate {
+    background: #f1f5f9;
+    color: #475569;
+  }
 }
 
 .detail-card-body {
@@ -362,11 +383,26 @@ $radius-full: 9999px;
   flex-shrink: 0;
   letter-spacing: 0.02em;
 
-  &.avatar-student { background: #ecfdf5; color: #059669; }
-  &.avatar-teacher { background: #eff6ff; color: #2563eb; }
-  &.avatar-late { background: #fff7ed; color: #ea580c; }
-  &.avatar-event { background: #f5f3ff; color: #7c3aed; }
-  &.avatar-parent { background: #fff7ed; color: #ea580c; }
+  &.avatar-student {
+    background: #ecfdf5;
+    color: #059669;
+  }
+  &.avatar-teacher {
+    background: #eff6ff;
+    color: #2563eb;
+  }
+  &.avatar-late {
+    background: #fff7ed;
+    color: #ea580c;
+  }
+  &.avatar-event {
+    background: #f5f3ff;
+    color: #7c3aed;
+  }
+  &.avatar-parent {
+    background: #fff7ed;
+    color: #ea580c;
+  }
 
   .material-symbols-outlined {
     font-size: 18px;
@@ -410,6 +446,37 @@ $radius-full: 9999px;
   }
 }
 
+.person-times {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 2px;
+}
+
+.person-exit-time {
+  &.time-early,
+  &.time-late,
+  &.time-absent {
+    font-weight: 600;
+  }
+  &.time-early {
+    color: #dc2134;
+  }
+  &.time-late {
+    color: #ea580c;
+  }
+  &.time-absent {
+    color: #6b7280;
+  }
+}
+
+.person-expected {
+  font-size: 0.7rem;
+  color: #6b7280;
+  white-space: nowrap;
+}
+
 .person-delay-badge {
   color: #ea580c;
   font-weight: 600;
@@ -427,10 +494,22 @@ $radius-full: 9999px;
   white-space: nowrap;
   flex-shrink: 0;
 
-  &.badge-student { background: #ecfdf5; color: #059669; }
-  &.badge-teacher { background: #eff6ff; color: #2563eb; }
-  &.badge-parent { background: #fff7ed; color: #ea580c; }
-  &.badge-default { background: $bg-muted; color: $text-secondary; }
+  &.badge-student {
+    background: #ecfdf5;
+    color: #059669;
+  }
+  &.badge-teacher {
+    background: #eff6ff;
+    color: #2563eb;
+  }
+  &.badge-parent {
+    background: #fff7ed;
+    color: #ea580c;
+  }
+  &.badge-default {
+    background: $bg-muted;
+    color: $text-secondary;
+  }
 }
 
 .event-status-badge {
@@ -441,9 +520,18 @@ $radius-full: 9999px;
   white-space: nowrap;
   flex-shrink: 0;
 
-  &.status-approved { background: #ecfdf5; color: #059669; }
-  &.status-pending { background: #fffbeb; color: #d97706; }
-  &.status-done { background: #eff6ff; color: #2563eb; }
+  &.status-approved {
+    background: #ecfdf5;
+    color: #059669;
+  }
+  &.status-pending {
+    background: #fffbeb;
+    color: #d97706;
+  }
+  &.status-done {
+    background: #eff6ff;
+    color: #2563eb;
+  }
 }
 
 /* ── Event Grid (full-width card) ──────────────────────── */
@@ -569,8 +657,12 @@ $radius-full: 9999px;
     border-bottom: 1px solid $border-light;
     white-space: nowrap;
 
-    &:first-child { padding-left: 20px; }
-    &:last-child { padding-right: 20px; }
+    &:first-child {
+      padding-left: 20px;
+    }
+    &:last-child {
+      padding-right: 20px;
+    }
   }
 
   td {
@@ -579,8 +671,12 @@ $radius-full: 9999px;
     color: $text-primary;
     white-space: nowrap;
 
-    &:first-child { padding-left: 20px; }
-    &:last-child { padding-right: 20px; }
+    &:first-child {
+      padding-left: 20px;
+    }
+    &:last-child {
+      padding-right: 20px;
+    }
   }
 
   tbody tr {
@@ -637,8 +733,12 @@ $radius-full: 9999px;
     font-size: 16px;
   }
 
-  &.direction-in { color: #059669; }
-  &.direction-out { color: #ea580c; }
+  &.direction-in {
+    color: #059669;
+  }
+  &.direction-out {
+    color: #ea580c;
+  }
 }
 
 .txn-result {
@@ -648,8 +748,14 @@ $radius-full: 9999px;
   padding: 3px 10px;
   border-radius: $radius-full;
 
-  &.result-ok { background: #ecfdf5; color: #059669; }
-  &.result-fail { background: #fef2f2; color: $brand-red; }
+  &.result-ok {
+    background: #ecfdf5;
+    color: #059669;
+  }
+  &.result-fail {
+    background: #fef2f2;
+    color: $brand-red;
+  }
 }
 
 /* ═══════════════════════════════════════════════════════════
@@ -698,7 +804,7 @@ $radius-full: 9999px;
 /* ── Kişi Listesi Modalı (sabit boyut + arama) ────────────
    Dialog'a sabit height verildiği için içerik flex-column;
    liste kalan tüm alanı doldurur, taşarsa kendi içinde kayar. */
-.dashboard-kisi-dialog {
+.dashboard-inside-dialog {
   .p-dialog-content {
     display: flex;
     flex-direction: column;
@@ -706,7 +812,7 @@ $radius-full: 9999px;
     overflow: hidden;
   }
 
-  .kisi-arama {
+  .inside-search {
     position: relative;
     margin-bottom: 14px;
     flex-shrink: 0;
