@@ -1,13 +1,13 @@
 <!-- ════════════════════════════════════════════════════════════
-     TED Dashboard — Ana Sayfa
+     TED Dashboard — Ana Sayfa (Tailwind, mobile-first responsive)
      Tekrarlanan parçalar (stat kartı, kişi satırı, hareket tablosu,
      detay kartı başlığı) aşağıdaki ng-template'lerde tanımlıdır.
+     Breakpoint'ler: sm=640 · md=768 · lg=1024 · xl=1280
      ════════════════════════════════════════════════════════════ -->
 
 <!-- ── Stat kartı ─────────────────────────────────────────── -->
 <ng-template
   #statCard
-  let-cls="cls"
   let-iconCls="iconCls"
   let-icon="icon"
   let-registered="registered"
@@ -16,26 +16,31 @@
   let-type="type"
 >
   <div
-    class="stat-card"
-    [class]="cls"
+    class="group animate-fade-in-up shadow-card hover:shadow-hover relative flex cursor-pointer items-center gap-4 overflow-hidden rounded-2xl bg-white p-4 transition-all duration-250 ease-in-out hover:-translate-y-[3px] active:-translate-y-px sm:p-6"
     (click)="openInsideDialog(type)"
     (keyup.enter)="openInsideDialog(type)"
     tabindex="0"
     role="button"
   >
-    <div class="stat-icon" [class]="iconCls">
-      <span class="material-symbols-outlined">{{ icon }}</span>
+    <div
+      class="flex size-[52px] shrink-0 items-center justify-center rounded-[14px]"
+      [class]="iconCls"
+    >
+      <span class="material-symbols-outlined !text-[26px]">{{ icon }}</span>
     </div>
-    <div class="stat-info">
-      <span class="stat-count">
-        {{ registered }}<span class="stat-slash">/</span
-        ><span class="stat-inside">{{ inside }}</span>
+    <div class="flex min-w-0 flex-1 flex-col gap-0.5">
+      <span class="text-ink text-[1.75rem] leading-[1.1] font-bold tracking-tight sm:text-[2rem]">
+        {{ registered }}<span class="text-ink-3 mx-1.5 font-normal">/</span
+        ><span class="text-ink-2">{{ inside }}</span>
       </span>
-      <span class="stat-label"
+      <span class="text-ink-2 text-[0.85rem] font-medium"
         >{{ labelKey | translate }} &middot; {{ 'DASHBOARD.REGISTERED_INSIDE' | translate }}</span
       >
     </div>
-    <span class="material-symbols-outlined stat-arrow">arrow_forward</span>
+    <span
+      class="material-symbols-outlined text-ink-3 hidden -translate-x-2 !text-xl opacity-0 transition-all duration-250 ease-in-out group-hover:translate-x-0 group-hover:opacity-100 sm:block"
+      >arrow_forward</span
+    >
   </div>
 </ng-template>
 
@@ -48,19 +53,26 @@
   let-count="count"
   let-onExpand="onExpand"
 >
-  <div class="detail-card-header">
-    <div class="detail-card-title">
-      <div class="detail-icon" [class]="iconCls">
-        <span class="material-symbols-outlined">{{ icon }}</span>
+  <div class="flex items-center justify-between gap-2 px-4 pt-5 pb-3 sm:px-6">
+    <div class="flex min-w-0 items-center gap-3.5">
+      <div
+        class="flex size-[42px] shrink-0 items-center justify-center rounded-xl"
+        [class]="iconCls"
+      >
+        <span class="material-symbols-outlined !text-[22px]">{{ icon }}</span>
       </div>
-      <div>
-        <h3>{{ titleKey | translate }}</h3>
-        <span class="detail-subtitle">{{ count }} {{ 'COMMON.PERSON' | translate }}</span>
+      <div class="min-w-0">
+        <h3 class="text-ink m-0 truncate text-base leading-[1.3] font-semibold">
+          {{ titleKey | translate }}
+        </h3>
+        <span class="text-ink-3 text-[0.8rem] font-normal"
+          >{{ count }} {{ 'COMMON.PERSON' | translate }}</span
+        >
       </div>
     </div>
     <button
       pButton
-      class="p-button-text p-button-sm p-button-rounded"
+      class="p-button-text p-button-sm p-button-rounded shrink-0"
       icon="pi pi-expand"
       pTooltip="{{ 'COMMON.VIEW_FULL' | translate }}"
       tooltipPosition="bottom"
@@ -72,41 +84,57 @@
 
 <!-- ── Kişi satırı (erken çıkan / geç kalan / gelmeyen) ───── -->
 <ng-template #personRow let-person="person" let-kind="kind">
-  <div class="person-row">
-    <div class="person-avatar" [class]="kind === 'late' ? 'avatar-late' : 'avatar-student'">
+  <div
+    class="hover:bg-muted flex items-center gap-3 rounded-[10px] px-3 py-2.5 transition-colors duration-150"
+  >
+    <div
+      class="flex size-[38px] shrink-0 items-center justify-center rounded-[10px] text-[0.8rem] font-bold tracking-wide"
+      [class]="kind === 'late' ? 'bg-orange-50 text-orange-600' : 'bg-emerald-50 text-emerald-600'"
+    >
       {{ person.fullName ? person.fullName.charAt(0) : '?' }}
     </div>
 
-    <div class="person-info">
-      <span class="person-name">{{ person.fullName }}</span>
-      <span class="person-meta">{{ person.className }} &middot; {{ person.schoolName }}</span>
+    <div class="flex min-w-0 flex-1 flex-col gap-px">
+      <span class="text-ink truncate text-[0.9rem] font-semibold">{{ person.fullName }}</span>
+      <span class="text-ink-3 truncate text-[0.78rem]"
+        >{{ person.className }} &middot; {{ person.schoolName }}</span
+      >
     </div>
 
-    <span class="person-badge badge-student">{{ 'USERDEF.STUDENT' | translate }}</span>
+    <span
+      class="hidden shrink-0 rounded-full bg-emerald-50 px-2 py-0.5 text-[0.7rem] font-semibold whitespace-nowrap text-emerald-600 sm:inline"
+      >{{ 'USERDEF.STUDENT' | translate }}</span
+    >
 
-    <div class="person-times">
+    <div class="flex shrink-0 flex-col items-end justify-center gap-0.5">
       @switch (kind) {
         @case ('early') {
-          <span class="person-exit-time time-early">
-            <span class="material-symbols-outlined">logout</span>
+          <span
+            class="text-brand flex shrink-0 items-center gap-1 text-[0.8rem] font-semibold whitespace-nowrap"
+          >
+            <span class="material-symbols-outlined !text-base">logout</span>
             {{ person.exitTime | date: 'HH:mm:ss' }}
           </span>
-          <span class="person-expected"
+          <span class="text-ink-2 text-[0.7rem] whitespace-nowrap"
             >{{ 'DASHBOARD.EXPECTED' | translate }}: {{ person.expectedExitTime }}</span
           >
         }
         @case ('late') {
-          <span class="person-exit-time time-late">
-            <span class="material-symbols-outlined">login</span>
+          <span
+            class="flex shrink-0 items-center gap-1 text-[0.8rem] font-semibold whitespace-nowrap text-orange-600"
+          >
+            <span class="material-symbols-outlined !text-base">login</span>
             {{ person.entryTime | date: 'HH:mm:ss' }}
           </span>
-          <span class="person-expected"
+          <span class="text-ink-2 text-[0.7rem] whitespace-nowrap"
             >{{ 'DASHBOARD.EXPECTED' | translate }}: {{ person.expectedEntryTime }}</span
           >
         }
         @default {
-          <span class="person-exit-time time-absent">
-            <span class="material-symbols-outlined">close</span>
+          <span
+            class="text-ink-2 flex shrink-0 items-center gap-1 text-[0.8rem] font-semibold whitespace-nowrap"
+          >
+            <span class="material-symbols-outlined !text-base">close</span>
             {{ 'DASHBOARD.NO_ENTRY' | translate }}
           </span>
         }
@@ -118,41 +146,49 @@
 <!-- ── Son hareketler tablosu ─────────────────────────────── -->
 <!-- translated=true (dialog): DB metinleri çeviri anahtarı olarak çözülür. -->
 <ng-template #txnTable let-rows="rows" let-translated="translated">
-  <div class="txn-table-wrapper">
-    <table class="txn-table">
+  <div class="overflow-x-auto px-1">
+    <table class="w-full border-collapse text-[0.85rem]">
       <thead>
-        <tr>
-          <th>#</th>
-          <th>{{ 'DASHBOARD.COLUMN_NAME' | translate }}</th>
-          <th>{{ 'DASHBOARD.COLUMN_SICIL' | translate }}</th>
-          <th>{{ 'DASHBOARD.COLUMN_CARD' | translate }}</th>
-          <th>{{ 'DASHBOARD.COLUMN_DIRECTION' | translate }}</th>
-          <th>{{ 'DASHBOARD.COLUMN_DEVICE' | translate }}</th>
-          <th>{{ 'DASHBOARD.COLUMN_TIME' | translate }}</th>
-          <th>{{ 'DASHBOARD.COLUMN_RESULT' | translate }}</th>
+        <tr class="bg-muted text-ink-2 text-left text-[0.75rem] tracking-[0.04em] uppercase">
+          @for (key of txnColumns; track key) {
+            <th
+              class="border-line border-b px-3.5 py-3 font-semibold whitespace-nowrap first:pl-5 last:pr-5"
+            >
+              {{ key | translate }}
+            </th>
+          }
         </tr>
       </thead>
       <tbody>
         @for (txn of rows; track txn.id) {
-          <tr [class.txn-failed]="txn.result === 'failed'">
-            <td class="txn-id">{{ txn.id }}</td>
-            <td>
-              <div class="txn-person">
-                <span class="person-badge" [class]="txn.badgeClass">
+          <tr
+            class="transition-colors duration-100 [&>td]:border-line [&>td]:border-b [&>td]:px-3.5 [&>td]:py-2.5 [&>td]:whitespace-nowrap [&>td:first-child]:pl-5 [&>td:last-child]:pr-5"
+            [class]="txn.result === 'failed' ? 'bg-red-50 hover:bg-red-100' : 'hover:bg-muted'"
+          >
+            <td class="text-ink-3 w-10 font-medium">{{ txn.id }}</td>
+            <td class="text-ink">
+              <div class="flex items-center gap-2 font-medium">
+                <span
+                  class="shrink-0 rounded-full px-2 py-0.5 text-[0.7rem] font-semibold whitespace-nowrap"
+                  [class]="
+                    txn.badgeClass === 'badge-student'
+                      ? 'bg-emerald-50 text-emerald-600'
+                      : 'bg-orange-50 text-orange-600'
+                  "
+                >
                   {{ translated ? (txn.badgeLabel | translate) : txn.badgeLabel }}
                 </span>
                 {{ txn.personName }}
               </div>
             </td>
-            <td class="txn-sicil">{{ txn.registryNo }}</td>
-            <td class="txn-card">{{ txn.cardId }}</td>
-            <td>
+            <td class="text-ink-2 font-mono text-[0.8rem]">{{ txn.registryNo }}</td>
+            <td class="text-ink-2 font-mono text-[0.8rem]">{{ txn.cardId }}</td>
+            <td class="text-ink">
               <span
-                class="txn-direction"
-                [class.direction-in]="txn.direction === 'in'"
-                [class.direction-out]="txn.direction === 'out'"
+                class="inline-flex items-center gap-1 text-[0.82rem] font-medium"
+                [class]="txn.direction === 'in' ? 'text-emerald-600' : 'text-orange-600'"
               >
-                <span class="material-symbols-outlined">{{
+                <span class="material-symbols-outlined !text-base">{{
                   txn.direction === 'in' ? 'login' : 'logout'
                 }}</span>
                 {{
@@ -160,13 +196,18 @@
                 }}
               </span>
             </td>
-            <td>{{ translated ? (txn.device | translate) : txn.device }}</td>
-            <td class="txn-time">{{ txn.time }}</td>
-            <td>
+            <td class="text-ink">{{ translated ? (txn.device | translate) : txn.device }}</td>
+            <td class="text-ink-2 font-mono text-[0.8rem]">{{ txn.time }}</td>
+            <td class="text-ink">
               <span
-                class="txn-result"
-                [class.result-ok]="txn.result === 'success'"
-                [class.result-fail]="txn.result === 'failed'"
+                class="inline-block rounded-full px-2.5 py-[3px] text-[0.75rem] font-semibold"
+                [class]="
+                  txn.result === 'success'
+                    ? 'bg-emerald-50 text-emerald-600'
+                    : txn.result === 'failed'
+                      ? 'bg-brand-light text-brand'
+                      : ''
+                "
               >
                 {{ translated ? (resultLabel(txn.result) | translate) : txn.rawResultText }}
               </span>
@@ -178,28 +219,42 @@
   </div>
 </ng-template>
 
-<div class="dashboard">
+<!-- ── Boş durum ──────────────────────────────────────────── -->
+<ng-template #emptyState let-messageKey="messageKey">
+  <div class="flex flex-col items-center gap-2 px-4 py-8 text-center">
+    <span class="material-symbols-outlined !text-4xl text-emerald-100">check_circle</span>
+    <p class="text-ink-3 m-0 text-[0.9rem]">{{ messageKey | translate }}</p>
+  </div>
+</ng-template>
+
+<div class="w-full">
   <!-- ── Welcome Banner ──────────────────────────────────── -->
-  <div class="welcome-banner">
-    <div class="welcome-content">
-      <h1>{{ greeting | translate }}, {{ userName() }}!</h1>
-      <p>{{ 'DASHBOARD.WELCOME_HINT' | translate }}</p>
+  <div
+    class="before:bg-brand/15 relative mb-5 flex items-center justify-between gap-4 overflow-hidden rounded-[20px] bg-linear-to-br from-gray-800 via-gray-700 to-gray-600 px-5 py-6 text-white before:pointer-events-none before:absolute before:-top-[40%] before:-right-[10%] before:size-[300px] before:rounded-full before:content-[''] after:pointer-events-none after:absolute after:-bottom-[60%] after:left-[20%] after:size-[200px] after:rounded-full after:bg-white/5 after:content-[''] sm:mb-7 sm:px-9 sm:py-8"
+  >
+    <div class="relative z-1 min-w-0">
+      <h1 class="m-0 mb-1.5 text-xl font-bold tracking-tight sm:text-[1.6rem]">
+        {{ greeting | translate }}, {{ userName() }}!
+      </h1>
+      <p class="m-0 text-[0.95rem] opacity-75">{{ 'DASHBOARD.WELCOME_HINT' | translate }}</p>
     </div>
-    <div class="welcome-decoration">
-      <span class="material-symbols-outlined">dashboard</span>
+    <div class="relative z-1 hidden sm:block">
+      <span class="material-symbols-outlined !text-[56px] opacity-[0.18]">dashboard</span>
     </div>
   </div>
 
   <!-- ── Loading State ───────────────────────────────────── -->
   @if (isLoading()) {
-    <div class="loading-container">
+    <div class="flex flex-col items-center gap-4 py-20">
       <p-progressSpinner strokeWidth="4" animationDuration=".8s" />
-      <p class="loading-text">{{ 'DASHBOARD.LOADING_DATA' | translate }}</p>
+      <p class="text-ink-2 m-0 text-[0.95rem]">{{ 'DASHBOARD.LOADING_DATA' | translate }}</p>
     </div>
   } @else if (errorMessage()) {
     <!-- ── Error State ─────────────────────────────────────── -->
-    <div class="error-banner">
-      <span class="material-symbols-outlined">error</span>
+    <div
+      class="border-brand/20 bg-brand-light text-brand mb-6 flex flex-wrap items-center gap-3 rounded-2xl border px-5 py-4 font-medium"
+    >
+      <span class="material-symbols-outlined !text-[22px]">error</span>
       <span>{{ errorMessage() | translate }}</span>
       <button
         pButton
@@ -215,13 +270,12 @@
     <!-- Row 1 — Stat Cards (sp_DashboardCampus_s)            -->
     <!-- ════════════════════════════════════════════════════ -->
     @let s = stats();
-    <div class="stat-grid">
+    <div class="mb-6 grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-3">
       <ng-container
         *ngTemplateOutlet="
           statCard;
           context: {
-            cls: 'stat-student',
-            iconCls: 'icon-emerald',
+            iconCls: 'bg-emerald-50 text-emerald-600',
             icon: 'school',
             registered: s.studentCount,
             inside: s.studentInsideCount,
@@ -234,8 +288,7 @@
         *ngTemplateOutlet="
           statCard;
           context: {
-            cls: 'stat-parent',
-            iconCls: 'icon-orange',
+            iconCls: 'bg-orange-50 text-orange-600',
             icon: 'groups',
             registered: s.parentCount,
             inside: s.parentInsideCount,
@@ -248,8 +301,7 @@
         *ngTemplateOutlet="
           statCard;
           context: {
-            cls: 'stat-total',
-            iconCls: 'icon-purple',
+            iconCls: 'bg-violet-50 text-violet-600',
             icon: 'badge',
             registered: s.totalRegisteredCount,
             inside: s.totalInsideCount,
@@ -263,14 +315,16 @@
     <!-- ════════════════════════════════════════════════════ -->
     <!-- Row 2 — Erken Çıkan, Geç Kalan, Hiç Gelmeyen         -->
     <!-- ════════════════════════════════════════════════════ -->
-    <div class="detail-grid">
+    <div class="mb-6 grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-3">
       <!-- Erken Çıkanlar -->
-      <div class="detail-card">
+      <div
+        class="animate-fade-in-up shadow-card flex min-w-0 flex-col overflow-hidden rounded-2xl bg-white [animation-delay:250ms]"
+      >
         <ng-container
           *ngTemplateOutlet="
             cardHeader;
             context: {
-              iconCls: 'icon-red',
+              iconCls: 'bg-brand-light text-brand',
               icon: 'logout',
               titleKey: 'DASHBOARD.EARLY_LEAVERS',
               count: earlyLeavers().length,
@@ -278,14 +332,13 @@
             }
           "
         />
-        <div class="detail-card-body">
+        <div class="flex-1 overflow-y-auto px-4 pt-1 pb-5 sm:px-6">
           @if (earlyLeavers().length === 0) {
-            <div class="empty-state">
-              <span class="material-symbols-outlined">check_circle</span>
-              <p>{{ 'DASHBOARD.NO_EARLY_LEAVERS' | translate }}</p>
-            </div>
+            <ng-container
+              *ngTemplateOutlet="emptyState; context: { messageKey: 'DASHBOARD.NO_EARLY_LEAVERS' }"
+            />
           } @else {
-            <div class="person-list">
+            <div class="flex flex-col gap-0.5">
               @for (person of earlyLeaversPreview(); track $index) {
                 <ng-container
                   *ngTemplateOutlet="personRow; context: { person: person, kind: 'early' }"
@@ -293,7 +346,10 @@
               }
             </div>
             @if (earlyLeaversExtra() > 0) {
-              <button class="show-more-btn" (click)="earlyLeaverDialogVisible.set(true)">
+              <button
+                class="hover:bg-brand-light hover:border-brand/25 border-line text-brand mt-3 block w-full cursor-pointer rounded-[10px] border border-dashed bg-transparent p-2.5 text-center text-[0.85rem] font-semibold transition-all duration-200"
+                (click)="earlyLeaverDialogVisible.set(true)"
+              >
                 +{{ earlyLeaversExtra() }} {{ 'DASHBOARD.MORE_PEOPLE' | translate }} &hellip;
               </button>
             }
@@ -302,12 +358,14 @@
       </div>
 
       <!-- Geç Kalan Kişiler -->
-      <div class="detail-card">
+      <div
+        class="animate-fade-in-up shadow-card flex min-w-0 flex-col overflow-hidden rounded-2xl bg-white [animation-delay:250ms]"
+      >
         <ng-container
           *ngTemplateOutlet="
             cardHeader;
             context: {
-              iconCls: 'icon-teal',
+              iconCls: 'bg-teal-50 text-teal-600',
               icon: 'alarm',
               titleKey: 'DASHBOARD.LATE_ARRIVALS',
               count: lateArrivals().length,
@@ -315,14 +373,13 @@
             }
           "
         />
-        <div class="detail-card-body">
+        <div class="flex-1 overflow-y-auto px-4 pt-1 pb-5 sm:px-6">
           @if (lateArrivals().length === 0) {
-            <div class="empty-state">
-              <span class="material-symbols-outlined">check_circle</span>
-              <p>{{ 'DASHBOARD.NO_LATE_ARRIVALS' | translate }}</p>
-            </div>
+            <ng-container
+              *ngTemplateOutlet="emptyState; context: { messageKey: 'DASHBOARD.NO_LATE_ARRIVALS' }"
+            />
           } @else {
-            <div class="person-list">
+            <div class="flex flex-col gap-0.5">
               @for (late of latePreview(); track $index) {
                 <ng-container
                   *ngTemplateOutlet="personRow; context: { person: late, kind: 'late' }"
@@ -334,12 +391,14 @@
       </div>
 
       <!-- Hiç Gelmeyenler -->
-      <div class="detail-card">
+      <div
+        class="animate-fade-in-up shadow-card flex min-w-0 flex-col overflow-hidden rounded-2xl bg-white [animation-delay:250ms] md:col-span-2 xl:col-span-1"
+      >
         <ng-container
           *ngTemplateOutlet="
             cardHeader;
             context: {
-              iconCls: 'icon-slate',
+              iconCls: 'bg-slate-100 text-slate-600',
               icon: 'person_off',
               titleKey: 'DASHBOARD.ABSENTEES',
               count: absentees().length,
@@ -347,14 +406,13 @@
             }
           "
         />
-        <div class="detail-card-body">
+        <div class="flex-1 overflow-y-auto px-4 pt-1 pb-5 sm:px-6">
           @if (absentees().length === 0) {
-            <div class="empty-state">
-              <span class="material-symbols-outlined">check_circle</span>
-              <p>{{ 'DASHBOARD.NO_ABSENTEES' | translate }}</p>
-            </div>
+            <ng-container
+              *ngTemplateOutlet="emptyState; context: { messageKey: 'DASHBOARD.NO_ABSENTEES' }"
+            />
           } @else {
-            <div class="person-list">
+            <div class="flex flex-col gap-0.5">
               @for (absent of absenteesPreview(); track $index) {
                 <ng-container
                   *ngTemplateOutlet="personRow; context: { person: absent, kind: 'absent' }"
@@ -362,7 +420,10 @@
               }
             </div>
             @if (absenteesExtra() > 0) {
-              <button class="show-more-btn" (click)="absentDialogVisible.set(true)">
+              <button
+                class="hover:bg-brand-light hover:border-brand/25 border-line text-brand mt-3 block w-full cursor-pointer rounded-[10px] border border-dashed bg-transparent p-2.5 text-center text-[0.85rem] font-semibold transition-all duration-200"
+                (click)="absentDialogVisible.set(true)"
+              >
                 +{{ absenteesExtra() }} {{ 'DASHBOARD.MORE_PEOPLE' | translate }} &hellip;
               </button>
             }
@@ -374,24 +435,32 @@
     <!-- ════════════════════════════════════════════════════ -->
     <!-- Row 3 — Son İşlemler (tam genişlik)                  -->
     <!-- ════════════════════════════════════════════════════ -->
-    <div class="full-card">
+    <div
+      class="animate-fade-in-up shadow-card mb-6 overflow-hidden rounded-2xl bg-white [animation-delay:250ms]"
+    >
       @let collapseOrAll =
         showAllTransactions()
           ? ('DASHBOARD.COLLAPSE' | translate)
           : ('DASHBOARD.SHOW_ALL' | translate);
-      <div class="detail-card-header">
-        <div class="detail-card-title">
-          <div class="detail-icon icon-slate">
-            <span class="material-symbols-outlined">receipt_long</span>
+      <div
+        class="border-line flex flex-wrap items-center justify-between gap-2 border-b px-4 pt-5 pb-3 sm:px-6"
+      >
+        <div class="flex min-w-0 items-center gap-3.5">
+          <div
+            class="flex size-[42px] shrink-0 items-center justify-center rounded-xl bg-slate-100 text-slate-600"
+          >
+            <span class="material-symbols-outlined !text-[22px]">receipt_long</span>
           </div>
-          <div>
-            <h3>{{ 'DASHBOARD.RECENT_TRANSACTIONS' | translate }}</h3>
-            <span class="detail-subtitle">{{
+          <div class="min-w-0">
+            <h3 class="text-ink m-0 text-base leading-[1.3] font-semibold">
+              {{ 'DASHBOARD.RECENT_TRANSACTIONS' | translate }}
+            </h3>
+            <span class="text-ink-3 text-[0.8rem] font-normal">{{
               'DASHBOARD.LAST_TRANSACTIONS' | translate: { count: transactionCount() }
             }}</span>
           </div>
         </div>
-        <div class="header-actions">
+        <div class="flex items-center gap-1">
           <button
             pButton
             [label]="collapseOrAll"
@@ -418,7 +487,7 @@
 </div>
 
 <!-- ════════════════════════════════════════════════════════════ -->
-<!-- Dialoglar — Tam ekran genişletme                             -->
+<!-- Dialoglar — Tam ekran genişletme (mobilde ekranın %95'i)     -->
 <!-- ════════════════════════════════════════════════════════════ -->
 
 <!-- İşlemler Dialog -->
@@ -426,10 +495,9 @@
   header="{{ 'DASHBOARD.TRANSACTION_HISTORY' | translate }}"
   [(visible)]="txnDialogVisible"
   [modal]="true"
-  [style]="{ width: '90vw', maxHeight: '85vh' }"
   [draggable]="false"
   [resizable]="false"
-  styleClass="dashboard-dialog"
+  styleClass="dashboard-dialog max-h-[85vh]! w-[95vw]! lg:w-[90vw]!"
 >
   <ng-container *ngTemplateOutlet="txnTable; context: { rows: transactions(), translated: true }" />
 </p-dialog>
@@ -439,12 +507,11 @@
   header="{{ 'DASHBOARD.EARLY_LEAVERS' | translate }}"
   [(visible)]="earlyLeaverDialogVisible"
   [modal]="true"
-  [style]="{ width: '60vw', maxHeight: '80vh' }"
   [draggable]="false"
   [resizable]="false"
-  styleClass="dashboard-dialog"
+  styleClass="dashboard-dialog max-h-[80vh]! w-[95vw]! lg:w-[60vw]!"
 >
-  <div class="person-list dialog-list">
+  <div class="dialog-list flex flex-col gap-0.5">
     @for (person of earlyLeavers(); track $index) {
       <ng-container *ngTemplateOutlet="personRow; context: { person: person, kind: 'early' }" />
     }
@@ -456,12 +523,11 @@
   header="{{ 'DASHBOARD.LATE_ARRIVALS' | translate }}"
   [(visible)]="lateDialogVisible"
   [modal]="true"
-  [style]="{ width: '60vw', maxHeight: '80vh' }"
   [draggable]="false"
   [resizable]="false"
-  styleClass="dashboard-dialog"
+  styleClass="dashboard-dialog max-h-[80vh]! w-[95vw]! lg:w-[60vw]!"
 >
-  <div class="person-list dialog-list">
+  <div class="dialog-list flex flex-col gap-0.5">
     @for (late of lateArrivals(); track $index) {
       <ng-container *ngTemplateOutlet="personRow; context: { person: late, kind: 'late' }" />
     }
@@ -473,12 +539,11 @@
   header="{{ 'DASHBOARD.ABSENTEES' | translate }}"
   [(visible)]="absentDialogVisible"
   [modal]="true"
-  [style]="{ width: '60vw', maxHeight: '80vh' }"
   [draggable]="false"
   [resizable]="false"
-  styleClass="dashboard-dialog"
+  styleClass="dashboard-dialog max-h-[80vh]! w-[95vw]! lg:w-[60vw]!"
 >
-  <div class="person-list dialog-list">
+  <div class="dialog-list flex flex-col gap-0.5">
     @for (absent of absentees(); track $index) {
       <ng-container *ngTemplateOutlet="personRow; context: { person: absent, kind: 'absent' }" />
     }
@@ -497,54 +562,69 @@
   }}"
   [(visible)]="insideDialogVisible"
   [modal]="true"
-  [style]="{ width: '60vw', height: '80vh' }"
   [draggable]="false"
   [resizable]="false"
-  styleClass="dashboard-dialog dashboard-inside-dialog"
+  styleClass="dashboard-dialog dashboard-inside-dialog h-[80vh]! w-[95vw]! lg:w-[60vw]!"
 >
   @if (dialog.loading) {
-    <div class="loading-container">
+    <div class="flex flex-col items-center gap-4 py-20">
       <p-progressSpinner strokeWidth="4" animationDuration=".8s" />
-      <p class="loading-text">{{ 'DASHBOARD.LOADING_DATA' | translate }}</p>
+      <p class="text-ink-2 m-0 text-[0.95rem]">{{ 'DASHBOARD.LOADING_DATA' | translate }}</p>
     </div>
   } @else if (dialog.error) {
-    <div class="error-banner">
-      <span class="material-symbols-outlined">error</span>
+    <div
+      class="border-brand/20 bg-brand-light text-brand mb-6 flex items-center gap-3 rounded-2xl border px-5 py-4 font-medium"
+    >
+      <span class="material-symbols-outlined !text-[22px]">error</span>
       <span>{{ 'DASHBOARD.LOAD_ERROR' | translate }}</span>
     </div>
   } @else if (dialog.persons.length === 0) {
-    <div class="empty-state">{{ 'DASHBOARD.NO_ONE_INSIDE' | translate }}</div>
+    <div class="text-ink-3 flex flex-col items-center gap-2 px-4 py-8 text-center text-[0.9rem]">
+      {{ 'DASHBOARD.NO_ONE_INSIDE' | translate }}
+    </div>
   } @else {
-    <div class="inside-search">
-      <span class="material-symbols-outlined">search</span>
+    <div class="relative mb-3.5 shrink-0">
+      <span
+        class="material-symbols-outlined text-ink-3 pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 !text-lg"
+        >search</span
+      >
       <input
         pInputText
         type="text"
+        class="w-full !pl-10"
         [(ngModel)]="insideSearch"
         [placeholder]="'COMMON.SEARCH' | translate"
       />
     </div>
 
-    <div class="person-list dialog-list">
+    <div class="dialog-list flex flex-col gap-0.5">
       @for (k of filteredInsidePersons(); track k.id) {
-        <div class="person-row">
+        <div
+          class="hover:bg-muted flex items-center gap-3 rounded-[10px] px-3 py-2.5 transition-colors duration-150"
+        >
           <div
-            class="person-avatar"
-            [class.avatar-student]="k.type === 'STUDENT'"
-            [class.avatar-parent]="k.type !== 'STUDENT'"
+            class="flex size-[38px] shrink-0 items-center justify-center rounded-[10px] text-[0.8rem] font-bold tracking-wide"
+            [class]="
+              k.type === 'STUDENT'
+                ? 'bg-emerald-50 text-emerald-600'
+                : 'bg-orange-50 text-orange-600'
+            "
           >
             {{ k.fullName ? k.fullName.charAt(0) : '?' }}
           </div>
 
-          <div class="person-info">
-            <span class="person-name">{{ k.fullName }}</span>
-            <span class="person-meta">{{ personMeta(k) }}</span>
+          <div class="flex min-w-0 flex-1 flex-col gap-px">
+            <span class="text-ink truncate text-[0.9rem] font-semibold">{{ k.fullName }}</span>
+            <span class="text-ink-3 truncate text-[0.78rem]">{{ personMeta(k) }}</span>
           </div>
 
           <span
-            class="person-badge"
-            [class.badge-student]="k.type === 'STUDENT'"
-            [class.badge-parent]="k.type !== 'STUDENT'"
+            class="hidden shrink-0 rounded-full px-2 py-0.5 text-[0.7rem] font-semibold whitespace-nowrap sm:inline"
+            [class]="
+              k.type === 'STUDENT'
+                ? 'bg-emerald-50 text-emerald-600'
+                : 'bg-orange-50 text-orange-600'
+            "
           >
             {{
               k.type === 'STUDENT'
@@ -554,7 +634,11 @@
           </span>
         </div>
       } @empty {
-        <div class="empty-state">{{ 'DASHBOARD.NO_SEARCH_RESULT' | translate }}</div>
+        <div
+          class="text-ink-3 flex flex-col items-center gap-2 px-4 py-8 text-center text-[0.9rem]"
+        >
+          {{ 'DASHBOARD.NO_SEARCH_RESULT' | translate }}
+        </div>
       }
     </div>
   }

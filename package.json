@@ -22,10 +22,13 @@
     "@ngx-translate/core": "^18.0.0",
     "@ngx-translate/http-loader": "^18.0.0",
     "@primeng/themes": "^21.0.4",
+    "@tailwindcss/postcss": "^4.3.3",
     "crypto-js": "^4.2.0",
+    "postcss": "^8.5.28",
     "primeicons": "^7.0.0",
     "primeng": "^21.1.9",
     "rxjs": "~7.8.0",
+    "tailwindcss": "^4.3.3",
     "tslib": "^2.3.0",
     "xlsx": "^0.18.5"
   },

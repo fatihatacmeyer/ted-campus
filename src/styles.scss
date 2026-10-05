@@ -2,6 +2,31 @@
 /* @import url("https://fonts.googleapis.com/css?family=Poppins:300,400,500,600,700|Roboto:300,400,500,600,700"); */
 @import "primeicons/primeicons.css";
 
+/* Tailwind: preflight (reset) bilinçli olarak dahil edilmedi; PrimeNG ve mevcut
+   stilleri bozmasın diye sadece theme + utilities yükleniyor. */
+@layer theme, base, components, utilities;
+@import "tailwindcss/theme.css" layer(theme);
+@import "tailwindcss/utilities.css" layer(utilities);
+
+@theme {
+  --color-brand: #dc2134;
+  --color-brand-light: #fef2f2;
+  --color-page: #fcf9f8;
+  --color-muted: #f9fafb;
+  --color-line: #f1f5f9;
+  --color-ink: #1f2937;
+  --color-ink-2: #6b7280;
+  --color-ink-3: #9ca3af;
+  --shadow-card: 0 2px 12px rgba(0, 0, 0, 0.06);
+  --shadow-hover: 0 8px 28px rgba(0, 0, 0, 0.1);
+  --shadow-soft: 0 1px 3px rgba(0, 0, 0, 0.04);
+  --animate-fade-in-up: fade-in-up 0.4s ease backwards;
+  @keyframes fade-in-up {
+    from { opacity: 0; transform: translateY(12px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+}
+
 
 html, body {
   margin: 0;

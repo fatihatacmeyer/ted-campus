@@ -150,6 +150,18 @@ export class DashboardComponent implements OnInit {
 
   /** Oturum başına bir kez hesaplanan değerler */
   readonly greeting = this.buildGreeting();
+
+  /** Son hareketler tablosu sütun başlıkları (çeviri anahtarları). */
+  protected readonly txnColumns = [
+    '#',
+    'DASHBOARD.COLUMN_NAME',
+    'DASHBOARD.COLUMN_SICIL',
+    'DASHBOARD.COLUMN_CARD',
+    'DASHBOARD.COLUMN_DIRECTION',
+    'DASHBOARD.COLUMN_DEVICE',
+    'DASHBOARD.COLUMN_TIME',
+    'DASHBOARD.COLUMN_RESULT',
+  ];
   readonly userName = signal('');
 
   /* ── Dialog states ─────────────────────────────────────── */
