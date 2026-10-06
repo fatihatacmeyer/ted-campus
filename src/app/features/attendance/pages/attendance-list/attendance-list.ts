@@ -68,6 +68,11 @@ export class AttendanceListComponent {
   assignLeaveDialogVisible = signal(false);
   assignLeaveTargets = signal<{ id: number; adSoyad: string }[]>([]);
 
+  /** İzin düzenleme (sil + yeniden ekle) dialog state'i. */
+  editLeaveDialogVisible = signal(false);
+  editLeaveTargets = signal<{ id: number; adSoyad: string }[]>([]);
+  editLeaveId = signal<number | null>(null);
+
   /** Student attendance rows. */
   rows = signal<StudentAttendanceRow[]>([]);
   isLoading = signal(false);
@@ -277,6 +282,16 @@ export class AttendanceListComponent {
     }));
     this.assignLeaveTargets.set(targets);
     this.assignLeaveDialogVisible.set(true);
+  }
+
+  /** Detay modalından düzenleme dialogunu açar; kayıtta eski izin silinip yenisi eklenir. */
+  openEditLeaveDialog(): void {
+    const row = this.selectedLeaveRow();
+    if (!row?.izinId) return;
+    this.editLeaveTargets.set([{ id: row.sicilId, adSoyad: row.adSoyad }]);
+    this.editLeaveId.set(row.izinId);
+    this.leaveIconDialogVisible.set(false);
+    this.editLeaveDialogVisible.set(true);
   }
 
   /** İzinler kaydedildikten sonra dialogdan tetiklenir */

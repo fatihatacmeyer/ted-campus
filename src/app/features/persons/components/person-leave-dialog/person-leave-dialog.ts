@@ -28,7 +28,8 @@ import { PersonService } from '../../services/person.service';
 import { TypesService, DropdownItem } from '../../services/types.service';
 import { formatDate } from '../../../../shared/utils/date.utils';
 import { unwrapResponse } from '../../../../shared/utils/response.utils';
-import { forkJoin } from 'rxjs';
+import { concat, forkJoin, last, of } from 'rxjs';
+import { AttendanceService } from '../../../attendance/services/attendance.service';
 
 @Component({
   selector: 'app-person-leave-dialog',
@@ -53,11 +54,15 @@ export class PersonLeaveDialogComponent implements OnChanges {
 
   @Input() multiPersons: { id: number; adSoyad: string }[] = [];
 
+  /** Doluysa dialog düzenleme modunda çalışır: önce bu izin silinir, sonra yenisi eklenir. */
+  @Input() replaceLeaveId: number | null = null;
+
   @Output() visibleChange = new EventEmitter<boolean>();
   @Output() confirmed = new EventEmitter<string>();
 
   private personService = inject(PersonService);
   private typesService = inject(TypesService);
+  private attendanceService = inject(AttendanceService);
   private cdr = inject(ChangeDetectorRef);
   private readonly destroyRef = inject(DestroyRef);
 
@@ -142,6 +147,10 @@ export class PersonLeaveDialogComponent implements OnChanges {
   }
 
   get dialogTitle(): string {
+    if (this.replaceLeaveId != null) {
+      const name = this.multiPersons[0]?.adSoyad;
+      return name ? `İzni Düzenle — ${name}` : 'İzni Düzenle';
+    }
     if (this.multiPersons && this.multiPersons.length > 0) {
       return `Toplu İzin Ata (${this.multiPersons.length} Kişi)`;
     }
@@ -193,11 +202,19 @@ export class PersonLeaveDialogComponent implements OnChanges {
       return this.personService.assignLeaveCampus(request);
     });
 
-    // forkJoin ile tüm istekleri aynı anda yolla ve hepsinin bitmesini bekle
-    forkJoin(requests)
+    // Düzenleme modunda: önce mevcut izin silinir, ardından yeni izin(ler) eklenir.
+    // Silme başarısız olursa ekleme hiç yapılmaz.
+    const deleteStep$ =
+      this.replaceLeaveId != null
+        ? this.attendanceService.deleteStudentLeave(this.replaceLeaveId)
+        : of(null);
+
+    concat(deleteStep$.pipe(last()), forkJoin(requests))
+      .pipe(last())
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
-        next: (responses) => {
+        next: (res) => {
+          const responses = res as unknown[];
           this.isProcessing = false;
 
           // Tüm yanıtların başarılı (Sonuc === '1') olup olmadığını kontrol et
@@ -209,7 +226,11 @@ export class PersonLeaveDialogComponent implements OnChanges {
           });
 
           if (allSuccess) {
-            this.confirmed.emit('İzin(ler) başarıyla atandı.');
+            this.confirmed.emit(
+              this.replaceLeaveId != null
+                ? 'İzin başarıyla güncellendi.'
+                : 'İzin(ler) başarıyla atandı.',
+            );
             this.close();
           } else {
             this.errorMessage = 'Bazı izinler kaydedilemedi. Lütfen tekrar deneyin.';

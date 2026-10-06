@@ -39,6 +39,7 @@ import {
   Absentee,
   AccessTransaction,
   InsidePerson,
+  KvkkStats,
 } from '../../services/dashboard.service';
 
 interface InsideDialogState {
@@ -63,6 +64,17 @@ const EMPTY_STATS: DashboardCampusStats = {
   parentInsideCount: 0,
   totalInsideCount: 0,
 };
+
+const EMPTY_KVKK: KvkkStats = {
+  studentApproved: 0,
+  parentApproved: 0,
+  proxyApproved: 0,
+  totalApproved: 0,
+};
+
+/** Onay oranı (%): kayıtlı yoksa 0; 100'ü aşmaz. */
+const percentOf = (approved: number, registered: number): number =>
+  registered > 0 ? Math.min(100, Math.round((approved / registered) * 100)) : 0;
 
 const INITIAL_INSIDE_DIALOG: InsideDialogState = {
   type: null,
@@ -116,6 +128,15 @@ export class DashboardComponent implements OnInit {
     () => this.dashboardService.getAbsentees(),
     [] as Absentee[],
   );
+  /**
+   * KVKK onay sayıları (sp_KvkkOnayCampus_s). Bilinçli olarak `resources`
+   * dışında: bu kaynak hata verirse yalnızca KVKK şeridi hata gösterir,
+   * tüm pano hata ekranına düşmez.
+   */
+  private readonly kvkkResource = this.createResource(
+    () => this.dashboardService.getKvkkStats(),
+    EMPTY_KVKK,
+  );
   private readonly resources = [
     this.statsResource,
     this.earlyLeaversResource,
@@ -127,6 +148,16 @@ export class DashboardComponent implements OnInit {
   readonly earlyLeavers = this.earlyLeaversResource.value;
   readonly lateArrivals = this.lateArrivalsResource.value;
   readonly absentees = this.absenteesResource.value;
+
+  readonly kvkk = this.kvkkResource.value;
+  readonly kvkkLoading = this.kvkkResource.isLoading;
+  readonly kvkkError = computed(() => !!this.kvkkResource.error());
+  readonly kvkkStudentPercent = computed(() =>
+    percentOf(this.kvkk().studentApproved, this.stats().studentCount),
+  );
+  readonly kvkkParentPercent = computed(() =>
+    percentOf(this.kvkk().parentApproved, this.stats().parentCount),
+  );
 
   readonly isLoading = computed(() => this.resources.some((r) => r.isLoading()));
   readonly errorMessage = computed(() =>
@@ -196,6 +227,11 @@ export class DashboardComponent implements OnInit {
   /** Kart verilerini yeniden yükler ("Tekrar dene"). */
   fetchData(): void {
     this.resources.forEach((r) => r.reload());
+    this.kvkkResource.reload();
+  }
+
+  reloadKvkk(): void {
+    this.kvkkResource.reload();
   }
 
   private createResource<T>(request: () => Observable<T>, defaultValue: T) {

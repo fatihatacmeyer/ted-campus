@@ -136,7 +136,7 @@
       ></button>
       <button
         pButton
-        label="Gönder"
+        [label]="replaceLeaveId != null ? 'Güncelle' : 'Gönder'"
         class="p-button-success"
         icon="pi pi-send"
         aria-label="İzini onayla"

@@ -39,6 +39,43 @@
   </div>
 </ng-template>
 
+<!-- ── KVKK onay bloğu (percent=null → oransız, sadece sayı) ── -->
+<ng-template
+  #kvkkBlock
+  let-cls="cls"
+  let-icon="icon"
+  let-labelKey="labelKey"
+  let-approved="approved"
+  let-registered="registered"
+  let-percent="percent"
+>
+  <div class="kvkk-block" [class]="cls">
+    <div class="kvkk-block-head">
+      <span class="material-symbols-outlined">{{ icon }}</span>
+      <span class="kvkk-label">{{ labelKey | translate }}</span>
+    </div>
+    <div class="kvkk-count">
+      {{ approved }}
+      @if (registered !== null) {
+        <span class="kvkk-registered">/ {{ registered }}</span>
+        <span class="kvkk-percent">%{{ percent }}</span>
+      }
+    </div>
+    @if (percent !== null) {
+      <div
+        class="kvkk-bar"
+        role="progressbar"
+        [attr.aria-valuenow]="percent"
+        aria-valuemin="0"
+        aria-valuemax="100"
+        [attr.aria-label]="labelKey | translate"
+      >
+        <div class="kvkk-bar-fill" [style.width.%]="percent"></div>
+      </div>
+    }
+  </div>
+</ng-template>
+
 <!-- ── Detay kartı başlığı ────────────────────────────────── -->
 <ng-template
   #cardHeader
@@ -258,6 +295,98 @@
           }
         "
       />
+    </div>
+
+    <!-- ════════════════════════════════════════════════════ -->
+    <!-- Row 1b — KVKK Onayı (sp_KvkkOnayCampus_s)            -->
+    <!-- ════════════════════════════════════════════════════ -->
+    <div class="full-card kvkk-card">
+      <div class="detail-card-header">
+        <div class="detail-card-title">
+          <div class="detail-icon icon-purple">
+            <span class="material-symbols-outlined">verified_user</span>
+          </div>
+          <div>
+            <h3>{{ 'DASHBOARD.KVKK_TITLE' | translate }}</h3>
+            <span class="detail-subtitle">{{ 'DASHBOARD.KVKK_SUBTITLE' | translate }}</span>
+          </div>
+        </div>
+      </div>
+
+      @if (kvkkLoading()) {
+        <div class="kvkk-state">
+          <p-progressSpinner strokeWidth="4" styleClass="kvkk-spinner" animationDuration=".8s" />
+        </div>
+      } @else if (kvkkError()) {
+        <div class="kvkk-state error-banner">
+          <span class="material-symbols-outlined">error</span>
+          <span>{{ 'DASHBOARD.LOAD_ERROR' | translate }}</span>
+          <button
+            pButton
+            aria-label="{{ 'COMMON.RETRY' | translate }}"
+            label="{{ 'COMMON.RETRY' | translate }}"
+            icon="pi pi-refresh"
+            class="p-button-sm p-button-text"
+            (click)="reloadKvkk()"
+          ></button>
+        </div>
+      } @else {
+        @let k = kvkk();
+        <div class="kvkk-grid">
+          <ng-container
+            *ngTemplateOutlet="
+              kvkkBlock;
+              context: {
+                cls: 'kvkk-student',
+                icon: 'school',
+                labelKey: 'USERDEF.STUDENT',
+                approved: k.studentApproved,
+                registered: s.studentCount,
+                percent: kvkkStudentPercent(),
+              }
+            "
+          />
+          <ng-container
+            *ngTemplateOutlet="
+              kvkkBlock;
+              context: {
+                cls: 'kvkk-parent',
+                icon: 'groups',
+                labelKey: 'USERDEF.PARENT',
+                approved: k.parentApproved,
+                registered: s.parentCount,
+                percent: kvkkParentPercent(),
+              }
+            "
+          />
+          <ng-container
+            *ngTemplateOutlet="
+              kvkkBlock;
+              context: {
+                cls: 'kvkk-proxy',
+                icon: 'supervisor_account',
+                labelKey: 'DASHBOARD.KVKK_PROXY',
+                approved: k.proxyApproved,
+                registered: null,
+                percent: null,
+              }
+            "
+          />
+          <ng-container
+            *ngTemplateOutlet="
+              kvkkBlock;
+              context: {
+                cls: 'kvkk-total',
+                icon: 'badge',
+                labelKey: 'DASHBOARD.TOTAL',
+                approved: k.totalApproved,
+                registered: null,
+                percent: null,
+              }
+            "
+          />
+        </div>
+      }
     </div>
 
     <!-- ════════════════════════════════════════════════════ -->

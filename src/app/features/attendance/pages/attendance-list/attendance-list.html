@@ -183,6 +183,13 @@
           <!-- Sadece izinId varsa silme butonunu göster -->
           @if (selectedLeaveRow()?.izinId) {
             <p-button
+              label="İzni Düzenle"
+              icon="pi pi-pencil"
+              severity="secondary"
+              size="small"
+              (click)="openEditLeaveDialog()"
+            ></p-button>
+            <p-button
               label="İzini Sil"
               icon="pi pi-trash"
               severity="danger"
@@ -201,6 +208,14 @@
         </div>
       </ng-template>
     </p-dialog>
+
+    <!-- İzin düzenleme: kayıtta mevcut izin silinip yenisi eklenir -->
+    <app-person-leave-dialog
+      [(visible)]="editLeaveDialogVisible"
+      [multiPersons]="editLeaveTargets()"
+      [replaceLeaveId]="editLeaveId()"
+      (confirmed)="onLeaveConfirmed($event)"
+    ></app-person-leave-dialog>
 
     <!-- EKLENDİ: Toplu İzin Atama Formu -->
     <app-person-leave-dialog

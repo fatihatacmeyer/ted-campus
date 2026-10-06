@@ -322,6 +322,10 @@ $radius-full: 9999px;
     background: #f1f5f9;
     color: #475569;
   }
+  &.icon-purple {
+    background: #f5f3ff;
+    color: #7c3aed;
+  }
 }
 
 .detail-card-body {
@@ -341,6 +345,119 @@ $radius-full: 9999px;
   .detail-card-header {
     padding: 20px 24px 12px;
     border-bottom: 1px solid $border-light;
+  }
+}
+
+/* ── KVKK Onay Şeridi (Row 1b) ─────────────────────────── */
+.kvkk-card {
+  --kvkk-accent: #{$text-secondary};
+}
+
+.kvkk-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 20px;
+  padding: 20px 24px;
+
+  @media (max-width: 900px) {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  @media (max-width: 480px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.kvkk-state {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 20px 24px;
+
+  &.error-banner {
+    margin: 16px 24px;
+    padding: 12px 16px;
+  }
+
+  :host ::ng-deep .kvkk-spinner {
+    width: 32px;
+    height: 32px;
+  }
+}
+
+.kvkk-block {
+  --kvkk-accent: #059669;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+
+  &.kvkk-parent {
+    --kvkk-accent: #ea580c;
+  }
+  &.kvkk-proxy {
+    --kvkk-accent: #0891b2;
+  }
+  &.kvkk-total {
+    --kvkk-accent: #7c3aed;
+    padding-left: 20px;
+    border-left: 1px solid $border-light;
+
+    @media (max-width: 900px) {
+      padding-left: 0;
+      border-left: 0;
+    }
+  }
+}
+
+.kvkk-block-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--kvkk-accent);
+  font-size: 0.85rem;
+  font-weight: 500;
+
+  .material-symbols-outlined {
+    font-size: 20px;
+  }
+  .kvkk-label {
+    color: $text-secondary;
+  }
+}
+
+.kvkk-count {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: $text-primary;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+
+  .kvkk-registered {
+    font-size: 1rem;
+    font-weight: 400;
+    color: $text-muted;
+  }
+  .kvkk-percent {
+    margin-left: auto;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--kvkk-accent);
+  }
+}
+
+.kvkk-bar {
+  height: 6px;
+  border-radius: 999px;
+  background: $border-light;
+  overflow: hidden;
+
+  .kvkk-bar-fill {
+    height: 100%;
+    border-radius: inherit;
+    background: var(--kvkk-accent);
+    transition: width 0.4s ease;
   }
 }
 

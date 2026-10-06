@@ -23,6 +23,25 @@ interface DashboardCampusRow {
   ToplamOkuldaSayisi?: number | null;
 }
 
+/**
+ * sp_KvkkOnayCampus_s'ten dönen tek satır: KVKK onaylayan (uygulamayı kurup
+ * giriş yapan) kişi sayıları. Kişi başı tek sayılır; vekillerin Sicil kaydı yok.
+ *   point=KvkkOnayCampus & islemtipi=s -> sp_KvkkOnayCampus_s
+ */
+interface KvkkOnayRow {
+  OgrenciOnaySayisi?: number | null;
+  VeliOnaySayisi?: number | null;
+  VekilOnaySayisi?: number | null;
+  ToplamOnaySayisi?: number | null;
+}
+
+export interface KvkkStats {
+  studentApproved: number;
+  parentApproved: number;
+  proxyApproved: number;
+  totalApproved: number;
+}
+
 interface EarlyLeaverRaw {
   SicilId: number;
   AdSoyad: string;
@@ -172,6 +191,26 @@ export class DashboardService {
         islemtipi: 's',
       })
       .pipe(map((rows) => this.mapStats((rows || [])[0])));
+  }
+
+  /** sp_KvkkOnayCampus_s: onaylayan öğrenci/veli/vekil sayıları (tek satır). */
+  getKvkkStats(): Observable<KvkkStats> {
+    return this.api
+      .callEndpoint<KvkkOnayRow[]>('Dynamic', {
+        point: 'KvkkOnayCampus',
+        islemtipi: 's',
+      })
+      .pipe(
+        map((rows) => {
+          const row = (rows || [])[0];
+          return {
+            studentApproved: this.toCount(row?.OgrenciOnaySayisi),
+            parentApproved: this.toCount(row?.VeliOnaySayisi),
+            proxyApproved: this.toCount(row?.VekilOnaySayisi),
+            totalApproved: this.toCount(row?.ToplamOnaySayisi),
+          };
+        }),
+      );
   }
 
   private mapStats(row: DashboardCampusRow | undefined): DashboardCampusStats {
