@@ -59,6 +59,12 @@
             {{ childrenSummary(person) }}
           </span>
         </ng-template>
+        <ng-template appColumnCell="ogrencilerSinif" let-person>
+          <span class="cell-wrap">{{ person.ogrencilerSinif || '' }}</span>
+        </ng-template>
+        <ng-template appColumnCell="ogrenciKampusleri" let-person>
+          <span class="cell-wrap">{{ person.ogrenciKampusleri || '' }}</span>
+        </ng-template>
         <ng-template appColumnCell="indirimorani" let-person>
           <span class="metric-badge">{{ person.indirimorani }}%</span>
         </ng-template>

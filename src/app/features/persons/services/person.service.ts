@@ -34,6 +34,8 @@ import { unwrapResponse } from '../../../shared/utils/response.utils';
  *   - VeliSicilId  (RelationCampus üzerinden ilk velinin sicil id, TOP(1);
  *                   backend JSON'da bazen string döndürebilir)
  *   - VeliAdSoyad  (ilk velinin "Ad Soyad" metni)
+ *   - OgrencilerSinif / OgrenciKampusleri (yalnızca VELI satırları: "Ad Soyad (Sınıf), ..."
+ *                   ve tekrarsız kampüs adları, virgülle ayrılmış; diğerlerinde NULL)
  * döndürür. @userdef boş bırakılırsa tüm tipler döner (backend'de
  * `WHERE (UserDef = @userdef OR @userdef IS NULL)` düzeltmesi uygulanmıştır).
  *
@@ -91,6 +93,9 @@ interface SicilCampusRow {
   VeliAdSoyad?: string;
   GelisServisPlaka?: string;
   DonusServisPlaka?: string;
+  // Sadece VELI satırlarında dolu (aktif öğrencilerden türetilir); diğerlerinde NULL
+  OgrencilerSinif?: string | null;
+  OgrenciKampusleri?: string | null;
 }
 
 @Injectable({
@@ -317,6 +322,8 @@ export class PersonService {
       veliAdSoyad: row.VeliAdSoyad,
       gelisServisPlaka: row.GelisServisPlaka,
       donusServisPlaka: row.DonusServisPlaka,
+      ogrencilerSinif: row.OgrencilerSinif ?? null,
+      ogrenciKampusleri: row.OgrenciKampusleri ?? null,
     };
   }
 

@@ -116,6 +116,10 @@ export interface Person {
 
   gelisServisPlaka?: string;
   donusServisPlaka?: string;
+
+  /** Sadece veli satırları: "Ad Soyad (Sınıf), ..." ve tekrarsız kampüs adları (virgülle). */
+  ogrencilerSinif?: string | null;
+  ogrenciKampusleri?: string | null;
 }
 
 /**

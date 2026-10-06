@@ -152,6 +152,8 @@ export class PersonCrudComponent implements OnInit {
     if (this.USERDEF === UserDef.Veli) {
       return [
         { field: 'veliAdSoyad', header: 'Çocuklar' },
+        { field: 'ogrencilerSinif', header: 'Öğrenciler (Sınıf)' },
+        { field: 'ogrenciKampusleri', header: 'Kampüs' },
         { field: 'personelno', header: 'TC Kimlik' }, // Sütun adını TC Kimlik yaptık
         { field: 'sicilno', header: 'Sicil No' },
       ];
@@ -185,7 +187,15 @@ export class PersonCrudComponent implements OnInit {
     }
 
     if (this.USERDEF === UserDef.Veli) {
-      return ['ad', 'soyad', 'personelno', 'ceptelefon', 'veliAdSoyad', 'cardid'];
+      return [
+        'ad',
+        'soyad',
+        'personelno',
+        'ceptelefon',
+        'ogrencilerSinif',
+        'ogrenciKampusleri',
+        'cardid',
+      ];
     }
 
     if (this.USERDEF === UserDef.Ogretmen) {

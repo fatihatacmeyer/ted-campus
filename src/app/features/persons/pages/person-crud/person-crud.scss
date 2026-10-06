@@ -12,3 +12,12 @@
   overflow: visible !important;
   padding-bottom: 24px; /* Yatay scroll'un en alta yapışıp ezilmesini önler */
 }
+
+/* Uzun, virgülle ayrılmış listeler (öğrenciler / kampüsler): kesilmez, alt satıra sarar */
+.cell-wrap {
+  display: block;
+  min-width: 220px;
+  max-width: 420px;
+  white-space: normal;
+  line-height: 1.35;
+}
