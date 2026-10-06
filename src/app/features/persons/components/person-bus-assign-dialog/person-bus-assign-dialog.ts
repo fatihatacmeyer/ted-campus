@@ -7,7 +7,9 @@ import {
   OnInit,
   inject,
   ChangeDetectorRef,
+  DestroyRef,
 } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { DialogModule } from 'primeng/dialog';
@@ -16,12 +18,13 @@ import { SelectModule } from 'primeng/select';
 import { Person } from '../../../../core/models/person.model';
 import { SchoolBusService } from '../../../transport/services/school-bus.service';
 import { NotificationService } from '../../../../core/services/notification.service';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { forkJoin } from 'rxjs';
 
 @Component({
   selector: 'app-person-bus-assign-dialog',
   standalone: true,
-  imports: [CommonModule, FormsModule, DialogModule, ButtonModule, SelectModule],
+  imports: [CommonModule, FormsModule, DialogModule, ButtonModule, SelectModule, TranslatePipe],
   templateUrl: './person-bus-assign-dialog.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -34,27 +37,45 @@ export class PersonBusAssignDialogComponent implements OnInit {
   private busService = inject(SchoolBusService);
   private notification = inject(NotificationService);
   private cdr = inject(ChangeDetectorRef);
+  private translate = inject(TranslateService);
+  private destroyRef = inject(DestroyRef);
 
   busOptions: { label: string; value: number }[] = [];
   selectedBusId: number | null = null;
   selectedYon: number = 1; // Varsayılan Gidiş
 
-  yonOptions = [
-    { label: 'Gidiş', value: 1 },
-    { label: 'Dönüş', value: 2 },
-    { label: 'Gidiş ve Dönüş', value: 3 },
-  ];
+  yonOptions: { label: string; value: number }[] = [];
 
   isProcessing = false;
 
   ngOnInit() {
+    this.buildYonOptions();
+    this.translate.onLangChange.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => {
+      this.buildYonOptions();
+      this.cdr.markForCheck();
+    });
+
     this.busService.getBuses().subscribe((buses) => {
       this.busOptions = buses.map((b) => ({
-        label: `${b.plate} - ${b.brand} ${b.model} (Boş Koltuk: Gidiş ${b.bosKoltukGidis}, Dönüş ${b.bosKoltukDonus})`,
+        label: this.translate.instant('PERSON_BUS_ASSIGN.BUS_LABEL', {
+          plate: b.plate,
+          brand: b.brand,
+          model: b.model,
+          out: b.bosKoltukGidis,
+          back: b.bosKoltukDonus,
+        }),
         value: b.id,
       }));
       this.cdr.markForCheck();
     });
+  }
+
+  private buildYonOptions(): void {
+    this.yonOptions = [
+      { label: this.translate.instant('PERSON_BUS_ASSIGN.DIR_OUT'), value: 1 },
+      { label: this.translate.instant('PERSON_BUS_ASSIGN.DIR_RETURN'), value: 2 },
+      { label: this.translate.instant('PERSON_BUS_ASSIGN.DIR_BOTH'), value: 3 },
+    ];
   }
 
   close() {
@@ -85,17 +106,25 @@ export class PersonBusAssignDialogComponent implements OnInit {
 
           // İkisi de başarılıysa
           if (gidisRes.sonuc === 1 && donusRes.sonuc === 1) {
-            this.notification.success('Öğrenci hem gidiş hem dönüş için servise atandı.');
+            this.notification.success('PERSON_BUS_ASSIGN.MSG_ASSIGNED_BOTH');
             this.confirmed.emit();
             this.close();
           } else {
             // Hata olan yönlerin mesajlarını birleştir ve göster
             const errorMessages = [];
             if (gidisRes.sonuc !== 1) {
-              errorMessages.push(`Gidiş: ${gidisRes.sunucuCevap || 'Hata'}`);
+              errorMessages.push(
+                this.translate.instant('PERSON_BUS_ASSIGN.ERR_OUT', {
+                  message: gidisRes.sunucuCevap || this.translate.instant('PERSON_BUS_ASSIGN.ERR_WORD'),
+                }),
+              );
             }
             if (donusRes.sonuc !== 1) {
-              errorMessages.push(`Dönüş: ${donusRes.sunucuCevap || 'Hata'}`);
+              errorMessages.push(
+                this.translate.instant('PERSON_BUS_ASSIGN.ERR_RETURN', {
+                  message: donusRes.sunucuCevap || this.translate.instant('PERSON_BUS_ASSIGN.ERR_WORD'),
+                }),
+              );
             }
 
             // Kullanıcıya tam olarak sunucunun döndüğü metinleri (Örn: "Bu öğrenci bu yön için zaten bir servise atanmış") gösteriyoruz
@@ -105,7 +134,7 @@ export class PersonBusAssignDialogComponent implements OnInit {
         },
         error: () => {
           this.isProcessing = false;
-          this.notification.error('Sunucuyla iletişim kurulurken bir hata oluştu.');
+          this.notification.error('COMMON.SERVER_ERROR');
           this.cdr.markForCheck();
         },
       });
@@ -115,18 +144,18 @@ export class PersonBusAssignDialogComponent implements OnInit {
         next: (res) => {
           this.isProcessing = false;
           if (res.sonuc === 1) {
-            this.notification.success('Öğrenci servise başarıyla atandı.');
+            this.notification.success('PERSON_BUS_ASSIGN.MSG_ASSIGNED');
             this.confirmed.emit();
             this.close();
           } else {
             // Doğrudan backend'den gelen "Bu öğrenci bu yön için zaten bir servise atanmış" mesajı gösterilecek
-            this.notification.error(res.sunucuCevap || 'Atama işlemi sırasında bir hata oluştu.');
+            this.notification.error(res.sunucuCevap || 'PERSON_BUS_ASSIGN.MSG_ASSIGN_ERROR');
           }
           this.cdr.markForCheck();
         },
         error: () => {
           this.isProcessing = false;
-          this.notification.error('Sunucuyla iletişim kurulurken bir hata oluştu.');
+          this.notification.error('COMMON.SERVER_ERROR');
           this.cdr.markForCheck();
         },
       });

@@ -61,7 +61,10 @@
             <div class="photo-info">
               <h5 class="person-name">{{ photo.displayName }}</h5>
               <div class="d-flex justify-content-between align-items-center mb-2">
-                <p-tag [value]="photo.personTypeStr" [severity]="photo.personTypeSeverity"></p-tag>
+                <p-tag
+                  [value]="photo.personTypeStr | translate"
+                  [severity]="photo.personTypeSeverity"
+                ></p-tag>
                 <span class="upload-date" [title]="'PHOTO_APPROVAL.UPLOAD_DATE' | translate">
                   <i class="pi pi-calendar"></i>
                   {{ photo.YuklemeTarihi | date: 'dd.MM.yyyy HH:mm' }}

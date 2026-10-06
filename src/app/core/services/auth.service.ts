@@ -50,7 +50,7 @@ export class AuthService {
           this.currentUserSubject.next(user);
           return user;
         } else {
-          throw new Error('Kullanıcı adı veya şifre hatalı');
+          throw new Error('LOGIN.ERROR_INVALID_CREDENTIALS');
         }
       }),
     );

@@ -245,7 +245,7 @@ export class SchoolBusService {
           };
           return {
             sonuc: row ? Number(pick('sonuc')) : -1,
-            sunucuCevap: row ? String(pick('sunucucevap') ?? '') : 'Sunucudan yanıt alınamadı.',
+            sunucuCevap: row ? String(pick('sunucucevap') ?? '') : 'SCHOOL_BUS.MSG_NO_RESPONSE',
           };
         }),
       );
@@ -296,7 +296,7 @@ export class SchoolBusService {
     const unwrapped = unwrapResponse(response);
     return {
       sonuc: unwrapped ? Number(unwrapped.Sonuc) : -1,
-      sunucuCevap: unwrapped ? String(unwrapped.SunucuCevap) : 'Sunucudan yanıt alınamadı.',
+      sunucuCevap: unwrapped ? String(unwrapped.SunucuCevap) : 'SCHOOL_BUS.MSG_NO_RESPONSE',
     };
   };
 }

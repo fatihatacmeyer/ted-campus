@@ -21,11 +21,20 @@ import { Person, ExitReason, OperationResultResponse } from '../../../../core/mo
 import { PersonService } from '../../services/person.service';
 import { unwrapResponse, isSuccessResult } from '../../../../shared/utils/response.utils';
 import { NotificationService } from '../../../../core/services/notification.service';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 
 @Component({
   selector: 'app-person-exit-dialog',
   standalone: true,
-  imports: [CommonModule, FormsModule, DialogModule, ButtonModule, DatePickerModule, SelectModule],
+  imports: [
+    CommonModule,
+    FormsModule,
+    DialogModule,
+    ButtonModule,
+    DatePickerModule,
+    SelectModule,
+    TranslatePipe,
+  ],
   templateUrl: './person-exit-dialog.html',
   styleUrl: './person-exit-dialog.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -41,6 +50,7 @@ export class PersonExitDialogComponent implements OnChanges {
   private cdr = inject(ChangeDetectorRef);
   private readonly destroyRef = inject(DestroyRef);
   private notification = inject(NotificationService);
+  private translate = inject(TranslateService);
 
   displayTitle = '';
   selectedDate: Date | null = null;
@@ -56,10 +66,10 @@ export class PersonExitDialogComponent implements OnChanges {
       this.selectedReason = null;
 
       if (this.mode === 'exit') {
-        this.displayTitle = 'Kişiyi İşten Çıkar';
+        this.displayTitle = this.translate.instant('PERSON_EXIT.TITLE_EXIT');
         this.loadReasons();
       } else {
-        this.displayTitle = 'Kişiyi İşe Geri Al';
+        this.displayTitle = this.translate.instant('PERSON_EXIT.TITLE_RESTORE');
         this.selectedDate = new Date();
       }
     }
@@ -89,9 +99,9 @@ export class PersonExitDialogComponent implements OnChanges {
         console.error('Ayrılış nedenleri yüklenemedi:', err);
         // Fallback options
         this.reasonOptions = [
-          { label: 'Neden 1', value: 1 },
-          { label: 'Neden 2', value: 2 },
-          { label: 'Neden 3', value: 3 },
+          { label: this.translate.instant('PERSON_EXIT.REASON_N', { n: 1 }), value: 1 },
+          { label: this.translate.instant('PERSON_EXIT.REASON_N', { n: 2 }), value: 2 },
+          { label: this.translate.instant('PERSON_EXIT.REASON_N', { n: 3 }), value: 3 },
         ];
         this.cdr.markForCheck();
       },
@@ -128,13 +138,12 @@ export class PersonExitDialogComponent implements OnChanges {
               this.confirmed.emit();
               this.close();
             } else {
-              this.errorMessage = 'İşlem başarısız oldu. Lütfen tekrar deneyin.';
+              this.errorMessage = this.translate.instant('COMMON.OPERATION_FAILED');
             }
           },
           error: (err: unknown) => {
             this.isProcessing = false;
-            this.errorMessage =
-              'Bir hata oluştu: ' + (err instanceof Error ? err.message : 'Bilinmeyen hata');
+            this.errorMessage = this.errorText(err);
           },
         });
     } else {
@@ -151,16 +160,32 @@ export class PersonExitDialogComponent implements OnChanges {
               this.confirmed.emit();
               this.close();
             } else {
-              this.errorMessage = 'İşlem başarısız oldu. Lütfen tekrar deneyin.';
+              this.errorMessage = this.translate.instant('COMMON.OPERATION_FAILED');
             }
           },
           error: (err: unknown) => {
             this.isProcessing = false;
-            this.errorMessage =
-              'Bir hata oluştu: ' + (err instanceof Error ? err.message : 'Bilinmeyen hata');
+            this.errorMessage = this.errorText(err);
           },
         });
     }
+  }
+
+  /** Hata nesnesinden kullanıcıya gösterilecek çevrilmiş mesajı üretir. */
+  private errorText(err: unknown): string {
+    return this.translate.instant('COMMON.ERROR_OCCURRED', {
+      message: err instanceof Error ? err.message : this.translate.instant('COMMON.UNKNOWN_ERROR'),
+    });
+  }
+
+  /** `[innerHTML]` çevirilerinde kullanıcı verisini kaçışlayıp kalın yazar. */
+  bold(value: string | null | undefined): string {
+    const escaped = String(value ?? '')
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+    return `<strong>${escaped}</strong>`;
   }
 
   close(): void {

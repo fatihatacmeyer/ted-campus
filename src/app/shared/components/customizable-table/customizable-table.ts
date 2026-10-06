@@ -568,7 +568,7 @@ export class CustomizableTableComponent<T extends object = Record<string, unknow
    * Aktif filtreler varsa yalnızca filtrelenmiş satırlar dışa aktarılır (E1).
    */
   private buildExportData(): { headers: string[]; rows: (string | number)[][] } {
-    const headers = this.visibleColumns.map((col) => col.header);
+    const headers = this.visibleColumns.map((col) => this.translateService.instant(col.header));
     const sourceRows = this.dt?.filteredValue ?? this.rows;
     const rows = sourceRows.map((row) =>
       this.visibleColumns.map((col) => this.formatExportValue(row, col)),

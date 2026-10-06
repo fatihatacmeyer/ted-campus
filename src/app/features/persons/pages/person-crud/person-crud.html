@@ -90,8 +90,8 @@
               type="button"
               icon="pi pi-car"
               class="p-button-text p-button-sm p-button-info"
-              pTooltip="Servis Ata"
-              aria-label="Servis Ata"
+              [pTooltip]="'PERSON_CRUD.ASSIGN_BUS' | translate"
+              [attr.aria-label]="'PERSON_CRUD.ASSIGN_BUS' | translate"
               (click)="onBusAssignRequest($event, person)"
             ></button>
           </div>

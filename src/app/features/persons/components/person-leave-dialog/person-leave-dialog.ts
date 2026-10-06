@@ -30,6 +30,7 @@ import { formatDate } from '../../../../shared/utils/date.utils';
 import { unwrapResponse } from '../../../../shared/utils/response.utils';
 import { concat, forkJoin, last, of } from 'rxjs';
 import { AttendanceService } from '../../../attendance/services/attendance.service';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 
 @Component({
   selector: 'app-person-leave-dialog',
@@ -43,6 +44,7 @@ import { AttendanceService } from '../../../attendance/services/attendance.servi
     TextareaModule,
     SelectModule,
     CheckboxModule,
+    TranslatePipe,
   ],
   templateUrl: './person-leave-dialog.html',
   styleUrl: './person-leave-dialog.scss',
@@ -65,6 +67,7 @@ export class PersonLeaveDialogComponent implements OnChanges {
   private attendanceService = inject(AttendanceService);
   private cdr = inject(ChangeDetectorRef);
   private readonly destroyRef = inject(DestroyRef);
+  private translate = inject(TranslateService);
 
   startDateStr = '';
   endDateStr = '';
@@ -149,13 +152,17 @@ export class PersonLeaveDialogComponent implements OnChanges {
   get dialogTitle(): string {
     if (this.replaceLeaveId != null) {
       const name = this.multiPersons[0]?.adSoyad;
-      return name ? `İzni Düzenle — ${name}` : 'İzni Düzenle';
+      return name
+        ? this.translate.instant('PERSON_LEAVE.TITLE_EDIT_NAME', { name })
+        : this.translate.instant('PERSON_LEAVE.TITLE_EDIT');
     }
     if (this.multiPersons && this.multiPersons.length > 0) {
-      return `Toplu İzin Ata (${this.multiPersons.length} Kişi)`;
+      return this.translate.instant('PERSON_LEAVE.TITLE_BULK', { count: this.multiPersons.length });
     }
-    if (!this.person) return 'İzin Ata';
-    return `İzin Ata — ${this.person.ad} ${this.person.soyad}`;
+    if (!this.person) return this.translate.instant('PERSON_LEAVE.TITLE_ASSIGN');
+    return this.translate.instant('PERSON_LEAVE.TITLE_ASSIGN_NAME', {
+      name: `${this.person.ad} ${this.person.soyad}`,
+    });
   }
 
   get isFormValid(): boolean {
@@ -228,19 +235,21 @@ export class PersonLeaveDialogComponent implements OnChanges {
           if (allSuccess) {
             this.confirmed.emit(
               this.replaceLeaveId != null
-                ? 'İzin başarıyla güncellendi.'
-                : 'İzin(ler) başarıyla atandı.',
+                ? 'PERSON_LEAVE.MSG_UPDATED'
+                : 'PERSON_LEAVE.MSG_ASSIGNED',
             );
             this.close();
           } else {
-            this.errorMessage = 'Bazı izinler kaydedilemedi. Lütfen tekrar deneyin.';
+            this.errorMessage = this.translate.instant('PERSON_LEAVE.ERR_PARTIAL');
             this.cdr.markForCheck();
           }
         },
         error: (err: unknown) => {
           this.isProcessing = false;
-          this.errorMessage =
-            'Bir hata oluştu: ' + (err instanceof Error ? err.message : 'Bilinmeyen hata');
+          this.errorMessage = this.translate.instant('COMMON.ERROR_OCCURRED', {
+            message:
+              err instanceof Error ? err.message : this.translate.instant('COMMON.UNKNOWN_ERROR'),
+          });
           this.cdr.markForCheck();
         },
       });

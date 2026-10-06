@@ -100,7 +100,7 @@
           pButton
           type="button"
           icon="pi pi-calendar-plus"
-          label="İzin Ata"
+          [label]="'STUDENT_ATTENDANCE.ASSIGN_LEAVE' | translate"
           size="small"
           class="p-button-success p-button-sm"
           [disabled]="selectedRows().length === 0"
@@ -130,7 +130,7 @@
                 class="pi pi-info-circle"
                 style="color: #dc2134; cursor: pointer; font-size: 1.2rem"
                 (click)="openLeaveIconDialog(row); $event.stopPropagation()"
-                pTooltip="İzin Detayı"
+                [pTooltip]="'STUDENT_ATTENDANCE.LEAVE_DETAIL' | translate"
                 tooltipPosition="right"
               ></i>
             </div>
@@ -163,19 +163,22 @@
 
     <!-- EKLENDİ: Geçici İzin Detay Dialog'u -->
     <p-dialog
-      header="İzin Detayı"
+      [header]="'STUDENT_ATTENDANCE.LEAVE_DETAIL' | translate"
       [(visible)]="leaveIconDialogVisible"
       [modal]="true"
       [style]="{ width: '400px' }"
     >
       @if (selectedLeaveRow(); as row) {
         <div class="d-flex flex-column gap-2 mt-2">
-          <div><strong>Öğrenci:</strong> {{ row.adSoyad }}</div>
-          <div><strong>Sınıf:</strong> {{ row.sinif }}</div>
+          <div><strong>{{ 'USERDEF.STUDENT' | translate }}:</strong> {{ row.adSoyad }}</div>
+          <div><strong>{{ 'STUDENT_ATTENDANCE.COL_SINIF' | translate }}:</strong> {{ row.sinif }}</div>
           <div>
-            <strong>İzin Tipi:</strong> <p-tag [value]="row.izinTipi ?? ''" severity="info"></p-tag>
+            <strong>{{ 'STUDENT_ATTENDANCE.COL_IZIN_TIPI' | translate }}:</strong> <p-tag [value]="row.izinTipi ?? ''" severity="info"></p-tag>
           </div>
-          <div><strong>Saat Aralığı:</strong> {{ row.izinSaatAraligi || 'Tüm Gün' }}</div>
+          <div>
+            <strong>{{ 'STUDENT_ATTENDANCE.LEAVE_TIME' | translate }}:</strong>
+            {{ row.izinSaatAraligi || ('STUDENT_ATTENDANCE.ALL_DAY' | translate) }}
+          </div>
         </div>
       }
       <ng-template pTemplate="footer">
@@ -183,14 +186,14 @@
           <!-- Sadece izinId varsa silme butonunu göster -->
           @if (selectedLeaveRow()?.izinId) {
             <p-button
-              label="İzni Düzenle"
+              [label]="'STUDENT_ATTENDANCE.EDIT_LEAVE' | translate"
               icon="pi pi-pencil"
               severity="secondary"
               size="small"
               (click)="openEditLeaveDialog()"
             ></p-button>
             <p-button
-              label="İzini Sil"
+              [label]="'STUDENT_ATTENDANCE.DELETE_LEAVE' | translate"
               icon="pi pi-trash"
               severity="danger"
               size="small"
@@ -199,7 +202,7 @@
           }
 
           <p-button
-            label="Kapat"
+            [label]="'COMMON.CLOSE' | translate"
             icon="pi pi-times"
             (click)="leaveIconDialogVisible.set(false)"
             class="p-button-text"

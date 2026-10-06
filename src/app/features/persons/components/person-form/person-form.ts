@@ -700,7 +700,7 @@ export class PersonFormComponent implements OnChanges, OnInit {
           this.applyRelationOps(personId).subscribe({
             next: () => this.finishSave(stdRes),
             error: () => {
-              this.errorMessage = 'Kayıt yapıldı ancak ilişki güncellenemedi.';
+              this.errorMessage = this.translate.instant('PERSON_FORM.RELATION_UPDATE_FAILED');
               this.isSaving = false;
               this.cdr.markForCheck();
             },
@@ -710,7 +710,7 @@ export class PersonFormComponent implements OnChanges, OnInit {
         }
       },
       error: () => {
-        this.errorMessage = 'Kayıt işlemi sırasında bir hata oluştu.';
+        this.errorMessage = this.translate.instant('PERSON_FORM.SAVE_ERROR');
         this.isSaving = false;
         this.cdr.markForCheck();
       },

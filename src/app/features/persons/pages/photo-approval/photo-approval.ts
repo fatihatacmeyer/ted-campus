@@ -177,35 +177,35 @@ export class PhotoApprovalComponent implements OnInit {
   private mapToUI(photo: PhotoApproval): PhotoApprovalUI {
     const baseUrl = this.config.photoBaseUrl || 'http://localhost/MeCampus/ProfilFotograflari';
 
-    let pTypeStr = 'Bilinmiyor';
+    let pTypeStr = 'PHOTO_APPROVAL.UNKNOWN';
     let pSeverity: 'success' | 'info' | 'warn' | 'danger' | 'secondary' | 'contrast' = 'secondary';
 
     // 1. Vekil Kontrolü: VekilCampusId doluysa öncelikli olarak Vekildir
     if (photo.VekilCampusId) {
-      pTypeStr = 'Vekil';
+      pTypeStr = 'PHOTO_APPROVAL.PROXY';
       pSeverity = 'warn'; // Turuncu Rozet
     }
     // 2. UserDef (ID) Kontrolü
     else {
       switch (photo.UserDef) {
         case 11:
-          pTypeStr = 'Öğrenci';
+          pTypeStr = 'USERDEF.STUDENT';
           pSeverity = 'info'; // Mavi Rozet
           break;
         case 12:
-          pTypeStr = 'Veli';
+          pTypeStr = 'USERDEF.PARENT';
           pSeverity = 'success'; // Yeşil Rozet
           break;
         case 13:
-          pTypeStr = 'Yetkili';
+          pTypeStr = 'USERDEF.AUTHORITY';
           pSeverity = 'contrast'; // Siyah Rozet (PrimeNG v17+)
           break;
         case 14:
-          pTypeStr = 'Öğretmen';
+          pTypeStr = 'USERDEF.TEACHER';
           pSeverity = 'danger'; // Kırmızı Rozet
           break;
         default:
-          pTypeStr = 'Personel / Diğer';
+          pTypeStr = 'PHOTO_APPROVAL.STAFF_OR_OTHER';
           pSeverity = 'secondary'; // Gri Rozet
           break;
       }

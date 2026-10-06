@@ -69,7 +69,7 @@ export class ProxyService {
           const unwrapped = unwrapResponse(response);
           return {
             sonuc: unwrapped ? Number(unwrapped.Sonuc) : -1,
-            sunucuCevap: unwrapped ? String(unwrapped.SunucuCevap) : 'Sunucudan yanıt alınamadı.',
+            sunucuCevap: unwrapped ? String(unwrapped.SunucuCevap) : 'COMMON.NO_RESPONSE',
           };
         }),
       );
@@ -95,7 +95,7 @@ export class ProxyService {
           const unwrapped = unwrapResponse(response);
           return {
             sonuc: unwrapped ? Number(unwrapped.Sonuc) : -1,
-            sunucuCevap: unwrapped ? String(unwrapped.SunucuCevap) : 'Sunucudan yanıt alınamadı.',
+            sunucuCevap: unwrapped ? String(unwrapped.SunucuCevap) : 'COMMON.NO_RESPONSE',
           };
         }),
       );

@@ -805,7 +805,7 @@ export class ActivitiesComponent {
   }
 
   deleteActivity(id: number) {
-    if (!confirm('Bu etkinliği silmek istediğinize emin misiniz?')) {
+    if (!confirm(this.translate.instant('ACTIVITIES.CONFIRM_DELETE_ACTIVITY'))) {
       return;
     }
     this.errorMessage.set(null);

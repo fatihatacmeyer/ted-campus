@@ -32,8 +32,8 @@ import { NotificationService } from '../../../../core/services/notification.serv
 import { PersonService } from '../../../persons/services/person.service';
 import { Person, UserDef } from '../../../../core/models/person.model';
 
-import { forkJoin, of } from 'rxjs';
-import { catchError } from 'rxjs/operators';
+import { forkJoin, merge, of } from 'rxjs';
+import { catchError, map, startWith } from 'rxjs/operators';
 import {
   Bus,
   ServisYonu,
@@ -43,7 +43,8 @@ import {
   ServiceAuthority,
 } from '../../models/school-bus.model';
 import { DestroyRef } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 
 type TabKey = 'dashboard' | 'buses' | 'assignments' | 'authorities';
 
@@ -63,6 +64,7 @@ type TabKey = 'dashboard' | 'buses' | 'assignments' | 'authorities';
     CustomizableTableComponent,
     ColumnCellDirective,
     FormsModule,
+    TranslatePipe,
   ],
   templateUrl: './school-bus.html',
   styleUrl: './school-bus.scss',
@@ -73,14 +75,15 @@ export class SchoolBusComponent implements OnInit {
   private busService = inject(SchoolBusService);
   private personService = inject(PersonService);
   private notification = inject(NotificationService);
+  private translate = inject(TranslateService);
   private destroyRef = inject(DestroyRef);
 
   protected readonly activeTab = signal<TabKey>('dashboard');
-  protected readonly tabs: { key: TabKey; label: string; icon: string }[] = [
-    { key: 'dashboard', label: 'Genel Bakış', icon: 'dashboard' },
-    { key: 'buses', label: 'Araçlar', icon: 'directions_bus' },
-    { key: 'assignments', label: 'Atamalar', icon: 'assignment' },
-    { key: 'authorities', label: 'Yetkililer', icon: 'admin_panel_settings' },
+  protected readonly tabs: { key: TabKey; labelKey: string; icon: string }[] = [
+    { key: 'dashboard', labelKey: 'SCHOOL_BUS.TAB_DASHBOARD', icon: 'dashboard' },
+    { key: 'buses', labelKey: 'SCHOOL_BUS.TAB_BUSES', icon: 'directions_bus' },
+    { key: 'assignments', labelKey: 'SCHOOL_BUS.TAB_ASSIGNMENTS', icon: 'assignment' },
+    { key: 'authorities', labelKey: 'SCHOOL_BUS.TAB_AUTHORITIES', icon: 'admin_panel_settings' },
   ];
 
   protected readonly buses = signal<Bus[]>([]);
@@ -134,25 +137,25 @@ export class SchoolBusComponent implements OnInit {
   });
 
   protected readonly busColumns: ColumnDef<Bus>[] = [
-    { field: 'plate', header: 'Plaka', sortable: true },
-    { field: 'brand', header: 'Marka', sortable: true },
-    { field: 'model', header: 'Model', sortable: true },
-    { field: 'seatCount', header: 'Koltuk Sayısı', sortable: true },
-    { field: 'description', header: 'Açıklama', sortable: true },
-    { field: 'status', header: 'Durum', sortable: true },
+    { field: 'plate', header: 'SCHOOL_BUS.COL_PLATE', sortable: true },
+    { field: 'brand', header: 'SCHOOL_BUS.COL_BRAND', sortable: true },
+    { field: 'model', header: 'SCHOOL_BUS.COL_MODEL', sortable: true },
+    { field: 'seatCount', header: 'SCHOOL_BUS.COL_SEAT_COUNT', sortable: true },
+    { field: 'description', header: 'SCHOOL_BUS.COL_DESCRIPTION', sortable: true },
+    { field: 'status', header: 'SCHOOL_BUS.COL_STATUS', sortable: true },
   ];
 
   protected readonly assignedStudentColumns: ColumnDef<StudentAssignment>[] = [
-    { field: 'ogrenciAdSoyad', header: 'Öğrenci', sortable: true },
-    { field: 'sinif', header: 'Sınıf', sortable: true },
-    { field: 'kampus', header: 'Kampüs', sortable: true },
+    { field: 'ogrenciAdSoyad', header: 'SCHOOL_BUS.COL_STUDENT', sortable: true },
+    { field: 'sinif', header: 'SCHOOL_BUS.COL_CLASS', sortable: true },
+    { field: 'kampus', header: 'SCHOOL_BUS.COL_CAMPUS', sortable: true },
   ];
 
   protected readonly serviceAuthorityColumns: ColumnDef<ServiceAuthority>[] = [
-    { field: 'adSoyad', header: 'Ad Soyad', sortable: true, alwaysVisible: true },
-    { field: 'sicilNo', header: 'Sicil No', sortable: true },
-    { field: 'cepTelefon', header: 'Telefon' },
-    { field: 'email', header: 'E-posta', sortable: true },
+    { field: 'adSoyad', header: 'SCHOOL_BUS.COL_FULL_NAME', sortable: true, alwaysVisible: true },
+    { field: 'sicilNo', header: 'SCHOOL_BUS.COL_REG_NO', sortable: true },
+    { field: 'cepTelefon', header: 'SCHOOL_BUS.COL_PHONE' },
+    { field: 'email', header: 'SCHOOL_BUS.COL_EMAIL', sortable: true },
   ];
 
   protected readonly authorityAssignmentsForBus = (servisId: number) =>
@@ -184,11 +187,62 @@ export class SchoolBusComponent implements OnInit {
     })),
   );
 
-  protected readonly yonOptions: { label: string; value: number }[] = [
-    { label: 'Gidiş', value: 1 },
-    { label: 'Dönüş', value: 2 },
-    { label: 'Gidiş/Dönüş', value: 3 },
-  ];
+  /** Dil veya çeviri yüklemesi değişince seçenek etiketlerini yeniden hesaplamak için. */
+  private readonly i18nVersion = toSignal(
+    merge(this.translate.onLangChange, this.translate.onTranslationChange).pipe(
+      map(() => this.translate.currentLang),
+      startWith(this.translate.currentLang),
+    ),
+  );
+
+  protected readonly yonOptions = computed(() => {
+    this.i18nVersion();
+    return [
+      { label: this.translate.instant('SCHOOL_BUS.DIRECTION_DEPARTURE'), value: 1 },
+      { label: this.translate.instant('SCHOOL_BUS.DIRECTION_RETURN'), value: 2 },
+      { label: this.translate.instant('SCHOOL_BUS.DIRECTION_BOTH'), value: 3 },
+    ];
+  });
+
+  /** `value` DB'deki durum metnidir (Aktif/Bakımda/Pasif); yalnızca etiket çevrilir. */
+  protected readonly statusOptions = computed(() => {
+    this.i18nVersion();
+    return [
+      { label: this.translate.instant('SCHOOL_BUS.STATUS_ACTIVE'), value: 'Aktif' },
+      { label: this.translate.instant('SCHOOL_BUS.STATUS_MAINTENANCE'), value: 'Bakımda' },
+      { label: this.translate.instant('SCHOOL_BUS.STATUS_PASSIVE'), value: 'Pasif' },
+    ];
+  });
+
+  /** DB durum metnini çeviri anahtarına çevirir (bilinmeyen değer olduğu gibi gösterilir). */
+  protected statusLabel(status: string): string {
+    switch (status) {
+      case 'Aktif':
+        return 'SCHOOL_BUS.STATUS_ACTIVE';
+      case 'Bakımda':
+        return 'SCHOOL_BUS.STATUS_MAINTENANCE';
+      case 'Pasif':
+        return 'SCHOOL_BUS.STATUS_PASSIVE';
+      default:
+        return status;
+    }
+  }
+
+  protected directionText(yon: ServisYonu): string {
+    return this.translate.instant(
+      yon === 1 ? 'SCHOOL_BUS.DIRECTION_DEPARTURE' : 'SCHOOL_BUS.DIRECTION_RETURN',
+    );
+  }
+
+  /** `[innerHTML]` çevirilerinde kullanıcı verisini kaçışlayıp kalın yazar. */
+  protected bold(value: string | null | undefined): string {
+    const escaped = String(value ?? '')
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+    return `<strong>${escaped}</strong>`;
+  }
 
   protected checkAssignButtonDisabled(bus: Bus): boolean {
     if (this.studentAssignForm.invalid) return true;
@@ -223,7 +277,7 @@ export class SchoolBusComponent implements OnInit {
   private loadDashboardStats(): void {
     this.busService.getDashboardStats().subscribe({
       next: (stats) => this.dashboardStats.set(stats),
-      error: () => this.notification.error('Dashboard istatistikleri alınamadı.'),
+      error: () => this.notification.error('SCHOOL_BUS.MSG_STATS_ERROR'),
     });
   }
 
@@ -233,21 +287,21 @@ export class SchoolBusComponent implements OnInit {
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: (busesData) => this.buses.set(busesData),
-        error: () => this.notification.error('Araçlar yüklenemedi.'),
+        error: () => this.notification.error('SCHOOL_BUS.MSG_BUSES_ERROR'),
       });
   }
 
   private loadStudents(): void {
     this.personService.getPersonListCampus().subscribe({
       next: (people) => this.students.set(people.filter((p) => p.userdef === UserDef.Ogrenci)),
-      error: () => this.notification.error('Öğrenci listesi alınamadı.'),
+      error: () => this.notification.error('SCHOOL_BUS.MSG_STUDENTS_ERROR'),
     });
   }
 
   private loadAuthorities(): void {
     this.personService.getPersonListCampus().subscribe({
       next: (people) => this.authorities.set(people.filter((p) => p.userdef === UserDef.Authority)),
-      error: () => this.notification.error('Yetkili listesi alınamadı.'),
+      error: () => this.notification.error('SCHOOL_BUS.MSG_AUTHORITIES_ERROR'),
     });
   }
 
@@ -277,14 +331,14 @@ export class SchoolBusComponent implements OnInit {
     request$.subscribe({
       next: (result) => {
         if (result.sonuc === 1) {
-          this.notification.success(result.sunucuCevap || 'İşlem başarılı.');
+          this.notification.success(result.sunucuCevap || 'SCHOOL_BUS.MSG_OP_SUCCESS');
           this.loadBuses();
           this.closeBusForm();
         } else {
-          this.notification.error(result.sunucuCevap || 'İşlem sırasında hata oluştu.');
+          this.notification.error(result.sunucuCevap || 'SCHOOL_BUS.MSG_OP_ERROR');
         }
       },
-      error: () => this.notification.error('Sunucuyla iletişim kurulamadı.'),
+      error: () => this.notification.error('SCHOOL_BUS.MSG_SERVER_ERROR'),
     });
   }
 
@@ -305,14 +359,14 @@ export class SchoolBusComponent implements OnInit {
     this.busService.deleteBus(target.id).subscribe({
       next: (result) => {
         if (result.sonuc === 1) {
-          this.notification.success(result.sunucuCevap || 'Araç başarıyla silindi.');
+          this.notification.success(result.sunucuCevap || 'SCHOOL_BUS.MSG_BUS_DELETED');
           this.loadBuses();
           this.closeBusDelete();
         } else {
-          this.notification.error(result.sunucuCevap || 'Araç silinirken hata oluştu.');
+          this.notification.error(result.sunucuCevap || 'SCHOOL_BUS.MSG_BUS_DELETE_ERROR');
         }
       },
-      error: () => this.notification.error('Sunucuyla iletişim kurulamadı.'),
+      error: () => this.notification.error('SCHOOL_BUS.MSG_SERVER_ERROR'),
     });
   }
 
@@ -351,7 +405,7 @@ export class SchoolBusComponent implements OnInit {
         this.studentAssignLoading.set(false);
       },
       error: () => {
-        this.notification.error('Öğrenci atamaları alınamadı.');
+        this.notification.error('SCHOOL_BUS.MSG_STUDENT_ASSIGNMENTS_ERROR');
         this.studentAssignLoading.set(false);
       },
     });
@@ -368,17 +422,17 @@ export class SchoolBusComponent implements OnInit {
       forkJoin([
         this.busService
           .assignStudentToBus(v.ogrenciSicilId, bus.id, 1 as ServisYonu)
-          .pipe(catchError(() => of({ sonuc: -1, sunucuCevap: 'Gidiş atamasında hata oluştu.' }))),
+          .pipe(catchError(() => of({ sonuc: -1, sunucuCevap: 'SCHOOL_BUS.MSG_DEPARTURE_ASSIGN_ERROR' }))),
         this.busService
           .assignStudentToBus(v.ogrenciSicilId, bus.id, 2 as ServisYonu)
-          .pipe(catchError(() => of({ sonuc: -1, sunucuCevap: 'Dönüş atamasında hata oluştu.' }))),
+          .pipe(catchError(() => of({ sonuc: -1, sunucuCevap: 'SCHOOL_BUS.MSG_RETURN_ASSIGN_ERROR' }))),
       ]).subscribe({
         next: (results) => {
           const allSuccess = results.every((res) => res.sonuc === 1);
           if (allSuccess) {
-            this.notification.success('Öğrenci hem gidiş hem dönüş için başarıyla atandı.');
+            this.notification.success('SCHOOL_BUS.MSG_ASSIGNED_BOTH');
           } else {
-            this.notification.info('Atama yapıldı ancak yönlerin birinde hata oluşmuş olabilir.');
+            this.notification.info('SCHOOL_BUS.MSG_ASSIGN_PARTIAL');
           }
           this.loadStudentAssignments(bus.id);
           this.loadBuses();
@@ -389,15 +443,15 @@ export class SchoolBusComponent implements OnInit {
       this.busService.assignStudentToBus(v.ogrenciSicilId, bus.id, v.yon).subscribe({
         next: (result) => {
           if (result.sonuc === 1) {
-            this.notification.success(result.sunucuCevap || 'Öğrenci servise başarıyla atandı.');
+            this.notification.success(result.sunucuCevap || 'SCHOOL_BUS.MSG_STUDENT_ASSIGNED');
             this.loadStudentAssignments(bus.id);
             this.loadBuses();
             this.studentAssignForm.reset({ ogrenciSicilId: null, yon: v.yon });
           } else {
-            this.notification.error(result.sunucuCevap || 'Öğrenci atanırken bir hata oluştu.');
+            this.notification.error(result.sunucuCevap || 'SCHOOL_BUS.MSG_STUDENT_ASSIGN_ERROR');
           }
         },
-        error: () => this.notification.error('Sunucuyla iletişim kurulurken bir hata oluştu.'),
+        error: () => this.notification.error('SCHOOL_BUS.MSG_SERVER_ERROR_GENERIC'),
       });
     }
   }
@@ -420,24 +474,24 @@ export class SchoolBusComponent implements OnInit {
     this.busService.removeStudentAssignment(target.id).subscribe({
       next: (result) => {
         if (result.sonuc === 1) {
-          this.notification.success(result.sunucuCevap || 'Kayıt başarıyla silindi.');
+          this.notification.success(result.sunucuCevap || 'SCHOOL_BUS.MSG_RECORD_DELETED');
           if (bus) {
             this.loadStudentAssignments(bus.id);
             this.loadBuses();
           }
           this.closeStudentAssignDelete();
         } else {
-          this.notification.error(result.sunucuCevap || 'Kayıt silinirken hata oluştu.');
+          this.notification.error(result.sunucuCevap || 'SCHOOL_BUS.MSG_RECORD_DELETE_ERROR');
         }
       },
-      error: () => this.notification.error('Sunucuyla iletişim kurulamadı.'),
+      error: () => this.notification.error('SCHOOL_BUS.MSG_SERVER_ERROR'),
     });
   }
 
   private loadAllAuthorityAssignments(): void {
     this.busService.getAuthorityAssignments().subscribe({
       next: (rows) => this.allAuthorityAssignments.set(rows),
-      error: () => this.notification.error('Yetkili atamaları alınırken hata oluştu.'),
+      error: () => this.notification.error('SCHOOL_BUS.MSG_AUTHORITY_ASSIGNMENTS_ERROR'),
     });
   }
 
@@ -450,14 +504,14 @@ export class SchoolBusComponent implements OnInit {
     this.busService.assignAuthorityToBus(v.authoritySicilId, bus.id).subscribe({
       next: (result) => {
         if (result.sonuc === 1) {
-          this.notification.success(result.sunucuCevap || 'Yetkili servise başarıyla atandı.');
+          this.notification.success(result.sunucuCevap || 'SCHOOL_BUS.MSG_AUTHORITY_ASSIGNED');
           this.loadAllAuthorityAssignments();
           this.authorityAssignForm.reset({ authoritySicilId: null });
         } else {
-          this.notification.error(result.sunucuCevap || 'Yetkili atanırken hata oluştu.');
+          this.notification.error(result.sunucuCevap || 'SCHOOL_BUS.MSG_AUTHORITY_ASSIGN_ERROR');
         }
       },
-      error: () => this.notification.error('Sunucuyla iletişim kurulamadı.'),
+      error: () => this.notification.error('SCHOOL_BUS.MSG_SERVER_ERROR'),
     });
   }
 
@@ -478,14 +532,14 @@ export class SchoolBusComponent implements OnInit {
     this.busService.removeAuthorityAssignment(target.id).subscribe({
       next: (result) => {
         if (result.sonuc === 1) {
-          this.notification.success(result.sunucuCevap || 'Kayıt başarıyla silindi.');
+          this.notification.success(result.sunucuCevap || 'SCHOOL_BUS.MSG_RECORD_DELETED');
           this.loadAllAuthorityAssignments();
           this.closeAuthorityAssignDelete();
         } else {
-          this.notification.error(result.sunucuCevap || 'Kayıt silinirken hata oluştu.');
+          this.notification.error(result.sunucuCevap || 'SCHOOL_BUS.MSG_RECORD_DELETE_ERROR');
         }
       },
-      error: () => this.notification.error('Sunucuyla iletişim kurulamadı.'),
+      error: () => this.notification.error('SCHOOL_BUS.MSG_SERVER_ERROR'),
     });
   }
 
@@ -500,7 +554,7 @@ export class SchoolBusComponent implements OnInit {
           this.serviceAuthoritiesLoading.set(false);
         },
         error: () => {
-          this.notification.error('Yetkili listesi alınamadı.');
+          this.notification.error('SCHOOL_BUS.MSG_AUTHORITIES_ERROR');
           this.serviceAuthoritiesLoading.set(false);
         },
       });
@@ -530,16 +584,16 @@ export class SchoolBusComponent implements OnInit {
         next: (res) => {
           this.authoritySendLoading.set(false);
           if (res.sonuc === 1) {
-            this.notification.success(res.sunucuCevap || 'Bilgiler gönderildi.');
+            this.notification.success(res.sunucuCevap || 'SCHOOL_BUS.MSG_INFO_SENT');
           } else {
-            this.notification.error(res.sunucuCevap || 'Bilgiler gönderilemedi.');
+            this.notification.error(res.sunucuCevap || 'SCHOOL_BUS.MSG_INFO_SEND_ERROR');
           }
           this.authoritySendVisible.set(false);
           this.authoritySendTarget.set(null);
         },
         error: () => {
           this.authoritySendLoading.set(false);
-          this.notification.error('Sunucuyla iletişim kurulamadı.');
+          this.notification.error('SCHOOL_BUS.MSG_SERVER_ERROR');
         },
       });
   }

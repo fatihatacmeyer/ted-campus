@@ -17,14 +17,14 @@
     <div class="field-row">
       <!-- Mevcut İzin Tipi Alanı -->
       <div class="field">
-        <label class="field-label" for="leaveType">İzin Tipi <span class="required">*</span></label>
+        <label class="field-label" for="leaveType">{{ 'PERSON_LEAVE.LEAVE_TYPE' | translate }} <span class="required">*</span></label>
         <p-select
           id="leaveType"
           [options]="leaveTypes"
           optionLabel="ad"
           optionValue="id"
           [(ngModel)]="selectedLeaveType"
-          placeholder="İzin tipi seçin..."
+          [placeholder]="'PERSON_LEAVE.PH_LEAVE_TYPE' | translate"
           [style]="{ width: '100%' }"
           appendTo="body"
         />
@@ -33,7 +33,7 @@
       <!-- Yeni Çıkış Terminali Alanı -->
       <div class="field">
         <label class="field-label" for="terminal"
-          >Çıkış Terminali <span class="required">*</span></label
+          >{{ 'PERSON_LEAVE.EXIT_TERMINAL' | translate }} <span class="required">*</span></label
         >
         <p-select
           id="terminal"
@@ -41,7 +41,7 @@
           optionLabel="ad"
           optionValue="id"
           [(ngModel)]="selectedTerminal"
-          placeholder="Terminal seçin..."
+          [placeholder]="'PERSON_LEAVE.PH_TERMINAL' | translate"
           [style]="{ width: '100%' }"
           appendTo="body"
           [showClear]="true"
@@ -52,7 +52,7 @@
     <div class="field-row">
       <div class="field">
         <label class="field-label" for="startDate"
-          >Başlangıç Tarihi <span class="required">*</span></label
+          >{{ 'PERSON_LEAVE.START_DATE' | translate }} <span class="required">*</span></label
         >
         <input
           pInputText
@@ -63,13 +63,13 @@
         />
       </div>
       <div class="field">
-        <label class="field-label" for="startTime">Başlangıç Saati</label>
+        <label class="field-label" for="startTime">{{ 'PERSON_LEAVE.START_TIME' | translate }}</label>
         <input
           pInputText
           id="startTime"
           type="time"
           [(ngModel)]="startTime"
-          placeholder="00:00 (boş geçilirse)"
+          [placeholder]="'PERSON_LEAVE.PH_TIME' | translate"
           [style]="{ width: '100%' }"
         />
       </div>
@@ -78,7 +78,7 @@
     <!-- Bitiş tarihi -->
     <div class="field-row">
       <div class="field">
-        <label class="field-label" for="endDate">Bitiş Tarihi <span class="">*</span></label>
+        <label class="field-label" for="endDate">{{ 'PERSON_LEAVE.END_DATE' | translate }} <span class="">*</span></label>
         <input
           pInputText
           id="endDate"
@@ -88,13 +88,13 @@
         />
       </div>
       <div class="field">
-        <label class="field-label" for="endTime">Bitiş Saati</label>
+        <label class="field-label" for="endTime">{{ 'PERSON_LEAVE.END_TIME' | translate }}</label>
         <input
           pInputText
           id="endTime"
           type="time"
           [(ngModel)]="endTime"
-          placeholder="00:00 (boş geçilirse)"
+          [placeholder]="'PERSON_LEAVE.PH_TIME' | translate"
           [style]="{ width: '100%' }"
         />
       </div>
@@ -103,21 +103,21 @@
     <div class="checkbox-row">
       <div class="checkbox-item">
         <p-checkbox [(ngModel)]="isSaatlik" [binary]="true" inputId="saatlikCheck" />
-        <label for="saatlikCheck" class="checkbox-label">Saatlik</label>
+        <label for="saatlikCheck" class="checkbox-label">{{ 'PERSON_LEAVE.HOURLY' | translate }}</label>
       </div>
       <div class="checkbox-item">
         <p-checkbox [(ngModel)]="isBlok" [binary]="true" inputId="blokCheck" />
-        <label for="blokCheck" class="checkbox-label">Blok izin (her gün aynı saat)</label>
+        <label for="blokCheck" class="checkbox-label">{{ 'PERSON_LEAVE.BLOCK' | translate }}</label>
       </div>
     </div>
 
     <div class="field">
-      <label class="field-label" for="description">Açıklama</label>
+      <label class="field-label" for="description">{{ 'PERSON_LEAVE.DESCRIPTION' | translate }}</label>
       <textarea
         pTextarea
         id="description"
         [(ngModel)]="description"
-        placeholder="Açıklama girin (isteğe bağlı)"
+        [placeholder]="'PERSON_LEAVE.PH_DESCRIPTION' | translate"
         rows="3"
         [style]="{ width: '100%' }"
       ></textarea>
@@ -128,18 +128,18 @@
     <div class="dialog-actions">
       <button
         pButton
-        label="İptal"
+        [label]="'COMMON.CANCEL' | translate"
         class="p-button-text"
-        aria-label="İptal"
+        [attr.aria-label]="'COMMON.CANCEL' | translate"
         (click)="close()"
         [disabled]="isProcessing"
       ></button>
       <button
         pButton
-        [label]="replaceLeaveId != null ? 'Güncelle' : 'Gönder'"
+        [label]="(replaceLeaveId != null ? 'COMMON.UPDATE' : 'COMMON.SEND') | translate"
         class="p-button-success"
         icon="pi pi-send"
-        aria-label="İzini onayla"
+        [attr.aria-label]="'PERSON_LEAVE.CONFIRM_ARIA' | translate"
         (click)="onConfirm()"
         [disabled]="!isFormValid || isProcessing"
       ></button>

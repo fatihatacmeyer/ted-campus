@@ -4,7 +4,7 @@
   [style]="{ width: '500px' }"
   [draggable]="false"
   (onHide)="close()"
-  header="Kişisel Profil"
+  [header]="'PERSON_PROFILE.TITLE' | translate"
   [baseZIndex]="10000"
 >
   @if (person) {
@@ -16,7 +16,7 @@
             <img
               [src]="photoUrl"
               (error)="onPhotoError()"
-              alt="Profil Fotoğrafı"
+              [alt]="'PERSON_PROFILE.PHOTO_ALT' | translate"
               class="profile-image"
             />
             <div class="photo-hover-overlay">
@@ -34,48 +34,48 @@
       </div>
       <div class="profile-info">
         <div class="info-row">
-          <span class="info-label">Ad Soyad</span>
+          <span class="info-label">{{ 'PERSON_PROFILE.FULL_NAME' | translate }}</span>
           <span class="info-value">{{ person.adsoyad }}</span>
         </div>
 
         @if (isStudent) {
           <div class="info-row">
-            <span class="info-label">Okul No</span>
+            <span class="info-label">{{ 'PERSON_PROFILE.SCHOOL_NO' | translate }}</span>
             <span class="info-value">{{ person.sicilno || '-' }}</span>
           </div>
           <div class="info-row">
-            <span class="info-label">TC Kimlik</span>
+            <span class="info-label">{{ 'PERSON_PROFILE.TC' | translate }}</span>
             <span class="info-value">{{ person.personelno || '-' }}</span>
           </div>
         } @else if (!isProxyPerson) {
           <!-- VELİ VE ÖĞRETMENLER İÇİN -->
           <div class="info-row">
-            <span class="info-label">TC Kimlik</span>
+            <span class="info-label">{{ 'PERSON_PROFILE.TC' | translate }}</span>
             <span class="info-value">{{ person.personelno || '-' }}</span>
           </div>
           <div class="info-row">
-            <span class="info-label">Sicil No</span>
+            <span class="info-label">{{ 'PERSON_PROFILE.REG_NO' | translate }}</span>
             <span class="info-value">{{ person.sicilno || '-' }}</span>
           </div>
         }
 
         <div class="info-row">
-          <span class="info-label">Telefon</span>
+          <span class="info-label">{{ 'PERSON_PROFILE.PHONE' | translate }}</span>
           <span class="info-value">{{ person.ceptelefon || '-' }}</span>
         </div>
         <div class="info-row">
-          <span class="info-label">Kayıt Tipi</span>
+          <span class="info-label">{{ 'PERSON_PROFILE.REG_TYPE' | translate }}</span>
           <span class="info-value">{{ person.userdefad || '-' }}</span>
         </div>
         <div class="info-row">
-          <span class="info-label">Kart ID</span>
+          <span class="info-label">{{ 'PERSON_PROFILE.CARD_ID' | translate }}</span>
           <span class="info-value">{{ person.cardid || '-' }}</span>
         </div>
       </div>
 
       @if (showLinkedPersons) {
         <div class="linked-section">
-          <h6>{{ linkedPersonsLabel }}</h6>
+          <h6>{{ linkedPersonsLabel | translate }}</h6>
           @if (hasLinkedPersons) {
             <ul class="linked-list">
               @for (linked of linkedPersons; track linked.id) {
@@ -95,7 +95,7 @@
               }
             </ul>
           } @else {
-            <span class="no-linked">Atanmamış</span>
+            <span class="no-linked">{{ 'PERSON_PROFILE.NO_LINKED' | translate }}</span>
           }
         </div>
       }
@@ -111,7 +111,7 @@
                 icon="pi pi-times"
                 (click)="onExitClick()"
               >
-                Çıkış Ver
+                {{ 'PERSON_PROFILE.EXIT' | translate }}
               </button>
             } @else {
               <button
@@ -121,7 +121,7 @@
                 icon="pi pi-replay"
                 (click)="onRestoreClick()"
               >
-                İşe Geri Al
+                {{ 'PERSON_PROFILE.RESTORE' | translate }}
               </button>
             }
           }
@@ -135,10 +135,10 @@
             class="p-button-help p-button-outlined p-button-sm"
             icon="pi pi-key"
             (click)="onForgotPasswordClick()"
-            pTooltip="Kullanıcı Bilgilerini Gönder"
+            [pTooltip]="'PERSON_PROFILE.SEND_INFO_TOOLTIP' | translate"
             tooltipPosition="top"
           >
-            Bilgileri Gönder
+            {{ 'PERSON_PROFILE.SEND_INFO' | translate }}
           </button>
 
           <!-- Düzenle Butonu (Birincil Eylem) — vekil profillerde gösterilmez -->
@@ -150,7 +150,7 @@
               icon="pi pi-pencil"
               (click)="onEditClick()"
             >
-              Düzenle
+              {{ 'COMMON.EDIT' | translate }}
             </button>
           }
         </div>
@@ -170,7 +170,7 @@
   styleClass="full-photo-dialog"
   [baseZIndex]="10005"
 >
-  <img [src]="photoUrl" alt="Büyük Profil Fotoğrafı" class="full-size-img" />
+  <img [src]="photoUrl" [alt]="'PERSON_PROFILE.PHOTO_ALT_LARGE' | translate" class="full-size-img" />
 </p-dialog>
 
 <p-confirmDialog appendTo="body" [style]="{ width: '450px' }" [baseZIndex]="10010">

@@ -14,16 +14,18 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { DialogModule } from 'primeng/dialog';
 import { ButtonModule } from 'primeng/button';
+import { TooltipModule } from 'primeng/tooltip';
 import { Person, LinkedPerson, UserDef } from '../../../../core/models/person.model';
 import { ApiHelperService } from '../../../../core/services/api-helper.service';
 import { AppConfig, APP_CONFIG } from '../../../../core/services/app-config.service';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { ConfirmationService } from 'primeng/api';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 
 @Component({
   selector: 'app-person-profile',
   standalone: true,
-  imports: [CommonModule, DialogModule, ButtonModule, ConfirmDialogModule],
+  imports: [CommonModule, DialogModule, ButtonModule, ConfirmDialogModule, TooltipModule, TranslatePipe],
   providers: [ConfirmationService],
   templateUrl: './person-profile.html',
   styleUrl: './person-profile.scss',
@@ -49,6 +51,7 @@ export class PersonProfileComponent implements OnChanges {
   private destroyRef = inject(DestroyRef);
   private config: AppConfig = inject(APP_CONFIG);
   private confirmationService = inject(ConfirmationService);
+  private translate = inject(TranslateService);
 
   showFullPhoto = false;
   photoUrl: string | null = null;
@@ -159,9 +162,9 @@ export class PersonProfileComponent implements OnChanges {
   /** Dinamik label — tıklanan kişinin userdef değerine göre */
   get linkedPersonsLabel(): string {
     const ctx = this.person?.userdef ?? this.userdefContext;
-    if (ctx === UserDef.Ogrenci) return 'Veliler';
-    if (ctx === UserDef.Veli) return 'Çocuklar';
-    return 'Bağlantılı Kişiler';
+    if (ctx === UserDef.Ogrenci) return 'PERSON_PROFILE.LINKED_PARENTS';
+    if (ctx === UserDef.Veli) return 'PERSON_PROFILE.LINKED_CHILDREN';
+    return 'PERSON_PROFILE.LINKED_DEFAULT';
   }
 
   get hasLinkedPersons(): boolean {
@@ -217,11 +220,13 @@ export class PersonProfileComponent implements OnChanges {
   onForgotPasswordClick(): void {
     if (this.person) {
       this.confirmationService.confirm({
-        message: `<strong>${this.person.adsoyad}</strong> adlı kişiye giriş bilgilerini (SMS/E-posta) göndermek istediğinize emin misiniz?`,
-        header: 'Bilgileri Gönder Onayı',
+        message: this.translate.instant('PERSON_PROFILE.CONFIRM_SEND', {
+          name: `<strong>${this.person.adsoyad}</strong>`,
+        }),
+        header: this.translate.instant('PERSON_PROFILE.CONFIRM_SEND_TITLE'),
         icon: 'pi pi-exclamation-triangle',
-        acceptLabel: 'Evet, Gönder',
-        rejectLabel: 'İptal',
+        acceptLabel: this.translate.instant('PERSON_PROFILE.YES_SEND'),
+        rejectLabel: this.translate.instant('COMMON.CANCEL'),
         acceptButtonStyleClass: 'p-button-success',
         rejectButtonStyleClass: 'p-button-text p-button-danger',
         accept: () => {

@@ -82,7 +82,7 @@ export class SchoolHoursService {
             unwrapped?.aciklama;
           return {
             sonuc: sonucVal != null ? Number(sonucVal) : 1,
-            sunucuCevap: sunucuCevapVal ? String(sunucuCevapVal) : 'Saatler başarıyla güncellendi.',
+            sunucuCevap: sunucuCevapVal ? String(sunucuCevapVal) : 'SCHOOL_HOURS.SUCCESS_UPDATE',
           };
         }),
       );

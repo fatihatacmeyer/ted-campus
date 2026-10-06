@@ -14,7 +14,7 @@
 
         @if (errorMessage) {
           <div class="login-alert" [class.shake]="isShaking" role="alert">
-            {{ errorMessage }}
+            {{ errorMessage | translate }}
           </div>
         }
 

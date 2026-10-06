@@ -1,4 +1,5 @@
 import { ChangeDetectionStrategy, Component, computed, inject, input, model } from '@angular/core';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { NotificationService } from '../../../../core/services/notification.service';
 import { isIntervalValid, isValidTime } from '../../../../shared/utils/time.utils';
 import { TimeRangeInputComponent } from '../time-range-input/time-range-input';
@@ -11,13 +12,14 @@ import { TimeRangeInputComponent } from '../time-range-input/time-range-input';
 @Component({
   selector: 'app-day-hours-cell',
   standalone: true,
-  imports: [TimeRangeInputComponent],
+  imports: [TimeRangeInputComponent, TranslatePipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './day-hours-cell.html',
   styleUrl: './day-hours-cell.scss',
 })
 export class DayHoursCellComponent {
   private readonly notification = inject(NotificationService);
+  private readonly translate = inject(TranslateService);
 
   readonly editing = input(false);
   readonly dayName = input.required<string>();
@@ -43,12 +45,15 @@ export class DayHoursCellComponent {
   checkInterval(pair: 'normal' | 'study'): void {
     const [start, end, label] =
       pair === 'normal'
-        ? ([this.normalStart, this.normalEnd, 'Normal'] as const)
-        : ([this.studyStart, this.studyEnd, 'Etüt'] as const);
+        ? ([this.normalStart, this.normalEnd, 'SCHOOL_HOURS.NORMAL_LABEL'] as const)
+        : ([this.studyStart, this.studyEnd, 'SCHOOL_HOURS.STUDY_PREFIX'] as const);
 
     if (!isIntervalValid(start(), end())) {
       this.notification.error(
-        `${this.dayName()} ${label} bitiş saati, başlangıç saatinden ileri (büyük) olmalıdır.`,
+        this.translate.instant('SCHOOL_HOURS.INTERVAL_ERROR', {
+          day: this.dayName(),
+          label: this.translate.instant(label),
+        }),
       );
       end.set(undefined);
     }

@@ -118,7 +118,7 @@ export class AttendanceListComponent {
   columns: ColumnDef<StudentAttendanceRow>[] = [
     {
       field: 'izinIkon',
-      header: 'Simge',
+      header: 'STUDENT_ATTENDANCE.COL_ICON',
       sortable: false,
       width: '45px',
       alwaysVisible: true,
@@ -312,14 +312,14 @@ export class AttendanceListComponent {
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: () => {
-          this.notification.success('İzin başarıyla silindi.');
+          this.notification.success('STUDENT_ATTENDANCE.MSG_LEAVE_DELETED');
           this.leaveIconDialogVisible.set(false); // Modalı kapat[cite: 1]
           this.selectedRows.set([]); // Seçimleri temizle
           this.loadRows(); // Tabloyu yenile[cite: 1]
         },
         error: (err) => {
           console.error('İzin silme hatası:', err);
-          this.notification.error('İzin silinirken bir hata oluştu.');
+          this.notification.error('STUDENT_ATTENDANCE.MSG_LEAVE_DELETE_ERROR');
         },
       });
   }

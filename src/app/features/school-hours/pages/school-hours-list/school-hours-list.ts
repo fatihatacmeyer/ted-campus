@@ -130,7 +130,7 @@ export class SchoolHoursListComponent implements OnInit {
   // ---- satır düzenleme yaşam döngüsü -----------------------------------
   protected onRowEditInit(row: SchoolHours): void {
     if (this.editingRowId() !== null && this.editingRowId() !== row.Id) {
-      this.notification.info('Aynı anda sadece bir sınıf düzenlenebilir.');
+      this.notification.info('SCHOOL_HOURS.MSG_ONE_EDIT');
       return;
     }
 
@@ -211,7 +211,7 @@ export class SchoolHoursListComponent implements OnInit {
       next: (res) => {
         this.loading.set(false);
         if (res.sonuc === 1 || res.sonuc === 0) {
-          this.notification.success('Saatler ve öğrenci etütleri başarıyla kaydedildi.');
+          this.notification.success('SCHOOL_HOURS.MSG_SAVED');
           this.finishEditing(row.Id);
           this.loadData();
           onComplete?.();
@@ -296,12 +296,11 @@ export class SchoolHoursListComponent implements OnInit {
     const row = this.hours().find((h) => h.Id === rowId);
 
     this.confirmationService.confirm({
-      message:
-        'Açık olan bir düzenlemeniz var. Filtreyi değiştirmeden önce bu değişiklikleri kaydetmek ister misiniz?',
-      header: 'Kaydedilmemiş Değişiklikler',
+      message: this.translate.instant('SCHOOL_HOURS.UNSAVED_MESSAGE'),
+      header: this.translate.instant('SCHOOL_HOURS.UNSAVED_TITLE'),
       icon: 'pi pi-exclamation-triangle',
-      acceptLabel: 'Kaydet ve Devam Et',
-      rejectLabel: 'İptal Et (Değişiklikleri Çöpe At)',
+      acceptLabel: this.translate.instant('SCHOOL_HOURS.SAVE_CONTINUE'),
+      rejectLabel: this.translate.instant('SCHOOL_HOURS.DISCARD'),
       acceptButtonStyleClass: 'p-button-success',
       rejectButtonStyleClass: 'p-button-text p-button-danger',
       accept: () => {

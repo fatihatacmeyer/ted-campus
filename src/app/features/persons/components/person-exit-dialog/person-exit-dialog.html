@@ -16,42 +16,42 @@
 
     @if (mode === 'exit') {
       <div class="field">
-        <label class="field-label" for="exitDate">Çıkış Tarihi <span class="required">*</span></label>
+        <label class="field-label" for="exitDate">{{ 'PERSON_EXIT.EXIT_DATE' | translate }} <span class="required">*</span></label>
         <p-datepicker
           id="exitDate"
           [(ngModel)]="selectedDate"
           dateFormat="dd.mm.yy"
           [showIcon]="true"
           [showOnFocus]="false"
-          placeholder="Tarih seçin"
+          [placeholder]="'PERSON_EXIT.PH_DATE' | translate"
           appendTo="body"
           [style]="{ width: '100%' }"
         />
       </div>
 
       <div class="field">
-        <label class="field-label" for="exitNeden">Neden <span class="required">*</span></label>
+        <label class="field-label" for="exitNeden">{{ 'PERSON_EXIT.REASON' | translate }} <span class="required">*</span></label>
         <p-select
           id="exitNeden"
           [(ngModel)]="selectedReason"
           [options]="reasonOptions"
           optionLabel="label"
           optionValue="value"
-          placeholder="Ayrılış nedeni seçin"
+          [placeholder]="'PERSON_EXIT.PH_REASON' | translate"
           [style]="{ width: '100%' }"
           appendTo="body"
         />
       </div>
     } @else {
       <div class="field">
-        <label class="field-label" for="restoreDate">Giriş Tarihi <span class="required">*</span></label>
+        <label class="field-label" for="restoreDate">{{ 'PERSON_EXIT.RESTORE_DATE' | translate }} <span class="required">*</span></label>
         <p-datepicker
           id="restoreDate"
           [(ngModel)]="selectedDate"
           dateFormat="dd.mm.yy"
           [showIcon]="true"
           [showOnFocus]="false"
-          placeholder="Tarih seçin"
+          [placeholder]="'PERSON_EXIT.PH_DATE' | translate"
           appendTo="body"
           [style]="{ width: '100%' }"
         />
@@ -59,7 +59,12 @@
 
       <div class="confirm-text">
         <i class="pi pi-info-circle"></i>
-        <span>Bu işlem <strong>{{ person?.ad }} {{ person?.soyad }}</strong> kişisini tekrar aktif hale getirecektir.</span>
+        <span
+          [innerHTML]="
+            'PERSON_EXIT.RESTORE_CONFIRM'
+              | translate: { name: bold((person?.ad ?? '') + ' ' + (person?.soyad ?? '')) }
+          "
+        ></span>
       </div>
     }
   </div>
@@ -68,18 +73,25 @@
     <div class="dialog-actions">
       <button
         pButton
-        label="İptal"
+        [label]="'COMMON.CANCEL' | translate"
         class="p-button-text"
-        aria-label="İptal"
+        [attr.aria-label]="'COMMON.CANCEL' | translate"
         (click)="close()"
         [disabled]="isProcessing"
       ></button>
       <button
         pButton
-        [label]="isProcessing ? 'İşleniyor...' : (mode === 'exit' ? 'Çıkış Ver' : 'Geri Al')"
+        [label]="
+          (isProcessing
+            ? 'PERSON_EXIT.PROCESSING'
+            : mode === 'exit'
+              ? 'PERSON_EXIT.EXIT'
+              : 'PERSON_EXIT.RESTORE'
+          ) | translate
+        "
         [class]="mode === 'exit' ? 'p-button-danger' : 'p-button-success'"
         [icon]="mode === 'exit' ? 'pi pi-times' : 'pi pi-replay'"
-        aria-label="İşlemi onayla"
+        [attr.aria-label]="'PERSON_EXIT.CONFIRM_ARIA' | translate"
         (click)="onConfirm()"
         [disabled]="!isFormValid || isProcessing"
       ></button>

@@ -2,7 +2,7 @@
   <div class="student-list-header">
     <h6 class="panel-title">
       <i class="pi pi-users"></i>
-      {{ gradeLabel() }} Öğrenci Etüt Seçimi
+      {{ 'SCHOOL_HOURS.STUDY_PANEL_TITLE' | translate: { grade: gradeLabel() } }}
     </h6>
 
     <div class="panel-tools">
@@ -12,7 +12,7 @@
           type="text"
           [ngModel]="searchText()"
           (ngModelChange)="searchText.set($event)"
-          placeholder="Öğrenci adı ile ara..."
+          [placeholder]="'SCHOOL_HOURS.SEARCH_STUDENT' | translate"
           class="search-input"
         />
       </div>
@@ -21,7 +21,7 @@
         <button
           pButton
           type="button"
-          label="Tümünü Seç"
+          [label]="'SCHOOL_HOURS.SELECT_ALL' | translate"
           icon="pi pi-check-square"
           class="p-button-sm p-button-success p-button-outlined"
           (click)="selectAll()"
@@ -29,7 +29,7 @@
         <button
           pButton
           type="button"
-          label="Temizle"
+          [label]="'COMMON.CLEAR' | translate"
           icon="pi pi-stop"
           class="p-button-sm p-button-danger p-button-outlined"
           (click)="clearAll()"
@@ -42,7 +42,7 @@
     <table class="sub-html-table">
       <thead>
         <tr>
-          <th class="student-name-col">Öğrenci Adı Soyadı</th>
+          <th class="student-name-col">{{ 'SCHOOL_HOURS.STUDENT_NAME_COL' | translate }}</th>
           @for (day of days; track day.key) {
             <th class="day-col text-center">
               <div class="day-col-head">
@@ -52,7 +52,7 @@
                     [binary]="true"
                     [ngModel]="isDaySelectedForAll(day.index)"
                     (onChange)="toggleDay(day.index, $event.checked)"
-                    pTooltip="Bu gün için tüm öğrencileri seç/kaldır"
+                    [pTooltip]="'SCHOOL_HOURS.TOGGLE_DAY_TOOLTIP' | translate"
                   ></p-checkbox>
                 }
               </div>
@@ -65,7 +65,7 @@
       <tbody>
         @for (student of filteredStudents(); track studentId(student)) {
           <tr>
-            <td class="student-name" data-label="Öğrenci">
+            <td class="student-name" [attr.data-label]="'SCHOOL_HOURS.STUDENT' | translate">
               <div class="student-cell">
                 <div class="student-avatar">{{ (student.ad || 'O').charAt(0) | uppercase }}</div>
                 <span>{{ studentDisplayName(student) }}</span>
@@ -92,7 +92,7 @@
           <tr>
             <td [attr.colspan]="days.length + 2" class="empty-message-cell">
               <i class="pi pi-search"></i><br />
-              Aranan kritere uygun öğrenci bulunamadı.
+              {{ 'SCHOOL_HOURS.NO_STUDENT_MATCH' | translate }}
             </td>
           </tr>
         }

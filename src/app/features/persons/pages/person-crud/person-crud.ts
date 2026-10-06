@@ -33,7 +33,7 @@ import { ButtonModule } from 'primeng/button';
 import { TooltipModule } from 'primeng/tooltip';
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
 import { NotificationService } from '../../../../core/services/notification.service';
-import { TranslatePipe } from '@ngx-translate/core';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { OperationResultResponse } from '../../../../core/models/person.model';
 import { PersonBusAssignDialogComponent } from '../../components/person-bus-assign-dialog/person-bus-assign-dialog';
 
@@ -95,6 +95,7 @@ export class PersonCrudComponent implements OnInit {
   private cdr = inject(ChangeDetectorRef);
   private route = inject(ActivatedRoute);
   private notification = inject(NotificationService);
+  private translate = inject(TranslateService);
   private readonly destroyRef = inject(DestroyRef);
 
   constructor() {
@@ -143,27 +144,27 @@ export class PersonCrudComponent implements OnInit {
   get columnOverrides(): { field: string; header: string }[] {
     if (this.USERDEF === UserDef.Ogrenci) {
       return [
-        { field: 'veliAdSoyad', header: 'Veliler' },
-        { field: 'firmaad', header: 'Kampüs' },
-        { field: 'bolumad', header: 'Sınıf' },
-        { field: 'direktorlukad', header: 'Eğitim Düzeyi' },
+        { field: 'veliAdSoyad', header: 'PERSON_COLUMNS.PARENTS' },
+        { field: 'firmaad', header: 'PERSON_COLUMNS.CAMPUS' },
+        { field: 'bolumad', header: 'PERSON_COLUMNS.CLASS' },
+        { field: 'direktorlukad', header: 'PERSON_COLUMNS.EDUCATION_LEVEL' },
       ];
     }
     if (this.USERDEF === UserDef.Veli) {
       return [
-        { field: 'veliAdSoyad', header: 'Çocuklar' },
-        { field: 'ogrencilerSinif', header: 'Öğrenciler (Sınıf)' },
-        { field: 'ogrenciKampusleri', header: 'Kampüs' },
-        { field: 'personelno', header: 'TC Kimlik' }, // Sütun adını TC Kimlik yaptık
-        { field: 'sicilno', header: 'Sicil No' },
+        { field: 'veliAdSoyad', header: 'PERSON_COLUMNS.CHILDREN' },
+        { field: 'ogrencilerSinif', header: 'PERSON_COLUMNS.STUDENTS_CLASS' },
+        { field: 'ogrenciKampusleri', header: 'PERSON_COLUMNS.CAMPUS' },
+        { field: 'personelno', header: 'PERSON_COLUMNS.TC' }, // Sütun adını TC Kimlik yaptık
+        { field: 'sicilno', header: 'PERSON_COLUMNS.SICIL_NO' },
       ];
     }
     if (this.USERDEF === UserDef.Ogretmen) {
       return [
-        { field: 'firmaad', header: 'Kampüs' },
-        { field: 'bolumad', header: 'Zümre / Bölüm' },
-        { field: 'pozisyonad', header: 'Branş' },
-        { field: 'personelno', header: 'Personel No' },
+        { field: 'firmaad', header: 'PERSON_COLUMNS.CAMPUS' },
+        { field: 'bolumad', header: 'PERSON_COLUMNS.DEPARTMENT_GROUP' },
+        { field: 'pozisyonad', header: 'PERSON_COLUMNS.BRANCH' },
+        { field: 'personelno', header: 'PERSON_COLUMNS.PERSONEL_NO' },
       ];
     }
     return [];
@@ -266,7 +267,7 @@ export class PersonCrudComponent implements OnInit {
           }
         },
         error: () => {
-          this.errorMessage = 'Sistem hatası: Personel listesi sunucudan çekilemedi.';
+          this.errorMessage = this.translate.instant('PERSON_CRUD.ERR_LOAD_LIST');
           this.isLoading = false;
           this.cdr.markForCheck();
         },
@@ -326,7 +327,7 @@ export class PersonCrudComponent implements OnInit {
   onForgotPasswordRequest(person: Person): void {
     // Sadece öğrenci ve veli için geçerli kısıtlaması
     if (this.USERDEF !== UserDef.Ogrenci && this.USERDEF !== UserDef.Veli) {
-      this.notification.error('Bu işlem sadece öğrenci ve veliler için geçerlidir.');
+      this.notification.error('PERSON_CRUD.ONLY_STUDENT_PARENT');
       return;
     }
 
@@ -347,9 +348,9 @@ export class PersonCrudComponent implements OnInit {
 
           // Prosedür güncellendiği için artık projenin standart helper'ını kullanabiliriz
           if (result && (result.Sonuc === 1 || result.Sonuc === '1')) {
-            this.notification.success(result.sunucucevap || 'Kullanıcı silindi.');
+            this.notification.success(result.sunucucevap || 'PERSON_CRUD.LOGIN_DELETED');
           } else {
-            this.notification.error(result?.sunucucevap || 'Kullanıcı bulunamadı veya silinemedi.');
+            this.notification.error(result?.sunucucevap || 'PERSON_CRUD.LOGIN_NOT_FOUND');
           }
 
           this.showProfileModal = false;
@@ -357,7 +358,7 @@ export class PersonCrudComponent implements OnInit {
         },
         error: () => {
           this.isLoading = false;
-          this.notification.error('Sunucuyla iletişim kurulurken hata oluştu.');
+          this.notification.error('COMMON.SERVER_ERROR');
           this.cdr.markForCheck();
         },
       });

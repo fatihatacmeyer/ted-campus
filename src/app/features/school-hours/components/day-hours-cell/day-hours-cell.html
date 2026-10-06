@@ -22,7 +22,7 @@
       <div class="study-time">(E: {{ studyStart() }} - {{ studyEnd() }})</div>
     }
     @if (!hasNormalTime() && !hasStudyTime()) {
-      <span class="closed-label">Kapalı</span>
+      <span class="closed-label">{{ 'SCHOOL_HOURS.CLOSED' | translate }}</span>
     }
   </div>
 }
