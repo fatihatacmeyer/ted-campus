@@ -349,7 +349,6 @@
             type="number"
             id="fee"
             formControlName="fee"
-            [disabled]="!activityForm.get('isPaid')?.value"
             [class.is-invalid]="isFieldInvalid('fee')"
           />
           @if (activityForm.get('fee')?.touched && activityForm.get('fee')?.invalid) {
@@ -438,7 +437,7 @@
           [maxSelectedLabels]="8"
           appendTo="body"
           [styleClass]="'w-100' + (isFieldInvalid('classroom') ? ' is-invalid' : '')"
-          [disabled]="isAllClassesSelected"
+          [readonly]="isAllClassesSelected"
         >
           <!-- Grup header template: dropdown içinde checkbox ile toplu seçim -->
           <ng-template #group let-group pTemplate="group">
