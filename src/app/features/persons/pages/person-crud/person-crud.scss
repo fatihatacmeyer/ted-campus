@@ -10,7 +10,17 @@
   height: auto !important;
   min-height: 100%;
   overflow: visible !important;
-  padding-bottom: 24px; /* Yatay scroll'un en alta yapışıp ezilmesini önler */
+  padding-bottom: 0;
+}
+
+/* Kart altındaki fazladan boşluk (margin) sağda gereksiz scroll oluşturuyordu */
+.admin-wrapper .admin-card {
+  margin-bottom: 0;
+}
+
+/* Başlık + açıklama yüksekliği kadar pay bırak: kart viewport'a sığsın */
+:host ::ng-deep .admin-table .p-datatable-wrapper {
+  max-height: calc(100vh - 290px);
 }
 
 /* Uzun, virgülle ayrılmış listeler (öğrenciler / kampüsler): kesilmez, alt satıra sarar */
