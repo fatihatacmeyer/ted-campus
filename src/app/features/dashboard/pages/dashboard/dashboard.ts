@@ -342,10 +342,6 @@ export class DashboardComponent implements OnInit {
   readonly openAbsentDialog = () => this.absentDialogVisible.set(true);
 
   /** Kişi listesi satırı için "Sınıf · Okul" meta metni (null alanları atlar). */
-  personMeta(person: InsidePerson): string {
-    return [person.className, person.schoolName].filter(Boolean).join(' · ');
-  }
-
   directionLabel(direction: string | null): string {
     if (!direction) return 'DASHBOARD.DIRECTION_UNKNOWN';
     return direction === 'in' ? 'DASHBOARD.DIRECTION_IN' : 'DASHBOARD.DIRECTION_OUT';

@@ -714,10 +714,9 @@
             {{ k.fullName ? k.fullName.charAt(0) : '?' }}
           </div>
 
-          <div class="person-info">
-            <span class="person-name">{{ k.fullName }}</span>
-            <span class="person-meta">{{ personMeta(k) }}</span>
-          </div>
+          <span class="person-col person-col-name">{{ k.fullName }}</span>
+          <span class="person-col">{{ k.className || '-' }}</span>
+          <span class="person-col">{{ k.schoolName || '-' }}</span>
 
           <span
             class="person-badge"

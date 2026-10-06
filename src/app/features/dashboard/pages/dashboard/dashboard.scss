@@ -548,6 +548,20 @@ $radius-full: 9999px;
   color: $text-muted;
 }
 
+.person-col {
+  flex: 1;
+  min-width: 0;
+  font-size: 0.85rem;
+  color: $text-primary;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+
+  &.person-col-name {
+    font-weight: 600;
+  }
+}
+
 .person-exit-time,
 .person-delay-badge {
   display: flex;
