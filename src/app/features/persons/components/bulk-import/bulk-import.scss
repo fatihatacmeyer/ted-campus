@@ -1,0 +1,148 @@
+:host {
+  display: block;
+}
+
+.steps {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-width: 760px;
+}
+
+.step-box {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 16px;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  background: #fff;
+}
+
+.step-no {
+  flex: 0 0 auto;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: #dc2134;
+  color: #fff;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.step-body {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.file-line {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+
+  .pi {
+    color: #16a34a;
+    font-size: 1.2rem;
+  }
+}
+
+.summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.chip {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 110px;
+  padding: 8px 14px;
+  border-radius: 10px;
+  background: #f1f5f9;
+
+  .chip-value {
+    font-size: 1.3rem;
+    font-weight: 700;
+  }
+  .chip-label {
+    font-size: 0.75rem;
+    color: #64748b;
+  }
+
+  &.chip-info {
+    background: #e0f2fe;
+  }
+  &.chip-warn {
+    background: #fef3c7;
+  }
+  &.chip-danger {
+    background: #fee2e2;
+  }
+  &.chip-success {
+    background: #dcfce7;
+  }
+}
+
+.progress-box {
+  margin-bottom: 14px;
+  max-width: 560px;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.only-issues {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: auto;
+  font-size: 0.85rem;
+  color: #475569;
+  cursor: pointer;
+}
+
+.issue {
+  font-size: 0.85rem;
+  color: #b91c1c;
+
+  /* Hata olmayan bilgilendirme satırları (mevcut kayıt vb.) */
+  &.issue-info {
+    color: #475569;
+  }
+}
+
+.error-box {
+  margin-bottom: 12px;
+  padding: 10px 14px;
+  border-radius: 10px;
+  background: #fee2e2;
+  color: #b91c1c;
+
+  p {
+    margin: 0;
+  }
+}
+
+.warn-box {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+  padding: 10px 14px;
+  border-radius: 10px;
+  background: #fef3c7;
+  color: #92400e;
+  font-size: 0.9rem;
+}

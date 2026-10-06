@@ -1,0 +1,240 @@
+<div class="bulk-import">
+  <div class="body">
+    <div class="small text-muted mb-3">{{ descriptionKey() | translate }}</div>
+
+    @if (fileError(); as error) {
+      <div class="error-box">
+        <p>{{ error.key | translate: error.params }}</p>
+      </div>
+    }
+
+    @for (warning of warnings(); track warning.key) {
+      <div class="warn-box">
+        <i class="pi pi-exclamation-triangle"></i>
+        <span>{{ warning.key | translate: warning.params }}</span>
+      </div>
+    }
+
+    @if (step() === 'upload') {
+      <div class="steps">
+        <div class="step-box">
+          <span class="step-no">1</span>
+          <div class="step-body">
+            <strong>{{ 'BULK_IMPORT.STEP_TEMPLATE' | translate }}</strong>
+            <span class="text-muted small">{{
+              (isParent() ? 'BULK_IMPORT.STEP_TEMPLATE_DESC_PARENT' : 'BULK_IMPORT.STEP_TEMPLATE_DESC')
+                | translate
+            }}</span>
+          </div>
+          <button
+            pButton
+            type="button"
+            class="p-button-sm p-button-outlined"
+            icon="pi pi-download"
+            [label]="'BULK_IMPORT.DOWNLOAD_TEMPLATE' | translate"
+            [loading]="busy()"
+            (click)="downloadTemplate()"
+          ></button>
+        </div>
+
+        <div class="step-box">
+          <span class="step-no">2</span>
+          <div class="step-body">
+            <strong>{{ 'BULK_IMPORT.STEP_UPLOAD' | translate }}</strong>
+            <span class="text-muted small">{{
+              'BULK_IMPORT.STEP_UPLOAD_DESC' | translate: { max: maxRows }
+            }}</span>
+          </div>
+          <input
+            #fileInput
+            type="file"
+            class="d-none"
+            accept=".xlsx,.xls"
+            (change)="onFileSelected($event)"
+          />
+          <button
+            pButton
+            type="button"
+            class="p-button-sm"
+            icon="pi pi-upload"
+            [label]="'BULK_IMPORT.SELECT_FILE' | translate"
+            [loading]="busy()"
+            (click)="fileInput.click()"
+          ></button>
+        </div>
+      </div>
+    } @else {
+      <div class="file-line">
+        <i class="pi pi-file-excel"></i>
+        <strong>{{ fileName() }}</strong>
+      </div>
+
+      <div class="summary">
+        <div class="chip">
+          <span class="chip-value">{{ counts().total }}</span>
+          <span class="chip-label">{{ 'BULK_IMPORT.SUMMARY_TOTAL' | translate }}</span>
+        </div>
+        <div class="chip chip-info">
+          <span class="chip-value">{{ counts().ready }}</span>
+          <span class="chip-label">{{ 'BULK_IMPORT.SUMMARY_READY' | translate }}</span>
+        </div>
+        @if (isParent()) {
+          <div class="chip chip-info">
+            <span class="chip-value">{{ counts().relations }}</span>
+            <span class="chip-label">{{ 'BULK_IMPORT.SUMMARY_RELATIONS' | translate }}</span>
+          </div>
+        }
+        <div class="chip chip-warn">
+          <span class="chip-value">{{ counts().exists }}</span>
+          <span class="chip-label">{{
+            (isParent() ? 'BULK_IMPORT.SUMMARY_EXISTS_PARENT' : 'BULK_IMPORT.SUMMARY_EXISTS')
+              | translate
+          }}</span>
+        </div>
+        <div class="chip chip-danger">
+          <span class="chip-value">{{ counts().error }}</span>
+          <span class="chip-label">{{ 'BULK_IMPORT.SUMMARY_ERRORS' | translate }}</span>
+        </div>
+        @if (step() !== 'preview') {
+          <div class="chip chip-success">
+            <span class="chip-value">{{ counts().imported }}</span>
+            <span class="chip-label">{{ 'BULK_IMPORT.SUMMARY_IMPORTED' | translate }}</span>
+          </div>
+          @if (isParent()) {
+            <div class="chip chip-warn">
+              <span class="chip-value">{{ counts().partial }}</span>
+              <span class="chip-label">{{ 'BULK_IMPORT.SUMMARY_PARTIAL' | translate }}</span>
+            </div>
+          }
+          <div class="chip chip-danger">
+            <span class="chip-value">{{ counts().failed }}</span>
+            <span class="chip-label">{{ 'BULK_IMPORT.SUMMARY_FAILED' | translate }}</span>
+          </div>
+        }
+      </div>
+
+      @if (step() === 'importing') {
+        <div class="progress-box">
+          <div class="small mb-1">
+            @if (isParent()) {
+              <strong>{{
+                (phase() === 'records' ? 'BULK_IMPORT.PHASE_PARENTS' : 'BULK_IMPORT.PHASE_RELATIONS')
+                  | translate
+              }}</strong>
+              ·
+            }
+            {{
+              (phase() === 'records' ? 'BULK_IMPORT.PROGRESS' : 'BULK_IMPORT.PROGRESS_RELATIONS')
+                | translate: { done: progress().done, total: progress().total }
+            }}
+          </div>
+          <p-progressBar [value]="percent()"></p-progressBar>
+        </div>
+      }
+
+      <div class="actions">
+        @if (step() === 'preview') {
+          <button
+            pButton
+            type="button"
+            class="p-button-sm"
+            icon="pi pi-check"
+            [label]="startLabelKey() | translate: { count: counts().ready, relations: counts().relations }"
+            [disabled]="counts().work === 0"
+            (click)="startImport()"
+          ></button>
+        }
+        @if (step() !== 'importing') {
+          <button
+            pButton
+            type="button"
+            class="p-button-sm p-button-outlined"
+            icon="pi pi-refresh"
+            [label]="
+              (step() === 'done' ? 'BULK_IMPORT.NEW_IMPORT' : 'COMMON.CANCEL') | translate
+            "
+            (click)="reset()"
+          ></button>
+        }
+        @if (
+          counts().exists + counts().error + counts().failed + counts().partial > 0 &&
+          step() !== 'importing'
+        ) {
+          <button
+            pButton
+            type="button"
+            class="p-button-sm p-button-outlined p-button-secondary"
+            icon="pi pi-file-export"
+            [label]="'BULK_IMPORT.DOWNLOAD_REPORT' | translate"
+            (click)="downloadReport()"
+          ></button>
+        }
+        <label class="only-issues">
+          <input
+            type="checkbox"
+            [checked]="onlyIssues()"
+            (change)="onlyIssues.set($any($event.target).checked)"
+          />
+          {{ 'BULK_IMPORT.ONLY_ISSUES' | translate }}
+        </label>
+      </div>
+
+      <p-table
+        [value]="visibleRows()"
+        [paginator]="visibleRows().length > 25"
+        [rows]="25"
+        [rowsPerPageOptions]="[25, 50, 100]"
+        styleClass="p-datatable-sm"
+        dataKey="rowNo"
+      >
+        <ng-template #header>
+          <tr>
+            <th style="width: 5rem">{{ 'BULK_IMPORT.COL_ROW' | translate }}</th>
+            <th>{{ 'BULK_IMPORT.COL_NAME' | translate }}</th>
+            <th>{{ keyColumnLabel() | translate }}</th>
+            @if (isParent()) {
+              <th style="width: 7rem">{{ 'BULK_IMPORT.COL_RELATIONS' | translate }}</th>
+            }
+            <th style="width: 11rem">{{ 'BULK_IMPORT.COL_STATUS' | translate }}</th>
+            <th>{{ 'BULK_IMPORT.COL_DETAIL' | translate }}</th>
+          </tr>
+        </ng-template>
+        <ng-template #body let-row>
+          <tr>
+            <td>{{ row.rowNo }}</td>
+            <td>{{ row.ad }} {{ row.soyad }}</td>
+            <td>{{ row.key }}</td>
+            @if (isParent()) {
+              <td>
+                {{ row.relationStudentIds.length }}
+                @if (row.alreadyLinked > 0) {
+                  <span class="text-muted small">(+{{ row.alreadyLinked }})</span>
+                }
+              </td>
+            }
+            <td>
+              <p-tag
+                [value]="statusTag(row).labelKey | translate"
+                [severity]="statusTag(row).severity"
+              ></p-tag>
+            </td>
+            <td>
+              @for (issue of rowIssues(row); track $index) {
+                <div class="issue" [class.issue-info]="row.status !== 'error' && !row.outcomeIssue">
+                  {{ issue.key | translate: issue.params }}
+                </div>
+              }
+            </td>
+          </tr>
+        </ng-template>
+        <ng-template #emptymessage>
+          <tr>
+            <td [attr.colspan]="isParent() ? 6 : 5" class="text-center text-muted">
+              {{ 'COMMON.NO_RECORDS' | translate }}
+            </td>
+          </tr>
+        </ng-template>
+      </p-table>
+    }
+  </div>
+</div>

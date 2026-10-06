@@ -3,14 +3,26 @@
     <div class="d-flex justify-content-between align-items-center mb-1 gap-2 flex-wrap">
       <h4 class="fw-bold mb-0" style="color: #dc2134">{{ pageTitleKey | translate }}</h4>
 
-      <button
-        pButton
-        class="p-button-sm"
-        icon="pi pi-plus"
-        [label]="addLabelKey | translate"
-        [attr.aria-label]="addLabelKey | translate"
-        (click)="openAddDialog()"
-      ></button>
+      <div class="d-flex align-items-center gap-2">
+        @if (canBulkImport) {
+          <button
+            pButton
+            class="p-button-sm p-button-outlined"
+            icon="pi pi-file-excel"
+            [label]="'BULK_IMPORT.OPEN_BUTTON' | translate"
+            [attr.aria-label]="'BULK_IMPORT.OPEN_BUTTON' | translate"
+            (click)="showBulkImport = true"
+          ></button>
+        }
+        <button
+          pButton
+          class="p-button-sm"
+          icon="pi pi-plus"
+          [label]="addLabelKey | translate"
+          [attr.aria-label]="addLabelKey | translate"
+          (click)="openAddDialog()"
+        ></button>
+      </div>
     </div>
 
     <div class="small text-muted mb-2">
@@ -140,6 +152,29 @@
   (visibleChange)="onLeaveDialogClose()"
   (confirmed)="onLeaveConfirmed($event)"
 ></app-person-leave-dialog>
+
+@if (canBulkImport) {
+  <p-dialog
+    [header]="bulkImportTitleKey | translate"
+    [(visible)]="showBulkImport"
+    [modal]="true"
+    [draggable]="false"
+    [resizable]="false"
+    [closable]="!bulkImporting"
+    [closeOnEscape]="!bulkImporting"
+    [dismissableMask]="false"
+    [style]="{ width: '1000px', maxWidth: '95vw' }"
+  >
+    <!-- @if: diyalog her açılışta sıfırdan oluşur, önceki aktarımın durumu kalmaz -->
+    @if (showBulkImport) {
+      <app-bulk-import
+        [kind]="bulkImportKind"
+        (imported)="onBulkImported()"
+        (importingChange)="onBulkImportingChange($event)"
+      ></app-bulk-import>
+    }
+  </p-dialog>
+}
 
 <app-person-bus-assign-dialog
   [(visible)]="showBusAssignDialog"

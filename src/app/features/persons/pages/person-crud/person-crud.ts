@@ -36,6 +36,9 @@ import { NotificationService } from '../../../../core/services/notification.serv
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { OperationResultResponse } from '../../../../core/models/person.model';
 import { PersonBusAssignDialogComponent } from '../../components/person-bus-assign-dialog/person-bus-assign-dialog';
+import { BulkImportComponent } from '../../components/bulk-import/bulk-import';
+import { ImportKind } from '../../models/bulk-import.model';
+import { DialogModule } from 'primeng/dialog';
 
 @Component({
   selector: 'app-person-crud',
@@ -52,6 +55,8 @@ import { PersonBusAssignDialogComponent } from '../../components/person-bus-assi
     ProgressSpinnerModule,
     TranslatePipe,
     PersonBusAssignDialogComponent,
+    BulkImportComponent,
+    DialogModule,
   ],
   templateUrl: './person-crud.html',
   styleUrl: './person-crud.scss',
@@ -78,6 +83,10 @@ export class PersonCrudComponent implements OnInit {
 
   showBusAssignDialog = false;
   busAssignPerson: Person | null = null;
+
+  /** Toplu aktarım diyaloğu (yalnızca öğrenci sayfası). Aktarım sürerken kapatılamaz. */
+  showBulkImport = false;
+  bulkImporting = false;
 
   /** Veli sayfası: veliId → çocukları (sp_relationcampus_s tip=0'dan tek çağrıda kurulur). */
   childrenMap = new Map<number, Person[]>();
@@ -133,6 +142,29 @@ export class PersonCrudComponent implements OnInit {
   /** İşlem kolu sadece Ogrenci sayfasında gösterilir (İzin Ata). */
   get showActionsColumn(): boolean {
     return this.USERDEF === UserDef.Ogrenci;
+  }
+
+  /** Excel ile toplu aktarım Öğrenci ve Veli sayfalarında vardır. */
+  get canBulkImport(): boolean {
+    return this.USERDEF === UserDef.Ogrenci || this.USERDEF === UserDef.Veli;
+  }
+
+  get bulkImportKind(): ImportKind {
+    return this.USERDEF === UserDef.Veli ? 'parent' : 'student';
+  }
+
+  get bulkImportTitleKey(): string {
+    return this.USERDEF === UserDef.Veli ? 'BULK_IMPORT.TITLE_PARENT' : 'BULK_IMPORT.TITLE';
+  }
+
+  onBulkImportingChange(importing: boolean): void {
+    this.bulkImporting = importing;
+    this.cdr.markForCheck();
+  }
+
+  /** Aktarım sonrası listeyi (ve ilişki haritalarını) yeniler. */
+  onBulkImported(): void {
+    this.fetchPersonList();
   }
 
   /** Ogrenci ve Veli sayfalarında allPersons gereklidir. */
