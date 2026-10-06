@@ -129,22 +129,37 @@ export interface AccessTransaction {
   badgeLabel: string;
   cardId: string;
   time: string;
-  direction: 'in' | 'out';
+  /** Kişinin sınıfı / kampüsü (tanımsızsa null). Vekilde bağlı olduğu öğrencinin. */
+  className: string | null;
+  campusName: string | null;
+  /** Yön bilinmiyorsa (vekil geçişinde yön kaydı yoksa) null. */
+  direction: 'in' | 'out' | null;
   device: string;
-  result: 'success' | 'failed';
+  /** 'service': servis geçişi (OlayKodu 4102 + terminal 55/56) — hata değildir. */
+  result: 'success' | 'failed' | 'service';
+  /** Vekil geçişi: Sonuc serbest metindir (log Response), çevrilmez. */
+  isProxy: boolean;
   rawDirectionText: string;
   rawResultText: string;
 }
 
+/**
+ * sp_SonHareketlerCampus_s'ten dönen ham satır. Öğrenci/veli geçişlerine
+ * (pool) ek olarak vekil geçişleri de gelir (userDef = 'Vekil'; SicilNo,
+ * CardID boş, Ad/terminalAdi yön/terminal kaydı yoksa NULL olabilir).
+ * Sonuc: 'Servis' | olay açıklaması | vekil Response metni | 'Başarısız: ...'.
+ */
 interface RecentTransactionRow {
   userDef: string;
   adSoyad: string;
   EventTime: string;
-  SicilNo: string;
-  CardID: string;
-  Ad: string;
-  terminalAdi: string;
-  Sonuc: string;
+  SicilNo: string | null;
+  CardID: string | null;
+  Ad: string | null;
+  terminalAdi: string | null;
+  Sinif: string | null;
+  Kampus: string | null;
+  Sonuc: string | null;
 }
 
 /**
@@ -318,39 +333,62 @@ export class DashboardService {
       );
   }
 
-  getRecentTransactions(adet: number = 10): Observable<AccessTransaction[]> {
+  /** @param ara isimden arama (backend @Ara); boşsa filtre uygulanmaz. */
+  getRecentTransactions(adet: number = 10, ara?: string): Observable<AccessTransaction[]> {
     return this.api
       .callEndpoint<RecentTransactionRow[]>('Dynamic', {
         point: 'SonHareketlerCampus',
         islemtipi: 's',
         Adet: adet,
+        Ara: ara?.trim() || undefined,
       })
       .pipe(
         map((rows) =>
           (rows || []).map((row, index) => {
             // SQL'den gelen metinlere göre UI sınıflarını (renk/ikon) belirliyoruz
-            const isSuccess =
-              (row.Sonuc || '').toLowerCase().includes('onay') ||
-              (row.Sonuc || '').toLowerCase() === 'başarılı' ||
-              (row.Sonuc || '').toLowerCase().includes('geçiş');
-            const isIn = (row.Ad || '').toLowerCase().includes('giriş');
-            const isStudent =
-              (row.userDef || '').toUpperCase().includes('ÖĞRENCİ') ||
-              (row.userDef || '').toUpperCase().includes('OGRENCI');
+            const sonuc = (row.Sonuc || '').toLowerCase();
+            const userDef = (row.userDef || '').toLocaleUpperCase('tr-TR');
+            const isProxy = userDef === 'VEKİL' || userDef === 'VEKIL';
+            const isStudent = userDef.includes('ÖĞRENCİ') || userDef.includes('OGRENCI');
+
+            let result: AccessTransaction['result'];
+            if (sonuc.startsWith('başarısız')) {
+              result = 'failed';
+            } else if (sonuc === 'servis') {
+              result = 'service';
+            } else if (isProxy) {
+              // Vekil Response'u serbest metin: "Başarısız:" ile başlamıyorsa başarılı.
+              result = 'success';
+            } else {
+              result =
+                sonuc.includes('onay') || sonuc === 'başarılı' || sonuc.includes('geçiş')
+                  ? 'success'
+                  : 'failed';
+            }
+
+            const directionText = (row.Ad || '').toLowerCase();
+            const direction: AccessTransaction['direction'] = !directionText
+              ? null
+              : directionText.includes('giriş')
+                ? 'in'
+                : 'out';
 
             return {
               id: index + 1, // Satır numarası olarak kullanıyoruz
               personName: row.adSoyad || '-',
               registryNo: row.SicilNo || '-',
               userdef: isStudent ? 11 : 12, // UI renk ayrımları için
-              badgeClass: isStudent ? 'badge-student' : 'badge-parent',
+              badgeClass: isProxy ? 'badge-proxy' : isStudent ? 'badge-student' : 'badge-parent',
               badgeLabel: row.userDef || '-',
               cardId: row.CardID || '-',
               time: this.formatEventTime(row.EventTime),
-              direction: isIn ? 'in' : 'out',
+              className: row.Sinif || null,
+              campusName: row.Kampus || null,
+              direction,
+              isProxy,
               rawDirectionText: row.Ad || '-',
               device: row.terminalAdi || '-',
-              result: isSuccess ? 'success' : 'failed',
+              result,
               rawResultText: row.Sonuc || '-',
             };
           }),

@@ -10,6 +10,7 @@ import {
   StudentAssignmentFilter,
   BusDashboardStats,
   AuthorityAssignment,
+  ServiceAuthority,
   DBInsertResult,
 } from '../models/school-bus.model';
 
@@ -39,6 +40,15 @@ interface OgrenciServisCampusRow {
   Model: string;
   Yon: number;
   YonAciklama: string;
+}
+
+interface ServisKullaniciRow {
+  SicilId: number;
+  SicilNo: string;
+  AdSoyad: string;
+  CepTelefon: string | null;
+  Email: string | null;
+  UserType: string;
 }
 
 interface AuthorityServisRow {
@@ -187,6 +197,58 @@ export class SchoolBusService {
         Id: id,
       })
       .pipe(map(this.mapStandardResponse));
+  }
+
+  /**
+   * sp_serviskullanicilarcampus_s: servis yetkililerinin listesi.
+   * (Prosedür @Ara ile isim araması da destekler; liste küçük olduğu için
+   * arama tablonun kendi arama kutusunda istemci tarafında yapılır.)
+   */
+  getServiceAuthorities(): Observable<ServiceAuthority[]> {
+    return this.api
+      .callEndpoint<ServisKullaniciRow[]>('Dynamic', {
+        point: 'serviskullanicilarcampus',
+        islemtipi: 's',
+      })
+      .pipe(
+        map((rows) =>
+          (rows || []).map((row) => ({
+            sicilId: row.SicilId,
+            sicilNo: row.SicilNo,
+            adSoyad: row.AdSoyad,
+            cepTelefon: row.CepTelefon ?? null,
+            email: row.Email ?? null,
+          })),
+        ),
+      );
+  }
+
+  /**
+   * "Bilgileri Gönder": öğrenci/veli akışındaki sp_loginsendcampus_d ile aynı —
+   * kullanıcının mevcut giriş kaydı silinir ve yeni giriş bilgileri gönderilir.
+   * Yanıt alan adlarının büyük/küçük harfi prosedürde değişebildiği için
+   * (Sonuc / sunucucevap) harf duyarsız okunur.
+   */
+  sendAuthorityLogin(sicilId: number): Observable<{ sonuc: number; sunucuCevap: string }> {
+    return this.api
+      .callEndpoint<Record<string, unknown>[]>('Dynamic', {
+        point: 'loginsendcampus',
+        islemtipi: 'd',
+        xsicilid: sicilId,
+      })
+      .pipe(
+        map((response) => {
+          const row = unwrapResponse(response);
+          const pick = (name: string): unknown => {
+            const key = row ? Object.keys(row).find((k) => k.toLowerCase() === name) : undefined;
+            return key && row ? row[key] : undefined;
+          };
+          return {
+            sonuc: row ? Number(pick('sonuc')) : -1,
+            sunucuCevap: row ? String(pick('sunucucevap') ?? '') : 'Sunucudan yanıt alınamadı.',
+          };
+        }),
+      );
   }
 
   getAuthorityAssignments(): Observable<AuthorityAssignment[]> {

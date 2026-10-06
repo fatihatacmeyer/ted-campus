@@ -152,6 +152,31 @@
   </div>
 </ng-template>
 
+<!-- ── Son hareketler arama kutusu (backend @Ara — isimden) ── -->
+<ng-template #txnSearchBox>
+  <div class="txn-search">
+    <span class="material-symbols-outlined">search</span>
+    <input
+      pInputText
+      type="text"
+      [ngModel]="txnSearch()"
+      (ngModelChange)="onTxnSearch($event)"
+      [placeholder]="'DASHBOARD.SEARCH_BY_NAME' | translate"
+      [attr.aria-label]="'DASHBOARD.SEARCH_BY_NAME' | translate"
+    />
+    @if (txnSearch()) {
+      <button
+        type="button"
+        class="txn-search-clear"
+        [attr.aria-label]="'COMMON.CLEAR' | translate"
+        (click)="onTxnSearch('')"
+      >
+        <span class="material-symbols-outlined">close</span>
+      </button>
+    }
+  </div>
+</ng-template>
+
 <!-- ── Son hareketler tablosu ─────────────────────────────── -->
 <!-- translated=true (dialog): DB metinleri çeviri anahtarı olarak çözülür. -->
 <ng-template #txnTable let-rows="rows" let-translated="translated">
@@ -161,6 +186,8 @@
         <tr>
           <th>#</th>
           <th>{{ 'DASHBOARD.COLUMN_NAME' | translate }}</th>
+          <th>{{ 'DASHBOARD.COLUMN_CLASS' | translate }}</th>
+          <th>{{ 'DASHBOARD.COLUMN_CAMPUS' | translate }}</th>
           <th>{{ 'DASHBOARD.COLUMN_SICIL' | translate }}</th>
           <th>{{ 'DASHBOARD.COLUMN_CARD' | translate }}</th>
           <th>{{ 'DASHBOARD.COLUMN_DIRECTION' | translate }}</th>
@@ -181,6 +208,8 @@
                 {{ txn.personName }}
               </div>
             </td>
+            <td>{{ txn.className || '-' }}</td>
+            <td>{{ txn.campusName || '-' }}</td>
             <td class="txn-sicil">{{ txn.registryNo }}</td>
             <td class="txn-card">{{ txn.cardId }}</td>
             <td>
@@ -189,9 +218,11 @@
                 [class.direction-in]="txn.direction === 'in'"
                 [class.direction-out]="txn.direction === 'out'"
               >
-                <span class="material-symbols-outlined">{{
-                  txn.direction === 'in' ? 'login' : 'logout'
-                }}</span>
+                @if (txn.direction) {
+                  <span class="material-symbols-outlined">{{
+                    txn.direction === 'in' ? 'login' : 'logout'
+                  }}</span>
+                }
                 {{
                   translated ? (directionLabel(txn.direction) | translate) : txn.rawDirectionText
                 }}
@@ -203,10 +234,24 @@
               <span
                 class="txn-result"
                 [class.result-ok]="txn.result === 'success'"
+                [class.result-service]="txn.result === 'service'"
                 [class.result-fail]="txn.result === 'failed'"
               >
-                {{ translated ? (resultLabel(txn.result) | translate) : txn.rawResultText }}
+                {{
+                  translated && !txn.isProxy
+                    ? (resultLabel(txn.result) | translate)
+                    : txn.rawResultText
+                }}
               </span>
+            </td>
+          </tr>
+        } @empty {
+          <tr class="txn-empty">
+            <td colspan="10">
+              {{
+                (appliedTxnSearch() ? 'DASHBOARD.NO_SEARCH_RESULT' : 'DASHBOARD.NO_TRANSACTIONS')
+                  | translate
+              }}
             </td>
           </tr>
         }
@@ -521,6 +566,7 @@
           </div>
         </div>
         <div class="header-actions">
+          <ng-container *ngTemplateOutlet="txnSearchBox" />
           <button
             pButton
             [label]="collapseOrAll"
@@ -560,6 +606,9 @@
   [resizable]="false"
   styleClass="dashboard-dialog"
 >
+  <div class="txn-dialog-search">
+    <ng-container *ngTemplateOutlet="txnSearchBox" />
+  </div>
   <ng-container *ngTemplateOutlet="txnTable; context: { rows: transactions(), translated: true }" />
 </p-dialog>
 

@@ -16,6 +16,7 @@ import {
   Observable,
   Subscription,
   catchError,
+  debounceTime,
   distinctUntilChanged,
   filter,
   startWith,
@@ -55,6 +56,8 @@ const PREVIEW_LIMIT = 5;
 const TRANSACTION_POLL_MS = 1500;
 const TRANSACTION_LIMIT_DEFAULT = 10;
 const TRANSACTION_LIMIT_FULL = 100;
+/** Son hareketlerde arama kutusu için yazma sonrası bekleme (ms). */
+const TRANSACTION_SEARCH_DEBOUNCE_MS = 300;
 
 const EMPTY_STATS: DashboardCampusStats = {
   studentCount: 0,
@@ -174,6 +177,9 @@ export class DashboardComponent implements OnInit {
   );
   readonly absenteesExtra = computed(() => Math.max(0, this.absentees().length - PREVIEW_LIMIT));
 
+  /** Arama kutusundaki metin (anlık) ve backend'e uygulanmış metin (debounce sonrası). */
+  readonly txnSearch = signal('');
+  readonly appliedTxnSearch = signal('');
   readonly showAllTransactions = signal(false);
   readonly transactionCount = computed(() =>
     this.showAllTransactions() ? TRANSACTION_LIMIT_FULL : TRANSACTION_LIMIT_DEFAULT,
@@ -211,6 +217,7 @@ export class DashboardComponent implements OnInit {
 
   /** Yeniden başlatılan (örn. "Tekrar dene") son hareket yoklama akışı tetikleyicisi. */
   private readonly refreshTransactions$ = new Subject<void>();
+  private readonly txnSearchInput$ = new Subject<string>();
   private insideRequest?: Subscription;
 
   /* ── Lifecycle ─────────────────────────────────────────── */
@@ -221,6 +228,7 @@ export class DashboardComponent implements OnInit {
     );
 
     this.initTransactionStream();
+    this.initTransactionSearch();
   }
 
   /* ── Data ──────────────────────────────────────────────── */
@@ -255,7 +263,7 @@ export class DashboardComponent implements OnInit {
         switchMap(() => timer(0, TRANSACTION_POLL_MS)),
         filter(() => !this.document.hidden),
         switchMap(() =>
-          this.dashboardService.getRecentTransactions(this.transactionLimit()).pipe(
+          this.dashboardService.getRecentTransactions(this.transactionLimit(), this.appliedTxnSearch()).pipe(
             catchError((err) => {
               console.error('Son hareketler alınamadı:', err);
               return EMPTY;
@@ -266,6 +274,25 @@ export class DashboardComponent implements OnInit {
         takeUntilDestroyed(this.destroyRef),
       )
       .subscribe((data) => this.transactions.set(data));
+  }
+
+  /** Arama metni durulunca uygulanır ve yoklama akışı anında yeniden başlatılır. */
+  private initTransactionSearch(): void {
+    this.txnSearchInput$
+      .pipe(
+        debounceTime(TRANSACTION_SEARCH_DEBOUNCE_MS),
+        distinctUntilChanged(),
+        takeUntilDestroyed(this.destroyRef),
+      )
+      .subscribe((term) => {
+        this.appliedTxnSearch.set(term);
+        this.refreshTransactions$.next();
+      });
+  }
+
+  onTxnSearch(value: string): void {
+    this.txnSearch.set(value);
+    this.txnSearchInput$.next(value.trim());
   }
 
   private transactionLimit(): number {
@@ -319,12 +346,20 @@ export class DashboardComponent implements OnInit {
     return [person.className, person.schoolName].filter(Boolean).join(' · ');
   }
 
-  directionLabel(direction: string): string {
+  directionLabel(direction: string | null): string {
+    if (!direction) return 'DASHBOARD.DIRECTION_UNKNOWN';
     return direction === 'in' ? 'DASHBOARD.DIRECTION_IN' : 'DASHBOARD.DIRECTION_OUT';
   }
 
   resultLabel(result: string): string {
-    return result === 'success' ? 'DASHBOARD.RESULT_SUCCESS' : 'DASHBOARD.RESULT_FAILED';
+    switch (result) {
+      case 'success':
+        return 'DASHBOARD.RESULT_SUCCESS';
+      case 'service':
+        return 'DASHBOARD.RESULT_SERVICE';
+      default:
+        return 'DASHBOARD.RESULT_FAILED';
+    }
   }
 
   private buildGreeting(): string {

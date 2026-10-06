@@ -36,6 +36,8 @@ export class ProxyService {
           veliAdSoyad: row.VeliAdSoyad,
           ogrenciSicilId: row.OgrenciSicilId,
           ogrenciAdSoyad: row.OgrenciAdSoyad,
+          ogrenciKampus: row.OgrenciKampus ?? null,
+          ogrenciSinif: row.OgrenciSinif ?? null,
           vekilAdSoyad: row.VekilAdSoyad,
           vekilTelefon: row.VekilTelefon,
           vekilTC: row.VekilTC,

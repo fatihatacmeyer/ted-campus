@@ -18,6 +18,7 @@ import {
   CustomizableTableComponent,
   ColumnDef,
   ColumnCellDirective,
+  uniqueFilterOptions,
 } from '../../../../shared/components/customizable-table/customizable-table';
 import { NotificationService } from '../../../../core/services/notification.service';
 import { ProxyService } from '../../services/proxy.service';
@@ -136,6 +137,20 @@ export class ProxyListComponent implements OnInit {
 
   columns: ColumnDef<GuardianProxy>[] = [
     { field: 'ogrenciAdSoyad', header: 'PROXIES.STUDENT', sortable: true, alwaysVisible: true },
+    {
+      field: 'ogrenciKampus',
+      header: 'PROXIES.CAMPUS',
+      sortable: true,
+      filterType: 'select',
+      filterOptions: (rows) => uniqueFilterOptions(rows, 'ogrenciKampus'),
+    },
+    {
+      field: 'ogrenciSinif',
+      header: 'PROXIES.CLASS',
+      sortable: true,
+      filterType: 'select',
+      filterOptions: (rows) => uniqueFilterOptions(rows, 'ogrenciSinif'),
+    },
     { field: 'veliAdSoyad', header: 'PROXIES.PARENT', sortable: true },
     { field: 'vekilAdSoyad', header: 'PROXIES.PROXY', sortable: true, alwaysVisible: true },
     { field: 'vekilTC', header: 'PROXIES.TC_NO', sortable: true },

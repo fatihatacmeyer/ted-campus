@@ -54,6 +54,15 @@ export interface AuthorityAssignment {
   createdDate: string | null;
 }
 
+/** sp_serviskullanicilarcampus_s: servis yetkilileri (UserDef = YETKILI, çıkış yapmamış). */
+export interface ServiceAuthority {
+  sicilId: number;
+  sicilNo: string;
+  adSoyad: string;
+  cepTelefon: string | null;
+  email: string | null;
+}
+
 export interface DBInsertResult {
   Sonuc: number | string;
   SunucuCevap: string;

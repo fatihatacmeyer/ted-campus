@@ -8,7 +8,7 @@
   <div class="welcome-banner">
     <div class="welcome-content">
       <h1>Servis Yönetim Paneli</h1>
-      <p>Araçlar ve atamalar</p>
+      <p>Araçlar, atamalar ve yetkililer</p>
     </div>
     <div class="welcome-decoration">
       <span class="material-symbols-outlined">directions_bus</span>
@@ -730,6 +730,103 @@
               </div>
             </ng-template>
           </app-customizable-table>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- ════════════════════════════════════════════════════ -->
+  <!-- TAB: Yetkililer (sp_serviskullanicilarcampus_s)      -->
+  <!-- ════════════════════════════════════════════════════ -->
+  @if (activeTab() === 'authorities') {
+    <div class="tab-content">
+      <div class="section-header">
+        <div class="section-title">
+          <span class="material-symbols-outlined">admin_panel_settings</span>
+          <h2>Servis Yetkilileri</h2>
+        </div>
+      </div>
+
+      <app-customizable-table
+        [rows]="serviceAuthorities()"
+        [columns]="serviceAuthorityColumns"
+        [loading]="serviceAuthoritiesLoading()"
+        tableId="school_bus_authorities"
+        emptyMessage="Yetkili bulunamadı."
+        exportFilename="servis_yetkilileri"
+        [showRowNumbers]="true"
+        [actionsTemplate]="authorityActionsTpl"
+        displayMode="fit"
+      >
+        <ng-template #authorityActionsTpl let-row>
+          <div class="row-actions">
+            <button
+              pButton
+              type="button"
+              icon="pi pi-key"
+              class="p-button-sm p-button-text p-button-help"
+              (click)="confirmAuthoritySend(row)"
+              pTooltip="Kullanıcı Bilgilerini Gönder"
+              tooltipPosition="top"
+              aria-label="Bilgileri Gönder"
+            ></button>
+          </div>
+        </ng-template>
+      </app-customizable-table>
+    </div>
+  }
+
+  <!-- ══════════════════════════════════════════════════════════ -->
+  <!-- DIALOG: Yetkiliye Giriş Bilgilerini Gönder Onayı           -->
+  <!-- ══════════════════════════════════════════════════════════ -->
+  @if (authoritySendVisible() && authoritySendTarget(); as sending) {
+    <div
+      class="dialog-overlay"
+      (click)="closeAuthoritySend()"
+      (keyup.enter)="closeAuthoritySend()"
+      role="presentation"
+    >
+      <div
+        class="dialog-content delete-dialog"
+        (click)="$event.stopPropagation()"
+        (keyup.enter)="$event.stopPropagation()"
+        tabindex="-1"
+      >
+        <div class="dialog-header">
+          <h3>
+            <span class="material-symbols-outlined">warning</span> Bilgileri Gönder Onayı
+          </h3>
+          <button class="dialog-close" (click)="closeAuthoritySend()">
+            <span class="material-symbols-outlined">close</span>
+          </button>
+        </div>
+        <div class="dialog-body">
+          <div class="delete-confirm-content">
+            <p>
+              <strong>{{ sending.adSoyad }}</strong> adlı kişiye giriş bilgilerini (SMS/E-posta)
+              göndermek istediğinize emin misiniz?
+            </p>
+          </div>
+          <div class="form-actions">
+            <button
+              pButton
+              label="İptal"
+              icon="pi pi-times"
+              class="p-button-text p-button-danger"
+              [disabled]="authoritySendLoading()"
+              (click)="closeAuthoritySend()"
+              aria-label="İptal"
+            ></button>
+            <button
+              pButton
+              label="Evet, Gönder"
+              icon="pi pi-key"
+              class="p-button-success"
+              [loading]="authoritySendLoading()"
+              (click)="sendAuthorityLogin()"
+              aria-label="Evet, Gönder"
+            ></button>
+          </div>
         </div>
       </div>
     </div>

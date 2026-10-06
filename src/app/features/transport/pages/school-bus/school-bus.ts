@@ -40,11 +40,12 @@ import {
   StudentAssignment,
   BusDashboardStats,
   AuthorityAssignment,
+  ServiceAuthority,
 } from '../../models/school-bus.model';
 import { DestroyRef } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
-type TabKey = 'dashboard' | 'buses' | 'assignments';
+type TabKey = 'dashboard' | 'buses' | 'assignments' | 'authorities';
 
 @Component({
   selector: 'app-school-bus',
@@ -79,6 +80,7 @@ export class SchoolBusComponent implements OnInit {
     { key: 'dashboard', label: 'Genel Bakış', icon: 'dashboard' },
     { key: 'buses', label: 'Araçlar', icon: 'directions_bus' },
     { key: 'assignments', label: 'Atamalar', icon: 'assignment' },
+    { key: 'authorities', label: 'Yetkililer', icon: 'admin_panel_settings' },
   ];
 
   protected readonly buses = signal<Bus[]>([]);
@@ -101,6 +103,13 @@ export class SchoolBusComponent implements OnInit {
   protected readonly authorityAssignDeleteVisible = signal(false);
   protected readonly authorityAssignDeleting = signal<AuthorityAssignment | null>(null);
   protected readonly authorities = signal<Person[]>([]);
+
+  /** Yetkililer sekmesi: servis yetkilileri listesi + "Bilgileri Gönder" onayı. */
+  protected readonly serviceAuthorities = signal<ServiceAuthority[]>([]);
+  protected readonly serviceAuthoritiesLoading = signal(false);
+  protected readonly authoritySendVisible = signal(false);
+  protected readonly authoritySendTarget = signal<ServiceAuthority | null>(null);
+  protected readonly authoritySendLoading = signal(false);
 
   protected assignmentBusSearchValue = '';
   protected readonly assignmentBusSearch = signal('');
@@ -137,6 +146,13 @@ export class SchoolBusComponent implements OnInit {
     { field: 'ogrenciAdSoyad', header: 'Öğrenci', sortable: true },
     { field: 'sinif', header: 'Sınıf', sortable: true },
     { field: 'kampus', header: 'Kampüs', sortable: true },
+  ];
+
+  protected readonly serviceAuthorityColumns: ColumnDef<ServiceAuthority>[] = [
+    { field: 'adSoyad', header: 'Ad Soyad', sortable: true, alwaysVisible: true },
+    { field: 'sicilNo', header: 'Sicil No', sortable: true },
+    { field: 'cepTelefon', header: 'Telefon' },
+    { field: 'email', header: 'E-posta', sortable: true },
   ];
 
   protected readonly authorityAssignmentsForBus = (servisId: number) =>
@@ -473,8 +489,66 @@ export class SchoolBusComponent implements OnInit {
     });
   }
 
+  private loadServiceAuthorities(): void {
+    this.serviceAuthoritiesLoading.set(true);
+    this.busService
+      .getServiceAuthorities()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (rows) => {
+          this.serviceAuthorities.set(rows);
+          this.serviceAuthoritiesLoading.set(false);
+        },
+        error: () => {
+          this.notification.error('Yetkili listesi alınamadı.');
+          this.serviceAuthoritiesLoading.set(false);
+        },
+      });
+  }
+
+  protected confirmAuthoritySend(row: ServiceAuthority): void {
+    this.authoritySendTarget.set(row);
+    this.authoritySendVisible.set(true);
+  }
+
+  protected closeAuthoritySend(): void {
+    if (this.authoritySendLoading()) return;
+    this.authoritySendVisible.set(false);
+    this.authoritySendTarget.set(null);
+  }
+
+  /** Giriş bilgilerini yeniden gönderir (mevcut giriş kaydı silinir, yenisi iletilir). */
+  protected sendAuthorityLogin(): void {
+    const target = this.authoritySendTarget();
+    if (!target || this.authoritySendLoading()) return;
+
+    this.authoritySendLoading.set(true);
+    this.busService
+      .sendAuthorityLogin(target.sicilId)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (res) => {
+          this.authoritySendLoading.set(false);
+          if (res.sonuc === 1) {
+            this.notification.success(res.sunucuCevap || 'Bilgiler gönderildi.');
+          } else {
+            this.notification.error(res.sunucuCevap || 'Bilgiler gönderilemedi.');
+          }
+          this.authoritySendVisible.set(false);
+          this.authoritySendTarget.set(null);
+        },
+        error: () => {
+          this.authoritySendLoading.set(false);
+          this.notification.error('Sunucuyla iletişim kurulamadı.');
+        },
+      });
+  }
+
   protected setTab(tab: TabKey): void {
     this.activeTab.set(tab);
+    if (tab === 'authorities') {
+      this.loadServiceAuthorities();
+    }
     if (tab === 'assignments') {
       this.loadAllAuthorityAssignments();
       if (this.authorities().length === 0) {

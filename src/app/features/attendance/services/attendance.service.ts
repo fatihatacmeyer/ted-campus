@@ -53,6 +53,8 @@ interface StudentAttendanceRowRaw {
   Sinif: string;
   Kampus: string;
   EgitimDuzeyi: string;
+  GelisServisPlaka: string | null;
+  DonusServisPlaka: string | null;
   Tarih: string;
   GirisSaati: string | null;
   CikisSaati: string | null;
@@ -264,6 +266,8 @@ export class AttendanceService {
       sinif: row.Sinif,
       kampus: row.Kampus,
       egitimDuzeyi: row.EgitimDuzeyi,
+      gelisServisPlaka: row.GelisServisPlaka ?? null,
+      donusServisPlaka: row.DonusServisPlaka ?? null,
       tarih: row.Tarih,
       girisSaati: row.GirisSaati,
       cikisSaati: row.CikisSaati,

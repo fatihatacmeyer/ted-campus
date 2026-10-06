@@ -93,6 +93,8 @@ export interface StudentAttendanceRow {
   sinif: string;
   kampus: string;
   egitimDuzeyi: string;
+  gelisServisPlaka: string | null; // servisi yoksa null
+  donusServisPlaka: string | null;
   tarih: string; // yyyy-MM-dd
   girisSaati: string | null; // HH:mm
   cikisSaati: string | null; // HH:mm

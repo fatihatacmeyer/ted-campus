@@ -623,6 +623,10 @@ $radius-full: 9999px;
     background: #fff7ed;
     color: #ea580c;
   }
+  &.badge-proxy {
+    background: #ecfeff;
+    color: #0891b2;
+  }
   &.badge-default {
     background: $bg-muted;
     color: $text-secondary;
@@ -826,6 +830,67 @@ $radius-full: 9999px;
   font-weight: 500;
 }
 
+/* Son hareketler arama kutusu */
+.txn-search {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 220px;
+
+  > .material-symbols-outlined {
+    position: absolute;
+    left: 10px;
+    font-size: 18px;
+    color: $text-muted;
+    pointer-events: none;
+  }
+
+  input {
+    width: 100%;
+    padding: 6px 32px 6px 36px;
+    font-size: 0.85rem;
+  }
+
+  .txn-search-clear {
+    position: absolute;
+    right: 6px;
+    display: flex;
+    padding: 2px;
+    border: 0;
+    background: transparent;
+    color: $text-muted;
+    cursor: pointer;
+
+    .material-symbols-outlined {
+      font-size: 16px;
+    }
+    &:hover {
+      color: $text-secondary;
+    }
+  }
+
+  @media (max-width: 600px) {
+    width: 140px;
+  }
+}
+
+.txn-dialog-search {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 12px;
+
+  .txn-search {
+    width: 280px;
+    max-width: 100%;
+  }
+}
+
+.txn-empty td {
+  padding: 24px 20px;
+  text-align: center;
+  color: $text-muted;
+}
+
 .txn-sicil,
 .txn-card {
   font-family: 'Menlo', 'Consolas', monospace;
@@ -868,6 +933,10 @@ $radius-full: 9999px;
   &.result-ok {
     background: #ecfdf5;
     color: #059669;
+  }
+  &.result-service {
+    background: #eff6ff;
+    color: #2563eb;
   }
   &.result-fail {
     background: #fef2f2;
