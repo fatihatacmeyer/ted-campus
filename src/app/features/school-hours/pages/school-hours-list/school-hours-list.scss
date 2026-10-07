@@ -46,18 +46,6 @@
     flex: 1 1 260px;
   }
 
-  .group-toggle {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-
-    .group-toggle-label {
-      font-size: 0.85rem;
-      font-weight: 600;
-      color: #475569;
-      white-space: nowrap;
-    }
-  }
 }
 
 :host ::ng-deep {
@@ -260,9 +248,6 @@
 
     .class-select {
       min-width: 0;
-    }
-    .group-toggle {
-      justify-content: space-between;
     }
   }
 

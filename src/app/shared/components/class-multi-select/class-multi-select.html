@@ -1,0 +1,100 @@
+<button
+  type="button"
+  class="cms-trigger"
+  [class.is-open]="open()"
+  aria-haspopup="dialog"
+  [attr.aria-expanded]="open()"
+  (click)="toggleOpen($event)"
+>
+  <span class="cms-summary">
+    @if (summary().length) {
+      @for (part of summary(); track part) {
+        <span class="cms-tag">{{ part }}</span>
+      }
+    } @else {
+      <span class="cms-placeholder">{{ placeholder() }}</span>
+    }
+  </span>
+  <i class="pi pi-chevron-down cms-caret"></i>
+</button>
+
+@if (open()) {
+  <div
+    class="cms-panel"
+    role="dialog"
+    [style.left.px]="panelPos().x"
+    [style.top.px]="panelPos().y"
+  >
+    <input
+      pInputText
+      type="text"
+      class="cms-search"
+      autocomplete="off"
+      [ngModel]="search()"
+      (ngModelChange)="search.set($event)"
+      [placeholder]="'SCHOOL_HOURS.FILTER_PROMPT' | translate"
+    />
+
+    <div class="cms-quick">
+      <button type="button" class="cms-link" (click)="selectAll()">
+        {{ 'SCHOOL_HOURS.CLASS_SELECT_ALL' | translate }}
+      </button>
+      <button type="button" class="cms-link" (click)="clearDraft()">
+        {{ 'COMMON.CLEAR' | translate }}
+      </button>
+    </div>
+
+    <div class="cms-groups">
+      @for (group of groups(); track group.grade ?? 'other') {
+        <div class="cms-group">
+          <label class="cms-grade">
+            <p-checkbox
+              [binary]="true"
+              [ngModel]="gradeAll(group)"
+              [indeterminate]="gradePartial(group)"
+              (onChange)="toggleGroup(group)"
+            />
+            <span>{{
+              group.grade !== null
+                ? ('COMMON.GRADE_LABEL' | translate: { value: group.grade })
+                : ('SCHOOL_HOURS.CLASS_OTHER' | translate)
+            }}</span>
+          </label>
+          <div class="cms-items">
+            @for (item of group.items; track item.id) {
+              <button
+                type="button"
+                class="cms-chip"
+                [class.is-selected]="isSelected(item.id)"
+                [attr.aria-pressed]="isSelected(item.id)"
+                (click)="toggleItem(item)"
+              >
+                {{ item.ad }}
+              </button>
+            }
+          </div>
+        </div>
+      } @empty {
+        <div class="cms-empty">{{ 'COMMON.NO_RECORDS' | translate }}</div>
+      }
+    </div>
+
+    <div class="cms-footer">
+      <button
+        pButton
+        type="button"
+        size="small"
+        text="true"
+        [label]="'COMMON.CANCEL' | translate"
+        (click)="close()"
+      ></button>
+      <button
+        pButton
+        type="button"
+        size="small"
+        [label]="'SCHOOL_HOURS.CLASS_APPLY' | translate"
+        (click)="apply()"
+      ></button>
+    </div>
+  </div>
+}

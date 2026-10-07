@@ -21,25 +21,13 @@
                 'SCHOOL_HOURS.SELECT_CLASS_LABEL' | translate
               }}</label>
 
-              <p-select
-                [options]="classOptions()"
-                [ngModel]="selectedClass()"
-                (ngModelChange)="onClassSelect($event)"
-                optionLabel="label"
-                optionValue="value"
+              <app-class-multi-select
+                class="class-select"
+                [classes]="classes()"
+                [value]="selectedClass()"
                 [placeholder]="'SCHOOL_HOURS.SELECT_CLASS_PROMPT' | translate"
-                [showClear]="true"
-                [filter]="true"
-                filterBy="label"
-                [filterPlaceholder]="'SCHOOL_HOURS.FILTER_PROMPT' | translate"
-                styleClass="class-select"
-                appendTo="body"
+                (valueChange)="onClassSelect($event)"
               />
-
-              <div class="group-toggle">
-                <p-toggleswitch [ngModel]="grouped()" (ngModelChange)="onGroupToggle($event)" />
-                <span class="group-toggle-label">{{ 'SCHOOL_HOURS.GROUP_LABEL' | translate }}</span>
-              </div>
             </div>
 
             <p-table

@@ -16,8 +16,6 @@ import { TooltipModule } from 'primeng/tooltip';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { ConfirmationService } from 'primeng/api';
 import { TabsModule } from 'primeng/tabs';
-import { SelectModule } from 'primeng/select';
-import { ToggleSwitchModule } from 'primeng/toggleswitch';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 
 import { NotificationService } from '../../../../core/services/notification.service';
@@ -28,18 +26,13 @@ import { DropdownItem } from '../../../persons/services/types.service';
 import { PersonService } from '../../../persons/services/person.service';
 import { Person, UserDef } from '../../../../core/models/person.model';
 import { isValidTime } from '../../../../shared/utils/time.utils';
-import { compareClassNames, parseClassName } from '../../../../shared/utils/class-name.utils';
+import { ClassMultiSelectComponent } from '../../../../shared/components/class-multi-select/class-multi-select';
 
 import { DayHoursCellComponent } from '../../components/day-hours-cell/day-hours-cell';
 import {
   RowSelections,
   StudentStudyPanelComponent,
 } from '../../components/student-study-panel/student-study-panel';
-
-interface ClassOption {
-  value?: number | string;
-  label: string;
-}
 
 @Component({
   selector: 'app-school-hours-list',
@@ -51,8 +44,7 @@ interface ClassOption {
     TooltipModule,
     ConfirmDialogModule,
     TabsModule,
-    SelectModule,
-    ToggleSwitchModule,
+    ClassMultiSelectComponent,
     TranslatePipe,
     DayHoursCellComponent,
     StudentStudyPanelComponent,
@@ -72,8 +64,6 @@ export class SchoolHoursListComponent implements OnInit {
   protected readonly classes = signal<DropdownItem[]>([]);
   protected readonly activeCampusId = signal<number | undefined>(undefined);
   protected readonly selectedClass = signal<number | string | undefined>(undefined);
-  protected readonly classOptions = signal<ClassOption[]>([]);
-  protected readonly grouped = signal(false);
   protected readonly editingRows = signal<Record<string, boolean>>({});
   protected readonly editingRowId = signal<number | null>(null);
   protected readonly studentsMap = signal<Map<string, Person[]>>(new Map());
@@ -94,9 +84,6 @@ export class SchoolHoursListComponent implements OnInit {
   private readonly destroyRef = inject(DestroyRef);
 
   ngOnInit(): void {
-    this.translate.onLangChange.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => {
-      this.buildClassOptions();
-    });
     this.loadFilterData();
     this.loadStudents();
   }
@@ -366,7 +353,6 @@ export class SchoolHoursListComponent implements OnInit {
       next: ({ campuses, classes }) => {
         this.campuses.set(campuses);
         this.classes.set(classes);
-        this.buildClassOptions();
         if (campuses.length > 0) {
           this.activeCampusId.set(campuses[0].id);
           this.previousCampusId = campuses[0].id;
@@ -380,47 +366,4 @@ export class SchoolHoursListComponent implements OnInit {
     });
   }
 
-  protected onGroupToggle(grouped: boolean): void {
-    this.grouped.set(grouped);
-    this.buildClassOptions();
-  }
-
-  private buildClassOptions(): void {
-    const sortedClasses = [...this.classes()].sort((a, b) => compareClassNames(a.ad, b.ad));
-
-    const allIds = sortedClasses.map((c) => c.id).join(',');
-    const allLabel = this.translate.instant('SCHOOL_HOURS.ALL_CLASSES');
-
-    if (!this.grouped()) {
-      this.classOptions.set([
-        { value: allIds, label: allLabel },
-        ...sortedClasses.map((c) => ({ value: c.id, label: c.ad })),
-      ]);
-      return;
-    }
-
-    const suffix = this.translate.instant('SCHOOL_HOURS.GRADE_ALL_SUFFIX');
-    const isTr = (this.translate.currentLang() ?? '').toLowerCase().startsWith('tr');
-    const gradeIdMap = new Map<number, number[]>();
-    const ungraded: DropdownItem[] = [];
-
-    sortedClasses.forEach((c) => {
-      const grade = parseClassName(c.ad).grade;
-      if (grade !== null) {
-        const ids = gradeIdMap.get(grade) ?? [];
-        ids.push(c.id);
-        gradeIdMap.set(grade, ids);
-      } else {
-        ungraded.push(c);
-      }
-    });
-
-    const options: ClassOption[] = [{ value: allIds, label: allLabel }];
-    gradeIdMap.forEach((ids, grade) => {
-      const label = isTr ? `${grade}. Sınıfların ${suffix}` : `Grade ${grade} ${suffix}`;
-      options.push({ value: ids.join(','), label });
-    });
-    ungraded.forEach((c) => options.push({ value: c.id, label: c.ad }));
-    this.classOptions.set(options);
-  }
 }
