@@ -177,6 +177,31 @@
   </div>
 </ng-template>
 
+<!-- ── Kart / dialog içi liste arama kutusu (istemci tarafı) ── -->
+<ng-template #listSearchBox let-value="value" let-onChange="onChange">
+  <div class="txn-search list-search">
+    <span class="material-symbols-outlined">search</span>
+    <input
+      pInputText
+      type="text"
+      [ngModel]="value"
+      (ngModelChange)="onChange($event)"
+      [placeholder]="'DASHBOARD.SEARCH_BY_NAME' | translate"
+      [attr.aria-label]="'DASHBOARD.SEARCH_BY_NAME' | translate"
+    />
+    @if (value) {
+      <button
+        type="button"
+        class="txn-search-clear"
+        [attr.aria-label]="'COMMON.CLEAR' | translate"
+        (click)="onChange('')"
+      >
+        <span class="material-symbols-outlined">close</span>
+      </button>
+    }
+  </div>
+</ng-template>
+
 <!-- ── Son hareketler tablosu ─────────────────────────────── -->
 <!-- translated=true (dialog): DB metinleri çeviri anahtarı olarak çözülür. -->
 <ng-template #txnTable let-rows="rows" let-translated="translated">
@@ -459,6 +484,17 @@
               <p>{{ 'DASHBOARD.NO_EARLY_LEAVERS' | translate }}</p>
             </div>
           } @else {
+            <ng-container
+              *ngTemplateOutlet="
+                listSearchBox;
+                context: { value: earlySearch(), onChange: setEarlySearch }
+              "
+            />
+            @if (filteredEarlyLeavers().length === 0) {
+              <div class="empty-state">
+                <p>{{ 'DASHBOARD.NO_SEARCH_RESULT' | translate }}</p>
+              </div>
+            }
             <div class="person-list">
               @for (person of earlyLeaversPreview(); track $index) {
                 <ng-container
@@ -496,6 +532,17 @@
               <p>{{ 'DASHBOARD.NO_LATE_ARRIVALS' | translate }}</p>
             </div>
           } @else {
+            <ng-container
+              *ngTemplateOutlet="
+                listSearchBox;
+                context: { value: lateSearch(), onChange: setLateSearch }
+              "
+            />
+            @if (filteredLateArrivals().length === 0) {
+              <div class="empty-state">
+                <p>{{ 'DASHBOARD.NO_SEARCH_RESULT' | translate }}</p>
+              </div>
+            }
             <div class="person-list">
               @for (late of latePreview(); track $index) {
                 <ng-container
@@ -503,6 +550,11 @@
                 />
               }
             </div>
+            @if (lateExtra() > 0) {
+              <button class="show-more-btn" (click)="lateDialogVisible.set(true)">
+                +{{ lateExtra() }} {{ 'DASHBOARD.MORE_PEOPLE' | translate }} &hellip;
+              </button>
+            }
           }
         </div>
       </div>
@@ -528,6 +580,17 @@
               <p>{{ 'DASHBOARD.NO_ABSENTEES' | translate }}</p>
             </div>
           } @else {
+            <ng-container
+              *ngTemplateOutlet="
+                listSearchBox;
+                context: { value: absentSearch(), onChange: setAbsentSearch }
+              "
+            />
+            @if (filteredAbsentees().length === 0) {
+              <div class="empty-state">
+                <p>{{ 'DASHBOARD.NO_SEARCH_RESULT' | translate }}</p>
+              </div>
+            }
             <div class="person-list">
               @for (absent of absenteesPreview(); track $index) {
                 <ng-container
@@ -622,8 +685,16 @@
   [resizable]="false"
   styleClass="dashboard-dialog"
 >
+  <div class="txn-dialog-search">
+    <ng-container
+      *ngTemplateOutlet="
+        listSearchBox;
+        context: { value: earlySearch(), onChange: setEarlySearch }
+      "
+    />
+  </div>
   <div class="person-list dialog-list">
-    @for (person of earlyLeavers(); track $index) {
+    @for (person of filteredEarlyLeavers(); track $index) {
       <ng-container *ngTemplateOutlet="personRow; context: { person: person, kind: 'early' }" />
     }
   </div>
@@ -639,8 +710,16 @@
   [resizable]="false"
   styleClass="dashboard-dialog"
 >
+  <div class="txn-dialog-search">
+    <ng-container
+      *ngTemplateOutlet="
+        listSearchBox;
+        context: { value: lateSearch(), onChange: setLateSearch }
+      "
+    />
+  </div>
   <div class="person-list dialog-list">
-    @for (late of lateArrivals(); track $index) {
+    @for (late of filteredLateArrivals(); track $index) {
       <ng-container *ngTemplateOutlet="personRow; context: { person: late, kind: 'late' }" />
     }
   </div>
@@ -656,8 +735,16 @@
   [resizable]="false"
   styleClass="dashboard-dialog"
 >
+  <div class="txn-dialog-search">
+    <ng-container
+      *ngTemplateOutlet="
+        listSearchBox;
+        context: { value: absentSearch(), onChange: setAbsentSearch }
+      "
+    />
+  </div>
   <div class="person-list dialog-list">
-    @for (absent of absentees(); track $index) {
+    @for (absent of filteredAbsentees(); track $index) {
       <ng-container *ngTemplateOutlet="personRow; context: { person: absent, kind: 'absent' }" />
     }
   </div>

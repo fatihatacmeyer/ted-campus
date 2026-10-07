@@ -89,6 +89,21 @@ const INITIAL_INSIDE_DIALOG: InsideDialogState = {
 const toLowerTr = (value: string | null | undefined): string =>
   (value ?? '').toLocaleLowerCase('tr-TR');
 
+/** İsim / sınıf / okul alanlarında (Türkçe duyarlı) arama yapar. */
+const filterPeople = <T extends { fullName: string; className: string; schoolName: string }>(
+  list: T[],
+  term: string,
+): T[] => {
+  const q = toLowerTr(term.trim());
+  if (!q) return list;
+  return list.filter(
+    (p) =>
+      toLowerTr(p.fullName).includes(q) ||
+      toLowerTr(p.className).includes(q) ||
+      toLowerTr(p.schoolName).includes(q),
+  );
+};
+
 @Component({
   selector: 'app-dashboard',
   imports: [
@@ -169,13 +184,33 @@ export class DashboardComponent implements OnInit {
   readonly transactions = signal<AccessTransaction[]>([]);
 
   /** Kart önizlemeleri: şablonda her değişiklik denetiminde slice yapmamak için. */
-  readonly earlyLeaversPreview = computed(() => this.earlyLeavers().slice(0, PREVIEW_LIMIT));
-  readonly latePreview = computed(() => this.lateArrivals().slice(0, PREVIEW_LIMIT));
-  readonly absenteesPreview = computed(() => this.absentees().slice(0, PREVIEW_LIMIT));
-  readonly earlyLeaversExtra = computed(() =>
-    Math.max(0, this.earlyLeavers().length - PREVIEW_LIMIT),
+  /** Kart (ve dialog) içi arama metinleri: isim / sınıf / okul. */
+  readonly earlySearch = signal('');
+  readonly lateSearch = signal('');
+  readonly absentSearch = signal('');
+
+  readonly filteredEarlyLeavers = computed(() =>
+    filterPeople(this.earlyLeavers(), this.earlySearch()),
   );
-  readonly absenteesExtra = computed(() => Math.max(0, this.absentees().length - PREVIEW_LIMIT));
+  readonly filteredLateArrivals = computed(() =>
+    filterPeople(this.lateArrivals(), this.lateSearch()),
+  );
+  readonly filteredAbsentees = computed(() => filterPeople(this.absentees(), this.absentSearch()));
+
+  readonly earlyLeaversPreview = computed(() => this.filteredEarlyLeavers().slice(0, PREVIEW_LIMIT));
+  readonly latePreview = computed(() => this.filteredLateArrivals().slice(0, PREVIEW_LIMIT));
+  readonly absenteesPreview = computed(() => this.filteredAbsentees().slice(0, PREVIEW_LIMIT));
+  readonly earlyLeaversExtra = computed(() =>
+    Math.max(0, this.filteredEarlyLeavers().length - PREVIEW_LIMIT),
+  );
+  readonly lateExtra = computed(() => Math.max(0, this.filteredLateArrivals().length - PREVIEW_LIMIT));
+  readonly absenteesExtra = computed(() =>
+    Math.max(0, this.filteredAbsentees().length - PREVIEW_LIMIT),
+  );
+
+  readonly setEarlySearch = (v: string) => this.earlySearch.set(v);
+  readonly setLateSearch = (v: string) => this.lateSearch.set(v);
+  readonly setAbsentSearch = (v: string) => this.absentSearch.set(v);
 
   /** Arama kutusundaki metin (anlık) ve backend'e uygulanmış metin (debounce sonrası). */
   readonly txnSearch = signal('');

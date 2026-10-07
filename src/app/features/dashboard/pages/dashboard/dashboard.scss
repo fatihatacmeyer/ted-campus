@@ -888,6 +888,12 @@ $radius-full: 9999px;
   }
 }
 
+/* Detay kartı içi arama: kart genişliğini doldurur */
+.list-search {
+  width: auto;
+  margin-bottom: 10px;
+}
+
 .txn-dialog-search {
   display: flex;
   justify-content: flex-end;
