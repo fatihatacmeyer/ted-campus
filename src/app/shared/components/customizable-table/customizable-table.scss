@@ -176,6 +176,63 @@ overflow-x: auto;
   }
 }
 
+/* ── Sınıf Filtresi (seviye + şube) ──────────────────────── */
+
+.class-filter {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 300px;
+  max-height: 320px;
+  overflow-y: auto;
+
+  /* Seviye başlığı üstte, şubeler altında alt alta satırlara sarılır (1/A … 1/Z gibi çok şubede de taşmaz) */
+  &-row {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding-bottom: 6px;
+    border-bottom: 1px solid #f1f5f9;
+
+    &:last-child {
+      border-bottom: 0;
+    }
+  }
+
+  &-grade {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-weight: 600;
+    color: #334155;
+    cursor: pointer;
+  }
+
+  &-sections {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    padding-left: 22px;
+  }
+
+  &-chip {
+    min-width: 26px;
+    padding: 2px 6px;
+    font-size: 11px;
+    color: #475569;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    cursor: pointer;
+
+    &.is-selected {
+      color: #ffffff;
+      background: #dc2134;
+      border-color: #dc2134;
+    }
+  }
+}
+
 /* ── Satır Numarası ─────────────────────────────────────── */
 
 .col-row-number {

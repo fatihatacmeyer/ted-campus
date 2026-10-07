@@ -247,6 +247,18 @@ export class PersonCrudComponent implements OnInit {
     }
   }
 
+  /** Sınıf sütunlarında seviye/şube çoklu seçim filtresi (Veli: çocukların sınıfları, Öğrenci: kendi sınıfı). */
+  private applyClassFilters(): void {
+    const field =
+      this.USERDEF === UserDef.Veli
+        ? 'ogrencilerSinif'
+        : this.USERDEF === UserDef.Ogrenci
+          ? 'bolumad'
+          : null;
+    const col = field ? this.columns.find((c) => c.field === field) : null;
+    if (col) col.filterType = 'class';
+  }
+
   /** Dışa aktarmada görünen hücre değerini değil, kişiye özel değeri kullan. */
   private applyExportHooks(): void {
     const setHook = (field: string, fn: (p: Person) => string): void => {
@@ -269,6 +281,7 @@ export class PersonCrudComponent implements OnInit {
 
   ngOnInit() {
     this.applyColumnOverrides();
+    this.applyClassFilters();
     this.applyExportHooks();
     this.fetchPersonList();
   }

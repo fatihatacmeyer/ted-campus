@@ -17,7 +17,7 @@
     "LAST_PASS": "Son Geçenler"
   },
   "BULK_IMPORT": {
-    "OPEN_BUTTON": "Toplu Aktar",
+    "OPEN_BUTTON": "Toplu İçe Aktar",
     "TITLE": "Toplu Öğrenci Aktarımı",
     "TITLE_PARENT": "Toplu Veli Aktarımı",
     "DESCRIPTION_PARENT": "Excel şablonunu doldurup yükleyerek birden fazla veliyi tek seferde ekleyebilir ve öğrencilerle ilişkilerini kurabilirsiniz. Önce veliler eklenir, ardından öğrenci ilişkileri kurulur. Öğrenciler sistemde önceden kayıtlı olmalıdır.",
@@ -129,6 +129,7 @@
     "NO": "Hayır",
     "BACK": "Geri",
     "ALL": "Tümü",
+    "GRADE_LABEL": "{{value}}. Sınıf",
     "SHOW_LIST": "Öğrenci listesini göster",
     "HIDE_LIST": "Öğrenci listesini gizle",
     "PERSON": "kişi",

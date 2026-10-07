@@ -20,6 +20,7 @@ import {
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { FilterService } from 'primeng/api';
 import { Table, TableColResizeEvent, TableModule } from 'primeng/table';
 import { InputTextModule } from 'primeng/inputtext';
 import { FloatLabelModule } from 'primeng/floatlabel';
@@ -32,6 +33,15 @@ import { CheckboxModule } from 'primeng/checkbox';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { formatDate } from '../../utils/date.utils';
 import { exportToExcel } from '../../utils/table-export.utils';
+import {
+  buildClassGroups,
+  ClassGroup,
+  extractClassNames,
+  matchesClassSelection,
+} from '../../utils/class-name.utils';
+
+/** PrimeNG özel eşleşme modu — sınıf filtresi (değer: token dizisi) */
+const CLASS_MATCH_MODE = 'classSelection';
 
 /** Select filtre seçenekleri */
 export interface FilterOption {
@@ -46,7 +56,7 @@ export interface ColumnDef<T = unknown> {
   sortable?: boolean;
   width?: string; // css genişliği (örn '70px')
   alwaysVisible?: boolean; // panelden kaldırılamaz
-  filterType?: 'text' | 'select'; // filtre widget türü (varsayılan 'text')
+  filterType?: 'text' | 'select' | 'class'; // filtre widget türü (varsayılan 'text'); 'class' = seviye/şube çoklu seçim
   filterOptions?: FilterOption[] | ((rows: T[]) => FilterOption[]); // select seçenekleri (statik veya satırlardan türetilen)
   exportValue?: (row: T) => string | number | null; // dışa aktarma için özel değer (hücre görünümünden bağımsız)
   filterable?: boolean;
@@ -160,6 +170,8 @@ export class CustomizableTableComponent<T extends object = Record<string, unknow
 
   private destroyRef = inject(DestroyRef);
   private translateService = inject(TranslateService);
+  private primeFilterService = inject(FilterService);
+  private classGroupCache = new Map<string, { rows: T[]; groups: ClassGroup[] }>();
 
   private cellTemplateMap = new Map<string, TemplateRef<unknown>>();
 
@@ -187,6 +199,11 @@ export class CustomizableTableComponent<T extends object = Record<string, unknow
   }
 
   ngOnInit(): void {
+    this.primeFilterService.register(
+      CLASS_MATCH_MODE,
+      (value: unknown, filter: string[] | null) =>
+        matchesClassSelection(extractClassNames(value as string | null), filter),
+    );
     this.loadPageSize();
     this.loadColumnWidths();
     this.loadColumnFilters();
@@ -199,7 +216,7 @@ export class CustomizableTableComponent<T extends object = Record<string, unknow
     for (const [field, value] of this.columnFilters) {
       const col = this.columns.find((c) => c.field === field);
       if (col) {
-        this.dt?.filter(value, field, col.filterType === 'select' ? 'equals' : 'contains');
+        this.dt?.filter(value, field, this.getMatchMode(col));
       }
     }
     // Filtre popup'ı açıkken herhangi bir kaydırma (sayfa veya tablo içi) popup'ı kapatır
@@ -372,8 +389,14 @@ export class CustomizableTableComponent<T extends object = Record<string, unknow
   /* ── Sütun Filtreleri ──────────────────────────────────── */
 
   /** Sütunun filtre widget türü — select seçenek tanımlıysa açılır menü, değilse arama kutusu */
-  getColumnFilterType(col: ColumnDef<T>): 'text' | 'select' {
+  getColumnFilterType(col: ColumnDef<T>): 'text' | 'select' | 'class' {
+    if (col.filterType === 'class') return 'class';
     return col.filterType === 'select' || col.filterOptions !== undefined ? 'select' : 'text';
+  }
+
+  private getMatchMode(col: ColumnDef<T>): string {
+    const type = this.getColumnFilterType(col);
+    return type === 'class' ? CLASS_MATCH_MODE : type === 'select' ? 'equals' : 'contains';
   }
 
   /** En az bir aktif filtre varsa toolbar'da temizle butonu görünür */
@@ -400,8 +423,9 @@ export class CustomizableTableComponent<T extends object = Record<string, unknow
     }
     const btn = event.currentTarget as HTMLElement;
     const rect = btn.getBoundingClientRect();
-    const popupWidth = 220;
-    const popupHeight = 140;
+    const isClassFilter = this.getColumnFilterType(col) === 'class';
+    const popupWidth = isClassFilter ? 300 : 220;
+    const popupHeight = isClassFilter ? 440 : 140;
     let x = rect.left;
     let y = rect.bottom + 4;
     if (x + popupWidth > window.innerWidth) {
@@ -421,11 +445,7 @@ export class CustomizableTableComponent<T extends object = Record<string, unknow
   /** Tek sütunun filtresini temizler (popup açık kalır) */
   clearColumnFilter(col: ColumnDef<T>): void {
     this.columnFilters.delete(col.field);
-    this.dt?.filter(
-      null,
-      col.field,
-      this.getColumnFilterType(col) === 'select' ? 'equals' : 'contains',
-    );
+    this.dt?.filter(null, col.field, this.getMatchMode(col));
     this.saveColumnFilters();
   }
 
@@ -457,14 +477,81 @@ export class CustomizableTableComponent<T extends object = Record<string, unknow
     return opts ?? [];
   }
 
+  /* ── Sınıf filtresi (seviye + şube çoklu seçim) ───────────── */
+
+  /** Satırlardaki sınıflardan seviye/şube ağacı — rows değişmedikçe önbellekten döner */
+  getClassGroups(col: ColumnDef<T>): ClassGroup[] {
+    const cached = this.classGroupCache.get(col.field);
+    if (cached && cached.rows === this.rows) return cached.groups;
+    const names = new Set<string>();
+    for (const row of this.rows) {
+      const cell = (row as Record<string, unknown>)[col.field];
+      extractClassNames(typeof cell === 'string' ? cell : null).forEach((n) => names.add(n));
+    }
+    const groups = buildClassGroups(names);
+    this.classGroupCache.set(col.field, { rows: this.rows, groups });
+    return groups;
+  }
+
+  private classTokens(col: ColumnDef<T>): string[] {
+    const value = this.columnFilters.get(col.field);
+    return Array.isArray(value) ? (value as string[]) : [];
+  }
+
+  /** Seviyenin tamamı seçili mi */
+  isGradeSelected(col: ColumnDef<T>, group: ClassGroup): boolean {
+    return this.classTokens(col).includes(group.key);
+  }
+
+  /** Seviyede yalnızca bazı şubeler seçili mi (kutuda yarı seçili gösterim) */
+  isGradePartial(col: ColumnDef<T>, group: ClassGroup): boolean {
+    const tokens = this.classTokens(col);
+    return !tokens.includes(group.key) && tokens.some((t) => t.startsWith(`${group.key}/`));
+  }
+
+  /** Şube seçili sayılır: seviyenin tamamı seçiliyse ya da şube tek başına seçiliyse */
+  isSectionSelected(col: ColumnDef<T>, group: ClassGroup, section: string): boolean {
+    const tokens = this.classTokens(col);
+    return tokens.includes(group.key) || tokens.includes(`${group.key}/${section}`);
+  }
+
+  /** Seviye kutusu: seçili/kısmi ise temizler, hiç seçili değilse seviyenin tamamını seçer */
+  toggleGrade(col: ColumnDef<T>, group: ClassGroup): void {
+    const prefix = `${group.key}/`;
+    const rest = this.classTokens(col).filter((t) => t !== group.key && !t.startsWith(prefix));
+    const hasAny = this.isGradeSelected(col, group) || this.isGradePartial(col, group);
+    this.onColumnFilterChange(col, hasAny ? rest : [...rest, group.key]);
+  }
+
+  /** Şube kutusu: seviye tamamı seçiliyken tıklanırsa o şube çıkarılıp diğerleri kalır; hepsi seçilince seviyeye indirgenir */
+  toggleSection(col: ColumnDef<T>, group: ClassGroup, section: string): void {
+    const prefix = `${group.key}/`;
+    const tokens = this.classTokens(col);
+    const rest = tokens.filter((t) => t !== group.key && !t.startsWith(prefix));
+    let selected = tokens.includes(group.key)
+      ? group.sections
+      : group.sections.filter((s) => tokens.includes(prefix + s));
+
+    selected = selected.includes(section)
+      ? selected.filter((s) => s !== section)
+      : [...selected, section];
+
+    const next =
+      selected.length === group.sections.length
+        ? [...rest, group.key]
+        : [...rest, ...selected.map((s) => prefix + s)];
+    this.onColumnFilterChange(col, next);
+  }
+
   getColumnFilterValue(field: string): unknown {
     return this.columnFilters.get(field) ?? null;
   }
 
   /** Filtre değiştiğinde PrimeNG tablosuna uygular ve kalıcı hale getirir */
   onColumnFilterChange(col: ColumnDef<T>, value: unknown): void {
-    const matchMode = this.getColumnFilterType(col) === 'select' ? 'equals' : 'contains';
-    if (value === null || value === undefined || value === '') {
+    const matchMode = this.getMatchMode(col);
+    const isEmptyArray = Array.isArray(value) && value.length === 0;
+    if (value === null || value === undefined || value === '' || isEmptyArray) {
       this.columnFilters.delete(col.field);
       this.dt?.filter(null, col.field, matchMode);
     } else {
@@ -478,11 +565,7 @@ export class CustomizableTableComponent<T extends object = Record<string, unknow
   clearColumnFilters(): void {
     for (const col of this.columns) {
       this.columnFilters.delete(col.field);
-      this.dt?.filter(
-        null,
-        col.field,
-        this.getColumnFilterType(col) === 'select' ? 'equals' : 'contains',
-      );
+      this.dt?.filter(null, col.field, this.getMatchMode(col));
     }
     this.saveColumnFilters();
   }

@@ -129,6 +129,7 @@
     "NO": "No",
     "BACK": "Back",
     "ALL": "All",
+    "GRADE_LABEL": "Grade {{value}}",
     "SHOW_LIST": "Show student list",
     "HIDE_LIST": "Hide student list",
     "PERSON": "person",

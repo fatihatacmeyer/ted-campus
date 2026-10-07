@@ -21,6 +21,7 @@ import { DropdownItem } from '../../../persons/services/types.service';
 import { PersonService } from '../../../persons/services/person.service';
 import { Person, UserDef } from '../../../../core/models/person.model';
 import { isValidTime } from '../../../../shared/utils/time.utils';
+import { compareClassNames, parseClassName } from '../../../../shared/utils/class-name.utils';
 
 import { DayHoursCellComponent } from '../../components/day-hours-cell/day-hours-cell';
 import { RowSelections, StudentStudyPanelComponent } from '../../components/student-study-panel/student-study-panel';
@@ -373,23 +374,7 @@ export class SchoolHoursListComponent implements OnInit {
   }
 
   private buildClassOptions(): void {
-    const gradeOf = (ad: string): number | null => {
-      const match = ad.match(/^(\d+)/);
-      return match ? parseInt(match[1], 10) : null;
-    };
-
-    const sortedClasses = [...this.classes()].sort((a, b) => {
-      const regex = /^(\d+)[-/\s]*(.*)$/;
-      const matchA = a.ad.match(regex);
-      const matchB = b.ad.match(regex);
-      if (matchA && matchB) {
-        const numA = parseInt(matchA[1], 10);
-        const numB = parseInt(matchB[1], 10);
-        if (numA !== numB) return numA - numB;
-        return matchA[2].localeCompare(matchB[2], 'tr');
-      }
-      return a.ad.localeCompare(b.ad, 'tr', { numeric: true });
-    });
+    const sortedClasses = [...this.classes()].sort((a, b) => compareClassNames(a.ad, b.ad));
 
     const allIds = sortedClasses.map((c) => c.id).join(',');
     const allLabel = this.translate.instant('SCHOOL_HOURS.ALL_CLASSES');
@@ -407,7 +392,7 @@ export class SchoolHoursListComponent implements OnInit {
     const gradeIdMap = new Map<number, number[]>();
 
     sortedClasses.forEach((c) => {
-      const grade = gradeOf(c.ad);
+      const grade = parseClassName(c.ad).grade;
       if (grade !== null) {
         const ids = gradeIdMap.get(grade) ?? [];
         ids.push(c.id);

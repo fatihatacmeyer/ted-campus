@@ -349,6 +349,41 @@
         showClear="true"
         class="col-filter-select"
       />
+    } @else if (getColumnFilterType(popup.col) === 'class') {
+      <div class="class-filter">
+        @for (group of getClassGroups(popup.col); track group.key) {
+          <div class="class-filter-row">
+            <label class="class-filter-grade">
+              <p-checkbox
+                [binary]="true"
+                [ngModel]="isGradeSelected(popup.col, group)"
+                [indeterminate]="isGradePartial(popup.col, group)"
+                (onChange)="toggleGrade(popup.col, group)"
+              />
+              <span>{{
+                group.grade !== null
+                  ? ('COMMON.GRADE_LABEL' | translate: { value: group.grade })
+                  : group.key
+              }}</span>
+            </label>
+            @if (group.sections.length) {
+              <div class="class-filter-sections">
+                @for (section of group.sections; track section) {
+                  <button
+                    type="button"
+                    class="class-filter-chip"
+                    [class.is-selected]="isSectionSelected(popup.col, group, section)"
+                    [attr.aria-pressed]="isSectionSelected(popup.col, group, section)"
+                    (click)="toggleSection(popup.col, group, section)"
+                  >
+                    {{ section }}
+                  </button>
+                }
+              </div>
+            }
+          </div>
+        }
+      </div>
     } @else {
       <input
         pInputText
