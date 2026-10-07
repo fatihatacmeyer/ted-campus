@@ -1,4 +1,11 @@
-import { ChangeDetectionStrategy, Component, DestroyRef, OnInit, inject, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  DestroyRef,
+  OnInit,
+  inject,
+  signal,
+} from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { forkJoin } from 'rxjs';
@@ -24,7 +31,10 @@ import { isValidTime } from '../../../../shared/utils/time.utils';
 import { compareClassNames, parseClassName } from '../../../../shared/utils/class-name.utils';
 
 import { DayHoursCellComponent } from '../../components/day-hours-cell/day-hours-cell';
-import { RowSelections, StudentStudyPanelComponent } from '../../components/student-study-panel/student-study-panel';
+import {
+  RowSelections,
+  StudentStudyPanelComponent,
+} from '../../components/student-study-panel/student-study-panel';
 
 interface ClassOption {
   value?: number | string;
@@ -336,16 +346,18 @@ export class SchoolHoursListComponent implements OnInit {
 
   private loadData(): void {
     this.loading.set(true);
-    this.schoolHoursService.getSchoolHours(this.activeCampusId()!, this.selectedClass()!).subscribe({
-      next: (data) => {
-        this.hours.set([...data]);
-        this.loading.set(false);
-      },
-      error: () => {
-        this.notification.error('SCHOOL_HOURS.ERROR_LOAD');
-        this.loading.set(false);
-      },
-    });
+    this.schoolHoursService
+      .getSchoolHours(this.activeCampusId()!, this.selectedClass()!)
+      .subscribe({
+        next: (data) => {
+          this.hours.set([...data]);
+          this.loading.set(false);
+        },
+        error: () => {
+          this.notification.error('SCHOOL_HOURS.ERROR_LOAD');
+          this.loading.set(false);
+        },
+      });
   }
 
   private loadFilterData(): void {
@@ -390,6 +402,7 @@ export class SchoolHoursListComponent implements OnInit {
     const suffix = this.translate.instant('SCHOOL_HOURS.GRADE_ALL_SUFFIX');
     const isTr = (this.translate.currentLang() ?? '').toLowerCase().startsWith('tr');
     const gradeIdMap = new Map<number, number[]>();
+    const ungraded: DropdownItem[] = [];
 
     sortedClasses.forEach((c) => {
       const grade = parseClassName(c.ad).grade;
@@ -397,6 +410,8 @@ export class SchoolHoursListComponent implements OnInit {
         const ids = gradeIdMap.get(grade) ?? [];
         ids.push(c.id);
         gradeIdMap.set(grade, ids);
+      } else {
+        ungraded.push(c);
       }
     });
 
@@ -405,6 +420,7 @@ export class SchoolHoursListComponent implements OnInit {
       const label = isTr ? `${grade}. Sınıfların ${suffix}` : `Grade ${grade} ${suffix}`;
       options.push({ value: ids.join(','), label });
     });
+    ungraded.forEach((c) => options.push({ value: c.id, label: c.ad }));
     this.classOptions.set(options);
   }
 }
