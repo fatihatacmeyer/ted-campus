@@ -1,0 +1,31 @@
+// TED Design System 2.0 — Sass mirrors of the CSS tokens in _tokens.scss.
+// Use these where Sass needs a real value (rgba(), color functions).
+$red-50: #fef2f3;
+$red-600: #dc2134;
+$red-700: #b51a2a;
+
+$bg-page: #fcf9f8;
+$bg-surface: #ffffff;
+$bg-subtle: #f8fafc;
+$bg-hover: #f1f5f9;
+$border: #e2e8f0;
+$border-strong: #cbd5e1;
+
+$text: #1f2937;
+$text-secondary: #475569;
+$text-muted: #64748b;
+
+$danger-bg: #fef2f2;
+$danger-solid: #b91c1c;
+$danger-fg: #b91c1c;
+$navy: #00205f;
+
+$shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.04);
+$shadow-card: 0 2px 12px rgba(0, 0, 0, 0.06);
+$shadow-hover: 0 8px 28px rgba(0, 0, 0, 0.1);
+
+$radius-lg: 8px;
+$radius-xl: 12px;
+$radius-2xl: 16px;
+$radius-3xl: 20px;
+$radius-full: 9999px;

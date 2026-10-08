@@ -23,8 +23,8 @@ app-sidebar {
 .content {
   flex: 1;
   overflow: hidden;          /* varsayılan: sabit, scroll yok */
-  padding: 16px 24px;
-  background-color: #fcf9f8;
+  padding: 16px 20px;
+  background-color: var(--ted-bg-page);
   min-height: 0;
   transition: all 0.3s ease-in-out;
 

@@ -4,16 +4,11 @@
      ════════════════════════════════════════════════════════════ -->
 
 <div class="school-bus">
-  <!-- ── Welcome Banner ──────────────────────────────────── -->
-  <div class="welcome-banner">
-    <div class="welcome-content">
-      <h1>{{ 'SCHOOL_BUS.TITLE' | translate }}</h1>
-      <p>{{ 'SCHOOL_BUS.SUBTITLE' | translate }}</p>
-    </div>
-    <div class="welcome-decoration">
-      <span class="material-symbols-outlined">directions_bus</span>
-    </div>
-  </div>
+  <app-page-header
+    [title]="'SCHOOL_BUS.TITLE' | translate"
+    [subtitle]="'SCHOOL_BUS.SUBTITLE' | translate"
+    icon="directions_bus"
+  />
 
   <!-- ════════════════════════════════════════════════════ -->
   <!-- Tab Navigation                                       -->
@@ -192,7 +187,10 @@
                   {{ bus.plate }}
                 </div>
                 <div class="bus-card-tags">
-                  <p-tag [value]="'SCHOOL_BUS.SEATS_TAG' | translate: { count: bus.seatCount }" severity="info" />
+                  <p-tag
+                    [value]="'SCHOOL_BUS.SEATS_TAG' | translate: { count: bus.seatCount }"
+                    severity="info"
+                  />
                 </div>
               </div>
 
@@ -249,7 +247,9 @@
                   {{ 'SCHOOL_BUS.AUTHORITIES' | translate }}
                 </div>
                 @if (authorityAssignmentsForBus(bus.id).length === 0) {
-                  <span class="bus-authorities-empty">{{ 'SCHOOL_BUS.NO_ASSIGNED_AUTHORITY' | translate }}</span>
+                  <span class="bus-authorities-empty">{{
+                    'SCHOOL_BUS.NO_ASSIGNED_AUTHORITY' | translate
+                  }}</span>
                 } @else {
                   <div class="bus-authorities-list">
                     @for (authority of authorityAssignmentsForBus(bus.id); track authority.id) {
@@ -312,7 +312,8 @@
           <form [formGroup]="busForm" (ngSubmit)="submitBus()" class="entity-form">
             <div class="form-field">
               <label for="busPlaka"
-                ><span class="material-symbols-outlined">pin</span> {{ 'SCHOOL_BUS.COL_PLATE' | translate }}</label
+                ><span class="material-symbols-outlined">pin</span>
+                {{ 'SCHOOL_BUS.COL_PLATE' | translate }}</label
               >
               <input
                 pInputText
@@ -327,7 +328,8 @@
             </div>
             <div class="form-field">
               <label for="busBrand"
-                ><span class="material-symbols-outlined">badge</span> {{ 'SCHOOL_BUS.COL_BRAND' | translate }}</label
+                ><span class="material-symbols-outlined">badge</span>
+                {{ 'SCHOOL_BUS.COL_BRAND' | translate }}</label
               >
               <input
                 pInputText
@@ -342,7 +344,8 @@
             </div>
             <div class="form-field">
               <label for="busModel"
-                ><span class="material-symbols-outlined">commute</span> {{ 'SCHOOL_BUS.COL_MODEL' | translate }}</label
+                ><span class="material-symbols-outlined">commute</span>
+                {{ 'SCHOOL_BUS.COL_MODEL' | translate }}</label
               >
               <input
                 pInputText
@@ -374,7 +377,8 @@
             </div>
             <div class="form-field">
               <label for="busDescription"
-                ><span class="material-symbols-outlined">description</span> {{ 'SCHOOL_BUS.COL_DESCRIPTION' | translate }}</label
+                ><span class="material-symbols-outlined">description</span>
+                {{ 'SCHOOL_BUS.COL_DESCRIPTION' | translate }}</label
               >
               <textarea
                 pTextarea
@@ -387,7 +391,8 @@
             </div>
             <div class="form-field">
               <label for="busStatus"
-                ><span class="material-symbols-outlined">toggle_on</span> {{ 'SCHOOL_BUS.COL_STATUS' | translate }}</label
+                ><span class="material-symbols-outlined">toggle_on</span>
+                {{ 'SCHOOL_BUS.COL_STATUS' | translate }}</label
               >
               <p-select
                 id="busStatus"
@@ -401,7 +406,9 @@
                 appendTo="body"
               />
               @if (busForm.get('status')?.invalid && busForm.get('status')?.touched) {
-                <small class="field-error">{{ 'SCHOOL_BUS.ERR_STATUS_REQUIRED' | translate }}</small>
+                <small class="field-error">{{
+                  'SCHOOL_BUS.ERR_STATUS_REQUIRED' | translate
+                }}</small>
               }
             </div>
             <div class="form-actions">
@@ -417,8 +424,12 @@
               <button
                 type="submit"
                 pButton
-                [label]="(busEditing() ? 'SCHOOL_BUS.UPDATE' : 'SCHOOL_BUS.SUBMIT_ADD_BUS') | translate"
-                [attr.aria-label]="(busEditing() ? 'SCHOOL_BUS.UPDATE' : 'SCHOOL_BUS.SUBMIT_ADD_BUS') | translate"
+                [label]="
+                  (busEditing() ? 'SCHOOL_BUS.UPDATE' : 'SCHOOL_BUS.SUBMIT_ADD_BUS') | translate
+                "
+                [attr.aria-label]="
+                  (busEditing() ? 'SCHOOL_BUS.UPDATE' : 'SCHOOL_BUS.SUBMIT_ADD_BUS') | translate
+                "
                 icon="pi pi-check"
                 class="p-button-success"
               ></button>
@@ -446,7 +457,10 @@
         tabindex="-1"
       >
         <div class="dialog-header">
-          <h3><span class="material-symbols-outlined delete-icon">warning</span> {{ 'SCHOOL_BUS.DELETE_BUS' | translate }}</h3>
+          <h3>
+            <span class="material-symbols-outlined delete-icon">warning</span>
+            {{ 'SCHOOL_BUS.DELETE_BUS' | translate }}
+          </h3>
           <button class="dialog-close" (click)="closeBusDelete()">
             <span class="material-symbols-outlined">close</span>
           </button>
@@ -582,7 +596,9 @@
                 </button>
               </span>
             } @empty {
-              <span class="authority-chip-empty">{{ 'SCHOOL_BUS.NO_AUTHORITY_ON_BUS' | translate }}</span>
+              <span class="authority-chip-empty">{{
+                'SCHOOL_BUS.NO_AUTHORITY_ON_BUS' | translate
+              }}</span>
             }
           </div>
 
@@ -593,7 +609,8 @@
           >
             <div class="form-field">
               <label for="assignAuthority"
-                ><span class="material-symbols-outlined">badge</span> {{ 'SCHOOL_BUS.AUTHORITY' | translate }}</label
+                ><span class="material-symbols-outlined">badge</span>
+                {{ 'SCHOOL_BUS.AUTHORITY' | translate }}</label
               >
               <p-select
                 id="assignAuthority"
@@ -612,7 +629,9 @@
                 authorityAssignForm.get('authoritySicilId')?.invalid &&
                 authorityAssignForm.get('authoritySicilId')?.touched
               ) {
-                <small class="field-error">{{ 'SCHOOL_BUS.ERR_AUTHORITY_REQUIRED' | translate }}</small>
+                <small class="field-error">{{
+                  'SCHOOL_BUS.ERR_AUTHORITY_REQUIRED' | translate
+                }}</small>
               }
             </div>
             <div class="form-actions">
@@ -636,7 +655,8 @@
           >
             <div class="form-field">
               <label for="assignOgrenci"
-                ><span class="material-symbols-outlined">person</span> {{ 'SCHOOL_BUS.COL_STUDENT' | translate }}</label
+                ><span class="material-symbols-outlined">person</span>
+                {{ 'SCHOOL_BUS.COL_STUDENT' | translate }}</label
               >
               <p-select
                 id="assignOgrenci"
@@ -657,12 +677,15 @@
                 studentAssignForm.get('ogrenciSicilId')?.invalid &&
                 studentAssignForm.get('ogrenciSicilId')?.touched
               ) {
-                <small class="field-error">{{ 'SCHOOL_BUS.ERR_STUDENT_REQUIRED' | translate }}</small>
+                <small class="field-error">{{
+                  'SCHOOL_BUS.ERR_STUDENT_REQUIRED' | translate
+                }}</small>
               }
             </div>
             <div class="form-field">
               <label for="assignYon"
-                ><span class="material-symbols-outlined">swap_horiz</span> {{ 'SCHOOL_BUS.DIRECTION' | translate }}</label
+                ><span class="material-symbols-outlined">swap_horiz</span>
+                {{ 'SCHOOL_BUS.DIRECTION' | translate }}</label
               >
               <p-select
                 id="assignYon"
@@ -676,7 +699,9 @@
                 appendTo="body"
               />
               @if (studentAssignForm.get('yon')?.invalid && studentAssignForm.get('yon')?.touched) {
-                <small class="field-error">{{ 'SCHOOL_BUS.ERR_DIRECTION_REQUIRED' | translate }}</small>
+                <small class="field-error">{{
+                  'SCHOOL_BUS.ERR_DIRECTION_REQUIRED' | translate
+                }}</small>
               }
             </div>
             <div class="form-actions">
@@ -803,7 +828,8 @@
       >
         <div class="dialog-header">
           <h3>
-            <span class="material-symbols-outlined">warning</span> {{ 'SCHOOL_BUS.SEND_INFO_TITLE' | translate }}
+            <span class="material-symbols-outlined">warning</span>
+            {{ 'SCHOOL_BUS.SEND_INFO_TITLE' | translate }}
           </h3>
           <button class="dialog-close" (click)="closeAuthoritySend()">
             <span class="material-symbols-outlined">close</span>
@@ -859,7 +885,10 @@
         tabindex="-1"
       >
         <div class="dialog-header">
-          <h3><span class="material-symbols-outlined delete-icon">warning</span> {{ 'SCHOOL_BUS.REMOVE_ASSIGNMENT' | translate }}</h3>
+          <h3>
+            <span class="material-symbols-outlined delete-icon">warning</span>
+            {{ 'SCHOOL_BUS.REMOVE_ASSIGNMENT' | translate }}
+          </h3>
           <button class="dialog-close" (click)="closeStudentAssignDelete()">
             <span class="material-symbols-outlined">close</span>
           </button>
@@ -921,7 +950,10 @@
         tabindex="-1"
       >
         <div class="dialog-header">
-          <h3><span class="material-symbols-outlined delete-icon">warning</span> {{ 'SCHOOL_BUS.REMOVE_ASSIGNMENT' | translate }}</h3>
+          <h3>
+            <span class="material-symbols-outlined delete-icon">warning</span>
+            {{ 'SCHOOL_BUS.REMOVE_ASSIGNMENT' | translate }}
+          </h3>
           <button class="dialog-close" (click)="closeAuthorityAssignDelete()">
             <span class="material-symbols-outlined">close</span>
           </button>

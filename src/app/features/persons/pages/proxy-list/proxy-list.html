@@ -1,16 +1,19 @@
 <div class="admin-wrapper">
-  <div class="admin-card">
-    <div class="d-flex justify-content-between align-items-center mb-3">
-      <h4 class="fw-bold mb-0" style="color: #dc2134">{{ 'PROXIES.PAGE_TITLE' | translate }}</h4>
-      <button
-        pButton
-        icon="pi pi-refresh"
-        class="p-button-sm p-button-outlined"
-        [pTooltip]="'COMMON.REFRESH' | translate"
-        (click)="loadProxies()"
-      ></button>
-    </div>
+  <app-page-header
+    [title]="'PROXIES.PAGE_TITLE' | translate"
+    [subtitle]="'PROXIES.PAGE_DESCRIPTION' | translate"
+    icon="supervisor_account"
+  >
+    <button
+      pButton
+      icon="pi pi-refresh"
+      class="p-button-sm p-button-outlined"
+      [pTooltip]="'COMMON.REFRESH' | translate"
+      (click)="loadProxies()"
+    ></button>
+  </app-page-header>
 
+  <div class="admin-card">
     <!-- PDKS Tarzı Filtre Sekmeleri -->
     <div class="d-flex flex-wrap align-items-center gap-2 mb-3 filter-tabs">
       @for (tab of tabOptions; track tab.status ?? 'all') {

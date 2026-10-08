@@ -1,34 +1,30 @@
 <div class="admin-wrapper">
+  <app-page-header
+    [title]="pageTitleKey | translate"
+    [subtitle]="descriptionTextKey | translate"
+    icon="group"
+  >
+    @if (canBulkImport) {
+      <button
+        pButton
+        class="p-button-sm p-button-outlined"
+        icon="pi pi-file-excel"
+        [label]="'BULK_IMPORT.OPEN_BUTTON' | translate"
+        [attr.aria-label]="'BULK_IMPORT.OPEN_BUTTON' | translate"
+        (click)="showBulkImport = true"
+      ></button>
+    }
+    <button
+      pButton
+      class="p-button-sm"
+      icon="pi pi-plus"
+      [label]="addLabelKey | translate"
+      [attr.aria-label]="addLabelKey | translate"
+      (click)="openAddDialog()"
+    ></button>
+  </app-page-header>
+
   <div class="admin-card">
-    <div class="d-flex justify-content-between align-items-center mb-1 gap-2 flex-wrap">
-      <h4 class="fw-bold mb-0" style="color: #dc2134">{{ pageTitleKey | translate }}</h4>
-
-      <div class="d-flex align-items-center gap-2">
-        @if (canBulkImport) {
-          <button
-            pButton
-            class="p-button-sm p-button-outlined"
-            icon="pi pi-file-excel"
-            [label]="'BULK_IMPORT.OPEN_BUTTON' | translate"
-            [attr.aria-label]="'BULK_IMPORT.OPEN_BUTTON' | translate"
-            (click)="showBulkImport = true"
-          ></button>
-        }
-        <button
-          pButton
-          class="p-button-sm"
-          icon="pi pi-plus"
-          [label]="addLabelKey | translate"
-          [attr.aria-label]="addLabelKey | translate"
-          (click)="openAddDialog()"
-        ></button>
-      </div>
-    </div>
-
-    <div class="small text-muted mb-2">
-      {{ descriptionTextKey | translate }}
-    </div>
-
     @if (isLoading) {
       <div class="loading-box">
         <p-progressSpinner
@@ -60,6 +56,7 @@
         [actionsTemplate]="showActionsColumn ? actionsTpl : null"
         (rowClick)="onRowClick($event)"
         displayMode="scroll"
+        scrollHeight="flex"
       >
         <ng-template appColumnCell="veliAdSoyad" let-person>
           <span

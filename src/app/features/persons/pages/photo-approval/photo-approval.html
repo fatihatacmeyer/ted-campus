@@ -1,23 +1,20 @@
 <div class="admin-wrapper">
+  <app-page-header
+    [title]="'PHOTO_APPROVAL.PAGE_TITLE' | translate"
+    [subtitle]="'PHOTO_APPROVAL.DESCRIPTION' | translate"
+    icon="photo_camera"
+  >
+    <button
+      pButton
+      icon="pi pi-refresh"
+      [label]="'COMMON.REFRESH' | translate"
+      class="p-button-sm p-button-outlined"
+      (click)="loadPendingPhotos()"
+      [loading]="isLoading() && !processingId()"
+    ></button>
+  </app-page-header>
+
   <div class="admin-card">
-    <div class="d-flex justify-content-between align-items-center mb-3">
-      <h4 class="fw-bold mb-0" style="color: #dc2134">
-        {{ 'PHOTO_APPROVAL.PAGE_TITLE' | translate }}
-      </h4>
-      <button
-        pButton
-        icon="pi pi-refresh"
-        [label]="'COMMON.REFRESH' | translate"
-        class="p-button-sm p-button-outlined"
-        (click)="loadPendingPhotos()"
-        [loading]="isLoading() && !processingId()"
-      ></button>
-    </div>
-
-    <div class="text-muted small mb-4">
-      {{ 'PHOTO_APPROVAL.DESCRIPTION' | translate }}
-    </div>
-
     @if (isLoading() && !processingId()) {
       <div class="loading-box">
         <p-progressSpinner strokeWidth="4" animationDuration=".8s"></p-progressSpinner>

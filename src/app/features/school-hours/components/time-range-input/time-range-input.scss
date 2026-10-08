@@ -7,18 +7,18 @@
   padding: 0 4px;
   font-size: 11px;
   text-align: center;
-  border: 1px solid #cbd5e1;
+  border: 1px solid var(--ted-border-strong);
   border-radius: 4px;
   outline: none;
-  background: #ffffff;
-  color: #1e293b;
+  background: var(--ted-bg-surface);
+  color: var(--ted-ink-800);
   font-family: 'SFMono-Regular', Consolas, monospace;
 
   &:focus {
-    border-color: #3b82f6;
+    border-color: var(--ted-info-solid);
     box-shadow: 0 0 0 1px rgba(59, 130, 246, 0.2);
   }
   &::placeholder {
-    color: #cbd5e1;
+    color: var(--ted-border-strong);
   }
 }

@@ -39,11 +39,13 @@ import { PersonBusAssignDialogComponent } from '../../components/person-bus-assi
 import { BulkImportComponent } from '../../components/bulk-import/bulk-import';
 import { ImportKind } from '../../models/bulk-import.model';
 import { DialogModule } from 'primeng/dialog';
+import { PageHeaderComponent } from '../../../../shared/components/page-header/page-header';
 
 @Component({
   selector: 'app-person-crud',
   standalone: true,
   imports: [
+    PageHeaderComponent,
     CustomizableTableComponent,
     ColumnCellDirective,
     PersonFormComponent,

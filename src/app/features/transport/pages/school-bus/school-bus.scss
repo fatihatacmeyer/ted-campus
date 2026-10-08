@@ -1,3 +1,4 @@
+@use '../../../../../styles/vars' as t;
 /* ═══════════════════════════════════════════════════════════
    TED Servis Yönetim Paneli — Styles
    ═══════════════════════════════════════════════════════════ */
@@ -7,88 +8,22 @@
 }
 
 /* ── Variables ─────────────────────────────────────────── */
-$brand-red: #dc2134;
-$brand-red-light: #fef2f2;
-$bg-page: #fcf9f8;
-$bg-surface: #ffffff;
-$bg-muted: #f9fafb;
-$border-light: #f1f5f9;
-$text-primary: #1f2937;
-$text-secondary: #6b7280;
-$text-muted: #9ca3af;
-$shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.04);
-$shadow-card: 0 2px 12px rgba(0, 0, 0, 0.06);
-$shadow-hover: 0 8px 28px rgba(0, 0, 0, 0.10);
-$radius-sm: 10px;
-$radius-md: 16px;
-$radius-lg: 20px;
-$radius-full: 9999px;
-
-/* ── Welcome Banner ────────────────────────────────────── */
-.welcome-banner {
-  background: linear-gradient(135deg, #1f2937 0%, #374151 50%, #4b5563 100%);
-  border-radius: $radius-lg;
-  padding: 32px 36px;
-  margin-bottom: 24px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  color: #fff;
-  position: relative;
-  overflow: hidden;
-
-  &::before {
-    content: '';
-    position: absolute;
-    top: -40%;
-    right: -10%;
-    width: 300px;
-    height: 300px;
-    border-radius: 50%;
-    background: rgba($brand-red, 0.15);
-    pointer-events: none;
-  }
-
-  &::after {
-    content: '';
-    position: absolute;
-    bottom: -60%;
-    left: 20%;
-    width: 200px;
-    height: 200px;
-    border-radius: 50%;
-    background: rgba(255, 255, 255, 0.05);
-    pointer-events: none;
-  }
-
-  .welcome-content {
-    position: relative;
-    z-index: 1;
-
-    h1 {
-      font-size: 1.6rem;
-      font-weight: 700;
-      margin: 0 0 6px;
-      letter-spacing: -0.01em;
-    }
-
-    p {
-      font-size: 0.95rem;
-      opacity: 0.75;
-      margin: 0;
-    }
-  }
-
-  .welcome-decoration {
-    position: relative;
-    z-index: 1;
-
-    .material-symbols-outlined {
-      font-size: 56px;
-      opacity: 0.18;
-    }
-  }
-}
+$brand-red: t.$red-600;
+$brand-red-light: t.$danger-bg;
+$bg-page: t.$bg-page;
+$bg-surface: t.$bg-surface;
+$bg-muted: t.$bg-subtle;
+$border-light: t.$bg-hover;
+$text-primary: t.$text;
+$text-secondary: t.$text-secondary;
+$text-muted: t.$text-muted;
+$shadow-sm: t.$shadow-sm;
+$shadow-card: t.$shadow-card;
+$shadow-hover: t.$shadow-hover;
+$radius-sm: t.$radius-xl;
+$radius-md: t.$radius-2xl;
+$radius-lg: t.$radius-3xl;
+$radius-full: t.$radius-full;
 
 /* ── Tab Navigation ────────────────────────────────────── */
 .tab-nav {
@@ -132,7 +67,7 @@ $radius-full: 9999px;
 
   &.active {
     background: $brand-red;
-    color: #fff;
+    color: var(--ted-on-primary);
     font-weight: 600;
     box-shadow: 0 2px 8px rgba($brand-red, 0.3);
   }
@@ -207,14 +142,14 @@ $radius-full: 9999px;
     font-size: 26px;
   }
 
-  &.icon-gray { background: #f3f4f6; color: #6b7280; }
-  &.icon-emerald { background: #ecfdf5; color: #059669; }
-  &.icon-blue { background: #eff6ff; color: #2563eb; }
-  &.icon-amber { background: #fffbeb; color: #d97706; }
-  &.icon-purple { background: #f5f3ff; color: #7c3aed; }
-  &.icon-teal { background: #f0fdfa; color: #0d9488; }
-  &.icon-rose { background: #fff1f2; color: #e11d48; }
-  &.icon-orange { background: #fff7ed; color: #ea580c; }
+  &.icon-gray { background: var(--ted-bg-subtle); color: var(--ted-text-muted); }
+  &.icon-emerald { background: var(--ted-success-bg); color: var(--ted-success-solid); }
+  &.icon-blue { background: var(--ted-info-bg); color: var(--ted-info-solid); }
+  &.icon-amber { background: var(--ted-warning-bg); color: var(--ted-warning-solid); }
+  &.icon-purple { background: var(--ted-accent-bg); color: var(--ted-accent-solid); }
+  &.icon-teal { background: var(--ted-teal-bg); color: var(--ted-teal-solid); }
+  &.icon-rose { background: var(--ted-danger-bg); color: var(--ted-danger-solid); }
+  &.icon-orange { background: var(--ted-orange-bg); color: var(--ted-orange-solid); }
 }
 
 .stat-info {
@@ -315,7 +250,7 @@ $radius-full: 9999px;
   border-radius: $radius-md;
   padding: 24px;
   box-shadow: $shadow-card;
-  border-left: 4px solid #e5e7eb;
+  border-left: 4px solid var(--ted-border);
   transition: box-shadow 0.2s ease, transform 0.2s ease;
 
   &:hover {
@@ -324,19 +259,19 @@ $radius-full: 9999px;
   }
 
   &.bus-active {
-    border-left-color: #f59e0b;
+    border-left-color: var(--ted-warning-solid);
 
     .bus-card-header .bus-plate {
-      color: #d97706;
+      color: var(--ted-warning-solid);
     }
   }
 
   &.bus-completed {
-    border-left-color: #10b981;
+    border-left-color: var(--ted-success-solid);
   }
 
   &.bus-waiting {
-    border-left-color: #6b7280;
+    border-left-color: var(--ted-text-muted);
   }
 }
 
@@ -474,7 +409,7 @@ $radius-full: 9999px;
 
 .passenger-bar {
   height: 6px;
-  background: #e5e7eb;
+  background: var(--ted-border);
   border-radius: $radius-full;
   overflow: hidden;
   margin-bottom: 6px;
@@ -482,7 +417,7 @@ $radius-full: 9999px;
 
 .passenger-fill {
   height: 100%;
-  background: linear-gradient(90deg, #10b981, #059669);
+  background: linear-gradient(90deg, var(--ted-success-solid), var(--ted-success-solid));
   border-radius: $radius-full;
   transition: width 0.4s ease;
 }
@@ -546,15 +481,15 @@ $radius-full: 9999px;
       padding: 4px 10px;
       font-size: 0.8rem;
       font-weight: 500;
-      color: #059669;
-      background: #ecfdf5;
-      border: 1px solid #a7f3d0;
+      color: var(--ted-success-solid);
+      background: var(--ted-success-bg);
+      border: 1px solid var(--ted-success-border);
       border-radius: $radius-full;
       box-shadow: $shadow-sm;
 
       .material-symbols-outlined {
         font-size: 15px;
-        color: #059669;
+        color: var(--ted-success-solid);
       }
     }
   }
@@ -739,15 +674,15 @@ $radius-full: 9999px;
     padding: 6px 8px 6px 12px;
     font-size: 0.85rem;
     font-weight: 500;
-    color: #059669;
-    background: #ecfdf5;
-    border: 1px solid #a7f3d0;
+    color: var(--ted-success-solid);
+    background: var(--ted-success-bg);
+    border: 1px solid var(--ted-success-border);
     border-radius: $radius-full;
     box-shadow: $shadow-sm;
 
     .material-symbols-outlined {
       font-size: 16px;
-      color: #059669;
+      color: var(--ted-success-solid);
     }
 
     .authority-chip-remove {
@@ -766,7 +701,7 @@ $radius-full: 9999px;
 
       &:hover {
         background: rgba(220, 38, 38, 0.12);
-        color: #dc2626;
+        color: var(--ted-danger-solid);
       }
 
       .material-symbols-outlined {
@@ -800,7 +735,7 @@ $radius-full: 9999px;
 
 .field-error {
   font-size: 0.75rem;
-  color: #dc2626;
+  color: var(--ted-danger-solid);
   margin-top: 2px;
 }
 
@@ -880,13 +815,13 @@ $radius-full: 9999px;
   align-items: flex-start;
   gap: 12px;
   padding: 14px;
-  background: #fef3c7;
-  border: 1px solid #fbbf24;
+  background: var(--ted-warning-border);
+  border: 1px solid var(--ted-warning-solid);
   border-radius: $radius-sm;
 
   .material-symbols-outlined {
     font-size: 24px;
-    color: #d97706;
+    color: var(--ted-warning-solid);
     flex-shrink: 0;
     margin-top: 1px;
   }
@@ -894,7 +829,7 @@ $radius-full: 9999px;
   p {
     margin: 0;
     font-size: 0.9rem;
-    color: #92400e;
+    color: var(--ted-warning-fg);
     line-height: 1.5;
 
     strong {
@@ -911,7 +846,7 @@ $radius-full: 9999px;
 }
 
 .delete-icon {
-  color: #dc2626 !important;
+  color: var(--ted-danger-solid) !important;
 }
 
 /* ── Responsive ────────────────────────────────────────── */
@@ -949,10 +884,6 @@ $radius-full: 9999px;
 
   .dialog-summary {
     grid-template-columns: 1fr;
-  }
-
-  .welcome-banner {
-    padding: 24px;
   }
 
   .tab-btn span:not(.material-symbols-outlined) {
@@ -1006,18 +937,18 @@ $radius-full: 9999px;
 
   &:hover {
     background: $bg-muted;
-    border-color: #d1d5db;
+    border-color: var(--ted-border-strong);
     color: $text-primary;
   }
 
   &.active {
     background: $brand-red;
-    color: #fff;
+    color: var(--ted-on-primary);
     border-color: $brand-red;
     box-shadow: 0 2px 8px rgba($brand-red, 0.25);
 
     .material-symbols-outlined {
-      color: #fff;
+      color: var(--ted-on-primary);
     }
   }
 }

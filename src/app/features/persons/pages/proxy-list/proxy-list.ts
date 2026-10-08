@@ -27,6 +27,7 @@ import { PersonProfileComponent } from '../../components/person-profile/person-p
 import { Person } from '../../../../core/models/person.model';
 import { FormsModule } from '@angular/forms';
 import { ToggleSwitchModule } from 'primeng/toggleswitch';
+import { PageHeaderComponent } from '../../../../shared/components/page-header/page-header';
 
 interface TabOption {
   labelKey: string;
@@ -37,6 +38,7 @@ interface TabOption {
   selector: 'app-proxy-list',
   standalone: true,
   imports: [
+    PageHeaderComponent,
     CommonModule,
     CustomizableTableComponent,
     ColumnCellDirective,

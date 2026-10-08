@@ -1,17 +1,20 @@
 <div class="admin-wrapper">
-  <div class="admin-card">
-    <div class="table-toolbar mb-3">
-      <h4 class="fw-bold mb-0" style="color: #dc2134">{{ 'ACTIVITIES.TITLE' | translate }}</h4>
-      <button
-        pButton
-        [label]="'ACTIVITIES.ADD' | translate"
-        [attr.aria-label]="'ACTIVITIES.ADD' | translate"
-        icon="pi pi-plus"
-        class="p-button p-button-sm p-component"
-        (click)="openAddDialog()"
-      ></button>
-    </div>
+  <app-page-header
+    [title]="'ACTIVITIES.TITLE' | translate"
+    [subtitle]="'ACTIVITIES.PAGE_DESCRIPTION' | translate"
+    icon="event"
+  >
+    <button
+      pButton
+      [label]="'ACTIVITIES.ADD' | translate"
+      [attr.aria-label]="'ACTIVITIES.ADD' | translate"
+      icon="pi pi-plus"
+      class="p-button p-button-sm p-component"
+      (click)="openAddDialog()"
+    ></button>
+  </app-page-header>
 
+  <div class="admin-card">
     <app-customizable-table
       [rows]="activities()"
       [columns]="activityColumns"

@@ -1,26 +1,64 @@
 /* Styles handled globally in styles.scss */
+/* Sayfa scroll'u yok: kart viewport'a sığar, yalnızca tablo kendi içinde kayar */
 :host {
   display: block;
   height: 100%;
-  overflow-y: auto;
+  overflow: hidden;
 }
 
-/* styles.scss'den gelen 'overflow: hidden' kısıtlamasını ezer */
 .admin-wrapper {
-  height: auto !important;
-  min-height: 100%;
-  overflow: visible !important;
+  height: 100% !important;
+  min-height: 0 !important;
+  overflow: hidden !important;
+  display: flex;
+  flex-direction: column;
   padding-bottom: 0;
+
+  .admin-card {
+    flex: 1 1 0;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    margin-bottom: 0;
+
+    /* Başlık, açıklama, yükleniyor/hata kutuları sabit yükseklikte kalır */
+    > *:not(app-customizable-table) {
+      flex-shrink: 0;
+    }
+
+    /* Tablo bileşeni kalan yüksekliği doldurur */
+    app-customizable-table {
+      flex: 1 1 0;
+      min-height: 0;
+      display: flex;
+      flex-direction: column;
+    }
+  }
 }
 
-/* Kart altındaki fazladan boşluk (margin) sağda gereksiz scroll oluşturuyordu */
-.admin-wrapper .admin-card {
-  margin-bottom: 0;
-}
+:host ::ng-deep {
+  .admin-table {
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 0;
+    min-height: 0;
+  }
 
-/* Başlık + açıklama yüksekliği kadar pay bırak: kart viewport'a sığsın */
-:host ::ng-deep .admin-table .p-datatable-wrapper {
-  max-height: calc(100vh - 290px);
+  .p-datatable {
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 0;
+    min-height: 0;
+  }
+
+  .p-datatable-wrapper,
+  .p-datatable-table-container {
+    flex: 1 1 0 !important;
+    height: auto !important;
+    max-height: none !important;
+    overflow: auto !important;
+  }
 }
 
 /* Uzun, virgülle ayrılmış listeler (öğrenciler / kampüsler): kesilmez, alt satıra sarar */

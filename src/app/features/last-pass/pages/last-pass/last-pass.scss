@@ -1,11 +1,12 @@
+@use '../../../../../styles/vars' as t;
 :host {
   display: block;
   height: 100%;
 }
 
-$text-primary: #1f2937;
-$text-secondary: #6b7280;
-$text-muted: #9ca3af;
+$text-primary: t.$text;
+$text-secondary: t.$text-secondary;
+$text-muted: t.$text-muted;
 
 .last-pass-container {
   height: 100%;
@@ -13,24 +14,6 @@ $text-muted: #9ca3af;
   display: flex;
   flex-direction: column;
   padding: 0;
-}
-
-.header-section {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 16px;
-  margin-bottom: 16px;
-  flex-wrap: wrap;
-  flex-shrink: 0;
-
-  h2 {
-    font-size: 1.5rem;
-    font-weight: 700;
-    color: $text-primary;
-    margin: 0;
-    letter-spacing: -0.01em;
-  }
 }
 
 .filters {
@@ -95,7 +78,7 @@ $text-muted: #9ca3af;
 
   /* GERÇEK TAM EKRAN MODU */
   &:fullscreen {
-    background-color: #fcf9f8;
+    background-color: var(--ted-bg-page);
     padding: 8px;
     overflow: hidden;
 
@@ -110,10 +93,10 @@ $text-muted: #9ca3af;
   width: 100%;
   height: 100%;
   flex-shrink: 0;
-  background: #ffffff;
+  background: var(--ted-bg-surface);
   border-radius: 16px;
   overflow: hidden;
-  border: 1px solid #e2e8f0;
+  border: 1px solid var(--ted-border);
   box-shadow:
     0 4px 12px rgba(0, 0, 0, 0.05),
     0 1px 3px rgba(0, 0, 0, 0.03);
@@ -125,7 +108,7 @@ $text-muted: #9ca3af;
 /* --- Fotoğraf Alanı --- */
 .pass-photo {
   position: relative;
-  background: #f1f5f9;
+  background: var(--ted-bg-hover);
   overflow: hidden;
 
   .photo-img {
@@ -146,7 +129,7 @@ $text-muted: #9ca3af;
   align-items: center;
   justify-content: center;
   text-align: center;
-  background: #ffffff;
+  background: var(--ted-bg-surface);
 }
 
 /* --- DİKEY TASARIM (Grid 2 ve 3) --- */
@@ -156,7 +139,7 @@ $text-muted: #9ca3af;
   .pass-photo {
     flex: 1 1 auto;
     width: 100%;
-    border-bottom: 1px solid #e2e8f0;
+    border-bottom: 1px solid var(--ted-border);
   }
 
   .pass-info {
@@ -191,7 +174,7 @@ $text-muted: #9ca3af;
   .pass-photo {
     flex: 1 1 auto;
     width: 100%;
-    border-bottom: 1px solid #e2e8f0;
+    border-bottom: 1px solid var(--ted-border);
   }
 
   .pass-info {
@@ -210,7 +193,7 @@ $text-muted: #9ca3af;
 
   .pass-photo {
     height: 100%;
-    border-right: 1px solid #e2e8f0;
+    border-right: 1px solid var(--ted-border);
   }
 
   .pass-info {
@@ -234,7 +217,7 @@ $text-muted: #9ca3af;
 @container passCard (min-height: 0px) {
   .pass-name {
     font-size: clamp(18px, 7cqmin, 36px);
-    color: #0f172a;
+    color: var(--ted-ink-900);
     font-weight: 800;
     letter-spacing: -0.01em;
     margin: 0 0 clamp(8px, 2cqmin, 16px);
@@ -245,7 +228,7 @@ $text-muted: #9ca3af;
   }
 
   .pass-name-idle {
-    color: #94a3b8 !important;
+    color: var(--ted-icon-muted) !important;
     font-weight: 500 !important;
     font-size: clamp(14px, 5cqmin, 24px) !important;
     white-space: normal !important;
@@ -261,9 +244,9 @@ $text-muted: #9ca3af;
     margin-bottom: clamp(10px, 2cqmin, 16px);
 
     span {
-      background: #f8fafc;
-      color: #334155;
-      border: 1px solid #cbd5e1;
+      background: var(--ted-bg-subtle);
+      color: var(--ted-ink-700);
+      border: 1px solid var(--ted-border-strong);
       padding: clamp(4px, 1cqmin, 6px) clamp(6px, 2cqmin, 12px);
       border-radius: 8px;
       font-size: clamp(11px, 4cqmin, 18px);
@@ -275,7 +258,7 @@ $text-muted: #9ca3af;
       svg {
         width: clamp(12px, 4cqmin, 20px);
         height: clamp(12px, 4cqmin, 20px);
-        color: #64748b;
+        color: var(--ted-text-muted);
       }
     }
   }
@@ -283,8 +266,8 @@ $text-muted: #9ca3af;
   .pass-terminal {
     width: 100%;
     padding-top: clamp(8px, 1.5cqmin, 12px);
-    border-top: 1px dashed #cbd5e1;
-    color: #64748b;
+    border-top: 1px dashed var(--ted-border-strong);
+    color: var(--ted-text-muted);
     font-weight: 600;
     font-size: clamp(12px, 5cqmin, 19px);
     display: flex;
@@ -295,7 +278,7 @@ $text-muted: #9ca3af;
     svg {
       width: clamp(14px, 5cqmin, 22px);
       height: clamp(14px, 5cqmin, 22px);
-      color: #94a3b8;
+      color: var(--ted-icon-muted);
     }
   }
 
@@ -307,7 +290,7 @@ $text-muted: #9ca3af;
     align-items: center;
     gap: 4px;
     background: rgba(16, 185, 129, 0.95);
-    color: #ffffff;
+    color: var(--ted-on-primary);
     font-weight: 600;
     border-radius: 20px;
     max-width: calc(100% - 32px);
@@ -337,7 +320,7 @@ $text-muted: #9ca3af;
     align-items: center;
     gap: 4px;
     background: rgba(15, 23, 42, 0.75);
-    color: #f8fafc;
+    color: var(--ted-bg-subtle);
     border-radius: 20px;
     white-space: nowrap;
     font-size: clamp(10px, 3.5cqmin, 16px);
@@ -359,11 +342,11 @@ $text-muted: #9ca3af;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #b4b2a9;
+  color: var(--ted-border-strong);
 
   &.idle-fallback {
-    background: #f1f5f9;
-    color: #cbd5e1;
+    background: var(--ted-bg-hover);
+    color: var(--ted-border-strong);
   }
 }
 
@@ -375,11 +358,11 @@ $text-muted: #9ca3af;
   align-items: center;
   justify-content: center;
   gap: 10px;
-  color: #94a3b8;
+  color: var(--ted-icon-muted);
   font-size: 13px;
   text-align: center;
   padding: 20px;
-  border: 1px dashed #cbd5e1;
+  border: 1px dashed var(--ted-border-strong);
   border-radius: 16px;
   background: transparent;
   box-shadow: none;
@@ -402,9 +385,9 @@ $text-muted: #9ca3af;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  background: #ffffff;
-  border: 1px solid #cbd5e1;
-  color: #475569;
+  background: var(--ted-bg-surface);
+  border: 1px solid var(--ted-border-strong);
+  color: var(--ted-text-secondary);
   border-radius: 8px;
   margin-left: 8px;
   cursor: pointer;
@@ -415,9 +398,9 @@ $text-muted: #9ca3af;
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
 
   &:hover {
-    background: #f8fafc;
-    color: #0f172a;
-    border-color: #94a3b8;
+    background: var(--ted-bg-subtle);
+    color: var(--ted-ink-900);
+    border-color: var(--ted-icon-muted);
   }
 
   .material-symbols-outlined {
@@ -430,8 +413,8 @@ $text-muted: #9ca3af;
   position: absolute;
   top: 16px;
   right: 16px;
-  background: #dc2134;
-  color: #ffffff;
+  background: var(--ted-red-600);
+  color: var(--ted-on-primary);
   border: none;
   border-radius: 50%;
   width: 44px;
@@ -444,7 +427,7 @@ $text-muted: #9ca3af;
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 
   &:hover {
-    background: #b51a2a;
+    background: var(--ted-red-700);
     transform: scale(1.1) rotate(90deg);
     box-shadow: 0 6px 16px rgba(220, 33, 52, 0.6);
   }

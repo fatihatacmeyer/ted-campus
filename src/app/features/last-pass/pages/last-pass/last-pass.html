@@ -1,8 +1,10 @@
 <div class="last-pass-container">
   <!-- Header & Filters -->
-  <div class="header-section">
-    <h2>{{ 'LAST_PASS.TITLE' | translate }}</h2>
-
+  <app-page-header
+    [title]="'LAST_PASS.TITLE' | translate"
+    [subtitle]="'LAST_PASS.PAGE_DESCRIPTION' | translate"
+    icon="badge"
+  >
     <div class="filters">
       <div class="filter-group">
         <label for="terminalGroup">{{ 'LAST_PASS.TERMINAL_GROUP' | translate }}:</label>
@@ -43,7 +45,7 @@
         <span class="material-symbols-outlined" style="font-size: 28px">fullscreen</span>
       </button>
     </div>
-  </div>
+  </app-page-header>
 
   <!-- Passes Grid / Loading -->
   @if (isLoading()) {

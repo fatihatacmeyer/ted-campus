@@ -79,37 +79,37 @@
 }
 
 .period-segment {
-  border: 1px solid #dee2e6;
+  border: 1px solid var(--ted-border-strong);
   border-radius: 6px;
   overflow: hidden;
 
   .p-button {
     border: 0;
     border-radius: 0;
-    border-right: 1px solid #dee2e6;
+    border-right: 1px solid var(--ted-border-strong);
 
     &:last-child {
       border-right: 0;
     }
 
     &.active {
-      background-color: #dc2134;
-      border-color: #dc2134;
-      color: #fff;
+      background-color: var(--ted-red-600);
+      border-color: var(--ted-red-600);
+      color: var(--ted-on-primary);
     }
   }
 }
 
 .filter-tabs {
   .p-button.active {
-    background-color: #dc2134;
-    border-color: #dc2134;
-    color: #fff;
+    background-color: var(--ted-red-600);
+    border-color: var(--ted-red-600);
+    color: var(--ted-on-primary);
   }
 }
 
 .cell-red {
-  color: #dc2134;
+  color: var(--ted-red-600);
   font-weight: 600;
 }
 

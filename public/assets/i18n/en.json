@@ -98,7 +98,8 @@
     "COLLAPSE": "Collapse Menu",
     "EXPAND": "Expand Menu",
     "LOGOUT": "Logout",
-    "LANG_LABEL": "Language"
+    "LANG_LABEL": "Language",
+    "PROFILE": "Profile menu"
   },
   "DAYS": {
     "MONDAY": "Monday",
@@ -432,6 +433,7 @@
     "CONFIRM_CANCEL_ACTION": "Yes, Cancel"
   },
   "STUDENT_ATTENDANCE": {
+    "PAGE_DESCRIPTION": "Track students' daily, weekly and monthly attendance.",
     "TITLE": "Student Attendance Tracking",
     "TAB_ALL": "All",
     "TAB_ON_LEAVE": "On Leave",
@@ -473,6 +475,7 @@
     "COL_ICON": "Icon"
   },
   "ACTIVITIES": {
+    "PAGE_DESCRIPTION": "Create and edit school activities and manage participating classes.",
     "TITLE": "Activities",
     "NAME": "Activity Name",
     "NAME_PLACEHOLDER": "Enter activity name",
@@ -858,6 +861,7 @@
     "STAFF_OR_OTHER": "Staff / Other"
   },
   "SCHOOL_HOURS": {
+    "PAGE_DESCRIPTION": "Edit entry and exit hours by campus and class.",
     "PAGE_TITLE": "School Hours Management",
     "GRADE_LEVEL": "Grade Level",
     "CAMPUS_TAB_LABEL": "Campus",
@@ -901,6 +905,7 @@
     "DISCARD": "Cancel (Discard Changes)"
   },
   "PROXIES": {
+    "PAGE_DESCRIPTION": "Review proxy requests and filter them by status.",
     "PAGE_TITLE": "Proxy Management",
     "STUDENT": "Student",
     "CAMPUS": "Campus",
@@ -926,6 +931,7 @@
     "ERROR_SERVER": "Server error occurred."
   },
   "LAST_PASS": {
+    "PAGE_DESCRIPTION": "Follow the latest passes of the selected terminal group live.",
     "TITLE": "Last Passes",
     "TERMINAL_GROUP": "Terminal Group",
     "SELECT_GROUP": "Select Group",

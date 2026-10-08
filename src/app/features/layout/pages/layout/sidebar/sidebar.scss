@@ -16,10 +16,10 @@
   width: 100%; /* Artık genişliği dışarıdaki app-sidebar'dan alacak */
   height: 100%;
   // background-color: #f6f6f6;
-  color: #444652;
+  color: var(--ted-text-secondary);
   overflow-y: auto;
   overflow-x: hidden; /* Daralırken yazıların dışarı taşmasını engeller */
-  border-right: 1px solid #c4c6d4;
+  border-right: 1px solid var(--ted-border-strong);
   transition: width 0.3s ease-in-out;
 }
 
@@ -44,7 +44,7 @@
   font-weight: 700;
   letter-spacing: 1.5px;
   text-transform: uppercase;
-  color: #5e6278;
+  color: var(--ted-text-muted);
   display: inline-block;
   white-space: nowrap;
   overflow: hidden;
@@ -118,7 +118,7 @@
   padding: 10px 12px;
   border-radius: 8px;
   text-decoration: none;
-  color: #444652;
+  color: var(--ted-text-secondary);
   font-size: 14px;
   font-weight: 500;
   transition: background-color 0.15s ease,
@@ -129,14 +129,14 @@
 }
 
 .nav-list a:hover {
-  background-color: #e8e8e8;
-  color: #1c1b1b;
+  background-color: var(--ted-border);
+  color: var(--ted-text);
 }
 
 .nav-list a.active {
-  background-color: #ffffff;
-  color: #dc2134;
-  box-shadow: inset 3px 0 0 #dc2134;
+  background-color: var(--ted-bg-surface);
+  color: var(--ted-red-600);
+  box-shadow: inset 3px 0 0 var(--ted-red-600);
   font-weight: 700;
 }
 

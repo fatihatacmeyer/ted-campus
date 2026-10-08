@@ -1,9 +1,11 @@
 <div class="admin-wrapper">
-  <div class="admin-card">
-    <div class="admin-card-header">
-      <h4 class="page-title">{{ 'SCHOOL_HOURS.PAGE_TITLE' | translate }}</h4>
-    </div>
+  <app-page-header
+    [title]="'SCHOOL_HOURS.PAGE_TITLE' | translate"
+    [subtitle]="'SCHOOL_HOURS.PAGE_DESCRIPTION' | translate"
+    icon="schedule"
+  />
 
+  <div class="admin-card">
     <p-confirmDialog [style]="{ width: '450px' }" />
 
     <p-tabs [value]="activeCampusId()" (valueChange)="onCampusSelect($event)">

@@ -33,11 +33,13 @@ import {
   RowSelections,
   StudentStudyPanelComponent,
 } from '../../components/student-study-panel/student-study-panel';
+import { PageHeaderComponent } from '../../../../shared/components/page-header/page-header';
 
 @Component({
   selector: 'app-school-hours-list',
   standalone: true,
   imports: [
+    PageHeaderComponent,
     FormsModule,
     TableModule,
     ButtonModule,
@@ -365,5 +367,4 @@ export class SchoolHoursListComponent implements OnInit {
       },
     });
   }
-
 }

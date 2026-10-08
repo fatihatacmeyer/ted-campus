@@ -1,70 +1,68 @@
 <div class="admin-wrapper">
-  <!-- Başlık satırı -->
-  <div class="admin-card mb-3">
-    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2">
-      <h4 class="fw-bold mb-0" style="color: #dc2134">
-        {{ 'STUDENT_ATTENDANCE.TITLE' | translate }}
-      </h4>
-      <div class="d-flex flex-wrap align-items-center gap-2 period-toolbar">
-        <div class="d-flex align-items-center period-segment">
-          <button
-            pButton
-            type="button"
-            [label]="'ATTENDANCE.PERIOD_DAY' | translate"
-            size="small"
-            [class.active]="period() === 'gun'"
-            (click)="setPeriod('gun')"
-          ></button>
-          <button
-            pButton
-            type="button"
-            [label]="'ATTENDANCE.PERIOD_WEEK' | translate"
-            size="small"
-            [class.active]="period() === 'hafta'"
-            (click)="setPeriod('hafta')"
-          ></button>
-          <button
-            pButton
-            type="button"
-            [label]="'ATTENDANCE.PERIOD_MONTH' | translate"
-            size="small"
-            [class.active]="period() === 'ay'"
-            (click)="setPeriod('ay')"
-          ></button>
-        </div>
+  <app-page-header
+    [title]="'STUDENT_ATTENDANCE.TITLE' | translate"
+    [subtitle]="'STUDENT_ATTENDANCE.PAGE_DESCRIPTION' | translate"
+    icon="fact_check"
+  >
+    <div class="d-flex flex-wrap align-items-center gap-2 period-toolbar">
+      <div class="d-flex align-items-center period-segment">
         <button
           pButton
           type="button"
-          icon="pi pi-chevron-left"
+          [label]="'ATTENDANCE.PERIOD_DAY' | translate"
           size="small"
-          text="true"
-          rounded="true"
-          [pTooltip]="'ATTENDANCE.PREV_PERIOD' | translate"
-          (click)="prevPeriod()"
-        ></button>
-        <span class="range-label fw-semibold">{{ rangeLabel() }}</span>
-        <button
-          pButton
-          type="button"
-          icon="pi pi-chevron-right"
-          size="small"
-          text="true"
-          rounded="true"
-          [pTooltip]="'ATTENDANCE.NEXT_PERIOD' | translate"
-          (click)="nextPeriod()"
+          [class.active]="period() === 'gun'"
+          (click)="setPeriod('gun')"
         ></button>
         <button
           pButton
           type="button"
-          [label]="'ATTENDANCE.GO_TODAY' | translate"
+          [label]="'ATTENDANCE.PERIOD_WEEK' | translate"
           size="small"
-          outlined="true"
-          severity="secondary"
-          (click)="goToday()"
+          [class.active]="period() === 'hafta'"
+          (click)="setPeriod('hafta')"
+        ></button>
+        <button
+          pButton
+          type="button"
+          [label]="'ATTENDANCE.PERIOD_MONTH' | translate"
+          size="small"
+          [class.active]="period() === 'ay'"
+          (click)="setPeriod('ay')"
         ></button>
       </div>
+      <button
+        pButton
+        type="button"
+        icon="pi pi-chevron-left"
+        size="small"
+        text="true"
+        rounded="true"
+        [pTooltip]="'ATTENDANCE.PREV_PERIOD' | translate"
+        (click)="prevPeriod()"
+      ></button>
+      <span class="range-label fw-semibold">{{ rangeLabel() }}</span>
+      <button
+        pButton
+        type="button"
+        icon="pi pi-chevron-right"
+        size="small"
+        text="true"
+        rounded="true"
+        [pTooltip]="'ATTENDANCE.NEXT_PERIOD' | translate"
+        (click)="nextPeriod()"
+      ></button>
+      <button
+        pButton
+        type="button"
+        [label]="'ATTENDANCE.GO_TODAY' | translate"
+        size="small"
+        outlined="true"
+        severity="secondary"
+        (click)="goToday()"
+      ></button>
     </div>
-  </div>
+  </app-page-header>
 
   <div class="attendance-layout">
     <div class="admin-card attendance-table-card">
@@ -128,7 +126,7 @@
             <div class="d-flex align-items-center justify-content-center w-100">
               <i
                 class="pi pi-info-circle"
-                style="color: #dc2134; cursor: pointer; font-size: 1.2rem"
+                style="color: var(--ted-red-600); cursor: pointer; font-size: 1.2rem"
                 (click)="openLeaveIconDialog(row); $event.stopPropagation()"
                 [pTooltip]="'STUDENT_ATTENDANCE.LEAVE_DETAIL' | translate"
                 tooltipPosition="right"
@@ -170,10 +168,15 @@
     >
       @if (selectedLeaveRow(); as row) {
         <div class="d-flex flex-column gap-2 mt-2">
-          <div><strong>{{ 'USERDEF.STUDENT' | translate }}:</strong> {{ row.adSoyad }}</div>
-          <div><strong>{{ 'STUDENT_ATTENDANCE.COL_SINIF' | translate }}:</strong> {{ row.sinif }}</div>
           <div>
-            <strong>{{ 'STUDENT_ATTENDANCE.COL_IZIN_TIPI' | translate }}:</strong> <p-tag [value]="row.izinTipi ?? ''" severity="info"></p-tag>
+            <strong>{{ 'USERDEF.STUDENT' | translate }}:</strong> {{ row.adSoyad }}
+          </div>
+          <div>
+            <strong>{{ 'STUDENT_ATTENDANCE.COL_SINIF' | translate }}:</strong> {{ row.sinif }}
+          </div>
+          <div>
+            <strong>{{ 'STUDENT_ATTENDANCE.COL_IZIN_TIPI' | translate }}:</strong>
+            <p-tag [value]="row.izinTipi ?? ''" severity="info"></p-tag>
           </div>
           <div>
             <strong>{{ 'STUDENT_ATTENDANCE.LEAVE_TIME' | translate }}:</strong>

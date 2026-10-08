@@ -20,6 +20,7 @@ import { LastPassService } from '../../services/last-pass.service';
 import { LastPassRecord, TerminalGroup } from '../../models/last-pass.model';
 import { AppConfig, APP_CONFIG } from '../../../../core/services/app-config.service';
 import { LastPassIconComponent } from './last-pass-icon';
+import { PageHeaderComponent } from '../../../../shared/components/page-header/page-header';
 
 // Kullanıcının son seçtiği terminal grubu ve grid sayısı oturumlar arası
 // localStorage'da korunur; sayfa her açılışında aynı seçimler tekrarlanmaz.
@@ -72,6 +73,7 @@ function writeSavedNumber(key: string, value: number): void {
 @Component({
   selector: 'app-last-pass',
   imports: [
+    PageHeaderComponent,
     CommonModule,
     SelectModule,
     ProgressSpinnerModule,

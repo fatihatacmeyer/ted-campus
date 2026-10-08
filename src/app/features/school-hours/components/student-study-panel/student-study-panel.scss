@@ -3,9 +3,9 @@
 }
 
 .student-list-container {
-  background: #ffffff;
+  background: var(--ted-bg-surface);
   border-radius: 12px;
-  border: 1px solid #cbd5e1;
+  border: 1px solid var(--ted-border-strong);
   box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.08), 0 8px 10px -6px rgba(0, 0, 0, 0.04);
   overflow: hidden;
   margin: 16px 20px;
@@ -18,13 +18,13 @@
   justify-content: space-between;
   align-items: center;
   padding: 10px 16px;
-  border-bottom: 1px solid #e2e8f0;
+  border-bottom: 1px solid var(--ted-border);
 
   .panel-title {
     margin: 0;
     font-size: 1rem;
     font-weight: 700;
-    color: var(--sh-accent, #dc2134);
+    color: var(--sh-accent, var(--ted-red-600));
     display: flex;
     align-items: center;
     gap: 8px;
@@ -51,27 +51,27 @@
   .search-icon {
     position: absolute;
     left: 10px;
-    color: #94a3b8;
+    color: var(--ted-icon-muted);
     font-size: 0.9rem;
   }
 
   .search-input {
     padding: 6px 12px 6px 32px;
-    border: 1px solid #cbd5e1;
+    border: 1px solid var(--ted-border-strong);
     border-radius: 6px;
     outline: none;
     font-size: 0.85rem;
-    color: #334155;
+    color: var(--ted-ink-700);
     width: 240px;
     max-width: 100%;
     transition: border-color 0.2s, box-shadow 0.2s;
 
     &:focus {
-      border-color: #3b82f6;
+      border-color: var(--ted-info-solid);
       box-shadow: 0 0 0 1px rgba(59, 130, 246, 0.2);
     }
     &::placeholder {
-      color: #94a3b8;
+      color: var(--ted-icon-muted);
     }
   }
 }
@@ -98,14 +98,14 @@
   }
 
   thead {
-    background: #f8fafc;
+    background: var(--ted-bg-subtle);
 
     th {
       padding: 14px 16px;
-      color: #475569;
+      color: var(--ted-text-secondary);
       font-weight: 700;
       font-size: 0.85rem;
-      border-bottom: 2px solid #e2e8f0;
+      border-bottom: 2px solid var(--ted-border);
       white-space: nowrap;
     }
   }
@@ -121,14 +121,14 @@
     transition: background-color 0.15s ease;
 
     &:hover {
-      background: #fef2f2;
+      background: var(--ted-danger-bg);
     }
 
     td {
       padding: 12px 16px;
-      border-bottom: 1px dashed #e2e8f0;
+      border-bottom: 1px dashed var(--ted-border);
       font-size: 0.9rem;
-      color: #334155;
+      color: var(--ted-ink-700);
       vertical-align: middle;
 
       &.student-name {
@@ -149,8 +149,8 @@
   .student-avatar {
     width: 32px;
     height: 32px;
-    background: #e2e8f0;
-    color: #475569;
+    background: var(--ted-border);
+    color: var(--ted-text-secondary);
     font-weight: 800;
     font-size: 0.85rem;
     border-radius: 50%;
@@ -162,19 +162,19 @@
   }
 
   .no-study {
-    color: #cbd5e1;
+    color: var(--ted-border-strong);
     font-size: 0.8rem;
   }
 
   .empty-message-cell {
     text-align: center;
     padding: 48px 20px;
-    color: #64748b;
-    background: #f8fafc;
+    color: var(--ted-text-muted);
+    background: var(--ted-bg-subtle);
 
     i {
       font-size: 2rem;
-      color: #94a3b8;
+      color: var(--ted-icon-muted);
     }
   }
 }
@@ -204,7 +204,7 @@
     tbody tr {
       display: block;
       padding: 12px 16px;
-      border-bottom: 1px solid #e2e8f0;
+      border-bottom: 1px solid var(--ted-border);
     }
 
     tbody td {
@@ -222,7 +222,7 @@
         content: attr(data-label);
         font-size: 0.75rem;
         font-weight: 700;
-        color: #94a3b8;
+        color: var(--ted-icon-muted);
         margin-right: 12px;
       }
 

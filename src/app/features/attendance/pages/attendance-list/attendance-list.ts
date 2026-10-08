@@ -26,6 +26,7 @@ import { computePeriodRange } from '../../../../shared/utils/date.utils';
 import { TranslatePipe } from '@ngx-translate/core';
 import { Dialog, DialogModule } from 'primeng/dialog';
 import { PersonLeaveDialogComponent } from '../../../persons/components/person-leave-dialog/person-leave-dialog';
+import { PageHeaderComponent } from '../../../../shared/components/page-header/page-header';
 
 /** Period type: gün / hafta / ay. */
 type Period = 'gun' | 'hafta' | 'ay';
@@ -40,6 +41,7 @@ interface TabOption {
   selector: 'app-attendance-list',
   standalone: true,
   imports: [
+    PageHeaderComponent,
     CommonModule,
     CustomizableTableComponent,
     ButtonModule,

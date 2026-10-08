@@ -13,19 +13,19 @@
 .field-label {
   font-size: 0.8125rem;
   font-weight: 600;
-  color: #475569;
+  color: var(--ted-text-secondary);
 }
 
 .required {
-  color: #dc2134;
+  color: var(--ted-red-600);
 }
 
 .error-box {
-  background: #fef2f2;
-  border: 1px solid #fecaca;
+  background: var(--ted-danger-bg);
+  border: 1px solid var(--ted-danger-border);
   border-radius: 8px;
   padding: 0.75rem 1rem;
-  color: #991b1b;
+  color: var(--ted-danger-fg);
   font-size: 0.875rem;
 }
 
@@ -33,12 +33,12 @@
   display: flex;
   align-items: flex-start;
   gap: 0.5rem;
-  background: #f0f9ff;
-  border: 1px solid #bae6fd;
+  background: var(--ted-info-bg);
+  border: 1px solid var(--ted-info-border);
   border-radius: 8px;
   padding: 0.75rem 1rem;
   font-size: 0.875rem;
-  color: #0c4a6e;
+  color: var(--ted-info-fg);
 
   i {
     margin-top: 2px;

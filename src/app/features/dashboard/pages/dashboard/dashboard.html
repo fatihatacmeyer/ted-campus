@@ -287,15 +287,16 @@
 
 <div class="dashboard">
   <!-- ── Welcome Banner ──────────────────────────────────── -->
-  <div class="welcome-banner">
-    <div class="welcome-content">
-      <h1>{{ greeting | translate }}, {{ userName() }}!</h1>
-      <p>{{ 'DASHBOARD.WELCOME_HINT' | translate }}</p>
-    </div>
-    <div class="welcome-decoration">
-      <span class="material-symbols-outlined">dashboard</span>
-    </div>
-  </div>
+  <app-page-header
+    [title]="(greeting | translate) + ', ' + userName()"
+    [subtitle]="'DASHBOARD.WELCOME_HINT' | translate"
+    icon="waving_hand"
+  >
+    <span class="welcome-date">
+      <span class="material-symbols-outlined">calendar_today</span>
+      {{ todayLabel() }}
+    </span>
+  </app-page-header>
 
   <!-- ── Loading State ───────────────────────────────────── -->
   @if (isLoading()) {
@@ -687,10 +688,7 @@
 >
   <div class="txn-dialog-search">
     <ng-container
-      *ngTemplateOutlet="
-        listSearchBox;
-        context: { value: earlySearch(), onChange: setEarlySearch }
-      "
+      *ngTemplateOutlet="listSearchBox; context: { value: earlySearch(), onChange: setEarlySearch }"
     />
   </div>
   <div class="person-list dialog-list">
@@ -712,10 +710,7 @@
 >
   <div class="txn-dialog-search">
     <ng-container
-      *ngTemplateOutlet="
-        listSearchBox;
-        context: { value: lateSearch(), onChange: setLateSearch }
-      "
+      *ngTemplateOutlet="listSearchBox; context: { value: lateSearch(), onChange: setLateSearch }"
     />
   </div>
   <div class="person-list dialog-list">

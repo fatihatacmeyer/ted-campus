@@ -45,6 +45,7 @@ import {
 import { DestroyRef } from '@angular/core';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
+import { PageHeaderComponent } from '../../../../shared/components/page-header/page-header';
 
 type TabKey = 'dashboard' | 'buses' | 'assignments' | 'authorities';
 
@@ -52,6 +53,7 @@ type TabKey = 'dashboard' | 'buses' | 'assignments' | 'authorities';
   selector: 'app-school-bus',
   standalone: true,
   imports: [
+    PageHeaderComponent,
     CommonModule,
     ReactiveFormsModule,
     CardModule,

@@ -3,10 +3,56 @@
     <span class="logo">TED</span>
   </div>
   <div class="header-right">
-    <app-language-switcher />
-    <button class="logout-btn" (click)="logout()">
-      <span class="material-symbols-outlined">logout</span>
-      {{ 'HEADER.LOGOUT' | translate }}
-    </button>
+    <div class="profile">
+      <button
+        type="button"
+        class="profile-btn"
+        aria-haspopup="menu"
+        [attr.aria-expanded]="menuOpen()"
+        [attr.aria-label]="'HEADER.PROFILE' | translate"
+        (click)="toggleMenu()"
+      >
+        <span class="avatar">{{ initials() }}</span>
+        <span class="profile-name">{{ displayName() }}</span>
+        <span class="material-symbols-outlined chevron" [class.open]="menuOpen()">expand_more</span>
+      </button>
+
+      @if (menuOpen()) {
+        <div class="profile-menu" role="menu">
+          <div class="menu-head">
+            <span class="avatar avatar-lg">{{ initials() }}</span>
+            <div class="menu-head-text">
+              <strong>{{ displayName() }}</strong>
+              @if (subtitle()) {
+                <small>{{ subtitle() }}</small>
+              }
+            </div>
+          </div>
+
+          <div class="menu-section">
+            <span class="menu-label">{{ 'HEADER.LANG_LABEL' | translate }}</span>
+            <div class="lang-toggle" role="group" [attr.aria-label]="'HEADER.LANG_LABEL' | translate">
+              @for (opt of langOptions; track opt.value) {
+                <button
+                  type="button"
+                  class="lang-opt"
+                  [class.active]="currentLang() === opt.value"
+                  [attr.aria-pressed]="currentLang() === opt.value"
+                  (click)="setLang(opt.value)"
+                >
+                  <app-flag-icon [lang]="opt.value" />
+                  {{ opt.label }}
+                </button>
+              }
+            </div>
+          </div>
+
+          <button type="button" class="logout-item" role="menuitem" (click)="logout()">
+            <span class="material-symbols-outlined">logout</span>
+            {{ 'HEADER.LOGOUT' | translate }}
+          </button>
+        </div>
+      }
+    </div>
   </div>
 </div>

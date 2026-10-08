@@ -59,20 +59,20 @@ overflow-x: auto;
 :host ::ng-deep .admin-table .p-datatable-thead > tr > th {
   padding: 0.2rem 0.5rem;
   font-size: 12px;
-  color: #475569;
+  color: var(--ted-text-secondary);
   font-weight: 600;
-  background: #f8fafc;
-  border-bottom: 2px solid #e5e7eb;
+  background: var(--ted-bg-subtle);
+  border-bottom: 2px solid var(--ted-border);
 }
 
 :host ::ng-deep .admin-table .p-datatable-tbody > tr > td {
   padding: 0.2rem 0.5rem;
   font-size: 12px;
-  color: #334155;
+  color: var(--ted-ink-700);
 }
 
 :host ::ng-deep .admin-table .p-datatable-tbody > tr:hover {
-  background: #f8fafc;
+  background: var(--ted-bg-subtle);
 }
 
 /* ── Responsive ──────────────────────────────────────────── */
@@ -138,7 +138,7 @@ overflow-x: auto;
 
 .col-filter-btn {
   &.is-active {
-    color: #dc2134;
+    color: var(--ted-red-600);
   }
 }
 
@@ -152,8 +152,8 @@ overflow-x: auto;
   flex-direction: column;
   gap: 8px;
   padding: 12px;
-  background: #ffffff;
-  border: 1px solid #e2e8f0;
+  background: var(--ted-bg-surface);
+  border: 1px solid var(--ted-border);
   border-radius: 8px;
   box-shadow: 0 8px 24px rgb(2 6 23 / 0.12);
   font-size: 12px;
@@ -164,7 +164,7 @@ overflow-x: auto;
     justify-content: space-between;
     gap: 8px;
     font-weight: 600;
-    color: #334155;
+    color: var(--ted-ink-700);
   }
 
   .col-filter-input {
@@ -192,7 +192,7 @@ overflow-x: auto;
     flex-direction: column;
     gap: 4px;
     padding-bottom: 6px;
-    border-bottom: 1px solid #f1f5f9;
+    border-bottom: 1px solid var(--ted-bg-hover);
 
     &:last-child {
       border-bottom: 0;
@@ -204,7 +204,7 @@ overflow-x: auto;
     align-items: center;
     gap: 6px;
     font-weight: 600;
-    color: #334155;
+    color: var(--ted-ink-700);
     cursor: pointer;
   }
 
@@ -219,16 +219,16 @@ overflow-x: auto;
     min-width: 26px;
     padding: 2px 6px;
     font-size: 11px;
-    color: #475569;
-    background: #f8fafc;
-    border: 1px solid #e2e8f0;
+    color: var(--ted-text-secondary);
+    background: var(--ted-bg-subtle);
+    border: 1px solid var(--ted-border);
     border-radius: 6px;
     cursor: pointer;
 
     &.is-selected {
-      color: #ffffff;
-      background: #dc2134;
-      border-color: #dc2134;
+      color: var(--ted-on-primary);
+      background: var(--ted-red-600);
+      border-color: var(--ted-red-600);
     }
   }
 }
@@ -238,7 +238,7 @@ overflow-x: auto;
 .col-row-number {
   width: 30px;
   text-align: center;
-  color: #94a3b8;
+  color: var(--ted-icon-muted);
   font-weight: 500;
 }
 
@@ -282,11 +282,11 @@ overflow-x: auto;
   width: 36px;
   height: 36px;
   border-radius: 8px;
-  color: #475569;
+  color: var(--ted-text-secondary);
 
   &:hover {
-    background: #f1f5f9;
-    color: #1e293b;
+    background: var(--ted-bg-hover);
+    color: var(--ted-ink-800);
   }
 }
 
@@ -296,8 +296,8 @@ overflow-x: auto;
   right: 0;
   z-index: 100;
   width: 240px;
-  background: #fff;
-  border: 1px solid #e5e7eb;
+  background: var(--ted-bg-surface);
+  border: 1px solid var(--ted-border);
   border-radius: 10px;
   box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08), 0 2px 8px rgba(0, 0, 0, 0.04);
   overflow: hidden;
@@ -308,13 +308,13 @@ overflow-x: auto;
   align-items: center;
   justify-content: space-between;
   padding: 10px 12px 8px;
-  border-bottom: 1px solid #f1f5f9;
+  border-bottom: 1px solid var(--ted-bg-hover);
 }
 
 .col-panel-title {
   font-size: 11px;
   font-weight: 700;
-  color: #64748b;
+  color: var(--ted-text-muted);
   text-transform: uppercase;
   letter-spacing: 0.6px;
 }
@@ -329,7 +329,7 @@ overflow-x: auto;
   }
 
   &::-webkit-scrollbar-thumb {
-    background: #cbd5e1;
+    background: var(--ted-border-strong);
     border-radius: 4px;
   }
 }
@@ -344,17 +344,17 @@ overflow-x: auto;
   user-select: none;
 
   &:hover {
-    background: #f8fafc;
+    background: var(--ted-bg-subtle);
   }
 
   &.col-item-dragging {
     opacity: 0.35;
-    background: #f1f5f9;
+    background: var(--ted-bg-hover);
   }
 
   &.col-item-drop-target {
-    background: #eff6ff;
-    box-shadow: inset 0 2px 0 0 #3b82f6;
+    background: var(--ted-info-bg);
+    box-shadow: inset 0 2px 0 0 var(--ted-info-solid);
   }
 
   &.col-panel-item--off {
@@ -363,7 +363,7 @@ overflow-x: auto;
 
     &:hover {
       opacity: 0.8;
-      background: #f8fafc;
+      background: var(--ted-bg-subtle);
     }
   }
 }
@@ -374,7 +374,7 @@ overflow-x: auto;
   justify-content: center;
   width: 14px;
   font-size: 13px;
-  color: #94a3b8;
+  color: var(--ted-icon-muted);
   flex-shrink: 0;
   line-height: 1;
   letter-spacing: -1px;
@@ -387,18 +387,18 @@ overflow-x: auto;
 .col-label {
   flex: 1;
   font-size: 12px;
-  color: #334155;
+  color: var(--ted-ink-700);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 
   &.col-label--dim {
-    color: #94a3b8;
+    color: var(--ted-icon-muted);
   }
 }
 
 .col-locked {
-  color: #94a3b8;
+  color: var(--ted-icon-muted);
   flex-shrink: 0;
   display: flex;
   align-items: center;
@@ -406,7 +406,7 @@ overflow-x: auto;
 
 .col-panel-divider {
   height: 1px;
-  background: #f1f5f9;
+  background: var(--ted-bg-hover);
   margin: 2px 12px;
 }
 
@@ -430,7 +430,7 @@ overflow-x: auto;
 .col-toggle-track {
   position: absolute;
   inset: 0;
-  background: #cbd5e1;
+  background: var(--ted-border-strong);
   border-radius: 8px;
   transition: background 0.2s ease;
   cursor: pointer;
@@ -442,14 +442,14 @@ overflow-x: auto;
     height: 12px;
     left: 2px;
     bottom: 2px;
-    background: #fff;
+    background: var(--ted-bg-surface);
     border-radius: 50%;
     transition: transform 0.2s ease;
     box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
   }
 
   input:checked + & {
-    background: #3b82f6;
+    background: var(--ted-info-solid);
 
     &::before {
       transform: translateX(14px);

@@ -1,0 +1,126 @@
+/* ═══════════════════════════════════════════════════════════
+   TED Design System 2.0 — tokens
+   Single source of truth for colour, space, radius, shadow, motion.
+   ═══════════════════════════════════════════════════════════ */
+
+:root {
+  /* Brand red (action = 600, hover = 700, pressed = 800) */
+  --ted-red-50: #fef2f3;
+  --ted-red-100: #fde3e5;
+  --ted-red-200: #fbc9ce;
+  --ted-red-300: #f6a0a8;
+  --ted-red-400: #ee6672;
+  --ted-red-500: #e53f4f;
+  --ted-red-600: #dc2134;
+  --ted-red-700: #b51a2a;
+  --ted-red-800: #911625;
+  --ted-red-900: #781623;
+  --ted-red-950: #430910;
+
+  /* Surfaces */
+  --ted-bg-page: #fcf9f8;
+  --ted-bg-surface: #ffffff;
+  --ted-bg-subtle: #f8fafc;
+  --ted-bg-hover: #f1f5f9;
+  --ted-border: #e2e8f0;
+  --ted-border-strong: #cbd5e1;
+
+  /* Text — all pass AA on white */
+  --ted-text: #1f2937;
+  --ted-text-secondary: #475569;
+  --ted-text-muted: #64748b;
+  --ted-icon-muted: #94a3b8; /* icons and borders only, never text */
+
+  /* Semantic: tint / border / solid / text */
+  --ted-success-bg: #ecfdf5;
+  --ted-success-solid: #059669;
+  --ted-success-fg: #047857;
+  --ted-warning-bg: #fffbeb;
+  --ted-warning-solid: #d97706;
+  --ted-warning-fg: #92400e;
+  --ted-info-bg: #eff6ff;
+  --ted-info-solid: #2563eb;
+  --ted-info-fg: #1d4ed8;
+  --ted-accent-bg: #f5f3ff;
+  --ted-accent-solid: #7c3aed;
+  --ted-accent-fg: #6d28d9;
+  --ted-danger-bg: #fef2f2;
+  --ted-danger-solid: #b91c1c;
+  --ted-danger-fg: #b91c1c;
+  --ted-navy: #00205f;
+
+  /* Extended palette (new) */
+  --ted-on-primary: #ffffff;
+  --ted-bg-sidebar: #f6f6f6;
+  --ted-login-bg: #dbe1ff;
+  --ted-ink-700: #334155;
+  --ted-ink-800: #1e293b;
+  --ted-ink-900: #0f172a;
+  --ted-success-border: #a7f3d0;
+  --ted-warning-border: #fef3c7;
+  --ted-info-border: #bfdbfe;
+  --ted-accent-border: #ddd6fe;
+  --ted-danger-border: #fecaca;
+  --ted-danger-bg-strong: #fee2e2;
+  --ted-orange-bg: #fff7ed;
+  --ted-orange-solid: #ea580c;
+  --ted-teal-bg: #f0fdfa;
+  --ted-teal-solid: #0d9488;
+  --ted-cyan-bg: #ecfeff;
+  --ted-cyan-solid: #0891b2;
+
+  /* Spacing (4px scale) */
+  --ted-space-1: 4px;
+  --ted-space-2: 8px;
+  --ted-space-3: 12px;
+  --ted-space-4: 16px;
+  --ted-space-5: 20px;
+  --ted-space-6: 24px;
+  --ted-space-8: 32px;
+  --ted-space-10: 40px;
+  --ted-space-12: 48px;
+
+  /* Radius */
+  --ted-radius-xs: 2px;
+  --ted-radius-sm: 4px;
+  --ted-radius-md: 6px;
+  --ted-radius-lg: 8px;
+  --ted-radius-xl: 12px;
+  --ted-radius-2xl: 16px;
+  --ted-radius-3xl: 20px;
+  --ted-radius-full: 9999px;
+
+  /* Elevation */
+  --ted-shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.04);
+  --ted-shadow-card: 0 2px 12px rgba(0, 0, 0, 0.06);
+  --ted-shadow-hover: 0 8px 28px rgba(0, 0, 0, 0.1);
+  --ted-shadow-overlay: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
+  --ted-shadow-modal: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+  --ted-focus-ring: 0 0 0 2px rgba(220, 33, 52, 0.35);
+
+  /* Motion */
+  --ted-ease: cubic-bezier(0.4, 0, 0.2, 1);
+  --ted-dur-fast: 150ms;
+  --ted-dur-base: 200ms;
+  --ted-dur-lift: 250ms;
+  --ted-dur-layout: 300ms;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --ted-dur-fast: 0ms;
+    --ted-dur-base: 0ms;
+    --ted-dur-lift: 0ms;
+    --ted-dur-layout: 0ms;
+  }
+}
+
+/* Visible keyboard focus everywhere */
+:focus-visible {
+  outline: 2px solid var(--ted-red-600);
+  outline-offset: 2px;
+}
+
+.tabular {
+  font-variant-numeric: tabular-nums;
+}

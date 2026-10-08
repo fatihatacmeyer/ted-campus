@@ -98,7 +98,8 @@
     "COLLAPSE": "Menüyü Daralt",
     "EXPAND": "Menüyü Genişlet",
     "LOGOUT": "Çıkış Yap",
-    "LANG_LABEL": "Dil"
+    "LANG_LABEL": "Dil",
+    "PROFILE": "Profil menüsü"
   },
   "DAYS": {
     "MONDAY": "Pazartesi",
@@ -432,6 +433,7 @@
     "CONFIRM_CANCEL_ACTION": "Evet, İptal Et"
   },
   "STUDENT_ATTENDANCE": {
+    "PAGE_DESCRIPTION": "Öğrencilerin günlük, haftalık ve aylık devam durumunu takip edin.",
     "TITLE": "Öğrenci Devam Takip",
     "TAB_ALL": "Hepsi",
     "TAB_ON_LEAVE": "İzinliler",
@@ -473,6 +475,7 @@
     "COL_ICON": "Simge"
   },
   "ACTIVITIES": {
+    "PAGE_DESCRIPTION": "Okul etkinliklerini oluşturun, düzenleyin ve katılımcı sınıfları yönetin.",
     "TITLE": "Etkinlikler",
     "NAME": "Etkinlik Adı",
     "NAME_PLACEHOLDER": "Etkinlik adı giriniz",
@@ -858,6 +861,7 @@
     "STAFF_OR_OTHER": "Personel / Diğer"
   },
   "SCHOOL_HOURS": {
+    "PAGE_DESCRIPTION": "Kampüs ve sınıf bazında giriş-çıkış saatlerini düzenleyin.",
     "PAGE_TITLE": "Giriş ve Çıkış Saatleri Yönetimi",
     "GRADE_LEVEL": "Sınıf Seviyesi",
     "CAMPUS_TAB_LABEL": "Kampüs",
@@ -901,6 +905,7 @@
     "DISCARD": "İptal Et (Değişiklikleri Çöpe At)"
   },
   "PROXIES": {
+    "PAGE_DESCRIPTION": "Vekil başvurularını inceleyin ve duruma göre filtreleyin.",
     "PAGE_TITLE": "Vekil Yönetimi",
     "STUDENT": "Öğrenci",
     "CAMPUS": "Kampüs",
@@ -926,6 +931,7 @@
     "ERROR_SERVER": "Sunucu hatası oluştu."
   },
   "LAST_PASS": {
+    "PAGE_DESCRIPTION": "Seçili terminal grubundaki en son geçişleri canlı olarak izleyin.",
     "TITLE": "Son Geçiş Yapanlar",
     "TERMINAL_GROUP": "Terminal Grubu",
     "SELECT_GROUP": "Grup Seçin",

@@ -15,6 +15,7 @@ import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { PhotoApprovalService, PhotoApproval } from '../../services/photo-approval.service';
 import { NotificationService } from '../../../../core/services/notification.service';
 import { AppConfig, APP_CONFIG } from '../../../../core/services/app-config.service';
+import { PageHeaderComponent } from '../../../../shared/components/page-header/page-header';
 
 const MOCK_PHOTOS: PhotoApproval[] = [
   {
@@ -108,7 +109,14 @@ interface PhotoApprovalUI extends PhotoApproval {
 @Component({
   selector: 'app-photo-approval',
   standalone: true,
-  imports: [CommonModule, ButtonModule, TagModule, ProgressSpinnerModule, TranslatePipe],
+  imports: [
+    PageHeaderComponent,
+    CommonModule,
+    ButtonModule,
+    TagModule,
+    ProgressSpinnerModule,
+    TranslatePipe,
+  ],
   templateUrl: './photo-approval.html',
   styleUrl: './photo-approval.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

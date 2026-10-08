@@ -45,6 +45,7 @@ import { ActivityService } from '../../services/activity.service';
 import { formatDateTime, parseDate } from '../../../../shared/utils/date.utils';
 import { NotificationService } from '../../../../core/services/notification.service';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
+import { PageHeaderComponent } from '../../../../shared/components/page-header/page-header';
 
 /** Cross-field: Bitiş tarihi başlangıç tarihinden küçük olamaz. */
 function dateRangeValidator(startKey: string, endKey: string, errorKey: string) {
@@ -86,6 +87,7 @@ const BOOLEAN_FILTER_OPTIONS: FilterOption[] = [
   selector: 'app-activities',
   standalone: true,
   imports: [
+    PageHeaderComponent,
     CommonModule,
     ReactiveFormsModule,
     FormsModule,
@@ -390,14 +392,16 @@ export class ActivitiesComponent {
       ),
     })
       .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe(({ TurCampus, UlasimCampus, cbo_bolum, cbo_direktorluk, cbo_altfirma, cbo_firma }) => {
-        this.typeOptions = TurCampus;
-        this.transportationOptions = UlasimCampus;
-        this.classroomOptions = cbo_bolum;
-        this.classroomGroups = this.buildClassroomGroups(cbo_bolum);
-        this.educationLevelOptions = cbo_altfirma;
-        this.campusOptions = cbo_firma;
-      });
+      .subscribe(
+        ({ TurCampus, UlasimCampus, cbo_bolum, cbo_direktorluk, cbo_altfirma, cbo_firma }) => {
+          this.typeOptions = TurCampus;
+          this.transportationOptions = UlasimCampus;
+          this.classroomOptions = cbo_bolum;
+          this.classroomGroups = this.buildClassroomGroups(cbo_bolum);
+          this.educationLevelOptions = cbo_altfirma;
+          this.campusOptions = cbo_firma;
+        },
+      );
   }
 
   /**
@@ -718,9 +722,7 @@ export class ActivitiesComponent {
     const selectedEducationLevel = this.educationLevelOptions.find(
       (o) => o.ad === formValues.educationLevel,
     );
-    const selectedCampus = this.campusOptions.find(
-      (o) => o.ad === formValues.campus,
-    );
+    const selectedCampus = this.campusOptions.find((o) => o.ad === formValues.campus);
 
     const payload = {
       ...formValues,
@@ -731,9 +733,7 @@ export class ActivitiesComponent {
       ulasimId: selectedTransportation?.id ?? '',
       // Edit'te lookup boşsa (sınıf silinmiş vb.) DB'den gelen orijinal SinifId korunur.
       sinifId:
-        classIdList.length > 0
-          ? classIdList.join(';')
-          : this.editingActivity()?.sinifId ?? '',
+        classIdList.length > 0 ? classIdList.join(';') : (this.editingActivity()?.sinifId ?? ''),
       egitimDuzeyiId: selectedEducationLevel?.id ?? '',
       campus: formValues.campus || '',
       campusId: selectedCampus?.id ?? this.editingActivity()?.campusId ?? '',

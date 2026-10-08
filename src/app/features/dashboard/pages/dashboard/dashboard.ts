@@ -42,6 +42,7 @@ import {
   InsidePerson,
   KvkkStats,
 } from '../../services/dashboard.service';
+import { PageHeaderComponent } from '../../../../shared/components/page-header/page-header';
 
 interface InsideDialogState {
   type: PersonType | null;
@@ -107,6 +108,7 @@ const filterPeople = <T extends { fullName: string; className: string; schoolNam
 @Component({
   selector: 'app-dashboard',
   imports: [
+    PageHeaderComponent,
     ButtonModule,
     ProgressSpinnerModule,
     DialogModule,
@@ -197,13 +199,17 @@ export class DashboardComponent implements OnInit {
   );
   readonly filteredAbsentees = computed(() => filterPeople(this.absentees(), this.absentSearch()));
 
-  readonly earlyLeaversPreview = computed(() => this.filteredEarlyLeavers().slice(0, PREVIEW_LIMIT));
+  readonly earlyLeaversPreview = computed(() =>
+    this.filteredEarlyLeavers().slice(0, PREVIEW_LIMIT),
+  );
   readonly latePreview = computed(() => this.filteredLateArrivals().slice(0, PREVIEW_LIMIT));
   readonly absenteesPreview = computed(() => this.filteredAbsentees().slice(0, PREVIEW_LIMIT));
   readonly earlyLeaversExtra = computed(() =>
     Math.max(0, this.filteredEarlyLeavers().length - PREVIEW_LIMIT),
   );
-  readonly lateExtra = computed(() => Math.max(0, this.filteredLateArrivals().length - PREVIEW_LIMIT));
+  readonly lateExtra = computed(() =>
+    Math.max(0, this.filteredLateArrivals().length - PREVIEW_LIMIT),
+  );
   readonly absenteesExtra = computed(() =>
     Math.max(0, this.filteredAbsentees().length - PREVIEW_LIMIT),
   );
@@ -223,6 +229,16 @@ export class DashboardComponent implements OnInit {
   /** Oturum başına bir kez hesaplanan değerler */
   readonly greeting = this.buildGreeting();
   readonly userName = signal('');
+
+  /** Banner'da gösterilen uzun tarih (dil değişince güncellenir). */
+  readonly todayLabel = computed(() =>
+    new Date().toLocaleDateString(this.translate.currentLang() === 'en' ? 'en-GB' : 'tr-TR', {
+      weekday: 'long',
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric',
+    }),
+  );
 
   /* ── Dialog states ─────────────────────────────────────── */
   readonly txnDialogVisible = signal(false);
@@ -298,12 +314,14 @@ export class DashboardComponent implements OnInit {
         switchMap(() => timer(0, TRANSACTION_POLL_MS)),
         filter(() => !this.document.hidden),
         switchMap(() =>
-          this.dashboardService.getRecentTransactions(this.transactionLimit(), this.appliedTxnSearch()).pipe(
-            catchError((err) => {
-              console.error('Son hareketler alınamadı:', err);
-              return EMPTY;
-            }),
-          ),
+          this.dashboardService
+            .getRecentTransactions(this.transactionLimit(), this.appliedTxnSearch())
+            .pipe(
+              catchError((err) => {
+                console.error('Son hareketler alınamadı:', err);
+                return EMPTY;
+              }),
+            ),
         ),
         distinctUntilChanged((a, b) => JSON.stringify(a) === JSON.stringify(b)),
         takeUntilDestroyed(this.destroyRef),

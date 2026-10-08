@@ -1,0 +1,16 @@
+<header class="page-header">
+  <div class="page-title">
+    @if (icon()) {
+      <span class="material-symbols-outlined title-icon" aria-hidden="true">{{ icon() }}</span>
+    }
+    <div class="title-text">
+      <h1>{{ title() }}</h1>
+      @if (subtitle()) {
+        <p>{{ subtitle() }}</p>
+      }
+    </div>
+  </div>
+  <div class="page-actions">
+    <ng-content />
+  </div>
+</header>

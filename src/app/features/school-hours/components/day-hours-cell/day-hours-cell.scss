@@ -12,39 +12,39 @@
   align-items: center;
   justify-content: center;
   gap: 4px;
-  background: #f8fafc;
+  background: var(--ted-bg-subtle);
   padding: 2px 4px;
   border-radius: 4px;
-  border: 1px solid #e2e8f0;
+  border: 1px solid var(--ted-border);
   width: max-content;
   margin: 0 auto;
 
   .lbl {
     font-size: 10px;
     font-weight: 700;
-    color: #64748b;
+    color: var(--ted-text-muted);
     width: 12px;
     cursor: help;
   }
   .sep {
-    color: #94a3b8;
+    color: var(--ted-icon-muted);
     font-size: 12px;
     margin: 0 -2px;
   }
 }
 .normal-time {
   font-weight: 600;
-  color: #1f2937;
+  color: var(--ted-text);
   white-space: nowrap;
 }
 .study-time {
   font-size: 0.75rem;
-  color: #6b7280;
+  color: var(--ted-text-muted);
   margin-top: 2px;
   white-space: nowrap;
 }
 .closed-label {
-  color: #9ca3af;
+  color: var(--ted-text-muted);
   font-size: 0.8rem;
   font-style: italic;
   white-space: nowrap;

@@ -1,3 +1,4 @@
+@use './styles/tokens';
 /* @import url("https://fonts.googleapis.com/css?family=Poppins:300,400,500,600,700|Roboto:300,400,500,600,700"); */
 @import 'primeicons/primeicons.css';
 
@@ -18,26 +19,27 @@ body {
 /* ── Admin Layout Shell ──────────────────────────────────── */
 
 .admin-wrapper {
-  max-width: 97%;
-  margin: 0 auto;
-  background: #f4f6fa;
+  width: 100%; /* sayfa içeriği .content padding'i kadar kenar boşluğu bırakır */
+  max-width: none;
+  margin: 0;
+  background: var(--ted-bg-page);
   min-height: 100%; /* height: 100% yerine */
   overflow-y: auto; /* overflow: hidden yerine */
   padding-bottom: 24px;
 }
 
 .admin-card {
-  background: #fff;
+  background: var(--ted-bg-surface);
   border-radius: 12px;
-  padding: 6px 10px 12px 10px;
+  padding: 8px 12px 12px;
   box-shadow: 0 12px 32px rgba(0, 0, 0, 0.08);
-  margin-bottom: 32px;
+  margin-bottom: var(--ted-space-4);
 }
 
 /* ── Admin Table ─────────────────────────────────────────── */
 
 .admin-table {
-  background: #fff;
+  background: var(--ted-bg-surface);
   border-radius: 16px;
   overflow: hidden;
 }
@@ -108,7 +110,7 @@ body {
   inset-inline-end: 3px;
   width: 2px;
   border-radius: 1px;
-  background: #cbd5e1;
+  background: var(--ted-border-strong);
   transition:
     background-color 0.15s ease,
     top 0.15s ease,
@@ -121,14 +123,14 @@ body {
   > tr
   > th.p-datatable-resizable-column
   .p-datatable-column-resizer:active::before {
-  background: #dc2134;
+  background: var(--ted-red-600);
   top: 12%;
   bottom: 12%;
 }
 
 /* Sürükleme sırasında tablonun üzerinde gezdirilen dikey gösterge çizgisi */
 .p-datatable-column-resize-indicator {
-  background: #dc2134;
+  background: var(--ted-red-600);
 }
 
 /* ── Inline Action Cell ──────────────────────────────────── */
@@ -151,9 +153,9 @@ body {
 /* ── Badge Styles ────────────────────────────────────────── */
 
 .metric-badge {
-  background: #f3f4f6;
-  color: #334155;
-  border: 1px solid #dbe1ea;
+  background: var(--ted-bg-subtle);
+  color: var(--ted-ink-700);
+  border: 1px solid var(--ted-border-strong);
   font-weight: 600;
   min-width: 40px;
   font-size: 11px;
@@ -172,7 +174,7 @@ body {
   gap: 12px;
 
   .loading-text {
-    color: #444652;
+    color: var(--ted-text-secondary);
     font-size: 14px;
     font-weight: 500;
   }
@@ -182,9 +184,9 @@ body {
 
 .error-box {
   padding: 20px;
-  background-color: #ffdad6;
-  border-left: 4px solid #dc2134;
-  color: #93000a;
+  background-color: var(--ted-danger-bg);
+  border-left: 4px solid var(--ted-red-600);
+  color: var(--ted-danger-fg);
   border-radius: 8px;
   font-weight: 600;
 }
@@ -324,10 +326,10 @@ body {
 }
 
 .text-muted {
-  color: #6c757d;
+  color: var(--ted-text-muted);
 }
 .text-primary {
-  color: #dc2134;
+  color: var(--ted-red-600);
 }
 .text-4xl {
   font-size: 2.25rem;
@@ -339,7 +341,7 @@ body {
 }
 
 .border-top {
-  border-top: 1px solid #dee2e6;
+  border-top: 1px solid var(--ted-border-strong);
 }
 
 .w-100 {
@@ -347,12 +349,34 @@ body {
 }
 
 .bg-light {
-  background-color: #f8f9fa;
+  background-color: var(--ted-bg-subtle);
 }
 .bg-light-primary {
-  background-color: #fce4ec;
+  background-color: var(--ted-danger-bg);
 }
 
 .text-center {
   text-align: center;
+}
+
+/* Spacing utilities on the 4px scale (previously undefined: gap-4, mb-4, py-3, py-4, pb-3, p-3) */
+.gap-4 {
+  gap: var(--ted-space-6);
+}
+.mb-4 {
+  margin-bottom: var(--ted-space-6);
+}
+.pb-3 {
+  padding-bottom: var(--ted-space-4);
+}
+.py-3 {
+  padding-top: var(--ted-space-4);
+  padding-bottom: var(--ted-space-4);
+}
+.py-4 {
+  padding-top: var(--ted-space-6);
+  padding-bottom: var(--ted-space-6);
+}
+.p-3 {
+  padding: var(--ted-space-4);
 }

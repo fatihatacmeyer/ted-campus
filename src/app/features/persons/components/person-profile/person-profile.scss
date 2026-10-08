@@ -10,7 +10,7 @@
   display: flex;
   justify-content: space-between;
   padding: 0.5rem 0;
-  border-bottom: 1px solid #f0f0f0;
+  border-bottom: 1px solid var(--ted-border);
 
   &:last-child {
     border-bottom: none;
@@ -20,23 +20,23 @@
 .info-label {
   font-weight: 600;
   font-size: 0.8125rem;
-  color: #475569;
+  color: var(--ted-text-secondary);
 }
 
 .info-value {
   font-size: 0.8125rem;
-  color: #334155;
+  color: var(--ted-ink-700);
 }
 
 .linked-section {
   margin-top: 1rem;
   padding-top: 1rem;
-  border-top: 2px solid #f0f0f0;
+  border-top: 2px solid var(--ted-border);
 
   h6 {
     font-size: 0.75rem;
     font-weight: 700;
-    color: #dc2134;
+    color: var(--ted-red-600);
     text-transform: uppercase;
     letter-spacing: 0.5px;
     margin: 0 0 0.75rem 0;
@@ -56,23 +56,23 @@
 .p-button-link {
   font-size: 0.8125rem;
   text-decoration: underline;
-  color: #dc2134;
+  color: var(--ted-red-600);
 
   &:hover {
-    background: #fef7f7;
+    background: var(--ted-danger-bg);
   }
 }
 
 .no-linked {
   font-size: 0.8125rem;
-  color: #9ca3af;
+  color: var(--ted-text-muted);
   font-style: italic;
 }
 
 .profile-actions {
   margin-top: 1.25rem;
   padding-top: 1rem;
-  border-top: 1px solid #f0f0f0;
+  border-top: 1px solid var(--ted-border);
   display: flex;
   justify-content: space-between; /* Sol ve sağ grupları iki uca yaslar */
   align-items: center;
@@ -95,7 +95,7 @@
   align-items: center;
   margin-bottom: 1.5rem;
   padding-bottom: 1.5rem;
-  border-bottom: 1px solid #f0f0f0;
+  border-bottom: 1px solid var(--ted-border);
 }
 
 .profile-image-container {
@@ -103,10 +103,10 @@
   height: 200px;
   border-radius: 50%;
   overflow: hidden;
-  border: 3px solid #f4f6fa;
+  border: 3px solid var(--ted-bg-hover);
   box-shadow: 0 4px 12px rgba(0,0,0,0.08);
   margin-bottom: 12px;
-  background-color: #e2e8f0;
+  background-color: var(--ted-border);
   display: flex;
   justify-content: center;
   align-items: center;
@@ -136,28 +136,28 @@
 
 .profile-name {
   margin: 0 0 4px 0;
-  color: #1e293b;
+  color: var(--ted-ink-800);
   font-weight: 700;
   font-size: 1.1rem;
 }
 
 .profile-title {
   font-size: 0.85rem;
-  color: #64748b;
+  color: var(--ted-text-muted);
   font-weight: 500;
 }
 
 .default-avatar {
   width: 100%;
   height: 100%;
-  background-color: #e2e8f0;
+  background-color: var(--ted-border);
   display: flex;
   align-items: center;
   justify-content: center;
 
   i {
     font-size: 3.5rem;
-    color: #94a3b8;
+    color: var(--ted-icon-muted);
   }
 }
 
@@ -230,7 +230,7 @@
   border-radius: 50%;
 
   i {
-    color: #ffffff;
+    color: var(--ted-on-primary);
     font-size: 1.25rem;
   }
 }
