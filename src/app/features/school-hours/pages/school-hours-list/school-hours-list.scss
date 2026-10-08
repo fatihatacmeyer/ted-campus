@@ -6,19 +6,6 @@
   min-height: 100%;
 }
 
-.admin-card-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: var(--ted-space-4);
-}
-
-.page-title {
-  font-weight: 700;
-  margin: 0;
-  color: var(--sh-accent, var(--ted-red-600));
-}
-
 .filter-bar {
   display: flex;
   flex-wrap: wrap;

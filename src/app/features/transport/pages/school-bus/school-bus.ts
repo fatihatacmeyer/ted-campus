@@ -5,6 +5,7 @@ import {
   computed,
   inject,
   OnInit,
+  HostListener,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import {
@@ -317,6 +318,17 @@ export class SchoolBusComponent implements OnInit {
     this.busFormVisible.set(true);
   }
 
+  /** Esc: en üstte açık olan modalı kapatır (üstteki modallar önce). */
+  @HostListener('document:keydown.escape')
+  protected onEscape(): void {
+    if (this.studentAssignDeleteVisible()) this.closeStudentAssignDelete();
+    else if (this.authorityAssignDeleteVisible()) this.closeAuthorityAssignDelete();
+    else if (this.authoritySendVisible()) this.closeAuthoritySend();
+    else if (this.busDeleteVisible()) this.closeBusDelete();
+    else if (this.busFormVisible()) this.closeBusForm();
+    else if (this.studentAssignVisible()) this.closeStudentAssign();
+  }
+
   protected closeBusForm(): void {
     this.busFormVisible.set(false);
     this.busEditing.set(null);
@@ -424,10 +436,16 @@ export class SchoolBusComponent implements OnInit {
       forkJoin([
         this.busService
           .assignStudentToBus(v.ogrenciSicilId, bus.id, 1 as ServisYonu)
-          .pipe(catchError(() => of({ sonuc: -1, sunucuCevap: 'SCHOOL_BUS.MSG_DEPARTURE_ASSIGN_ERROR' }))),
+          .pipe(
+            catchError(() =>
+              of({ sonuc: -1, sunucuCevap: 'SCHOOL_BUS.MSG_DEPARTURE_ASSIGN_ERROR' }),
+            ),
+          ),
         this.busService
           .assignStudentToBus(v.ogrenciSicilId, bus.id, 2 as ServisYonu)
-          .pipe(catchError(() => of({ sonuc: -1, sunucuCevap: 'SCHOOL_BUS.MSG_RETURN_ASSIGN_ERROR' }))),
+          .pipe(
+            catchError(() => of({ sonuc: -1, sunucuCevap: 'SCHOOL_BUS.MSG_RETURN_ASSIGN_ERROR' })),
+          ),
       ]).subscribe({
         next: (results) => {
           const allSuccess = results.every((res) => res.sonuc === 1);
