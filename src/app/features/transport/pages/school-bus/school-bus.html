@@ -615,7 +615,7 @@
               <p-select
                 id="assignAuthority"
                 inputId="assignAuthority"
-                formControlName="authoritySicilId"
+                formControlName="authorityId"
                 [options]="authorityOptions()"
                 optionLabel="label"
                 optionValue="value"
@@ -626,8 +626,8 @@
                 appendTo="body"
               />
               @if (
-                authorityAssignForm.get('authoritySicilId')?.invalid &&
-                authorityAssignForm.get('authoritySicilId')?.touched
+                authorityAssignForm.get('authorityId')?.invalid &&
+                authorityAssignForm.get('authorityId')?.touched
               ) {
                 <small class="field-error">{{
                   'SCHOOL_BUS.ERR_AUTHORITY_REQUIRED' | translate
@@ -654,14 +654,14 @@
             class="entity-form"
           >
             <div class="form-field">
-              <label for="assignOgrenci"
+              <label for="assignStudent"
                 ><span class="material-symbols-outlined">person</span>
                 {{ 'SCHOOL_BUS.COL_STUDENT' | translate }}</label
               >
               <p-select
-                id="assignOgrenci"
-                inputId="assignOgrenci"
-                formControlName="ogrenciSicilId"
+                id="assignStudent"
+                inputId="assignStudent"
+                formControlName="studentId"
                 [options]="studentOptions()"
                 optionLabel="label"
                 optionValue="value"
@@ -674,8 +674,8 @@
                 [virtualScrollItemSize]="38"
               />
               @if (
-                studentAssignForm.get('ogrenciSicilId')?.invalid &&
-                studentAssignForm.get('ogrenciSicilId')?.touched
+                studentAssignForm.get('studentId')?.invalid &&
+                studentAssignForm.get('studentId')?.touched
               ) {
                 <small class="field-error">{{
                   'SCHOOL_BUS.ERR_STUDENT_REQUIRED' | translate
@@ -683,22 +683,25 @@
               }
             </div>
             <div class="form-field">
-              <label for="assignYon"
+              <label for="assignDirection"
                 ><span class="material-symbols-outlined">swap_horiz</span>
                 {{ 'SCHOOL_BUS.DIRECTION' | translate }}</label
               >
               <p-select
-                id="assignYon"
-                inputId="assignYon"
-                formControlName="yon"
-                [options]="yonOptions()"
+                id="assignDirection"
+                inputId="assignDirection"
+                formControlName="direction"
+                [options]="directionOptions()"
                 optionLabel="label"
                 optionValue="value"
                 [placeholder]="'SCHOOL_BUS.PH_DIRECTION' | translate"
                 styleClass="w-full"
                 appendTo="body"
               />
-              @if (studentAssignForm.get('yon')?.invalid && studentAssignForm.get('yon')?.touched) {
+              @if (
+                studentAssignForm.get('direction')?.invalid &&
+                studentAssignForm.get('direction')?.touched
+              ) {
                 <small class="field-error">{{
                   'SCHOOL_BUS.ERR_DIRECTION_REQUIRED' | translate
                 }}</small>
@@ -725,7 +728,7 @@
               (click)="setStudentAssignDirectionTab(1)"
             >
               <span class="material-symbols-outlined">wb_sunny</span>
-              {{ 'SCHOOL_BUS.TAB_DEPARTURE' | translate: { count: studentAssignGidisCount() } }}
+              {{ 'SCHOOL_BUS.TAB_DEPARTURE' | translate: { count: studentAssignDepartureCount() } }}
             </button>
             <button
               class="sefer-filter-btn"
@@ -733,7 +736,7 @@
               (click)="setStudentAssignDirectionTab(2)"
             >
               <span class="material-symbols-outlined">nights_stay</span>
-              {{ 'SCHOOL_BUS.TAB_RETURN' | translate: { count: studentAssignDonusCount() } }}
+              {{ 'SCHOOL_BUS.TAB_RETURN' | translate: { count: studentAssignReturnCount() } }}
             </button>
           </div>
 

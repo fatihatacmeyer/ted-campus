@@ -37,7 +37,7 @@ import { forkJoin, merge, of } from 'rxjs';
 import { catchError, map, startWith } from 'rxjs/operators';
 import {
   Bus,
-  ServisYonu,
+  BusDirection,
   StudentAssignment,
   BusDashboardStats,
   AuthorityAssignment,
@@ -103,7 +103,7 @@ export class SchoolBusComponent implements OnInit {
   protected readonly studentAssignLoading = signal(false);
   protected readonly studentAssignDeleteVisible = signal(false);
   protected readonly studentAssignDeleting = signal<StudentAssignment | null>(null);
-  protected readonly studentAssignDirectionTab = signal<ServisYonu>(1);
+  protected readonly studentAssignDirectionTab = signal<BusDirection>(1);
 
   protected readonly allAuthorityAssignments = signal<AuthorityAssignment[]>([]);
   protected readonly authorityAssignDeleteVisible = signal(false);
@@ -131,12 +131,12 @@ export class SchoolBusComponent implements OnInit {
   });
 
   protected readonly studentAssignForm: FormGroup = this.fb.group({
-    ogrenciSicilId: [null, Validators.required],
-    yon: [1, Validators.required],
+    studentId: [null, Validators.required],
+    direction: [1, Validators.required],
   });
 
   protected readonly authorityAssignForm: FormGroup = this.fb.group({
-    authoritySicilId: [null, Validators.required],
+    authorityId: [null, Validators.required],
   });
 
   protected readonly busColumns: ColumnDef<Bus>[] = [
@@ -198,7 +198,7 @@ export class SchoolBusComponent implements OnInit {
     ),
   );
 
-  protected readonly yonOptions = computed(() => {
+  protected readonly directionOptions = computed(() => {
     this.i18nVersion();
     return [
       { label: this.translate.instant('SCHOOL_BUS.DIRECTION_DEPARTURE'), value: 1 },
@@ -231,9 +231,9 @@ export class SchoolBusComponent implements OnInit {
     }
   }
 
-  protected directionText(yon: ServisYonu): string {
+  protected directionText(direction: BusDirection): string {
     return this.translate.instant(
-      yon === 1 ? 'SCHOOL_BUS.DIRECTION_DEPARTURE' : 'SCHOOL_BUS.DIRECTION_RETURN',
+      direction === 1 ? 'SCHOOL_BUS.DIRECTION_DEPARTURE' : 'SCHOOL_BUS.DIRECTION_RETURN',
     );
   }
 
@@ -249,27 +249,31 @@ export class SchoolBusComponent implements OnInit {
 
   protected checkAssignButtonDisabled(bus: Bus): boolean {
     if (this.studentAssignForm.invalid) return true;
-    const yon = this.studentAssignForm.value.yon;
+    const direction = this.studentAssignForm.value.direction;
 
-    if (yon === 1) return bus.bosKoltukGidis <= 0;
-    if (yon === 2) return bus.bosKoltukDonus <= 0;
-    if (yon === 3) return bus.bosKoltukGidis <= 0 || bus.bosKoltukDonus <= 0;
+    if (direction === 1) return bus.bosKoltukGidis <= 0;
+    if (direction === 2) return bus.bosKoltukDonus <= 0;
+    if (direction === 3) return bus.bosKoltukGidis <= 0 || bus.bosKoltukDonus <= 0;
 
     return false;
   }
 
-  protected readonly studentAssignGidisList = computed(() =>
+  protected readonly studentAssignDepartureList = computed(() =>
     this.studentAssignments().filter((a) => a.yon === 1),
   );
-  protected readonly studentAssignDonusList = computed(() =>
+  protected readonly studentAssignReturnList = computed(() =>
     this.studentAssignments().filter((a) => a.yon === 2),
   );
-  protected readonly studentAssignGidisCount = computed(() => this.studentAssignGidisList().length);
-  protected readonly studentAssignDonusCount = computed(() => this.studentAssignDonusList().length);
+  protected readonly studentAssignDepartureCount = computed(
+    () => this.studentAssignDepartureList().length,
+  );
+  protected readonly studentAssignReturnCount = computed(
+    () => this.studentAssignReturnList().length,
+  );
   protected readonly studentAssignActiveList = computed(() =>
     this.studentAssignDirectionTab() === 1
-      ? this.studentAssignGidisList()
-      : this.studentAssignDonusList(),
+      ? this.studentAssignDepartureList()
+      : this.studentAssignReturnList(),
   );
 
   ngOnInit(): void {
@@ -386,28 +390,28 @@ export class SchoolBusComponent implements OnInit {
 
   protected openStudentAssign(bus: Bus): void {
     this.studentAssignBus.set(bus);
-    this.studentAssignForm.reset({ ogrenciSicilId: null, yon: 1 });
+    this.studentAssignForm.reset({ studentId: null, direction: 1 });
     this.studentAssignDirectionTab.set(1);
     this.loadStudentAssignments(bus.id);
 
     if (this.students().length === 0) this.loadStudents();
 
-    this.authorityAssignForm.reset({ authoritySicilId: null });
+    this.authorityAssignForm.reset({ authorityId: null });
     if (this.authorities().length === 0) this.loadAuthorities();
 
     this.studentAssignVisible.set(true);
   }
 
-  protected setStudentAssignDirectionTab(yon: ServisYonu): void {
-    this.studentAssignDirectionTab.set(yon);
+  protected setStudentAssignDirectionTab(direction: BusDirection): void {
+    this.studentAssignDirectionTab.set(direction);
   }
 
   protected closeStudentAssign(): void {
     this.studentAssignVisible.set(false);
     this.studentAssignBus.set(null);
     this.studentAssignments.set([]);
-    this.studentAssignForm.reset({ ogrenciSicilId: null, yon: 1 });
-    this.authorityAssignForm.reset({ authoritySicilId: null });
+    this.studentAssignForm.reset({ studentId: null, direction: 1 });
+    this.authorityAssignForm.reset({ authorityId: null });
     this.closeAuthorityAssignDelete();
   }
 
@@ -431,18 +435,18 @@ export class SchoolBusComponent implements OnInit {
     if (!bus) return;
     const v = this.studentAssignForm.value;
 
-    if (v.yon === 3) {
+    if (v.direction === 3) {
       this.studentAssignLoading.set(true);
       forkJoin([
         this.busService
-          .assignStudentToBus(v.ogrenciSicilId, bus.id, 1 as ServisYonu)
+          .assignStudentToBus(v.studentId, bus.id, 1 as BusDirection)
           .pipe(
             catchError(() =>
               of({ sonuc: -1, sunucuCevap: 'SCHOOL_BUS.MSG_DEPARTURE_ASSIGN_ERROR' }),
             ),
           ),
         this.busService
-          .assignStudentToBus(v.ogrenciSicilId, bus.id, 2 as ServisYonu)
+          .assignStudentToBus(v.studentId, bus.id, 2 as BusDirection)
           .pipe(
             catchError(() => of({ sonuc: -1, sunucuCevap: 'SCHOOL_BUS.MSG_RETURN_ASSIGN_ERROR' })),
           ),
@@ -456,17 +460,17 @@ export class SchoolBusComponent implements OnInit {
           }
           this.loadStudentAssignments(bus.id);
           this.loadBuses();
-          this.studentAssignForm.reset({ ogrenciSicilId: null, yon: 1 });
+          this.studentAssignForm.reset({ studentId: null, direction: 1 });
         },
       });
     } else {
-      this.busService.assignStudentToBus(v.ogrenciSicilId, bus.id, v.yon).subscribe({
+      this.busService.assignStudentToBus(v.studentId, bus.id, v.direction).subscribe({
         next: (result) => {
           if (result.sonuc === 1) {
             this.notification.success(result.sunucuCevap || 'SCHOOL_BUS.MSG_STUDENT_ASSIGNED');
             this.loadStudentAssignments(bus.id);
             this.loadBuses();
-            this.studentAssignForm.reset({ ogrenciSicilId: null, yon: v.yon });
+            this.studentAssignForm.reset({ studentId: null, direction: v.direction });
           } else {
             this.notification.error(result.sunucuCevap || 'SCHOOL_BUS.MSG_STUDENT_ASSIGN_ERROR');
           }
@@ -521,12 +525,12 @@ export class SchoolBusComponent implements OnInit {
     if (!bus) return;
     const v = this.authorityAssignForm.value;
 
-    this.busService.assignAuthorityToBus(v.authoritySicilId, bus.id).subscribe({
+    this.busService.assignAuthorityToBus(v.authorityId, bus.id).subscribe({
       next: (result) => {
         if (result.sonuc === 1) {
           this.notification.success(result.sunucuCevap || 'SCHOOL_BUS.MSG_AUTHORITY_ASSIGNED');
           this.loadAllAuthorityAssignments();
-          this.authorityAssignForm.reset({ authoritySicilId: null });
+          this.authorityAssignForm.reset({ authorityId: null });
         } else {
           this.notification.error(result.sunucuCevap || 'SCHOOL_BUS.MSG_AUTHORITY_ASSIGN_ERROR');
         }

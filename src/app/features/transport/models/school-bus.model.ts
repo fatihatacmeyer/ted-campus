@@ -12,7 +12,7 @@ export interface Bus {
   status: string;
 }
 
-export type ServisYonu = 1 | 2;
+export type BusDirection = 1 | 2;
 
 export interface StudentAssignment {
   id: number;
@@ -24,7 +24,7 @@ export interface StudentAssignment {
   plaka: string;
   marka: string;
   model: string;
-  yon: ServisYonu;
+  yon: BusDirection;
   yonAciklama: string;
 }
 

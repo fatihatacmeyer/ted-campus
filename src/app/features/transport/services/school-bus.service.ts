@@ -5,7 +5,7 @@ import { ApiHelperService } from '../../../core/services/api-helper.service';
 import { unwrapResponse } from '../../../shared/utils/response.utils';
 import {
   Bus,
-  ServisYonu,
+  BusDirection,
   StudentAssignment,
   StudentAssignmentFilter,
   BusDashboardStats,
@@ -166,7 +166,7 @@ export class SchoolBusService {
             plaka: row.Plaka,
             marka: row.Marka,
             model: row.Model,
-            yon: row.Yon as ServisYonu,
+            yon: row.Yon as BusDirection,
             yonAciklama: row.YonAciklama,
           })),
         ),
@@ -176,7 +176,7 @@ export class SchoolBusService {
   assignStudentToBus(
     ogrenciSicilId: number,
     servisId: number,
-    yon: ServisYonu,
+    yon: BusDirection,
   ): Observable<{ sonuc: number; sunucuCevap: string }> {
     return this.api
       .callEndpoint<DBInsertResult[]>('Dynamic', {
