@@ -59,6 +59,9 @@ export class PersonLeaveDialogComponent implements OnChanges {
   /** Doluysa dialog düzenleme modunda çalışır: önce bu izin silinir, sonra yenisi eklenir. */
   @Input() replaceLeaveId: number | null = null;
 
+  /** Formun başlangıç/bitiş tarihi; verilmezse bugün kullanılır. */
+  @Input() initialDate: Date | null = null;
+
   @Output() visibleChange = new EventEmitter<boolean>();
   @Output() confirmed = new EventEmitter<string>();
 
@@ -120,8 +123,9 @@ export class PersonLeaveDialogComponent implements OnChanges {
     const defaultEndTime = new Date(today.getTime() + 15 * 60 * 1000);
 
     this.errorMessage = '';
-    this.startDateStr = formatDate(today);
-    this.endDateStr = formatDate(today);
+    const dateStr = formatDate(this.initialDate ?? today);
+    this.startDateStr = dateStr;
+    this.endDateStr = dateStr;
     this.selectedLeaveType = null;
     this.selectedTerminal = null;
     this.startTime = this.getTimeString(today);

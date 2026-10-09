@@ -755,6 +755,7 @@
         scrollHeight="calc(100vh - 420px)"
         [emptyMessage]="'ACTIVITIES.NO_PARTICIPANTS_FOUND' | translate"
         tableId="participant-list"
+        [persistFilters]="false"
       >
         <ng-template appColumnCell="durum" let-row>
           <p-tag [value]="row.durum" [severity]="getParticipantSeverity(row.durum)"></p-tag>

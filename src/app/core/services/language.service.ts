@@ -54,6 +54,8 @@ export class LanguageService {
 
   private applyLang(lang: AppLang): void {
     this.translateService.use(lang);
+    // CSS text-transform: uppercase (i → İ, ı → I) tarayıcıya dilini bildirmeden doğru çalışmaz
+    document.documentElement.lang = lang;
     this.primeNG.setTranslation(lang === 'tr' ? PRIME_NG_TR : PRIME_NG_EN);
   }
 

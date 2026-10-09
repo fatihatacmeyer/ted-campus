@@ -40,6 +40,8 @@ import {
   matchesClassSelection,
 } from '../../utils/class-name.utils';
 
+import { TABLE_FILTER_STORAGE_PREFIX } from '../../config/table-storage';
+
 /** PrimeNG özel eşleşme modu — sınıf filtresi (değer: token dizisi) */
 const CLASS_MATCH_MODE = 'classSelection';
 
@@ -113,6 +115,8 @@ export class CustomizableTableComponent<T extends object = Record<string, unknow
   @Input() rows: T[] = [];
   @Input() columns: ColumnDef<T>[] = [];
   @Input() loading = false;
+  /** false: filtre/arama saklanmaz (bir kayda özel modal tabloları — başka kayıtta eski filtre kalmasın) */
+  @Input() persistFilters = true;
   @Input() tableId = 'default'; // localStorage anahtarı: ted_table_columns_${tableId}
   @Input() defaultFields: string[] | null = null; // null ise tüm sütunlar varsayılan
   @Input() emptyMessage = 'COMMON.NO_RECORDS';
@@ -212,12 +216,15 @@ export class CustomizableTableComponent<T extends object = Record<string, unknow
   }
 
   ngAfterViewInit(): void {
-    // localStorage'dan geri yüklenen filtreleri tabloya uygula
+    // sessionStorage'dan geri yüklenen filtreleri tabloya uygula
     for (const [field, value] of this.columnFilters) {
       const col = this.columns.find((c) => c.field === field);
       if (col) {
         this.dt?.filter(value, field, this.getMatchMode(col));
       }
+    }
+    if (this.filterText) {
+      this.dt?.filterGlobal(this.filterText, 'contains');
     }
     // Filtre popup'ı açıkken herhangi bir kaydırma (sayfa veya tablo içi) popup'ı kapatır
     const onScroll = (event: Event): void => {
@@ -561,29 +568,49 @@ export class CustomizableTableComponent<T extends object = Record<string, unknow
     this.saveColumnFilters();
   }
 
-  /** Tüm sütun filtrelerini temizler (global aramaya dokunmaz) */
+  /** Genel arama değiştiğinde tabloya uygular ve oturum boyunca saklar */
+  onSearchChange(value: string): void {
+    this.filterText = value ?? '';
+    this.dt?.filterGlobal(this.filterText, 'contains');
+    this.saveColumnFilters();
+  }
+
+  /** Aktif filtre sayısı (sütun filtreleri + genel arama) */
+  get activeFilterCount(): number {
+    return this.columnFilters.size + (this.filterText ? 1 : 0);
+  }
+
+  /** Tüm sütun filtrelerini ve genel aramayı temizler */
   clearColumnFilters(): void {
     for (const col of this.columns) {
       this.columnFilters.delete(col.field);
       this.dt?.filter(null, col.field, this.getMatchMode(col));
     }
+    this.filterText = '';
+    this.dt?.filterGlobal('', 'contains');
     this.saveColumnFilters();
   }
 
   private get filterStorageKey(): string {
-    return `ted_table_filters_${this.tableId}`;
+    return `${TABLE_FILTER_STORAGE_PREFIX}${this.tableId}`;
   }
 
+  // Filtreler kullanıcı tercihi değil, geçici görünümdür: sekme kapanınca ve
+  // çıkışta (AuthService.logout) silinmesi için sessionStorage'da tutulur.
   private loadColumnFilters(): void {
+    if (!this.persistFilters) return;
     try {
-      const raw = localStorage.getItem(this.filterStorageKey);
+      const raw = sessionStorage.getItem(this.filterStorageKey);
       if (raw) {
-        const parsed: Record<string, unknown> = JSON.parse(raw);
+        const parsed: { columns?: Record<string, unknown>; search?: string } = JSON.parse(raw);
         for (const col of this.columns) {
-          const value = parsed[col.field];
+          const value = parsed.columns?.[col.field];
           if (value !== undefined && value !== null && value !== '') {
             this.columnFilters.set(col.field, value);
           }
+        }
+        if (typeof parsed.search === 'string') {
+          this.filterText = parsed.search;
         }
       }
     } catch {
@@ -592,13 +619,21 @@ export class CustomizableTableComponent<T extends object = Record<string, unknow
   }
 
   private saveColumnFilters(): void {
+    if (!this.persistFilters) return;
     try {
-      localStorage.setItem(
+      if (this.activeFilterCount === 0) {
+        sessionStorage.removeItem(this.filterStorageKey);
+        return;
+      }
+      sessionStorage.setItem(
         this.filterStorageKey,
-        JSON.stringify(Object.fromEntries(this.columnFilters)),
+        JSON.stringify({
+          columns: Object.fromEntries(this.columnFilters),
+          search: this.filterText,
+        }),
       );
     } catch {
-      /* localStorage doluysa sessizce geç */
+      /* depolama doluysa sessizce geç */
     }
   }
 

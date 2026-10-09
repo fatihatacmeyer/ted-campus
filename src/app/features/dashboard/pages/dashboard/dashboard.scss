@@ -855,6 +855,18 @@ $radius-full: t.$radius-full;
   }
 }
 
+/* Son işlemler dialog'undaki kolon filtreleri (ikinci başlık satırı) */
+.txn-table .txn-filter-row th {
+  padding: 8px 14px;
+  text-transform: none;
+  background: $bg-muted;
+
+  .txn-filter {
+    width: 100%;
+    min-width: 130px;
+  }
+}
+
 .txn-empty td {
   padding: 24px 20px;
   text-align: center;
@@ -960,7 +972,9 @@ $radius-full: t.$radius-full;
 /* ── Kişi Listesi Modalı (sabit boyut + arama) ────────────
    Dialog'a sabit height verildiği için içerik flex-column;
    liste kalan tüm alanı doldurur, taşarsa kendi içinde kayar. */
-.dashboard-inside-dialog {
+$inside-type-col-width: 130px;
+
+:host ::ng-deep .dashboard-inside-dialog {
   .p-dialog-content {
     display: flex;
     flex-direction: column;
@@ -968,10 +982,73 @@ $radius-full: t.$radius-full;
     overflow: hidden;
   }
 
+  .inside-count {
+    display: inline-flex;
+    align-items: baseline;
+    align-self: flex-start;
+    gap: 6px;
+    margin: 0 12px 12px;
+    padding: 8px 16px;
+    flex-shrink: 0;
+    border-radius: $radius-full;
+    background: $bg-muted;
+    border: 1px solid $border-light;
+    color: $text-secondary;
+
+    .material-symbols-outlined {
+      align-self: center;
+      font-size: 22px;
+      color: var(--ted-red-600);
+    }
+
+    .count-num {
+      font-size: 1.6rem;
+      font-weight: 800;
+      line-height: 1;
+      color: var(--ted-red-600);
+    }
+
+    .count-total {
+      font-size: 1rem;
+      font-weight: 600;
+    }
+
+    .count-unit {
+      font-size: 0.9rem;
+      font-weight: 600;
+    }
+  }
+
+  /* Filtre satırı: person-row ile aynı yerleşim, her filtre kendi kolonunun üstünde */
+  .inside-header {
+    /* person-row ile aynı kolon ızgarası: avatar | isim | sınıf | okul | tür */
+    display: grid;
+    grid-template-columns: 38px repeat(3, minmax(0, 1fr)) $inside-type-col-width;
+    align-items: center;
+    gap: 12px;
+    padding: 0 12px 10px;
+    flex-shrink: 0;
+    overflow-y: hidden;
+    scrollbar-gutter: stable; /* listedeki kaydırma çubuğu kadar yer ayırır */
+
+    /* Arama kutusu avatar + isim kolonlarını kaplar, sola dayalı */
+    .inside-search {
+      grid-column: 1 / 3;
+    }
+
+    .inside-header-col,
+    .inside-header-type {
+      min-width: 0;
+      width: 100%;
+    }
+
+    .inside-header-type .p-select {
+      width: 100%;
+    }
+  }
+
   .inside-search {
     position: relative;
-    margin-bottom: 14px;
-    flex-shrink: 0;
 
     .material-symbols-outlined {
       position: absolute;
@@ -989,11 +1066,19 @@ $radius-full: t.$radius-full;
     }
   }
 
+  .person-type-col {
+    width: $inside-type-col-width;
+    flex-shrink: 0;
+    display: flex;
+    justify-content: flex-start;
+  }
+
   .dialog-list {
     flex: 1 1 auto;
     min-height: 0;
     max-height: none; /* 60vh sınırı yerine dialog içinde kalan alanın tamamı */
     overflow-y: auto;
+    scrollbar-gutter: stable;
   }
 }
 

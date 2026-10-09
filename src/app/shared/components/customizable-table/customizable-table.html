@@ -7,7 +7,7 @@
           pInputText
           [id]="'customizable_table_search_' + tableId"
           [ngModel]="filterText"
-          (ngModelChange)="filterText = $event; dt.filterGlobal($event, 'contains')"
+          (ngModelChange)="onSearchChange($event)"
           autocomplete="off"
         />
       </p-iconfield>
@@ -31,9 +31,10 @@
       ></p-button>
     }
 
-    @if (hasActiveFilters) {
+    @if (activeFilterCount > 0) {
       <p-button
         icon="pi pi-filter-slash"
+        [label]="'' + activeFilterCount"
         size="small"
         text="true"
         (onClick)="clearColumnFilters()"

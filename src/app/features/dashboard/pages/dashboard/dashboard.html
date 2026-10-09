@@ -204,7 +204,7 @@
 
 <!-- ── Son hareketler tablosu ─────────────────────────────── -->
 <!-- translated=true (dialog): DB metinleri çeviri anahtarı olarak çözülür. -->
-<ng-template #txnTable let-rows="rows" let-translated="translated">
+<ng-template #txnTable let-rows="rows" let-translated="translated" let-filters="filters">
   <div class="txn-table-wrapper">
     <table class="txn-table">
       <thead>
@@ -220,6 +220,149 @@
           <th>{{ 'DASHBOARD.COLUMN_TIME' | translate }}</th>
           <th>{{ 'DASHBOARD.COLUMN_RESULT' | translate }}</th>
         </tr>
+        @if (filters) {
+          @let f = txnFilters();
+          <tr class="txn-filter-row">
+            <th>
+              @if (txnFiltersActive()) {
+                <button
+                  pButton
+                  type="button"
+                  class="p-button-text p-button-sm p-button-rounded"
+                  icon="pi pi-filter-slash"
+                  pTooltip="{{ 'COMMON.CLEAR_FILTERS' | translate }}"
+                  tooltipPosition="bottom"
+                  aria-label="{{ 'COMMON.CLEAR_FILTERS' | translate }}"
+                  (click)="clearTxnFilters()"
+                ></button>
+              }
+            </th>
+            <th>
+              <p-select
+                class="txn-filter"
+                appendTo="body"
+                [options]="txnTypeOptions"
+                optionLabel="label"
+                optionValue="value"
+                [ngModel]="f.type || null"
+                (ngModelChange)="setTxnFilter('type', $event)"
+                [showClear]="true"
+                [placeholder]="'DASHBOARD.FILTER_ALL_TYPES' | translate"
+              >
+                <ng-template #selectedItem let-o>{{ o.label | translate }}</ng-template>
+                <ng-template #item let-o>{{ o.label | translate }}</ng-template>
+              </p-select>
+            </th>
+            <th>
+              <p-select
+                class="txn-filter"
+                appendTo="body"
+                [options]="txnClassOptions()"
+                [ngModel]="f.className || null"
+                (ngModelChange)="setTxnFilter('className', $event)"
+                [filter]="true"
+                [showClear]="true"
+                [placeholder]="'DASHBOARD.FILTER_ALL_CLASSES' | translate"
+                [emptyFilterMessage]="'DASHBOARD.NO_SEARCH_RESULT' | translate"
+              />
+            </th>
+            <th>
+              <p-select
+                class="txn-filter"
+                appendTo="body"
+                [options]="txnCampusOptions()"
+                [ngModel]="f.campus || null"
+                (ngModelChange)="setTxnFilter('campus', $event)"
+                [filter]="true"
+                [showClear]="true"
+                [placeholder]="'DASHBOARD.FILTER_ALL_CAMPUSES' | translate"
+                [emptyFilterMessage]="'DASHBOARD.NO_SEARCH_RESULT' | translate"
+              />
+            </th>
+            <th>
+              <input
+                pInputText
+                class="txn-filter"
+                type="text"
+                [ngModel]="f.sicil"
+                (ngModelChange)="setTxnFilter('sicil', $event)"
+                [placeholder]="'COMMON.SEARCH' | translate"
+              />
+            </th>
+            <th>
+              <input
+                pInputText
+                class="txn-filter"
+                type="text"
+                [ngModel]="f.card"
+                (ngModelChange)="setTxnFilter('card', $event)"
+                [placeholder]="'COMMON.SEARCH' | translate"
+              />
+            </th>
+            <th>
+              <p-select
+                class="txn-filter"
+                appendTo="body"
+                [options]="txnDirectionOptions"
+                optionLabel="label"
+                optionValue="value"
+                [ngModel]="f.direction || null"
+                (ngModelChange)="setTxnFilter('direction', $event)"
+                [showClear]="true"
+                [placeholder]="'DASHBOARD.FILTER_ALL_DIRECTIONS' | translate"
+              >
+                <ng-template #selectedItem let-o>{{ o.label | translate }}</ng-template>
+                <ng-template #item let-o>{{ o.label | translate }}</ng-template>
+              </p-select>
+            </th>
+            <th>
+              <p-select
+                class="txn-filter"
+                appendTo="body"
+                [options]="txnDeviceOptions()"
+                [ngModel]="f.device || null"
+                (ngModelChange)="setTxnFilter('device', $event)"
+                [filter]="true"
+                [showClear]="true"
+                [placeholder]="'DASHBOARD.FILTER_ALL_DEVICES' | translate"
+                [emptyFilterMessage]="'DASHBOARD.NO_SEARCH_RESULT' | translate"
+              >
+                <ng-template #selectedItem let-d>{{ d | translate }}</ng-template>
+                <ng-template #item let-d>{{ d | translate }}</ng-template>
+              </p-select>
+            </th>
+            <th>
+              <p-datepicker
+                styleClass="txn-filter"
+                appendTo="body"
+                selectionMode="range"
+                dateFormat="dd.mm.yy"
+                [readonlyInput]="true"
+                [showClear]="true"
+                [showIcon]="true"
+                [ngModel]="f.range"
+                (ngModelChange)="setTxnFilter('range', $event)"
+                [placeholder]="'DASHBOARD.FILTER_DATE_RANGE' | translate"
+              />
+            </th>
+            <th>
+              <p-select
+                class="txn-filter"
+                appendTo="body"
+                [options]="txnResultOptions"
+                optionLabel="label"
+                optionValue="value"
+                [ngModel]="f.result || null"
+                (ngModelChange)="setTxnFilter('result', $event)"
+                [showClear]="true"
+                [placeholder]="'DASHBOARD.FILTER_ALL_RESULTS' | translate"
+              >
+                <ng-template #selectedItem let-o>{{ o.label | translate }}</ng-template>
+                <ng-template #item let-o>{{ o.label | translate }}</ng-template>
+              </p-select>
+            </th>
+          </tr>
+        }
       </thead>
       <tbody>
         @for (txn of rows; track txn.id) {
@@ -274,7 +417,9 @@
           <tr class="txn-empty">
             <td colspan="10">
               {{
-                (appliedTxnSearch() ? 'DASHBOARD.NO_SEARCH_RESULT' : 'DASHBOARD.NO_TRANSACTIONS')
+                (appliedTxnSearch() || txnFiltersActive()
+                  ? 'DASHBOARD.NO_SEARCH_RESULT'
+                  : 'DASHBOARD.NO_TRANSACTIONS')
                   | translate
               }}
             </td>
@@ -673,7 +818,12 @@
   <div class="txn-dialog-search">
     <ng-container *ngTemplateOutlet="txnSearchBox" />
   </div>
-  <ng-container *ngTemplateOutlet="txnTable; context: { rows: transactions(), translated: true }" />
+  <ng-container
+    *ngTemplateOutlet="
+      txnTable;
+      context: { rows: filteredTransactions(), translated: true, filters: true }
+    "
+  />
 </p-dialog>
 
 <!-- Erken Çıkanlar Dialog -->
@@ -775,14 +925,67 @@
   } @else if (dialog.persons.length === 0) {
     <div class="empty-state">{{ 'DASHBOARD.NO_ONE_INSIDE' | translate }}</div>
   } @else {
-    <div class="inside-search">
-      <span class="material-symbols-outlined">search</span>
-      <input
-        pInputText
-        type="text"
-        [(ngModel)]="insideSearch"
-        [placeholder]="'COMMON.SEARCH' | translate"
+    <div class="inside-count">
+      <span class="material-symbols-outlined">groups</span>
+      <span class="count-num">{{ filteredInsidePersons().length }}</span>
+      @if (filteredInsidePersons().length !== dialog.persons.length) {
+        <span class="count-total">/ {{ dialog.persons.length }}</span>
+      }
+      <span class="count-unit">{{ 'DASHBOARD.PERSON_UNIT' | translate }}</span>
+    </div>
+
+    <div class="inside-header">
+      <div class="inside-header-col inside-search">
+        <span class="material-symbols-outlined">search</span>
+        <input
+          pInputText
+          type="text"
+          [(ngModel)]="insideSearch"
+          [placeholder]="'COMMON.SEARCH' | translate"
+        />
+      </div>
+
+      <p-select
+        class="inside-header-col"
+        appendTo="body"
+        [options]="insideClassOptions()"
+        [ngModel]="insideClassFilter() || null"
+        (ngModelChange)="insideClassFilter.set($event ?? '')"
+        [filter]="true"
+        [showClear]="true"
+        [placeholder]="'DASHBOARD.FILTER_ALL_CLASSES' | translate"
+        [emptyFilterMessage]="'DASHBOARD.NO_SEARCH_RESULT' | translate"
       />
+
+      <p-select
+        class="inside-header-col"
+        appendTo="body"
+        [options]="insideSchoolOptions()"
+        [ngModel]="insideSchoolFilter() || null"
+        (ngModelChange)="onInsideSchoolChange($event ?? '')"
+        [filter]="true"
+        [showClear]="true"
+        [placeholder]="'DASHBOARD.FILTER_ALL_SCHOOLS' | translate"
+        [emptyFilterMessage]="'DASHBOARD.NO_SEARCH_RESULT' | translate"
+      />
+
+      <div class="inside-header-type">
+        @if (dialog.type === null) {
+          <p-select
+            appendTo="body"
+            [options]="insideTypeOptions"
+            optionLabel="label"
+            optionValue="value"
+            [ngModel]="insideTypeFilter() || null"
+            (ngModelChange)="insideTypeFilter.set($event ?? '')"
+            [showClear]="true"
+            [placeholder]="'DASHBOARD.FILTER_ALL_TYPES' | translate"
+          >
+            <ng-template #selectedItem let-type>{{ type.label | translate }}</ng-template>
+            <ng-template #item let-type>{{ type.label | translate }}</ng-template>
+          </p-select>
+        }
+      </div>
     </div>
 
     <div class="person-list dialog-list">
@@ -800,16 +1003,18 @@
           <span class="person-col">{{ k.className || '-' }}</span>
           <span class="person-col">{{ k.schoolName || '-' }}</span>
 
-          <span
-            class="person-badge"
-            [class.badge-student]="k.type === 'STUDENT'"
-            [class.badge-parent]="k.type !== 'STUDENT'"
-          >
-            {{
-              k.type === 'STUDENT'
-                ? ('USERDEF.STUDENT' | translate)
-                : ('USERDEF.PARENT' | translate)
-            }}
+          <span class="person-type-col">
+            <span
+              class="person-badge"
+              [class.badge-student]="k.type === 'STUDENT'"
+              [class.badge-parent]="k.type !== 'STUDENT'"
+            >
+              {{
+                k.type === 'STUDENT'
+                  ? ('USERDEF.STUDENT' | translate)
+                  : ('USERDEF.PARENT' | translate)
+              }}
+            </span>
           </span>
         </div>
       } @empty {

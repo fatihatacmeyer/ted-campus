@@ -7,6 +7,7 @@ import { APP_CONFIG, AppConfig } from './app-config.service';
 import { User } from '../models/person.model';
 import { encryptParam } from './prepare.service';
 import { getTodayKeyParts } from '../utils/crypto-date.utils';
+import { clearAllTableFilters } from '../../shared/config/table-storage';
 
 @Injectable({
   providedIn: 'root',
@@ -59,6 +60,7 @@ export class AuthService {
   logout() {
     const authLocalStorageToken = this.storageKey;
     sessionStorage.removeItem(authLocalStorageToken);
+    clearAllTableFilters();
     this.currentUserSubject.next(null);
     this.router.navigate(['/login']);
   }

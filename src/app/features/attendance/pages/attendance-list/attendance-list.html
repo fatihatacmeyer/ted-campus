@@ -227,6 +227,7 @@
     <app-person-leave-dialog
       [(visible)]="assignLeaveDialogVisible"
       [multiPersons]="assignLeaveTargets()"
+      [initialDate]="selectedDate()"
       (confirmed)="onLeaveConfirmed($event)"
     ></app-person-leave-dialog>
   </div>
