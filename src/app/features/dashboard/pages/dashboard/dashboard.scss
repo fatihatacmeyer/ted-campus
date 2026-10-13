@@ -305,7 +305,7 @@ $radius-full: t.$radius-full;
 
 .kvkk-grid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(5, 1fr);
   gap: 20px;
   padding: 20px 24px;
 
@@ -345,6 +345,9 @@ $radius-full: t.$radius-full;
   }
   &.kvkk-proxy {
     --kvkk-accent: var(--ted-cyan-solid);
+  }
+  &.kvkk-service {
+    --kvkk-accent: var(--ted-warning-solid);
   }
   &.kvkk-total {
     --kvkk-accent: var(--ted-accent-solid);
@@ -1024,6 +1027,10 @@ $inside-type-col-width: 130px;
     /* person-row ile aynı kolon ızgarası: avatar | isim | sınıf | okul | tür */
     display: grid;
     grid-template-columns: 38px repeat(3, minmax(0, 1fr)) $inside-type-col-width;
+
+    &.with-students {
+      grid-template-columns: 38px repeat(4, minmax(0, 1fr)) $inside-type-col-width;
+    }
     align-items: center;
     gap: 12px;
     padding: 0 12px 10px;

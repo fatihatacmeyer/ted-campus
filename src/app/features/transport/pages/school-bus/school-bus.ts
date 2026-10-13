@@ -20,6 +20,8 @@ import { TagModule } from 'primeng/tag';
 import { ButtonModule } from 'primeng/button';
 import { TooltipModule } from 'primeng/tooltip';
 import { SelectModule } from 'primeng/select';
+import { MultiSelectModule } from 'primeng/multiselect';
+import { InputMaskModule } from 'primeng/inputmask';
 import { InputTextModule } from 'primeng/inputtext';
 import { TextareaModule } from 'primeng/textarea';
 
@@ -27,11 +29,15 @@ import {
   CustomizableTableComponent,
   ColumnCellDirective,
   ColumnDef,
+  uniqueFilterOptions,
 } from '../../../../shared/components/customizable-table/customizable-table';
 import { SchoolBusService } from '../../services/school-bus.service';
+import { DashboardService } from '../../../dashboard/services/dashboard.service';
 import { NotificationService } from '../../../../core/services/notification.service';
 import { PersonService } from '../../../persons/services/person.service';
-import { Person, UserDef } from '../../../../core/models/person.model';
+import { Person, PersonInsertRequest, UserDef } from '../../../../core/models/person.model';
+import { PersonExitDialogComponent } from '../../../persons/components/person-exit-dialog/person-exit-dialog';
+import { unwrapResponse } from '../../../../shared/utils/response.utils';
 
 import { forkJoin, merge, of } from 'rxjs';
 import { catchError, map, startWith } from 'rxjs/operators';
@@ -39,6 +45,7 @@ import {
   Bus,
   BusDirection,
   StudentAssignment,
+  StudentBusPlan,
   BusDashboardStats,
   AuthorityAssignment,
   ServiceAuthority,
@@ -48,7 +55,7 @@ import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { PageHeaderComponent } from '../../../../shared/components/page-header/page-header';
 
-type TabKey = 'dashboard' | 'buses' | 'assignments' | 'authorities';
+type TabKey = 'dashboard' | 'buses' | 'assignments' | 'plans' | 'authorities';
 
 @Component({
   selector: 'app-school-bus',
@@ -62,10 +69,13 @@ type TabKey = 'dashboard' | 'buses' | 'assignments' | 'authorities';
     ButtonModule,
     TooltipModule,
     SelectModule,
+    MultiSelectModule,
+    InputMaskModule,
     InputTextModule,
     TextareaModule,
     CustomizableTableComponent,
     ColumnCellDirective,
+    PersonExitDialogComponent,
     FormsModule,
     TranslatePipe,
   ],
@@ -76,6 +86,7 @@ type TabKey = 'dashboard' | 'buses' | 'assignments' | 'authorities';
 export class SchoolBusComponent implements OnInit {
   private fb = inject(FormBuilder);
   private busService = inject(SchoolBusService);
+  private dashboardService = inject(DashboardService);
   private personService = inject(PersonService);
   private notification = inject(NotificationService);
   private translate = inject(TranslateService);
@@ -86,6 +97,7 @@ export class SchoolBusComponent implements OnInit {
     { key: 'dashboard', labelKey: 'SCHOOL_BUS.TAB_DASHBOARD', icon: 'dashboard' },
     { key: 'buses', labelKey: 'SCHOOL_BUS.TAB_BUSES', icon: 'directions_bus' },
     { key: 'assignments', labelKey: 'SCHOOL_BUS.TAB_ASSIGNMENTS', icon: 'assignment' },
+    { key: 'plans', labelKey: 'SCHOOL_BUS.TAB_PLANS', icon: 'event_repeat' },
     { key: 'authorities', labelKey: 'SCHOOL_BUS.TAB_AUTHORITIES', icon: 'admin_panel_settings' },
   ];
 
@@ -113,6 +125,10 @@ export class SchoolBusComponent implements OnInit {
   /** Yetkililer sekmesi: servis yetkilileri listesi + "Bilgileri Gönder" onayı. */
   protected readonly serviceAuthorities = signal<ServiceAuthority[]>([]);
   protected readonly serviceAuthoritiesLoading = signal(false);
+
+  /** Planlar sekmesi: öğrenci servis planları (sp_ogrenciservisplancampus_s). */
+  protected readonly studentBusPlans = signal<StudentBusPlan[]>([]);
+  protected readonly studentBusPlansLoading = signal(false);
   protected readonly authoritySendVisible = signal(false);
   protected readonly authoritySendTarget = signal<ServiceAuthority | null>(null);
   protected readonly authoritySendLoading = signal(false);
@@ -120,6 +136,8 @@ export class SchoolBusComponent implements OnInit {
   protected assignmentBusSearchValue = '';
   protected readonly assignmentBusSearch = signal('');
   protected readonly dashboardStats = signal<BusDashboardStats | null>(null);
+  /** KVKK onaylayan servis yetkilisi sayısı (sp_KvkkOnayCampus_s.ServisOnaySayisi). */
+  protected readonly kvkkServiceApproved = signal(0);
 
   protected readonly busForm: FormGroup = this.fb.group({
     plate: ['', Validators.required],
@@ -128,6 +146,54 @@ export class SchoolBusComponent implements OnInit {
     seatCount: [16, [Validators.required, Validators.min(1)]],
     description: [''],
     status: ['Aktif', Validators.required],
+  });
+
+  /** Planlar sekmesi: ekle/düzenle formu ve silme onayı. */
+  protected readonly planFormVisible = signal(false);
+  protected readonly planEditing = signal<StudentBusPlan | null>(null);
+  protected readonly planDeleteVisible = signal(false);
+  protected readonly planDeleting = signal<StudentBusPlan | null>(null);
+  protected readonly planSaving = signal(false);
+
+  /** Toplu silme: tabloda işaretlenen planlar ve onay penceresi. */
+  protected readonly selectedPlans = signal<StudentBusPlan[]>([]);
+  protected readonly planBulkDeleteVisible = signal(false);
+  protected readonly planBulkDeleting = signal(false);
+
+  /** busId 0 = "servis kullanmıyor"; direction ve weekday çoklu seçimdir (dizi). */
+  protected readonly planForm: FormGroup = this.fb.group({
+    studentId: [null, Validators.required],
+    busId: [0, Validators.required],
+    direction: [[1] as number[], Validators.required],
+    repeatType: ['weekly', Validators.required],
+    date: [''],
+    weekday: [[] as number[]],
+    startDate: [''],
+    endDate: [''],
+    description: [''],
+    isActive: [true],
+  });
+
+  /** Yetkililer sekmesi: ekle/düzenle formu ve çıkış verme (ortak çıkış penceresi). */
+  protected readonly authorityFormVisible = signal(false);
+  protected readonly authorityEditing = signal<ServiceAuthority | null>(null);
+  protected readonly authoritySaving = signal(false);
+  protected readonly authorityLoadingId = signal<number | null>(null);
+  /** Düzenlenen yetkilinin tam sicil kaydı: güncelleme tüm alanları yazdığı için korunur. */
+  private authorityEditPerson: Person | null = null;
+  protected authorityExitVisible = false;
+  protected authorityExitPerson: Person | null = null;
+
+  /**
+   * Telefon p-inputMask ('0 (999) 999 99 99', unmask) ile girilir; değer baştaki 0 olmadan
+   * 10 haneli gelir (kişi formuyla aynı). Eksik girişte maske değeri temizler.
+   */
+  protected readonly authorityForm: FormGroup = this.fb.group({
+    ad: ['', [Validators.required, Validators.pattern(/\S/), Validators.maxLength(50)]],
+    soyad: ['', [Validators.required, Validators.pattern(/\S/), Validators.maxLength(50)]],
+    sicilno: ['', Validators.maxLength(20)],
+    ceptelefon: ['', Validators.pattern(/^5\d{9}$/)],
+    email: ['', [Validators.email, Validators.maxLength(100)]],
   });
 
   protected readonly studentAssignForm: FormGroup = this.fb.group({
@@ -152,6 +218,48 @@ export class SchoolBusComponent implements OnInit {
     { field: 'ogrenciAdSoyad', header: 'SCHOOL_BUS.COL_STUDENT', sortable: true },
     { field: 'sinif', header: 'SCHOOL_BUS.COL_CLASS', sortable: true },
     { field: 'kampus', header: 'SCHOOL_BUS.COL_CAMPUS', sortable: true },
+  ];
+
+  protected readonly studentBusPlanColumns: ColumnDef<StudentBusPlan>[] = [
+    { field: 'ogrenciAdSoyad', header: 'SCHOOL_BUS.COL_STUDENT', sortable: true, alwaysVisible: true },
+    {
+      field: 'sinif',
+      header: 'SCHOOL_BUS.COL_CLASS',
+      sortable: true,
+      filterType: 'select',
+      filterOptions: (rows) => uniqueFilterOptions(rows, 'sinif'),
+    },
+    {
+      field: 'kampus',
+      header: 'SCHOOL_BUS.COL_CAMPUS',
+      sortable: true,
+      filterType: 'select',
+      filterOptions: (rows) => uniqueFilterOptions(rows, 'kampus'),
+    },
+    { field: 'plaka', header: 'SCHOOL_BUS.COL_PLATE', sortable: true },
+    {
+      field: 'yonAciklama',
+      header: 'SCHOOL_BUS.DIRECTION',
+      sortable: true,
+      filterType: 'select',
+      filterOptions: (rows) => uniqueFilterOptions(rows, 'yonAciklama'),
+    },
+    {
+      field: 'tekrarTuru',
+      header: 'SCHOOL_BUS.COL_REPEAT',
+      sortable: true,
+      filterType: 'select',
+      filterOptions: (rows) => uniqueFilterOptions(rows, 'tekrarTuru'),
+    },
+    { field: 'gunAciklama', header: 'SCHOOL_BUS.COL_PLAN_DAY', sortable: true },
+    { field: 'baslangicTarih', header: 'SCHOOL_BUS.COL_START_DATE', sortable: true },
+    { field: 'bitisTarih', header: 'SCHOOL_BUS.COL_END_DATE', sortable: true },
+    { field: 'isActive', header: 'SCHOOL_BUS.COL_STATUS', sortable: true, filterable: false },
+    { field: 'aciklama', header: 'SCHOOL_BUS.COL_DESCRIPTION' },
+    { field: 'olusturanAdSoyad', header: 'SCHOOL_BUS.COL_CREATED_BY', sortable: true },
+    { field: 'olusturmaTarihi', header: 'SCHOOL_BUS.COL_CREATED_DATE', sortable: true },
+    { field: 'guncelleyenAdSoyad', header: 'SCHOOL_BUS.COL_UPDATED_BY', sortable: true },
+    { field: 'guncellemeTarihi', header: 'SCHOOL_BUS.COL_UPDATED_DATE', sortable: true },
   ];
 
   protected readonly serviceAuthorityColumns: ColumnDef<ServiceAuthority>[] = [
@@ -204,6 +312,50 @@ export class SchoolBusComponent implements OnInit {
       { label: this.translate.instant('SCHOOL_BUS.DIRECTION_DEPARTURE'), value: 1 },
       { label: this.translate.instant('SCHOOL_BUS.DIRECTION_RETURN'), value: 2 },
       { label: this.translate.instant('SCHOOL_BUS.DIRECTION_BOTH'), value: 3 },
+    ];
+  });
+
+  /** Plan yönleri (çoklu seçim: ikisi birden seçilirse her yön ayrı kayıt olur). */
+  protected readonly planDirectionOptions = computed(() => {
+    this.i18nVersion();
+    return [
+      { label: this.translate.instant('SCHOOL_BUS.DIRECTION_DEPARTURE'), value: 1 },
+      { label: this.translate.instant('SCHOOL_BUS.DIRECTION_RETURN'), value: 2 },
+    ];
+  });
+
+  protected readonly planRepeatOptions = computed(() => {
+    this.i18nVersion();
+    return [
+      { label: this.translate.instant('SCHOOL_BUS.REPEAT_WEEKLY'), value: 'weekly' },
+      { label: this.translate.instant('SCHOOL_BUS.REPEAT_SINGLE'), value: 'single' },
+    ];
+  });
+
+  protected readonly planWeekdayOptions = computed(() => {
+    this.i18nVersion();
+    return [1, 2, 3, 4, 5, 6, 7].map((day) => ({
+      label: this.translate.instant(`SCHOOL_BUS.WEEKDAY_${day}`),
+      value: day,
+    }));
+  });
+
+  protected readonly planBusOptions = computed(() => {
+    this.i18nVersion();
+    return [
+      { label: this.translate.instant('SCHOOL_BUS.NOT_USING_SERVICE'), value: 0 },
+      ...this.buses().map((b) => ({
+        label: `${b.plate} — ${b.brand} ${b.model}`,
+        value: b.id,
+      })),
+    ];
+  });
+
+  protected readonly planActiveOptions = computed(() => {
+    this.i18nVersion();
+    return [
+      { label: this.translate.instant('SCHOOL_BUS.STATUS_ACTIVE'), value: true },
+      { label: this.translate.instant('SCHOOL_BUS.STATUS_PASSIVE'), value: false },
     ];
   });
 
@@ -279,6 +431,213 @@ export class SchoolBusComponent implements OnInit {
   ngOnInit(): void {
     this.loadBuses();
     this.loadDashboardStats();
+    this.loadKvkkServiceApproved();
+
+    this.planForm
+      .get('repeatType')!
+      .valueChanges.pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => this.applyPlanRepeatValidators());
+  }
+
+  /** Tek günlükte tarih, haftalıkta hafta günü zorunlu. */
+  private applyPlanRepeatValidators(): void {
+    const single = this.planForm.get('repeatType')?.value === 'single';
+    const date = this.planForm.get('date')!;
+    const weekday = this.planForm.get('weekday')!;
+    date.setValidators(single ? Validators.required : null);
+    weekday.setValidators(single ? null : Validators.required);
+    date.updateValueAndValidity({ emitEvent: false });
+    weekday.updateValueAndValidity({ emitEvent: false });
+  }
+
+  protected planIsSingle(): boolean {
+    return this.planForm.get('repeatType')?.value === 'single';
+  }
+
+  /** Haftalık planda bitiş, başlangıçtan önce olamaz (yyyy-MM-dd metin karşılaştırması yeterli). */
+  protected planDateRangeInvalid(): boolean {
+    if (this.planIsSingle()) return false;
+    const { startDate, endDate } = this.planForm.value;
+    return !!startDate && !!endDate && endDate < startDate;
+  }
+
+  protected openPlanForm(plan?: StudentBusPlan): void {
+    this.planEditing.set(plan ?? null);
+    if (this.students().length === 0) this.loadStudents();
+
+    const studentControl = this.planForm.get('studentId')!;
+    if (plan) {
+      studentControl.disable();
+      this.planForm.reset({
+        studentId: plan.ogrenciSicilId,
+        busId: plan.servisId ?? 0,
+        direction: [plan.yon],
+        repeatType: plan.tarih ? 'single' : 'weekly',
+        date: plan.tarih ?? '',
+        weekday: plan.haftaGunu ? [plan.haftaGunu] : [],
+        startDate: plan.baslangicIso ?? '',
+        endDate: plan.bitisIso ?? '',
+        description: plan.aciklama ?? '',
+        isActive: plan.isActive,
+      });
+    } else {
+      studentControl.enable();
+      this.planForm.reset({
+        studentId: null,
+        busId: 0,
+        direction: [1],
+        repeatType: 'weekly',
+        date: '',
+        weekday: [],
+        startDate: '',
+        endDate: '',
+        description: '',
+        isActive: true,
+      });
+    }
+    this.applyPlanRepeatValidators();
+    this.planFormVisible.set(true);
+  }
+
+  protected closePlanForm(): void {
+    if (this.planSaving()) return;
+    this.planFormVisible.set(false);
+    this.planEditing.set(null);
+  }
+
+  protected submitPlan(): void {
+    if (this.planSaving()) return;
+    if (this.planForm.invalid || this.planDateRangeInvalid()) {
+      this.planForm.markAllAsTouched();
+      return;
+    }
+
+    const v = this.planForm.getRawValue();
+    const single = v.repeatType === 'single';
+    const base = {
+      servisId: v.busId || null,
+      tarih: single ? v.date || null : null,
+      haftaGunu: single ? [] : [...(v.weekday as number[])].sort((a, b) => a - b),
+      baslangicTarih: single ? null : v.startDate || null,
+      bitisTarih: single ? null : v.endDate || null,
+      aciklama: (v.description ?? '').trim() || null,
+      yon: [...(v.direction as BusDirection[])].sort((a, b) => a - b),
+    };
+
+    const editing = this.planEditing();
+    const request$ = editing
+      ? this.busService.updateStudentBusPlan(editing.id, { ...base, isActive: v.isActive })
+      : this.busService.addStudentBusPlan(v.studentId, base);
+
+    this.planSaving.set(true);
+    request$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+      next: (result) => {
+        this.planSaving.set(false);
+        if (result.sonuc === 1) {
+          // Prosedür tek işlemde çalışır; yalnızca başarıda liste değişir.
+          this.loadStudentBusPlans();
+          this.notification.success(result.sunucuCevap || 'SCHOOL_BUS.MSG_OP_SUCCESS');
+          this.closePlanForm();
+        } else {
+          this.notification.error(result.sunucuCevap || 'SCHOOL_BUS.MSG_OP_ERROR');
+        }
+      },
+      error: () => {
+        this.planSaving.set(false);
+        this.notification.error('SCHOOL_BUS.MSG_SERVER_ERROR');
+      },
+    });
+  }
+
+  protected confirmPlanDelete(plan: StudentBusPlan): void {
+    this.planDeleting.set(plan);
+    this.planDeleteVisible.set(true);
+  }
+
+  protected closePlanDelete(): void {
+    this.planDeleteVisible.set(false);
+    this.planDeleting.set(null);
+  }
+
+  protected confirmPlanBulkDelete(): void {
+    if (this.selectedPlans().length === 0) return;
+    this.planBulkDeleteVisible.set(true);
+  }
+
+  protected closePlanBulkDelete(): void {
+    if (this.planBulkDeleting()) return;
+    this.planBulkDeleteVisible.set(false);
+  }
+
+  /**
+   * Seçili planları siler. Silme prosedürü tek kayıt aldığı için her plan ayrı
+   * istek olarak gider (atomik değil); başarısız olanlar sayılıp özetlenir.
+   */
+  protected deleteSelectedPlans(): void {
+    const targets = this.selectedPlans();
+    if (targets.length === 0 || this.planBulkDeleting()) return;
+
+    this.planBulkDeleting.set(true);
+    forkJoin(
+      targets.map((plan) =>
+        this.busService.deleteStudentBusPlan(plan.id).pipe(
+          catchError(() =>
+            of({ sonuc: -1, sunucuCevap: this.translate.instant('SCHOOL_BUS.MSG_SERVER_ERROR') }),
+          ),
+        ),
+      ),
+    )
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((results) => {
+        this.planBulkDeleting.set(false);
+        this.planBulkDeleteVisible.set(false);
+        const failed = results.filter((r) => r.sonuc !== 1);
+        const deleted = results.length - failed.length;
+
+        if (deleted > 0) {
+          this.notification.success(
+            this.translate.instant('SCHOOL_BUS.MSG_PLANS_DELETED', { count: deleted }),
+          );
+        }
+        if (failed.length > 0) {
+          this.notification.error(
+            this.translate.instant('SCHOOL_BUS.MSG_PLANS_DELETE_FAILED', {
+              count: failed.length,
+              reason: failed[0].sunucuCevap,
+            }),
+          );
+        }
+        this.loadStudentBusPlans();
+      });
+  }
+
+  protected deletePlan(): void {
+    const target = this.planDeleting();
+    if (!target) return;
+
+    this.busService
+      .deleteStudentBusPlan(target.id)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (result) => {
+          if (result.sonuc === 1) {
+            this.notification.success(result.sunucuCevap || 'SCHOOL_BUS.MSG_OP_SUCCESS');
+            this.loadStudentBusPlans();
+            this.closePlanDelete();
+          } else {
+            this.notification.error(result.sunucuCevap || 'SCHOOL_BUS.MSG_OP_ERROR');
+          }
+        },
+        error: () => this.notification.error('SCHOOL_BUS.MSG_SERVER_ERROR'),
+      });
+  }
+
+  /** Kart ikincil bilgi: hata durumunda sayfayı bozmadan 0 kalır. */
+  private loadKvkkServiceApproved(): void {
+    this.dashboardService
+      .getKvkkStats()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({ next: (k) => this.kvkkServiceApproved.set(k.serviceApproved) });
   }
 
   private loadDashboardStats(): void {
@@ -325,7 +684,11 @@ export class SchoolBusComponent implements OnInit {
   /** Esc: en üstte açık olan modalı kapatır (üstteki modallar önce). */
   @HostListener('document:keydown.escape')
   protected onEscape(): void {
-    if (this.studentAssignDeleteVisible()) this.closeStudentAssignDelete();
+    if (this.planBulkDeleteVisible()) this.closePlanBulkDelete();
+    else if (this.planDeleteVisible()) this.closePlanDelete();
+    else if (this.authorityFormVisible()) this.closeAuthorityForm();
+    else if (this.planFormVisible()) this.closePlanForm();
+    else if (this.studentAssignDeleteVisible()) this.closeStudentAssignDelete();
     else if (this.authorityAssignDeleteVisible()) this.closeAuthorityAssignDelete();
     else if (this.authoritySendVisible()) this.closeAuthoritySend();
     else if (this.busDeleteVisible()) this.closeBusDelete();
@@ -567,6 +930,25 @@ export class SchoolBusComponent implements OnInit {
     });
   }
 
+  private loadStudentBusPlans(): void {
+    this.studentBusPlansLoading.set(true);
+    this.busService
+      .getStudentBusPlans()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (rows) => {
+          this.studentBusPlans.set(rows);
+          // Satır nesneleri yenilendiği için eski seçim (referans) geçersiz.
+          this.selectedPlans.set([]);
+          this.studentBusPlansLoading.set(false);
+        },
+        error: () => {
+          this.notification.error('SCHOOL_BUS.MSG_PLANS_ERROR');
+          this.studentBusPlansLoading.set(false);
+        },
+      });
+  }
+
   private loadServiceAuthorities(): void {
     this.serviceAuthoritiesLoading.set(true);
     this.busService
@@ -582,6 +964,158 @@ export class SchoolBusComponent implements OnInit {
           this.serviceAuthoritiesLoading.set(false);
         },
       });
+  }
+
+  protected openAuthorityForm(row?: ServiceAuthority): void {
+    if (!row) {
+      this.authorityEditing.set(null);
+      this.authorityEditPerson = null;
+      this.authorityForm.reset({ ad: '', soyad: '', sicilno: '', ceptelefon: '', email: '' });
+      this.authorityFormVisible.set(true);
+      return;
+    }
+
+    // Liste prosedürü ad/soyadı ayrı vermediği için tam kayıt sicil listesinden alınır.
+    this.authorityLoadingId.set(row.sicilId);
+    this.personService
+      .getPersonListCampus()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (people) => {
+          this.authorityLoadingId.set(null);
+          const person = people.find((p) => p.id === row.sicilId);
+          if (!person) {
+            this.notification.error('SCHOOL_BUS.MSG_AUTHORITY_NOT_FOUND');
+            return;
+          }
+          this.authorityEditing.set(row);
+          this.authorityEditPerson = person;
+          this.authorityForm.reset({
+            ad: person.ad ?? '',
+            soyad: person.soyad ?? '',
+            sicilno: person.sicilno ?? '',
+            ceptelefon: this.normalizePhone(person.ceptelefon),
+            email: person.email ?? '',
+          });
+          this.authorityFormVisible.set(true);
+        },
+        error: () => {
+          this.authorityLoadingId.set(null);
+          this.notification.error('SCHOOL_BUS.MSG_SERVER_ERROR');
+        },
+      });
+  }
+
+  /** Kayıtlı telefonu maskenin beklediği 10 haneye çevirir (+90 / 90 / baştaki 0 atılır). */
+  private normalizePhone(value: string | null | undefined): string {
+    let digits = (value ?? '').replace(/\D/g, '');
+    if (digits.startsWith('90') && digits.length >= 12) digits = digits.substring(2);
+    if (digits.startsWith('0')) digits = digits.substring(1);
+    return digits;
+  }
+
+  protected closeAuthorityForm(): void {
+    if (this.authoritySaving()) return;
+    this.authorityFormVisible.set(false);
+    this.authorityEditing.set(null);
+    this.authorityEditPerson = null;
+  }
+
+  /** Backend tarihleri 'yyyy-MM-dd' bekler; datetime gelirse tarih kısmı alınır. */
+  private dateOnly(value: string | null | undefined): string {
+    return value ? (/^\d{4}-\d{2}-\d{2}/.exec(value)?.[0] ?? value) : '';
+  }
+
+  protected submitAuthority(): void {
+    if (this.authoritySaving()) return;
+    if (this.authorityForm.invalid) {
+      this.authorityForm.markAllAsTouched();
+      return;
+    }
+
+    const v = this.authorityForm.value;
+    const form = {
+      ad: String(v.ad).trim(),
+      soyad: String(v.soyad).trim(),
+      sicilno: String(v.sicilno ?? '').trim(),
+      ceptelefon: String(v.ceptelefon ?? '').trim(),
+      email: String(v.email ?? '').trim(),
+    };
+
+    const editing = this.authorityEditing();
+    const original = this.authorityEditPerson;
+    let request$;
+    if (editing && original) {
+      // Güncelleme tam kayıt yazar: formda olmayan alanlar mevcut değerleriyle gönderilir.
+      const payload: PersonInsertRequest & { id: number } = {
+        id: original.id,
+        userdef: UserDef.Authority,
+        personelno: original.personelno ?? '',
+        cardid: original.cardid ?? '',
+        telefon1: original.telefon1 ?? '',
+        adres: original.adres ?? '',
+        il: original.il ?? '',
+        ilce: original.ilce ?? '',
+        cinsiyet: original.cinsiyet ?? '',
+        kangrubu: original.kangrubu ?? '',
+        firma: original.firma ?? '',
+        bolum: original.bolum ?? '',
+        pozisyon: original.pozisyon ?? '',
+        gorev: original.gorev ?? '',
+        altfirma: original.altfirma ?? '',
+        direktorluk: original.direktorluk ?? '',
+        yaka: original.yaka ?? '',
+        okod1: original.okod1 ?? '',
+        dogumtarih: this.dateOnly(original.dogumtarih),
+        giristarih: this.dateOnly(original.giristarih),
+        ...form,
+      };
+      request$ = this.personService.updatePerson(payload);
+    } else {
+      request$ = this.personService.insertPerson({ ...form, userdef: UserDef.Authority });
+    }
+
+    this.authoritySaving.set(true);
+    request$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+      next: (res) => {
+        this.authoritySaving.set(false);
+        const result = unwrapResponse<Person>(res);
+        // islemsonuc negatifse backend işlemi reddetmiştir.
+        if (result && Number(result.islemsonuc) < 0) {
+          this.notification.error(result.sunucucevap || 'SCHOOL_BUS.MSG_OP_ERROR');
+          return;
+        }
+        this.notification.success(
+          editing ? 'SCHOOL_BUS.MSG_AUTHORITY_UPDATED' : 'SCHOOL_BUS.MSG_AUTHORITY_ADDED',
+        );
+        this.authorityFormVisible.set(false);
+        this.authorityEditing.set(null);
+        this.authorityEditPerson = null;
+        this.afterAuthorityChange();
+      },
+      error: () => {
+        this.authoritySaving.set(false);
+        this.notification.error('SCHOOL_BUS.MSG_SERVER_ERROR');
+      },
+    });
+  }
+
+  /** Çıkış: kişi ortak çıkış penceresiyle (neden + tarih) ayrılır. */
+  protected openAuthorityExit(row: ServiceAuthority): void {
+    // Çıkış penceresi yalnızca id ve görünen adı kullanır.
+    this.authorityExitPerson = { id: row.sicilId, ad: row.adSoyad, soyad: '' } as Person;
+    this.authorityExitVisible = true;
+  }
+
+  protected onAuthorityExitVisibleChange(visible: boolean): void {
+    this.authorityExitVisible = visible;
+    if (!visible) this.authorityExitPerson = null;
+  }
+
+  protected afterAuthorityChange(): void {
+    this.loadServiceAuthorities();
+    // Atama sekmesindeki yetkili seçenekleri bir sonraki açılışta yeniden yüklensin.
+    this.authorities.set([]);
   }
 
   protected confirmAuthoritySend(row: ServiceAuthority): void {
@@ -624,6 +1158,9 @@ export class SchoolBusComponent implements OnInit {
 
   protected setTab(tab: TabKey): void {
     this.activeTab.set(tab);
+    if (tab === 'plans') {
+      this.loadStudentBusPlans();
+    }
     if (tab === 'authorities') {
       this.loadServiceAuthorities();
     }

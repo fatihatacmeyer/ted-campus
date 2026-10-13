@@ -592,6 +592,19 @@
             *ngTemplateOutlet="
               kvkkBlock;
               context: {
+                cls: 'kvkk-service',
+                icon: 'directions_bus',
+                labelKey: 'DASHBOARD.KVKK_SERVICE',
+                approved: k.serviceApproved,
+                registered: null,
+                percent: null,
+              }
+            "
+          />
+          <ng-container
+            *ngTemplateOutlet="
+              kvkkBlock;
+              context: {
                 cls: 'kvkk-total',
                 icon: 'badge',
                 labelKey: 'DASHBOARD.TOTAL',
@@ -934,7 +947,7 @@
       <span class="count-unit">{{ 'DASHBOARD.PERSON_UNIT' | translate }}</span>
     </div>
 
-    <div class="inside-header">
+    <div class="inside-header" [class.with-students]="showInsideStudentsCol()">
       <div class="inside-header-col inside-search">
         <span class="material-symbols-outlined">search</span>
         <input
@@ -969,6 +982,20 @@
         [emptyFilterMessage]="'DASHBOARD.NO_SEARCH_RESULT' | translate"
       />
 
+      @if (showInsideStudentsCol()) {
+        <p-select
+          class="inside-header-col"
+          appendTo="body"
+          [options]="insideStudentOptions()"
+          [ngModel]="insideStudentFilter() || null"
+          (ngModelChange)="insideStudentFilter.set($event ?? '')"
+          [filter]="true"
+          [showClear]="true"
+          [placeholder]="'DASHBOARD.STUDENTS_OF_PARENT' | translate"
+          [emptyFilterMessage]="'DASHBOARD.NO_SEARCH_RESULT' | translate"
+        />
+      }
+
       <div class="inside-header-type">
         @if (dialog.type === null) {
           <p-select
@@ -1002,6 +1029,9 @@
           <span class="person-col person-col-name">{{ k.fullName }}</span>
           <span class="person-col">{{ k.className || '-' }}</span>
           <span class="person-col">{{ k.schoolName || '-' }}</span>
+          @if (showInsideStudentsCol()) {
+            <span class="person-col" [title]="k.students || ''">{{ k.students || '-' }}</span>
+          }
 
           <span class="person-type-col">
             <span

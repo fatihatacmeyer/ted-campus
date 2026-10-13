@@ -269,9 +269,12 @@ export class CustomizableTableComponent<T extends object = Record<string, unknow
     return this.allColumnFields.filter((field) => !this.selectedColumnFields.includes(field));
   }
 
-  /** Seçim kaynağı — filtre uygulanmış satırlar, yoksa tüm satırlar */
+  /**
+   * Seçim kaynağı — filtre aktifse filtrelenmiş satırlar (hiç eşleşme yoksa boş),
+   * filtre yoksa tüm satırlar. Boş sonuçta tüm satırlara düşmek toplu işlemlerde riskli.
+   */
   private selectionSource(): T[] {
-    return (this.dt?.filteredValue?.length ? (this.dt.filteredValue as T[]) : this.rows) ?? [];
+    return ((this.dt?.filteredValue as T[] | null | undefined) ?? this.rows) ?? [];
   }
 
   /** Satır seçili mi? (referans karşılaştırması) */

@@ -77,6 +77,16 @@
             <span class="stat-label">{{ 'SCHOOL_BUS.STAT_PASSIVE' | translate }}</span>
           </div>
         </div>
+
+        <div class="stat-card">
+          <div class="stat-icon icon-purple">
+            <span class="material-symbols-outlined">verified_user</span>
+          </div>
+          <div class="stat-info">
+            <span class="stat-count">{{ kvkkServiceApproved() }}</span>
+            <span class="stat-label">{{ 'SCHOOL_BUS.STAT_KVKK_APPROVED' | translate }}</span>
+          </div>
+        </div>
       </div>
     </div>
   }
@@ -774,6 +784,468 @@
   }
 
   <!-- ════════════════════════════════════════════════════ -->
+  <!-- TAB: Planlar (sp_ogrenciservisplancampus_s)          -->
+  <!-- ════════════════════════════════════════════════════ -->
+  @if (activeTab() === 'plans') {
+    <div class="tab-content">
+      <div class="section-header">
+        <div class="section-title">
+          <span class="material-symbols-outlined">event_repeat</span>
+          <h2>{{ 'SCHOOL_BUS.PLANS_TITLE' | translate }}</h2>
+        </div>
+        <div class="section-actions">
+          <button
+            pButton
+            [label]="('SCHOOL_BUS.DELETE_SELECTED' | translate) + ' (' + selectedPlans().length + ')'"
+            [attr.aria-label]="'SCHOOL_BUS.DELETE_SELECTED' | translate"
+            icon="pi pi-trash"
+            class="p-button-sm p-button-danger"
+            [disabled]="selectedPlans().length === 0"
+            (click)="confirmPlanBulkDelete()"
+          ></button>
+          <button
+            pButton
+            [label]="'SCHOOL_BUS.ADD_PLAN' | translate"
+            [attr.aria-label]="'SCHOOL_BUS.ADD_PLAN' | translate"
+            icon="pi pi-plus"
+            class="p-button-sm p-button-success"
+            (click)="openPlanForm()"
+          ></button>
+        </div>
+      </div>
+
+      <app-customizable-table
+        [rows]="studentBusPlans()"
+        [columns]="studentBusPlanColumns"
+        [loading]="studentBusPlansLoading()"
+        tableId="school_bus_plans"
+        [persistFilters]="false"
+        emptyMessage="SCHOOL_BUS.NO_PLAN"
+        exportFilename="servis_planlari"
+        [showRowNumbers]="true"
+        [actionsTemplate]="planActionsTpl"
+        selectionMode="multiple"
+        [selectedRows]="selectedPlans()"
+        (selectedRowsChange)="selectedPlans.set($event)"
+        displayMode="fit"
+      >
+        <ng-template #planActionsTpl let-plan>
+          <div class="row-actions">
+            <button
+              pButton
+              icon="pi pi-pencil"
+              class="p-button-sm p-button-text p-button-warning"
+              (click)="openPlanForm(plan)"
+              pTooltip="{{ 'COMMON.EDIT' | translate }}"
+              aria-label="{{ 'COMMON.EDIT' | translate }}"
+            ></button>
+            <button
+              pButton
+              icon="pi pi-trash"
+              class="p-button-sm p-button-text p-button-danger"
+              (click)="confirmPlanDelete(plan)"
+              pTooltip="{{ 'COMMON.DELETE' | translate }}"
+              aria-label="{{ 'COMMON.DELETE' | translate }}"
+            ></button>
+          </div>
+        </ng-template>
+        <ng-template appColumnCell="plaka" let-plan>
+          @if (plan.servisKullanmiyor) {
+            <span class="no-service-label">{{ 'SCHOOL_BUS.NOT_USING_SERVICE' | translate }}</span>
+          } @else {
+            <strong>{{ plan.plaka }}</strong>
+          }
+        </ng-template>
+        <ng-template appColumnCell="isActive" let-plan>
+          <p-tag
+            [value]="(plan.isActive ? 'SCHOOL_BUS.STATUS_ACTIVE' : 'SCHOOL_BUS.STATUS_PASSIVE') | translate"
+            [severity]="plan.isActive ? 'success' : 'danger'"
+          />
+        </ng-template>
+      </app-customizable-table>
+    </div>
+  }
+
+  <!-- ══════════════════════════════════════════════════════════ -->
+  <!-- DIALOG: Plan Form (Add/Edit)                              -->
+  <!-- ══════════════════════════════════════════════════════════ -->
+  @if (planFormVisible()) {
+    <div
+      class="dialog-overlay"
+      (click)="closePlanForm()"
+      (keyup.enter)="closePlanForm()"
+      role="presentation"
+    >
+      <div
+        class="dialog-content form-dialog"
+        (click)="$event.stopPropagation()"
+        (keyup.enter)="$event.stopPropagation()"
+        tabindex="-1"
+      >
+        <div class="dialog-header">
+          <h3>
+            <span class="material-symbols-outlined">{{
+              planEditing() ? 'edit' : 'add_circle'
+            }}</span>
+            {{ (planEditing() ? 'SCHOOL_BUS.EDIT_PLAN' : 'SCHOOL_BUS.ADD_PLAN') | translate }}
+          </h3>
+          <button class="dialog-close" (click)="closePlanForm()">
+            <span class="material-symbols-outlined">close</span>
+          </button>
+        </div>
+        <div class="dialog-body">
+          <form [formGroup]="planForm" (ngSubmit)="submitPlan()" class="entity-form">
+            <div class="form-field">
+              <label for="planStudent"
+                ><span class="material-symbols-outlined">person</span>
+                {{ 'SCHOOL_BUS.COL_STUDENT' | translate }}</label
+              >
+              @if (planEditing(); as editingPlan) {
+                <input
+                  pInputText
+                  id="planStudent"
+                  class="w-full"
+                  [value]="editingPlan.ogrenciAdSoyad"
+                  disabled
+                />
+              } @else {
+                <p-select
+                  id="planStudent"
+                  inputId="planStudent"
+                  formControlName="studentId"
+                  [options]="studentOptions()"
+                  optionLabel="label"
+                  optionValue="value"
+                  [filter]="true"
+                  [placeholder]="'SCHOOL_BUS.PH_STUDENT' | translate"
+                  styleClass="w-full"
+                  appendTo="body"
+                />
+                @if (planForm.get('studentId')?.invalid && planForm.get('studentId')?.touched) {
+                  <small class="field-error">{{
+                    'SCHOOL_BUS.ERR_STUDENT_REQUIRED' | translate
+                  }}</small>
+                }
+              }
+            </div>
+
+            <div class="form-field">
+              <label for="planBus"
+                ><span class="material-symbols-outlined">directions_bus</span>
+                {{ 'SCHOOL_BUS.VEHICLE' | translate }}</label
+              >
+              <p-select
+                id="planBus"
+                inputId="planBus"
+                formControlName="busId"
+                [options]="planBusOptions()"
+                optionLabel="label"
+                optionValue="value"
+                [filter]="true"
+                styleClass="w-full"
+                appendTo="body"
+              />
+            </div>
+
+            <div class="form-field">
+              <label for="planDirection"
+                ><span class="material-symbols-outlined">swap_horiz</span>
+                {{ 'SCHOOL_BUS.DIRECTION' | translate }}</label
+              >
+              <p-multiselect
+                id="planDirection"
+                inputId="planDirection"
+                formControlName="direction"
+                [options]="planDirectionOptions()"
+                optionLabel="label"
+                optionValue="value"
+                [showToggleAll]="false"
+                [placeholder]="'SCHOOL_BUS.PH_DIRECTION' | translate"
+                styleClass="w-full"
+                appendTo="body"
+              />
+              @if (planForm.get('direction')?.invalid && planForm.get('direction')?.touched) {
+                <small class="field-error">{{
+                  'SCHOOL_BUS.ERR_DIRECTION_REQUIRED' | translate
+                }}</small>
+              }
+              @if (planEditing()) {
+                <small class="field-hint">{{ 'SCHOOL_BUS.PLAN_MULTI_EDIT_HINT' | translate }}</small>
+              }
+            </div>
+
+            <div class="form-field">
+              <label for="planRepeat"
+                ><span class="material-symbols-outlined">event_repeat</span>
+                {{ 'SCHOOL_BUS.COL_REPEAT' | translate }}</label
+              >
+              <p-select
+                id="planRepeat"
+                inputId="planRepeat"
+                formControlName="repeatType"
+                [options]="planRepeatOptions()"
+                optionLabel="label"
+                optionValue="value"
+                styleClass="w-full"
+                appendTo="body"
+              />
+            </div>
+
+            @if (planIsSingle()) {
+              <div class="form-field">
+                <label for="planDate"
+                  ><span class="material-symbols-outlined">calendar_today</span>
+                  {{ 'SCHOOL_BUS.LABEL_DATE' | translate }}</label
+                >
+                <input pInputText type="date" id="planDate" formControlName="date" class="w-full" />
+                @if (planForm.get('date')?.invalid && planForm.get('date')?.touched) {
+                  <small class="field-error">{{ 'SCHOOL_BUS.ERR_DATE_REQUIRED' | translate }}</small>
+                }
+              </div>
+            } @else {
+              <div class="form-field">
+                <label for="planWeekday"
+                  ><span class="material-symbols-outlined">date_range</span>
+                  {{ 'SCHOOL_BUS.LABEL_WEEKDAY' | translate }}</label
+                >
+                <p-multiselect
+                  id="planWeekday"
+                  inputId="planWeekday"
+                  formControlName="weekday"
+                  [options]="planWeekdayOptions()"
+                  optionLabel="label"
+                  optionValue="value"
+                  [placeholder]="'SCHOOL_BUS.PH_WEEKDAY' | translate"
+                  styleClass="w-full"
+                  appendTo="body"
+                />
+                @if (planForm.get('weekday')?.invalid && planForm.get('weekday')?.touched) {
+                  <small class="field-error">{{
+                    'SCHOOL_BUS.ERR_WEEKDAY_REQUIRED' | translate
+                  }}</small>
+                }
+              </div>
+              <div class="form-field">
+                <label for="planStart"
+                  ><span class="material-symbols-outlined">event_available</span>
+                  {{ 'SCHOOL_BUS.COL_START_DATE' | translate }}</label
+                >
+                <input
+                  pInputText
+                  type="date"
+                  id="planStart"
+                  formControlName="startDate"
+                  class="w-full"
+                />
+              </div>
+              <div class="form-field">
+                <label for="planEnd"
+                  ><span class="material-symbols-outlined">event_busy</span>
+                  {{ 'SCHOOL_BUS.COL_END_DATE' | translate }}</label
+                >
+                <input pInputText type="date" id="planEnd" formControlName="endDate" class="w-full" />
+                <small class="field-hint">{{ 'SCHOOL_BUS.PLAN_RANGE_HINT' | translate }}</small>
+                @if (planDateRangeInvalid()) {
+                  <small class="field-error">{{ 'SCHOOL_BUS.ERR_DATE_RANGE' | translate }}</small>
+                }
+              </div>
+            }
+
+            <div class="form-field">
+              <label for="planDescription"
+                ><span class="material-symbols-outlined">description</span>
+                {{ 'SCHOOL_BUS.COL_DESCRIPTION' | translate }}</label
+              >
+              <textarea
+                pTextarea
+                id="planDescription"
+                formControlName="description"
+                [placeholder]="'SCHOOL_BUS.PH_DESCRIPTION' | translate"
+                class="w-full"
+                rows="3"
+                maxlength="500"
+              ></textarea>
+            </div>
+
+            @if (planEditing()) {
+              <div class="form-field">
+                <label for="planActive"
+                  ><span class="material-symbols-outlined">toggle_on</span>
+                  {{ 'SCHOOL_BUS.COL_STATUS' | translate }}</label
+                >
+                <p-select
+                  id="planActive"
+                  inputId="planActive"
+                  formControlName="isActive"
+                  [options]="planActiveOptions()"
+                  optionLabel="label"
+                  optionValue="value"
+                  styleClass="w-full"
+                  appendTo="body"
+                />
+              </div>
+            }
+
+            <div class="form-actions">
+              <button
+                type="button"
+                pButton
+                [label]="'COMMON.CANCEL' | translate"
+                icon="pi pi-times"
+                class="p-button-text"
+                (click)="closePlanForm()"
+                [attr.aria-label]="'COMMON.CANCEL' | translate"
+              ></button>
+              <button
+                type="submit"
+                pButton
+                [label]="
+                  (planEditing() ? 'SCHOOL_BUS.UPDATE' : 'SCHOOL_BUS.SUBMIT_ADD_PLAN') | translate
+                "
+                [attr.aria-label]="
+                  (planEditing() ? 'SCHOOL_BUS.UPDATE' : 'SCHOOL_BUS.SUBMIT_ADD_PLAN') | translate
+                "
+                icon="pi pi-check"
+                class="p-button-success"
+                [loading]="planSaving()"
+              ></button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- ══════════════════════════════════════════════════════════ -->
+  <!-- DIALOG: Plan Delete Confirmation                          -->
+  <!-- ══════════════════════════════════════════════════════════ -->
+  @if (planDeleteVisible() && planDeleting(); as deletingPlan) {
+    <div
+      class="dialog-overlay"
+      (click)="closePlanDelete()"
+      (keyup.enter)="closePlanDelete()"
+      role="presentation"
+    >
+      <div
+        class="dialog-content delete-dialog"
+        (click)="$event.stopPropagation()"
+        (keyup.enter)="$event.stopPropagation()"
+        tabindex="-1"
+      >
+        <div class="dialog-header">
+          <h3>
+            <span class="material-symbols-outlined delete-icon">warning</span>
+            {{ 'SCHOOL_BUS.DELETE_PLAN' | translate }}
+          </h3>
+          <button class="dialog-close" (click)="closePlanDelete()">
+            <span class="material-symbols-outlined">close</span>
+          </button>
+        </div>
+        <div class="dialog-body">
+          <div class="delete-confirm-content">
+            <div class="delete-warning">
+              <span class="material-symbols-outlined">error</span>
+              <p
+                [innerHTML]="
+                  'SCHOOL_BUS.CONFIRM_DELETE_PLAN'
+                    | translate
+                      : {
+                          name: bold(deletingPlan.ogrenciAdSoyad),
+                          direction: bold(deletingPlan.yonAciklama),
+                          day: bold(deletingPlan.gunAciklama),
+                        }
+                "
+              ></p>
+            </div>
+            <p class="delete-note">{{ 'SCHOOL_BUS.IRREVERSIBLE' | translate }}</p>
+          </div>
+          <div class="form-actions">
+            <button
+              pButton
+              [label]="'COMMON.CANCEL' | translate"
+              icon="pi pi-times"
+              class="p-button-text"
+              (click)="closePlanDelete()"
+              [attr.aria-label]="'COMMON.CANCEL' | translate"
+            ></button>
+            <button
+              pButton
+              [label]="'COMMON.DELETE' | translate"
+              icon="pi pi-trash"
+              class="p-button-danger"
+              (click)="deletePlan()"
+              [attr.aria-label]="'COMMON.DELETE' | translate"
+            ></button>
+          </div>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- ══════════════════════════════════════════════════════════ -->
+  <!-- DIALOG: Plan Toplu Silme Onayı                            -->
+  <!-- ══════════════════════════════════════════════════════════ -->
+  @if (planBulkDeleteVisible()) {
+    <div
+      class="dialog-overlay"
+      (click)="closePlanBulkDelete()"
+      (keyup.enter)="closePlanBulkDelete()"
+      role="presentation"
+    >
+      <div
+        class="dialog-content delete-dialog"
+        (click)="$event.stopPropagation()"
+        (keyup.enter)="$event.stopPropagation()"
+        tabindex="-1"
+      >
+        <div class="dialog-header">
+          <h3>
+            <span class="material-symbols-outlined delete-icon">warning</span>
+            {{ 'SCHOOL_BUS.DELETE_SELECTED_TITLE' | translate }}
+          </h3>
+          <button class="dialog-close" (click)="closePlanBulkDelete()">
+            <span class="material-symbols-outlined">close</span>
+          </button>
+        </div>
+        <div class="dialog-body">
+          <div class="delete-confirm-content">
+            <div class="delete-warning">
+              <span class="material-symbols-outlined">error</span>
+              <p
+                [innerHTML]="
+                  'SCHOOL_BUS.CONFIRM_DELETE_PLANS'
+                    | translate: { count: bold(selectedPlans().length.toString()) }
+                "
+              ></p>
+            </div>
+            <p class="delete-note">{{ 'SCHOOL_BUS.IRREVERSIBLE' | translate }}</p>
+          </div>
+          <div class="form-actions">
+            <button
+              pButton
+              [label]="'COMMON.CANCEL' | translate"
+              icon="pi pi-times"
+              class="p-button-text"
+              [disabled]="planBulkDeleting()"
+              (click)="closePlanBulkDelete()"
+              [attr.aria-label]="'COMMON.CANCEL' | translate"
+            ></button>
+            <button
+              pButton
+              [label]="'COMMON.DELETE' | translate"
+              icon="pi pi-trash"
+              class="p-button-danger"
+              [loading]="planBulkDeleting()"
+              (click)="deleteSelectedPlans()"
+              [attr.aria-label]="'COMMON.DELETE' | translate"
+            ></button>
+          </div>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- ════════════════════════════════════════════════════ -->
   <!-- TAB: Yetkililer (sp_serviskullanicilarcampus_s)      -->
   <!-- ════════════════════════════════════════════════════ -->
   @if (activeTab() === 'authorities') {
@@ -783,6 +1255,14 @@
           <span class="material-symbols-outlined">admin_panel_settings</span>
           <h2>{{ 'SCHOOL_BUS.AUTHORITIES_TITLE' | translate }}</h2>
         </div>
+        <button
+          pButton
+          [label]="'SCHOOL_BUS.ADD_AUTHORITY' | translate"
+          [attr.aria-label]="'SCHOOL_BUS.ADD_AUTHORITY' | translate"
+          icon="pi pi-plus"
+          class="p-button-sm p-button-success"
+          (click)="openAuthorityForm()"
+        ></button>
       </div>
 
       <app-customizable-table
@@ -802,6 +1282,27 @@
             <button
               pButton
               type="button"
+              icon="pi pi-pencil"
+              class="p-button-sm p-button-text p-button-warning"
+              [loading]="authorityLoadingId() === row.sicilId"
+              (click)="openAuthorityForm(row)"
+              pTooltip="{{ 'COMMON.EDIT' | translate }}"
+              tooltipPosition="top"
+              [attr.aria-label]="'COMMON.EDIT' | translate"
+            ></button>
+            <button
+              pButton
+              type="button"
+              icon="pi pi-sign-out"
+              class="p-button-sm p-button-text p-button-danger"
+              (click)="openAuthorityExit(row)"
+              pTooltip="{{ 'SCHOOL_BUS.AUTHORITY_EXIT' | translate }}"
+              tooltipPosition="top"
+              [attr.aria-label]="'SCHOOL_BUS.AUTHORITY_EXIT' | translate"
+            ></button>
+            <button
+              pButton
+              type="button"
               icon="pi pi-key"
               class="p-button-sm p-button-text p-button-help"
               (click)="confirmAuthoritySend(row)"
@@ -814,6 +1315,159 @@
       </app-customizable-table>
     </div>
   }
+
+  <!-- ══════════════════════════════════════════════════════════ -->
+  <!-- DIALOG: Yetkili Ekle / Düzenle                             -->
+  <!-- ══════════════════════════════════════════════════════════ -->
+  @if (authorityFormVisible()) {
+    <div
+      class="dialog-overlay"
+      (click)="closeAuthorityForm()"
+      (keyup.enter)="closeAuthorityForm()"
+      role="presentation"
+    >
+      <div
+        class="dialog-content form-dialog"
+        (click)="$event.stopPropagation()"
+        (keyup.enter)="$event.stopPropagation()"
+        tabindex="-1"
+      >
+        <div class="dialog-header">
+          <h3>
+            <span class="material-symbols-outlined">{{
+              authorityEditing() ? 'edit' : 'person_add'
+            }}</span>
+            {{
+              (authorityEditing() ? 'SCHOOL_BUS.EDIT_AUTHORITY' : 'SCHOOL_BUS.ADD_AUTHORITY')
+                | translate
+            }}
+          </h3>
+          <button class="dialog-close" (click)="closeAuthorityForm()">
+            <span class="material-symbols-outlined">close</span>
+          </button>
+        </div>
+        <div class="dialog-body">
+          <form [formGroup]="authorityForm" (ngSubmit)="submitAuthority()" class="entity-form">
+            <div class="form-field">
+              <label for="authAd"
+                ><span class="material-symbols-outlined">badge</span>
+                {{ 'SCHOOL_BUS.LABEL_FIRST_NAME' | translate }}</label
+              >
+              <input
+                pInputText
+                id="authAd"
+                formControlName="ad"
+                class="w-full"
+                maxlength="50"
+                autocomplete="off"
+              />
+              @if (authorityForm.get('ad')?.invalid && authorityForm.get('ad')?.touched) {
+                <small class="field-error">{{ 'SCHOOL_BUS.ERR_FIRST_NAME_REQUIRED' | translate }}</small>
+              }
+            </div>
+            <div class="form-field">
+              <label for="authSoyad"
+                ><span class="material-symbols-outlined">badge</span>
+                {{ 'SCHOOL_BUS.LABEL_LAST_NAME' | translate }}</label
+              >
+              <input
+                pInputText
+                id="authSoyad"
+                formControlName="soyad"
+                class="w-full"
+                maxlength="50"
+                autocomplete="off"
+              />
+              @if (authorityForm.get('soyad')?.invalid && authorityForm.get('soyad')?.touched) {
+                <small class="field-error">{{ 'SCHOOL_BUS.ERR_LAST_NAME_REQUIRED' | translate }}</small>
+              }
+            </div>
+            <div class="form-field">
+              <label for="authSicilNo"
+                ><span class="material-symbols-outlined">pin</span>
+                {{ 'SCHOOL_BUS.COL_REG_NO' | translate }}</label
+              >
+              <input
+                pInputText
+                id="authSicilNo"
+                formControlName="sicilno"
+                class="w-full"
+                maxlength="20"
+                autocomplete="off"
+              />
+            </div>
+            <div class="form-field">
+              <label for="authPhone"
+                ><span class="material-symbols-outlined">call</span>
+                {{ 'SCHOOL_BUS.COL_PHONE' | translate }}</label
+              >
+              <p-inputMask
+                inputId="authPhone"
+                formControlName="ceptelefon"
+                mask="0 (999) 999 99 99"
+                placeholder="0 (5XX) XXX XX XX"
+                [unmask]="true"
+                styleClass="w-full"
+              />
+              @if (authorityForm.get('ceptelefon')?.invalid && authorityForm.get('ceptelefon')?.touched) {
+                <small class="field-error">{{ 'SCHOOL_BUS.ERR_PHONE_INVALID' | translate }}</small>
+              }
+              <small class="field-hint">{{ 'SCHOOL_BUS.AUTHORITY_CONTACT_HINT' | translate }}</small>
+            </div>
+            <div class="form-field">
+              <label for="authEmail"
+                ><span class="material-symbols-outlined">mail</span>
+                {{ 'SCHOOL_BUS.COL_EMAIL' | translate }}</label
+              >
+              <input
+                pInputText
+                id="authEmail"
+                type="email"
+                formControlName="email"
+                class="w-full"
+                maxlength="100"
+                autocomplete="off"
+              />
+              @if (authorityForm.get('email')?.invalid && authorityForm.get('email')?.touched) {
+                <small class="field-error">{{ 'SCHOOL_BUS.ERR_EMAIL_INVALID' | translate }}</small>
+              }
+            </div>
+            <div class="form-actions">
+              <button
+                type="button"
+                pButton
+                [label]="'COMMON.CANCEL' | translate"
+                icon="pi pi-times"
+                class="p-button-text"
+                [disabled]="authoritySaving()"
+                (click)="closeAuthorityForm()"
+                [attr.aria-label]="'COMMON.CANCEL' | translate"
+              ></button>
+              <button
+                type="submit"
+                pButton
+                [label]="
+                  (authorityEditing() ? 'SCHOOL_BUS.UPDATE' : 'SCHOOL_BUS.SUBMIT_ADD_AUTHORITY')
+                    | translate
+                "
+                icon="pi pi-check"
+                class="p-button-success"
+                [loading]="authoritySaving()"
+              ></button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  }
+
+  <app-person-exit-dialog
+    [visible]="authorityExitVisible"
+    [person]="authorityExitPerson"
+    mode="exit"
+    (visibleChange)="onAuthorityExitVisibleChange($event)"
+    (confirmed)="afterAuthorityChange()"
+  ></app-person-exit-dialog>
 
   <!-- ══════════════════════════════════════════════════════════ -->
   <!-- DIALOG: Yetkiliye Giriş Bilgilerini Gönder Onayı           -->

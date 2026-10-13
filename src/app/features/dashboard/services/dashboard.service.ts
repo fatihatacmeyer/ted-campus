@@ -32,6 +32,8 @@ interface KvkkOnayRow {
   OgrenciOnaySayisi?: number | null;
   VeliOnaySayisi?: number | null;
   VekilOnaySayisi?: number | null;
+  /** Servis yetkilisi (UserDef=YETKILI) onayı; ToplamOnaySayisi'na dahil değil. */
+  ServisOnaySayisi?: number | null;
   ToplamOnaySayisi?: number | null;
 }
 
@@ -39,6 +41,8 @@ export interface KvkkStats {
   studentApproved: number;
   parentApproved: number;
   proxyApproved: number;
+  /** Servis yetkilisi onayı; totalApproved'a dahil değildir. */
+  serviceApproved: number;
   totalApproved: number;
 }
 
@@ -118,6 +122,8 @@ export interface InsidePerson {
   schoolName: string | null;
   registryNo: string | null;
   isInside: boolean;
+  /** Veli satırında velinin aktif öğrencileri ("Ad Soyad (Sınıf), ..."); öğrencide null. */
+  students: string | null;
 }
 
 export interface AccessTransaction {
@@ -182,6 +188,7 @@ interface InsidePersonRow {
   Okul: string | null;
   SicilNo: string | null;
   Okulda: number;
+  Ogrenciler: string | null;
 }
 
 /** Backend'in beklediği kişi türü değerleri. */
@@ -224,6 +231,7 @@ export class DashboardService {
             studentApproved: this.toCount(row?.OgrenciOnaySayisi),
             parentApproved: this.toCount(row?.VeliOnaySayisi),
             proxyApproved: this.toCount(row?.VekilOnaySayisi),
+            serviceApproved: this.toCount(row?.ServisOnaySayisi),
             totalApproved: this.toCount(row?.ToplamOnaySayisi),
           };
         }),
@@ -330,6 +338,7 @@ export class DashboardService {
             schoolName: row.Okul,
             registryNo: row.SicilNo,
             isInside: row.Okulda === 1,
+            students: row.Ogrenciler || null,
           })),
         ),
       );

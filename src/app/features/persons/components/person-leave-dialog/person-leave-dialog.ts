@@ -19,6 +19,8 @@ import { InputTextModule } from 'primeng/inputtext';
 import { TextareaModule } from 'primeng/textarea';
 import { SelectModule } from 'primeng/select';
 import { CheckboxModule } from 'primeng/checkbox';
+import { ConfirmDialogModule } from 'primeng/confirmdialog';
+import { ConfirmationService } from 'primeng/api';
 import {
   Person,
   PersonLeaveAssignCampusParams,
@@ -44,8 +46,10 @@ import { TranslatePipe, TranslateService } from '@ngx-translate/core';
     TextareaModule,
     SelectModule,
     CheckboxModule,
+    ConfirmDialogModule,
     TranslatePipe,
   ],
+  providers: [ConfirmationService],
   templateUrl: './person-leave-dialog.html',
   styleUrl: './person-leave-dialog.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -71,6 +75,7 @@ export class PersonLeaveDialogComponent implements OnChanges {
   private cdr = inject(ChangeDetectorRef);
   private readonly destroyRef = inject(DestroyRef);
   private translate = inject(TranslateService);
+  private confirmationService = inject(ConfirmationService);
 
   startDateStr = '';
   endDateStr = '';
@@ -177,6 +182,7 @@ export class PersonLeaveDialogComponent implements OnChanges {
     return true;
   }
 
+  /** 2+ kişiye izin atanacaksa önce onay penceresi gösterir; aksi halde doğrudan kaydeder. */
   onConfirm(): void {
     if (
       (!this.person && (!this.multiPersons || this.multiPersons.length === 0)) ||
@@ -184,6 +190,25 @@ export class PersonLeaveDialogComponent implements OnChanges {
     )
       return;
 
+    const count = this.multiPersons?.length ?? 0;
+    if (count < 2 || this.replaceLeaveId != null) {
+      this.submit();
+      return;
+    }
+
+    this.confirmationService.confirm({
+      message: this.translate.instant('PERSON_LEAVE.BULK_CONFIRM_MESSAGE', { count }),
+      header: this.translate.instant('PERSON_LEAVE.BULK_CONFIRM_TITLE'),
+      icon: 'pi pi-exclamation-triangle',
+      acceptLabel: this.translate.instant('COMMON.CONFIRM'),
+      rejectLabel: this.translate.instant('COMMON.CANCEL'),
+      acceptButtonStyleClass: 'p-button-success',
+      rejectButtonStyleClass: 'p-button-text p-button-danger',
+      accept: () => this.submit(),
+    });
+  }
+
+  private submit(): void {
     this.isProcessing = true;
     this.errorMessage = '';
 

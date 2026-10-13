@@ -8,6 +8,8 @@ import {
   BusDirection,
   StudentAssignment,
   StudentAssignmentFilter,
+  StudentBusPlan,
+  StudentBusPlanInput,
   BusDashboardStats,
   AuthorityAssignment,
   ServiceAuthority,
@@ -40,6 +42,31 @@ interface OgrenciServisCampusRow {
   Model: string;
   Yon: number;
   YonAciklama: string;
+}
+
+interface OgrenciServisPlanRow {
+  Id: number;
+  OgrenciSicilId: number;
+  OgrenciAdSoyad: string;
+  Sinif: string | null;
+  Kampus: string | null;
+  ServisId: number | null;
+  Plaka: string | null;
+  ServisKullanmiyor: boolean | number;
+  Yon: number;
+  YonAciklama: string;
+  TekrarTuru: string;
+  Tarih: string | null;
+  HaftaGunu: number | null;
+  HaftaGunuAciklama: string | null;
+  BaslangicTarih: string | null;
+  BitisTarih: string | null;
+  Aciklama: string | null;
+  IsActive: boolean | number;
+  OlusturanAdSoyad: string | null;
+  CreatedDate: string | null;
+  GuncelleyenAdSoyad: string | null;
+  UpdatedDate: string | null;
 }
 
 interface ServisKullaniciRow {
@@ -197,6 +224,129 @@ export class SchoolBusService {
         Id: id,
       })
       .pipe(map(this.mapStandardResponse));
+  }
+
+  /**
+   * sp_ogrenciservisplancampus_s: öğrenci servis planları. Prosedürün tüm
+   * filtreleri opsiyonel; liste istemci tarafında tablo filtreleriyle daraltılır.
+   */
+  getStudentBusPlans(): Observable<StudentBusPlan[]> {
+    return this.api
+      .callEndpoint<OgrenciServisPlanRow[]>('Dynamic', {
+        point: 'ogrenciservisplancampus',
+        islemtipi: 's',
+      })
+      .pipe(
+        map((rows) =>
+          (rows || []).map((row) => ({
+            id: row.Id,
+            ogrenciSicilId: row.OgrenciSicilId,
+            ogrenciAdSoyad: row.OgrenciAdSoyad,
+            sinif: row.Sinif,
+            kampus: row.Kampus,
+            servisId: row.ServisId,
+            plaka: row.Plaka,
+            servisKullanmiyor: !!row.ServisKullanmiyor,
+            yon: row.Yon as BusDirection,
+            yonAciklama: row.YonAciklama,
+            tekrarTuru: row.TekrarTuru,
+            gunAciklama: row.Tarih ? this.formatDate(row.Tarih) : (row.HaftaGunuAciklama ?? '-'),
+            baslangicTarih: row.BaslangicTarih ? this.formatDate(row.BaslangicTarih) : null,
+            bitisTarih: row.BitisTarih ? this.formatDate(row.BitisTarih) : null,
+            tarih: this.toIsoDate(row.Tarih),
+            haftaGunu: row.HaftaGunu ? Number(row.HaftaGunu) : null,
+            baslangicIso: this.toIsoDate(row.BaslangicTarih),
+            bitisIso: this.toIsoDate(row.BitisTarih),
+            aciklama: row.Aciklama,
+            isActive: !!row.IsActive,
+            olusturanAdSoyad: row.OlusturanAdSoyad,
+            olusturmaTarihi: row.CreatedDate ? this.formatDate(row.CreatedDate, true) : null,
+            guncelleyenAdSoyad: row.GuncelleyenAdSoyad,
+            guncellemeTarihi: row.UpdatedDate ? this.formatDate(row.UpdatedDate, true) : null,
+          })),
+        ),
+      );
+  }
+
+  /** Tüm Yön x Gün kombinasyonları tek işlemde eklenir; biri çakışırsa hiçbiri eklenmez. */
+  addStudentBusPlan(
+    ogrenciSicilId: number,
+    plan: StudentBusPlanInput,
+  ): Observable<{ sonuc: number; sunucuCevap: string }> {
+    return this.api
+      .callEndpoint<DBInsertResult[]>('Dynamic', {
+        point: 'ogrenciservisplancampus',
+        islemtipi: 'i',
+        OgrenciSicilId: ogrenciSicilId,
+        ...this.planParams(plan),
+      })
+      .pipe(map(this.mapStandardResponse));
+  }
+
+  /**
+   * Tam güncelleme: prosedür tüm alanları yollanan değerle değiştirir (öğrenci hariç).
+   * Birden fazla yön/gün gönderilirse ilk kombinasyon bu kaydı günceller, kalanlar
+   * yeni kayıt olarak eklenir (tek işlemde; çakışmada hiçbiri değişmez).
+   */
+  updateStudentBusPlan(
+    id: number,
+    plan: StudentBusPlanInput,
+  ): Observable<{ sonuc: number; sunucuCevap: string }> {
+    return this.api
+      .callEndpoint<DBInsertResult[]>('Dynamic', {
+        point: 'ogrenciservisplancampus',
+        islemtipi: 'u',
+        Id: id,
+        ...this.planParams(plan),
+        IsActive: plan.isActive === undefined ? '' : String(plan.isActive),
+      })
+      .pipe(map(this.mapStandardResponse));
+  }
+
+  deleteStudentBusPlan(id: number): Observable<{ sonuc: number; sunucuCevap: string }> {
+    return this.api
+      .callEndpoint<DBInsertResult[]>('Dynamic', {
+        point: 'ogrenciservisplancampus',
+        islemtipi: 'd',
+        Id: id,
+      })
+      .pipe(map(this.mapStandardResponse));
+  }
+
+  /**
+   * Boş değerler '' gider; prosedür '' / 0 / 1900-01-01'i NULL sayar.
+   * Yön ve hafta günleri ';' ile birleştirilir ('1;2', '2;4').
+   */
+  private planParams(plan: StudentBusPlanInput) {
+    return {
+      ServisId: plan.servisId ?? '',
+      Yon: plan.yon.join(';'),
+      Tarih: plan.tarih ?? '',
+      HaftaGunu: plan.haftaGunu.join(';'),
+      BaslangicTarih: plan.baslangicTarih ?? '',
+      BitisTarih: plan.bitisTarih ?? '',
+      Aciklama: plan.aciklama ?? '',
+    };
+  }
+
+  /** API tarihini form/gönderim için yyyy-MM-dd yapar; boş/ayrıştırılamazsa null. */
+  private toIsoDate(value: string | null | undefined): string | null {
+    if (!value) return null;
+    const match = /^\d{4}-\d{2}-\d{2}/.exec(value);
+    if (match) return match[0];
+    const date = new Date(value);
+    if (isNaN(date.getTime())) return null;
+    const pad = (n: number) => String(n).padStart(2, '0');
+    return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
+  }
+
+  /** ISO / SQL tarihini dd.MM.yyyy (withTime ile HH:mm) olarak döndürür; ayrıştırılamazsa olduğu gibi. */
+  private formatDate(value: string, withTime = false): string {
+    const date = new Date(value);
+    if (isNaN(date.getTime())) return value;
+    const pad = (n: number) => String(n).padStart(2, '0');
+    const day = `${pad(date.getDate())}.${pad(date.getMonth() + 1)}.${date.getFullYear()}`;
+    return withTime ? `${day} ${pad(date.getHours())}:${pad(date.getMinutes())}` : day;
   }
 
   /**

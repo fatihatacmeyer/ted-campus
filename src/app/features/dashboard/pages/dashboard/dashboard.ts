@@ -75,6 +75,7 @@ const EMPTY_KVKK: KvkkStats = {
   studentApproved: 0,
   parentApproved: 0,
   proxyApproved: 0,
+  serviceApproved: 0,
   totalApproved: 0,
 };
 
@@ -287,6 +288,7 @@ export class DashboardComponent implements OnInit {
   readonly insideSchoolFilter = signal('');
   readonly insideClassFilter = signal('');
   readonly insideTypeFilter = signal<'' | PersonType>('');
+  readonly insideStudentFilter = signal('');
   /** Tür seçenekleri: değer olarak PersonType, etiket olarak çeviri anahtarı. */
   readonly insideTypeOptions = [
     { label: 'USERDEF.STUDENT', value: 'STUDENT' },
@@ -306,22 +308,37 @@ export class DashboardComponent implements OnInit {
     );
   });
 
+  /** Veli satırlarındaki öğrenciler için filtre seçenekleri ("Ad Soyad (Sınıf)"). */
+  readonly insideStudentOptions = computed(() =>
+    this.uniqueSorted(
+      this.insideDialog().persons.flatMap((p) => (p.students ? p.students.split(', ') : [])),
+    ),
+  );
+
+  /** Öğrenci kolonu yalnızca veli içeren görünümde anlamlıdır. */
+  readonly showInsideStudentsCol = computed(
+    () => this.insideDialog().type !== 'STUDENT' && this.insideTypeFilter() !== 'STUDENT',
+  );
+
   /** Arama metni ve filtrelere göre daraltılmış kişi listesi. */
   readonly filteredInsidePersons = computed(() => {
     const q = toLowerTr(this.insideSearch().trim());
     const school = this.insideSchoolFilter();
     const cls = this.insideClassFilter();
     const type = this.insideTypeFilter();
+    const student = this.insideStudentFilter();
     return this.insideDialog().persons.filter(
       (p) =>
         (!school || p.schoolName === school) &&
+        (!student || (p.students ?? '').split(', ').includes(student)) &&
         (!cls || p.className === cls) &&
         (!type || p.type === type) &&
         (!q ||
           toLowerTr(p.fullName).includes(q) ||
           toLowerTr(p.schoolName).includes(q) ||
           toLowerTr(p.className).includes(q) ||
-          toLowerTr(p.registryNo).includes(q)),
+          toLowerTr(p.registryNo).includes(q) ||
+          toLowerTr(p.students).includes(q)),
     );
   });
 
@@ -507,6 +524,7 @@ export class DashboardComponent implements OnInit {
     this.insideSchoolFilter.set('');
     this.insideClassFilter.set('');
     this.insideTypeFilter.set('');
+    this.insideStudentFilter.set('');
     this.insideDialog.set({ ...INITIAL_INSIDE_DIALOG, type, loading: true });
     this.insideDialogVisible.set(true);
 
