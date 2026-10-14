@@ -2,18 +2,15 @@ import {
   ChangeDetectionStrategy,
   ChangeDetectorRef,
   Component,
-  DestroyRef,
   EventEmitter,
   Input,
   Output,
   SimpleChanges,
   OnChanges,
-  inject,
   OnInit,
+  inject,
+  viewChild,
 } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { concat, forkJoin, Observable, of } from 'rxjs';
-import { catchError } from 'rxjs/operators';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { DialogModule } from 'primeng/dialog';
@@ -22,15 +19,8 @@ import { TextareaModule } from 'primeng/textarea';
 import { ButtonModule } from 'primeng/button';
 import { DatePickerModule } from 'primeng/datepicker';
 import { SelectModule } from 'primeng/select';
-import { TooltipModule } from 'primeng/tooltip';
 import { PersonService } from '../../services/person.service';
-import {
-  Person,
-  UserDef,
-  PersonInsertRequest,
-  RelationCampusRow,
-} from '../../../../core/models/person.model';
-import { TypesService, DropdownItem } from '../../services/types.service';
+import { Person, UserDef, PersonInsertRequest } from '../../../../core/models/person.model';
 import { NotificationService } from '../../../../core/services/notification.service';
 import { formatDate, parseDate } from '../../../../shared/utils/date.utils';
 import {
@@ -40,6 +30,9 @@ import {
 } from '../../../../shared/utils/response.utils';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { InputMaskModule } from 'primeng/inputmask';
+import { PersonLinkedSectionComponent } from '../person-linked-section/person-linked-section';
+import { linkedKindKey, linkedTargetUserdef } from '../../utils/linked-person.utils';
+import { PersonFormOptions } from './person-form-options.service';
 
 /** Form alanlarının tek kaynağı (single source of truth) — alan adları yalnızca burada tanımlanır. */
 interface PersonFormFieldMeta {
@@ -75,30 +68,6 @@ const PERSON_FORM_FIELDS: PersonFormFieldMeta[] = [
   { key: 'giristarih', isDate: true },
 ];
 
-/**
- * Mevcut ilişki satırı. Yön, formun userdef'ine bağlıdır:
- *  - Öğrenci modunda (userdef=11) linkedId = veli sicil id  (sp_relationcampus_s tip=2)
- *  - Veli modunda (userdef=12) linkedId = öğrenci sicil id (sp_relationcampus_s tip=1)
- */
-interface ExistingRelation {
-  relid: number; // RelationCampus.Id — güncelleme/silme için zorunlu
-  linkedId: number;
-  linkedName: string;
-  sicilno: string;
-}
-
-/** "Değiştir" işlemi — mevcut ilişki satırı (relid) yeni kişiye güncellenir (sp_velicampus_u). */
-interface RelationChange {
-  relid: number;
-  newLinkedId: number;
-}
-
-/** Şablonda listelenen birleşik satır: mevcut ilişki veya bekleyen ekleme. */
-interface RelationDisplayRow extends ExistingRelation {
-  changed?: boolean;
-  pending?: boolean;
-}
-
 @Component({
   selector: 'app-person-form',
   standalone: true,
@@ -111,10 +80,11 @@ interface RelationDisplayRow extends ExistingRelation {
     ButtonModule,
     DatePickerModule,
     SelectModule,
-    TooltipModule,
     TranslatePipe,
     InputMaskModule,
+    PersonLinkedSectionComponent,
   ],
+  providers: [PersonFormOptions],
   templateUrl: './person-form.html',
   styleUrl: './person-form.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -129,37 +99,18 @@ export class PersonFormComponent implements OnChanges, OnInit {
   @Output() visibleChange = new EventEmitter<boolean>();
   @Output() saved = new EventEmitter<unknown>();
 
-  /** Düzenleme modunda mı? NguyenChanges tarafından ayarlanır. */
+  /** Düzenleme modunda mı? ngOnChanges tarafından ayarlanır. */
   isEditMode = false;
-  isCreatingNewLinked = false;
-
-  // ─── İlişkili kişi yönetimi (userdef=11 Öğrenci veya 12 Veli) ───
-  existingRelations: ExistingRelation[] = []; // DB'deki mevcut ilişkiler
-  removedRelIds: number[] = []; // silinecek ilişkiler (sp_velicampus_d)
-  changedRelations: RelationChange[] = []; // velisi değişecek ilişkiler (sp_velicampus_u)
-  pendingAdditions: number[] = []; // eklenecek veli sicil id'leri (sp_velicampus_i)
-  changingRelid: number | null = null; // "Değiştir" modundaki satırın relid'si
-  confirmRemoveKey: string | null = null; // "Kaldır" onayı bekleyen satır
-
-  /**
-   * linkedPersonOptions cache'i — getter her change detection'da çağrıldığı için
-   * binlerce kayıtlık allPersons listesini her seferinde yeniden filtreleyip
-   * map'lememek adına, girdiler (allPersons/ilişki durumu/userdef) değişmedikçe
-   * sonuç burada tutulur. Geçersiz kılma: invalidateLinkedOptions().
-   */
-  private cachedLinkedOptions: { label: string; value: number }[] | null = null;
-
-  private invalidateLinkedOptions(): void {
-    this.cachedLinkedOptions = null;
-  }
 
   private fb = inject(FormBuilder);
   private personService = inject(PersonService);
-  private typesService = inject(TypesService);
-  private destroyRef = inject(DestroyRef);
   private cdr = inject(ChangeDetectorRef);
   private notification = inject(NotificationService);
   private translate = inject(TranslateService);
+  protected readonly options = inject(PersonFormOptions);
+
+  /** Veli/çocuk bölümü; yalnızca öğrenci ve veli formlarında (ve form açıkken) vardır. */
+  private readonly linked = viewChild(PersonLinkedSectionComponent);
 
   form: FormGroup = this.fb.group(this.buildFormControls());
 
@@ -176,6 +127,7 @@ export class PersonFormComponent implements OnChanges, OnInit {
       }
     }
 
+    // İlişkili kişi bölümünün (PersonLinkedSectionComponent) kullandığı alanlar.
     controls['linkedPersonId'] = [null];
     controls['yeniLinkedAd'] = [''];
     controls['yeniLinkedSoyad'] = [''];
@@ -184,7 +136,6 @@ export class PersonFormComponent implements OnChanges, OnInit {
     return controls;
   }
 
-  // Form alanlarının isimlendirmesi ve görünürlüğü için i18n uyumlu dinamik yapı
   // Form alanlarının isimlendirmesi ve görünürlüğü için i18n uyumlu dinamik yapı
   get formConfig() {
     const isOgrenci = this.userdef === UserDef.Ogrenci;
@@ -197,28 +148,6 @@ export class PersonFormComponent implements OnChanges, OnInit {
         pozisyon: !isOgrenci,
         gorev: !isOgrenci,
       },
-      // labels: {
-      //   sicilno: isOgrenci ? 'PERSON.IDENTITY_STUDENT' : 'PERSON.IDENTITY_DEFAULT',
-      //   personelno: isOgrenci ? 'PERSON.SCHOOL_NO' : 'PERSON.PERSONNEL_NO',
-      //   firma: 'PERSON.CAMPUS',
-      //   direktorluk: isOgrenci ? 'PERSON.EDU_LEVEL' : 'PERSON.DIRECTORATE',
-      //   bolum: isOgrenci ? 'PERSON.CLASS' : 'PERSON.DEPARTMENT',
-      //   pozisyon: isOgretmen ? 'PERSON.BRANCH' : 'PERSON.POSITION',
-      //   gorev: 'PERSON.TASK',
-      //   altfirma: 'PERSON.SUB_CAMPUS',
-      // },
-      // placeholders: {
-      //   sicilno: isOgrenci
-      //     ? 'PERSON.IDENTITY_STUDENT_PLACEHOLDER'
-      //     : 'PERSON.IDENTITY_DEFAULT_PLACEHOLDER',
-      //   personelno: isOgrenci ? 'PERSON.SCHOOL_NO_PLACEHOLDER' : 'PERSON.PERSONNEL_NO_PLACEHOLDER',
-      //   firma: 'PERSON.CAMPUS_PLACEHOLDER',
-      //   direktorluk: isOgrenci ? 'PERSON.EDU_LEVEL_PLACEHOLDER' : 'PERSON.DIRECTORATE_PLACEHOLDER',
-      //   bolum: isOgrenci ? 'PERSON.CLASS_PLACEHOLDER' : 'PERSON.DEPARTMENT_PLACEHOLDER',
-      //   pozisyon: isOgretmen ? 'PERSON.BRANCH_PLACEHOLDER' : 'PERSON.POSITION_PLACEHOLDER',
-      //   gorev: 'PERSON.TASK_PLACEHOLDER',
-      //   altfirma: 'PERSON.SUB_CAMPUS_PLACEHOLDER',
-      // },
       labels: {
         // Öğrenciyse "Okul No", değilse "Sicil No"
         sicilno: isOgrenci ? 'PERSON.SCHOOL_NO' : 'Sicil No',
@@ -250,204 +179,23 @@ export class PersonFormComponent implements OnChanges, OnInit {
     };
   }
 
-  toggleNewLinkedMode(): void {
-    this.isCreatingNewLinked = !this.isCreatingNewLinked;
-
-    // Mod değiştiğinde gereksiz alanları temizle
-    if (this.isCreatingNewLinked) {
-      this.form.get('linkedPersonId')?.setValue(null);
-    } else {
-      this.form.patchValue({ yeniLinkedAd: '', yeniLinkedSoyad: '', yeniLinkedTelefon: '' });
-    }
-  }
   isSaving = false;
   errorMessage = '';
   selectedPhoto: string | null = null;
   photoFileName = '';
 
-  genderOptions: { label: string; value: string }[] = [];
-  bloodTypeOptions: { label: string; value: string }[] = [];
-  // Ham DB değerinden (örn. 'E', 'A RH+') seçenek ID'sine çeviri için arama tabloları.
-  // Edit modunda form.patchValue ham değeri alır; bu map ile item.id'ye çevrilir.
-  private genderIdByAd = new Map<string, number>();
-  private bloodTypeIdByAd = new Map<string, number>();
-
-  /** DropdownItem listesinden "ad → id" arama tablosu üretir. */
-  private idLookup(items: DropdownItem[]): Map<string, number> {
-    return new Map(items.map((item) => [item.ad, item.id]));
-  }
-
-  /** Ham DB değerini (örn. 'E') seçenek ID'sine çevirir; eşleşmezse olduğu gibi döner. */
-  private toOptionId(lookup: Map<string, number>, raw: unknown): string | null {
-    if (raw == null || raw === '') return null;
-    const id = lookup.get(String(raw));
-    return id != null ? String(id) : String(raw);
-  }
-
-  // Kurumsal dropdown seçenekleri (TypesService'den yüklenir)
-  firmaOptions: DropdownItem[] = [];
-  bolumOptions: DropdownItem[] = [];
-  pozisyonOptions: DropdownItem[] = [];
-  gorevOptions: DropdownItem[] = [];
-  altfirmaOptions: DropdownItem[] = [];
-  direktorlukOptions: DropdownItem[] = [];
-  yakaOptions: DropdownItem[] = [];
-
   ngOnInit() {
-    this.loadDropdownData();
-  }
-
-  private loadDropdownData(): void {
-    forkJoin({
-      cbo_firma: this.typesService.getDropdownList('cbo_firma').pipe(
-        catchError((err) => {
-          console.error('Firmalar yüklenirken hata:', err);
-          return of([] as DropdownItem[]);
-        }),
-      ),
-      cbo_bolum: this.typesService.getDropdownList('cbo_bolum').pipe(
-        catchError((err) => {
-          console.error('Bölümler yüklenirken hata:', err);
-          return of([] as DropdownItem[]);
-        }),
-      ),
-      cbo_pozisyon: this.typesService.getDropdownList('cbo_pozisyon').pipe(
-        catchError((err) => {
-          console.error('Pozisyonlar yüklenirken hata:', err);
-          return of([] as DropdownItem[]);
-        }),
-      ),
-      cbo_gorev: this.typesService.getDropdownList('cbo_gorev').pipe(
-        catchError((err) => {
-          console.error('Görevler yüklenirken hata:', err);
-          return of([] as DropdownItem[]);
-        }),
-      ),
-      cbo_altfirma: this.typesService.getDropdownList('cbo_altfirma').pipe(
-        catchError((err) => {
-          console.error('Alt firmalar yüklenirken hata:', err);
-          return of([] as DropdownItem[]);
-        }),
-      ),
-      cbo_direktorluk: this.typesService.getDropdownList('cbo_direktorluk').pipe(
-        catchError((err) => {
-          console.error('Direktörlükler yüklenirken hata:', err);
-          return of([] as DropdownItem[]);
-        }),
-      ),
-      cbo_yaka: this.typesService.getDropdownList('cbo_yaka').pipe(
-        catchError((err) => {
-          console.error('Yakalar yüklenirken hata:', err);
-          return of([] as DropdownItem[]);
-        }),
-      ),
-      sys_cinsiyet: this.typesService.getGenderOptions().pipe(
-        catchError((err) => {
-          console.error('Cinsiyet seçenekleri yüklenirken hata:', err);
-          return of([] as DropdownItem[]);
-        }),
-      ),
-      sys_KanGrubu: this.typesService.getBloodTypes().pipe(
-        catchError((err) => {
-          console.error('Kan grubu seçenekleri yüklenirken hata:', err);
-          return of([] as DropdownItem[]);
-        }),
-      ),
-    })
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe(
-        ({
-          cbo_firma,
-          cbo_bolum,
-          cbo_pozisyon,
-          cbo_gorev,
-          cbo_altfirma,
-          cbo_direktorluk,
-          cbo_yaka,
-          sys_cinsiyet,
-          sys_KanGrubu,
-        }) => {
-          this.firmaOptions = cbo_firma;
-          this.bolumOptions = cbo_bolum;
-          this.pozisyonOptions = cbo_pozisyon;
-          this.gorevOptions = cbo_gorev;
-          this.altfirmaOptions = cbo_altfirma;
-          this.direktorlukOptions = cbo_direktorluk;
-          this.yakaOptions = cbo_yaka;
-
-          const genderLabelMap: Record<string, string> = {
-            E: 'PERSON.GENDER_MALE',
-            K: 'PERSON.GENDER_FEMALE',
-          };
-          // Backend'e seçenek ID'si gidiyor (item.id), görünen etiket item.ad kalıyor.
-          this.genderOptions = sys_cinsiyet.map((item) => ({
-            label: genderLabelMap[item.ad] ?? item.ad,
-            value: String(item.id),
-          }));
-          this.genderIdByAd = this.idLookup(sys_cinsiyet);
-
-          this.bloodTypeOptions = sys_KanGrubu.map((item) => ({
-            label: item.ad,
-            value: String(item.id),
-          }));
-          this.bloodTypeIdByAd = this.idLookup(sys_KanGrubu);
-        },
-      );
+    this.options.load();
   }
 
   ngOnChanges(changes: SimpleChanges): void {
-    // linkedPersonOptions girdileri değişti → cache'i tazele
-    if (changes['allPersons'] || changes['userdef']) {
-      this.invalidateLinkedOptions();
-    }
     if (changes['editPerson']) {
       this.isEditMode = this.editPerson !== null;
-      this.resetRelationState();
-      if (this.editPerson) {
-        this.patchFormForEdit();
-        // Düzenleme modunda mevcut ilişkileri ilişki tablosundan yükle (öğrenci: tip=2, veli: tip=1)
-        if (this.isRelationMode) {
-          this.loadExistingRelations();
-        }
-      }
+      if (this.editPerson) this.patchFormForEdit();
     }
   }
 
   /** Düzenleme modunda form alanlarını mevcut person verisiyle doldurur. */
-  // private patchFormForEdit(): void {
-  //   // Alan adları PERSON_FORM_FIELDS'tan gelir; değer eşlemesi düzensiz olduğu için açık tutulur.
-  //   const p = this.editPerson!;
-  //   // DEBUG: backend'in bu kişi için gerçekte hangi alanları döndürdüğünü gör.
-  //   // dogumtarih/cinsiyet/kangrubu/telefon1/email/adres/il/ilce/giristarih
-  //   // undefined geliyorsa, backend'in sv2 select prosedürü bu kolonları hiç
-  //   // döndürmüyor demektir — bu durumda düzeltme backend tarafında yapılmalı.
-  //   console.log('[PersonForm] düzenlenen kişi (ham):', p);
-  //   this.form.patchValue({
-  //     ad: p.ad || '',
-  //     soyad: p.soyad || '',
-  //     dogumtarih: parseDate(p.dogumtarih ?? null),
-  //     cinsiyet: this.toOptionId(this.genderIdByAd, p.cinsiyet),
-  //     kangrubu: this.toOptionId(this.bloodTypeIdByAd, p.kangrubu),
-  //     sicilno: p.sicilno || '',
-  //     personelno: p.personelno || '',
-  //     cardid: p.cardid || '',
-  //     ceptelefon: p.ceptelefon || '',
-  //     telefon1: p.telefon1 || '',
-  //     email: p.email || '',
-  //     adres: p.adres || '',
-  //     il: p.il || '',
-  //     ilce: p.ilce || '',
-  //     firma: p.firma || '',
-  //     bolum: p.bolum || '',
-  //     pozisyon: p.pozisyon || '',
-  //     gorev: p.gorev || '',
-  //     altfirma: p.altfirma || '',
-  //     direktorluk: p.direktorluk || '',
-  //     yaka: p.yaka || '',
-  //     giristarih: parseDate(p.giristarih ?? null),
-  //   });
-  // }
-
   private patchFormForEdit(): void {
     const p = this.editPerson!;
 
@@ -466,8 +214,8 @@ export class PersonFormComponent implements OnChanges, OnInit {
       ad: p.ad || '',
       soyad: p.soyad || '',
       dogumtarih: parseDate(p.dogumtarih ?? null),
-      cinsiyet: this.toOptionId(this.genderIdByAd, p.cinsiyet),
-      kangrubu: this.toOptionId(this.bloodTypeIdByAd, p.kangrubu),
+      cinsiyet: this.options.toGenderId(p.cinsiyet),
+      kangrubu: this.options.toBloodTypeId(p.kangrubu),
       sicilno: p.sicilno || '',
       personelno: p.personelno || '',
       cardid: p.cardid || '',
@@ -496,7 +244,7 @@ export class PersonFormComponent implements OnChanges, OnInit {
     this.isEditMode = false;
     this.selectedPhoto = null;
     this.photoFileName = '';
-    this.resetRelationState();
+    this.linked()?.resetRelationState();
     this.form.reset();
     this.cdr.markForCheck();
   }
@@ -525,72 +273,6 @@ export class PersonFormComponent implements OnChanges, OnInit {
     return this.userdef === UserDef.Ogrenci || this.userdef === UserDef.Veli;
   }
 
-  /** İlişkili kişinin tekil adı (i18n anahtarı): öğrenci düzenlerken "Veli", veli düzenlerken "Öğrenci". */
-  get linkedKind(): string {
-    return this.userdef === UserDef.Veli ? 'USERDEF.STUDENT' : 'USERDEF.PARENT';
-  }
-
-  /** Bölüm başlığı (i18n anahtarı): "Veli Bilgisi" / "Çocuk Bilgisi". */
-  get linkedSectionTitle(): string {
-    return this.userdef === UserDef.Veli ? 'PERSON.CHILD_INFO' : 'PERSON.PARENT_INFO';
-  }
-
-  /** Toggle buton etiketi (i18n anahtarı): "Listeden Seç" / "Yeni Veli Oluştur" / "Yeni Öğrenci Oluştur". */
-  get newLinkedToggleLabel(): string {
-    return this.isCreatingNewLinked ? 'PERSON.SELECT_FROM_LIST' : 'PERSON.CREATE_NEW_LINKED';
-  }
-
-  /** "Veli seçin" / "Öğrenci seçin" placeholder'ı (i18n anahtarı). */
-  readonly linkedSelectPlaceholder = 'PERSON.SELECT_LINKED';
-
-  /** Değiştir dropdown'ı placeholder'ı (i18n anahtarı): "Yeni veli seçin" / "Yeni öğrenci seçin". */
-  readonly changeLinkedPlaceholder = 'PERSON.SELECT_NEW_LINKED';
-
-  /** "Veli Ekle" / "Öğrenci Ekle" buton etiketi (i18n anahtarı). */
-  readonly addLinkedButtonLabel = 'PERSON.ADD_LINKED';
-
-  /** Değiştir tooltip'i (i18n anahtarı): "Veliyi Değiştir" / "Öğrenciyi Değiştir". */
-  get changeLinkedTooltip(): string {
-    return this.userdef === UserDef.Veli ? 'PERSON.CHANGE_STUDENT' : 'PERSON.CHANGE_PARENT';
-  }
-
-  /** Kaldır tooltip'i (i18n anahtarı): "Veli İlişkisini Kaldır" / "Öğrenci İlişkisini Kaldır". */
-  get removeLinkedTooltip(): string {
-    return this.userdef === UserDef.Veli
-      ? 'PERSON.REMOVE_STUDENT_RELATION'
-      : 'PERSON.REMOVE_PARENT_RELATION';
-  }
-
-  /** Boş liste metni (i18n anahtarı): "Veli atanmamış" / "Çocuk atanmamış". */
-  get noLinkedText(): string {
-    return this.userdef === UserDef.Veli ? 'PERSON.NO_STUDENT' : 'PERSON.NO_PARENT';
-  }
-
-  /** Dropdown içindeki arama kutusu placeholder'ı (i18n anahtarı): "Veli ara..." / "Öğrenci ara...". */
-  readonly linkedFilterPlaceholder = 'PERSON.SEARCH_LINKED';
-
-  get linkedPersonOptions(): { label: string; value: number }[] {
-    if (this.cachedLinkedOptions) return this.cachedLinkedOptions;
-
-    // userdef=Ogrenci → show userdef=Veli, userdef=Veli → show userdef=Ogrenci
-    const targetUserdef = this.userdef === UserDef.Ogrenci ? UserDef.Veli : UserDef.Ogrenci;
-
-    // Zaten ilişkili olan velileri dropdown'dan çıkar (mükerrer ilişki oluşmasın):
-    // - mevcut ilişkiler (kaldırılmamış olanlar)
-    // - bekleyen eklemeler
-    const excludedIds = new Set<number>();
-    for (const rel of this.existingRelations) {
-      if (!this.removedRelIds.includes(rel.relid)) excludedIds.add(rel.linkedId);
-    }
-    for (const linkedId of this.pendingAdditions) excludedIds.add(linkedId);
-
-    this.cachedLinkedOptions = this.allPersons
-      .filter((p) => p.userdef === targetUserdef && !excludedIds.has(p.id))
-      // .map((p) => ({ label: `${p.adsoyad} (${p.sicilno})`, value: p.id }));
-      .map((p) => ({ label: `${p.adsoyad} (${p.sicilno ? p.sicilno : p.id})`, value: p.id }));
-    return this.cachedLinkedOptions;
-  }
-
   submit(): void {
     if (this.form.invalid) {
       this.form.markAllAsTouched();
@@ -600,15 +282,16 @@ export class PersonFormComponent implements OnChanges, OnInit {
     this.isSaving = true;
     this.errorMessage = '';
     const formVals = this.form.value;
+    const linked = this.linked();
 
     // Eğer YENİ ilişkili kişi oluşturuluyorsa (öğrenci düzenlerken veli, veli düzenlerken öğrenci)
-    if (this.isCreatingNewLinked) {
-      const targetUserdef = this.userdef === UserDef.Ogrenci ? UserDef.Veli : UserDef.Ogrenci;
+    if (linked?.isCreatingNewLinked) {
+      const kind = this.translate.instant(linkedKindKey(this.userdef));
       const yeniLinkedPayload: PersonInsertRequest = {
         ad: formVals.yeniLinkedAd,
         soyad: formVals.yeniLinkedSoyad,
         ceptelefon: formVals.yeniLinkedTelefon,
-        userdef: targetUserdef,
+        userdef: linkedTargetUserdef(this.userdef),
       };
 
       // 1. ÖNCE YENİ KİŞİYİ KAYDET
@@ -618,9 +301,7 @@ export class PersonFormComponent implements OnChanges, OnInit {
           if (!isSuccessResult(yeniResult)) {
             this.errorMessage =
               yeniResult?.sunucucevap ||
-              this.translate.instant('PERSON.CREATE_LINKED_FAILED', {
-                kind: this.translate.instant(this.linkedKind),
-              });
+              this.translate.instant('PERSON.CREATE_LINKED_FAILED', { kind });
             this.isSaving = false;
             this.cdr.markForCheck();
             return;
@@ -628,17 +309,15 @@ export class PersonFormComponent implements OnChanges, OnInit {
           const yeniLinkedId = extractNewId(yeniResult);
 
           if (!yeniLinkedId) {
-            this.errorMessage = this.translate.instant('PERSON.CREATE_LINKED_NO_ID', {
-              kind: this.translate.instant(this.linkedKind),
-            });
+            this.errorMessage = this.translate.instant('PERSON.CREATE_LINKED_NO_ID', { kind });
             this.isSaving = false;
             this.cdr.markForCheck();
             return;
           }
 
           // 2. ARDINDAN DÜZENLENEN KİŞİYİ KAYDET VE İLİŞKİYİ KUR
-          this.addPendingLinked(yeniLinkedId);
-          this.isCreatingNewLinked = false;
+          linked.addPendingLinked(yeniLinkedId);
+          linked.stopCreatingNew();
           this.savePersonAndLink();
         },
         error: () => {
@@ -653,7 +332,7 @@ export class PersonFormComponent implements OnChanges, OnInit {
     // Mevcut ilişkili kişi seçildiyse (ekleme alanı) bekleyen eklemelere al.
     if (this.isRelationMode) {
       const mevcutLinkedId = formVals.linkedPersonId ? Number(formVals.linkedPersonId) : null;
-      if (mevcutLinkedId) this.addPendingLinked(mevcutLinkedId);
+      if (mevcutLinkedId) linked?.addPendingLinked(mevcutLinkedId);
     }
 
     this.savePersonAndLink();
@@ -674,20 +353,19 @@ export class PersonFormComponent implements OnChanges, OnInit {
     saveObs.subscribe({
       next: (stdRes) => {
         const stdResult = unwrapResponse<Person>(stdRes);
-        console.log('stdResult', stdResult);
         // if (!isSuccessResult(stdResult)) {
         //   this.errorMessage =
         //     stdResult?.sunucucevap || this.translate.instant('PERSON.SAVE_FAILED');
-        //   console.log('girdi: ', this.errorMessage);
         //   this.isSaving = false;
         //   this.cdr.markForCheck();
         //   return;
         // }
 
         const personId = this.isEditMode ? this.editPerson!.id : extractNewId(stdResult);
+        const linked = this.linked();
 
-        if (this.isRelationMode && personId) {
-          this.applyRelationOps(personId).subscribe({
+        if (this.isRelationMode && personId && linked) {
+          linked.applyRelationOps(personId).subscribe({
             next: () => this.finishSave(stdRes),
             error: () => {
               this.errorMessage = this.translate.instant('PERSON_FORM.RELATION_UPDATE_FAILED');
@@ -707,38 +385,6 @@ export class PersonFormComponent implements OnChanges, OnInit {
     });
   }
 
-  /**
-   * Bekleyen ilişki değişikliklerini sırayla uygular:
-   *   1. silmeler  → sp_velicampus_d (relid)
-   *   2. değişimler → sp_velicampus_u (relid ile — relid eksikse SP sessizce hiçbir satırı güncellemez)
-   *   3. eklemeler → sp_velicampus_i (veli sicil id)
-   */
-  private applyRelationOps(personId: number): Observable<unknown> {
-    const ops: Observable<unknown>[] = [];
-    const ogrenciModu = this.userdef === UserDef.Ogrenci;
-
-    for (const relid of this.removedRelIds) {
-      ops.push(this.personService.deleteRelationCampus(relid));
-    }
-    for (const change of this.changedRelations) {
-      // sp_velicampus_u(ogrenciSicilId, veliSicilId, relid): sabit taraf yöne göre değişir.
-      ops.push(
-        ogrenciModu
-          ? this.personService.updateRelationCampus(personId, change.newLinkedId, change.relid)
-          : this.personService.updateRelationCampus(change.newLinkedId, personId, change.relid),
-      );
-    }
-    for (const linkedId of this.pendingAdditions) {
-      ops.push(
-        ogrenciModu
-          ? this.personService.addRelationCampus(personId, linkedId)
-          : this.personService.addRelationCampus(linkedId, personId),
-      );
-    }
-
-    return ops.length ? concat(...ops) : of(null);
-  }
-
   private finishSave(stdRes: unknown): void {
     this.isSaving = false;
 
@@ -750,190 +396,6 @@ export class PersonFormComponent implements OnChanges, OnInit {
 
     this.saved.emit(stdRes);
     this.close();
-  }
-
-  // ─── Veli ilişkisi yönetimi (sp_relationcampus_s / sp_velicampus_i-u-d) ───
-
-  /**
-   * Düzenleme modunda mevcut ilişkileri yükler:
-   *  - öğrenci düzenlerken sp_relationcampus_s tip=2 (velileri) → { VeliSicilId, relid }
-   *  - veli düzenlerken sp_relationcampus_s tip=1 (çocukları) → { OgrenciSicilId, relid }
-   */
-  private loadExistingRelations(): void {
-    const personId = this.editPerson!.id;
-    const ogrenciModu = this.userdef === UserDef.Ogrenci;
-    const obs = ogrenciModu
-      ? this.personService.getStudentRelation(personId)
-      : this.personService.getParentRelations(personId);
-
-    obs.pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
-      next: (rows: RelationCampusRow[]) => {
-        console.log('[Rel] mevcut ilişkiler (ham):', JSON.stringify(rows));
-        this.existingRelations = (rows || []).map((r) => {
-          const linkedId = Number(ogrenciModu ? r.VeliSicilId : r.OgrenciSicilId);
-          const relid = Number(r.relid ?? r.Id);
-          console.log(
-            '[Rel] satır anahtarları:',
-            Object.keys(r),
-            '| VeliSicilId:',
-            r.VeliSicilId,
-            '| OgrenciSicilId:',
-            r.OgrenciSicilId,
-            '| relid:',
-            r.relid,
-            '| → linkedId:',
-            linkedId,
-            '| relid:',
-            relid,
-          );
-          const linked = this.allPersons.find((p) => p.id === linkedId);
-          return {
-            relid,
-            linkedId,
-            linkedName: linked ? linked.adsoyad : `${this.linkedKind} #${linkedId}`,
-            sicilno: linked?.sicilno ?? '',
-          };
-        });
-        this.invalidateLinkedOptions();
-        this.cdr.markForCheck();
-      },
-      error: (err) => {
-        console.error('[PersonForm] Mevcut ilişkiler yüklenemedi:', err);
-        this.existingRelations = [];
-        this.invalidateLinkedOptions();
-        this.cdr.markForCheck();
-      },
-    });
-  }
-
-  private resetRelationState(): void {
-    this.existingRelations = [];
-    this.removedRelIds = [];
-    this.changedRelations = [];
-    this.pendingAdditions = [];
-    this.changingRelid = null;
-    this.confirmRemoveKey = null;
-    this.isCreatingNewLinked = false;
-    this.invalidateLinkedOptions();
-  }
-
-  /** Şablonda listelenen birleşik satırlar: mevcut (değişenler güncel isimle) + bekleyen eklemeler. */
-  get relationRows(): RelationDisplayRow[] {
-    const rows: RelationDisplayRow[] = [];
-
-    for (const rel of this.existingRelations) {
-      if (this.removedRelIds.includes(rel.relid)) continue;
-
-      const change = this.changedRelations.find((c) => c.relid === rel.relid);
-      const linkedId = change ? change.newLinkedId : rel.linkedId;
-      const linked = this.allPersons.find((p) => p.id === linkedId);
-
-      rows.push({
-        relid: rel.relid,
-        linkedId,
-        linkedName: linked ? linked.adsoyad : `${this.linkedKind} #${linkedId}`,
-        sicilno: linked?.sicilno ?? '',
-        changed: !!change,
-      });
-    }
-
-    for (const linkedId of this.pendingAdditions) {
-      const linked = this.allPersons.find((p) => p.id === linkedId);
-      rows.push({
-        relid: 0,
-        linkedId,
-        linkedName: linked ? linked.adsoyad : `${this.linkedKind} #${linkedId}`,
-        sicilno: linked?.sicilno ?? '',
-        pending: true,
-      });
-    }
-
-    return rows;
-  }
-
-  /** @for track anahtarı — relid yoksa (bekleyen ekleme) ilişkili kişi id üzerinden tekil olur. */
-  rowKey(row: RelationDisplayRow): string {
-    return row.relid ? `rel-${row.relid}` : `add-${row.linkedId}`;
-  }
-
-  /** Eklenmek üzere seçilen mevcut kişiyi bekleyen eklemelere alır (edit modundaki "Ekle" butonu). */
-  addSelectedLinked(): void {
-    const linkedId = this.form.value.linkedPersonId ? Number(this.form.value.linkedPersonId) : null;
-    if (!linkedId) return;
-    this.addPendingLinked(linkedId);
-    this.form.patchValue({ linkedPersonId: null });
-    this.cdr.markForCheck();
-  }
-
-  private addPendingLinked(linkedId: number): void {
-    if (this.pendingAdditions.includes(linkedId)) return;
-    this.pendingAdditions.push(linkedId);
-    this.invalidateLinkedOptions();
-  }
-
-  /** Satırı "Değiştir" moduna alır — dropdown ile yeni ilişkili kişi seçilir. */
-  startChange(row: RelationDisplayRow): void {
-    if (!row.relid) return;
-    this.changingRelid = row.relid;
-    this.form.patchValue({ changeLinkedId: null });
-    this.cdr.markForCheck();
-  }
-
-  cancelChange(): void {
-    this.changingRelid = null;
-    this.form.patchValue({ changeLinkedId: null });
-    this.cdr.markForCheck();
-  }
-
-  /** "Değiştir" modunda seçilen yeni kişiyi onaylar → kayıtta sp_velicampus_u (relid ile) uygulanır. */
-  confirmChange(): void {
-    const linkedId = this.form.value.changeLinkedId ? Number(this.form.value.changeLinkedId) : null;
-    if (!linkedId || !this.changingRelid) return;
-
-    const relid = this.changingRelid;
-    const idx = this.changedRelations.findIndex((c) => c.relid === relid);
-    if (idx >= 0) {
-      this.changedRelations[idx] = { relid, newLinkedId: linkedId };
-    } else {
-      this.changedRelations.push({ relid, newLinkedId: linkedId });
-    }
-    // Değiştirilen satır aynı zamanda silinmemeli
-    this.removedRelIds = this.removedRelIds.filter((id) => id !== relid);
-    this.invalidateLinkedOptions();
-
-    this.changingRelid = null;
-    this.form.patchValue({ changeLinkedId: null });
-    this.cdr.markForCheck();
-  }
-
-  /** Satırda iki aşamalı silme onayı başlatır (yanlışlıkla tıklamaya karşı). */
-  requestRemove(row: RelationDisplayRow): void {
-    this.confirmRemoveKey = this.rowKey(row);
-    this.cdr.markForCheck();
-  }
-
-  cancelRemove(): void {
-    this.confirmRemoveKey = null;
-    this.cdr.markForCheck();
-  }
-
-  /** Silme onayını tamamlar → sp_velicampus_d (relid) işaretlenir. */
-  confirmRemove(row: RelationDisplayRow): void {
-    this.confirmRemoveKey = null;
-    this.removeRelation(row);
-  }
-
-  /** İlişkiyi silinmek üzere işaretler veya bekleyen eklemeyi geri alır. */
-  removeRelation(row: RelationDisplayRow): void {
-    if (row.relid) {
-      this.removedRelIds.push(row.relid);
-      this.changedRelations = this.changedRelations.filter((c) => c.relid !== row.relid);
-    } else {
-      this.pendingAdditions = this.pendingAdditions.filter((id) => id !== row.linkedId);
-    }
-    if (this.changingRelid === row.relid) this.changingRelid = null;
-    this.invalidateLinkedOptions();
-    this.cdr.markForCheck();
   }
 
   /** PERSON_FORM_FIELDS metadata'sından insert/update payload'ını üretir. */

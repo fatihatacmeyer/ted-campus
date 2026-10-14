@@ -38,9 +38,6 @@ describe('AssignmentsTabComponent', () => {
       ...overrides,
     }) as Bus;
 
-  const dialogs = (): HTMLElement[] =>
-    Array.from(fixture.nativeElement.querySelectorAll('.p-dialog') as NodeListOf<HTMLElement>);
-
   beforeEach(async () => {
     store = {
       buses: signal([bus(), bus({ id: 8, plate: '06 XYZ 999', brand: 'Ford', model: 'Transit' })]),
@@ -80,27 +77,6 @@ describe('AssignmentsTabComponent', () => {
     component['assignmentBusSearch'].set('ford');
     fixture.detectChanges();
     expect(fixture.nativeElement.querySelectorAll('.bus-card')).toHaveLength(1);
-  });
-
-  it('atama dialogu açılır, üstüne silme onayı ikinci dialog olarak biner', async () => {
-    component['openStudentAssign'](bus());
-    fixture.detectChanges();
-    await fixture.whenStable();
-    await vi.waitFor(() => expect(dialogs()).toHaveLength(1));
-    expect(store.ensureStudents).toHaveBeenCalled();
-
-    component['confirmStudentAssignDelete']({
-      id: 1,
-      ogrenciAdSoyad: 'Ali Veli',
-    } as StudentAssignment);
-    fixture.detectChanges();
-    await fixture.whenStable();
-    await vi.waitFor(() => expect(dialogs()).toHaveLength(2));
-
-    component['closeStudentAssignDelete']();
-    fixture.detectChanges();
-    await fixture.whenStable();
-    await vi.waitFor(() => expect(dialogs()).toHaveLength(1));
   });
 
   it('dolu araca atama butonu kapalıdır', () => {

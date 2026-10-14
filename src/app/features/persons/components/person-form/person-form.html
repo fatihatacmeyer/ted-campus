@@ -98,7 +98,7 @@
           <p-select
             id="cinsiyet"
             formControlName="cinsiyet"
-            [options]="genderOptions"
+            [options]="options.gender()"
             optionLabel="label"
             optionValue="value"
             [placeholder]="'PERSON.SELECT' | translate"
@@ -117,7 +117,7 @@
           <p-select
             id="kangrubu"
             formControlName="kangrubu"
-            [options]="bloodTypeOptions"
+            [options]="options.bloodType()"
             optionLabel="label"
             optionValue="value"
             [placeholder]="'PERSON.SELECT' | translate"
@@ -240,206 +240,13 @@
     </div>
 
     @if (isRelationMode) {
-      <div class="form-section">
-        <div class="d-flex justify-content-between align-items-center mb-2">
-          <h5 class="mb-0">{{ linkedSectionTitle | translate }}</h5>
-          <button
-            pButton
-            type="button"
-            class="p-button-text p-button-sm"
-            [icon]="isCreatingNewLinked ? 'pi pi-list' : 'pi pi-plus'"
-            [label]="newLinkedToggleLabel | translate"
-            (click)="toggleNewLinkedMode()"
-          ></button>
-        </div>
-
-        <!-- DÜZENLEME MODU: MEVCUT VELİLER -->
-        @if (isEditMode) {
-          <div class="relation-list">
-            @for (row of relationRows; track rowKey(row)) {
-              <div class="relation-row">
-                <div class="relation-info">
-                  <span class="relation-name">{{ row.linkedName }}</span>
-                  @if (row.sicilno) {
-                    <small class="relation-sicilno">({{ row.sicilno }})</small>
-                  }
-                  @if (row.changed) {
-                    <span class="relation-badge relation-badge-change">{{
-                      'PERSON.WILL_CHANGE' | translate
-                    }}</span>
-                  }
-                  @if (row.pending) {
-                    <span class="relation-badge relation-badge-add">{{
-                      'PERSON.WILL_ADD' | translate
-                    }}</span>
-                  }
-                </div>
-
-                @if (changingRelid === row.relid) {
-                  <!-- İlişkili kişiyi değiştir modu: yeni kişi seç + onayla -->
-                  <div class="relation-change">
-                    <p-select
-                      formControlName="changeLinkedId"
-                      [options]="linkedPersonOptions"
-                      [placeholder]="changeLinkedPlaceholder | translate"
-                      optionLabel="label"
-                      optionValue="value"
-                      styleClass="w-100"
-                      appendTo="body"
-                      [filter]="true"
-                      filterBy="label"
-                      [filterPlaceholder]="linkedFilterPlaceholder | translate"
-                      [virtualScroll]="true"
-                      [virtualScrollItemSize]="38"
-                    />
-                    <div class="relation-change-actions">
-                      <button
-                        pButton
-                        type="button"
-                        icon="pi pi-check"
-                        class="p-button-sm p-button-success"
-                        [pTooltip]="'PERSON.CONFIRM_CHANGE' | translate"
-                        [attr.aria-label]="'PERSON.CONFIRM_CHANGE' | translate"
-                        (click)="confirmChange()"
-                      ></button>
-                      <button
-                        pButton
-                        type="button"
-                        icon="pi pi-times"
-                        class="p-button-sm p-button-text"
-                        [pTooltip]="'PERSON.ABORT' | translate"
-                        [attr.aria-label]="'PERSON.ABORT' | translate"
-                        (click)="cancelChange()"
-                      ></button>
-                    </div>
-                  </div>
-                } @else if (confirmRemoveKey === rowKey(row)) {
-                  <!-- İki aşamalı silme onayı -->
-                  <div class="relation-actions relation-confirm">
-                    <span class="relation-confirm-text">{{
-                      'PERSON.REMOVE_QUESTION' | translate
-                    }}</span>
-                    <button
-                      pButton
-                      type="button"
-                      icon="pi pi-check"
-                      class="p-button-sm p-button-danger"
-                      [pTooltip]="'COMMON.CONFIRM' | translate"
-                      [attr.aria-label]="'COMMON.CONFIRM' | translate"
-                      (click)="confirmRemove(row)"
-                    ></button>
-                    <button
-                      pButton
-                      type="button"
-                      icon="pi pi-times"
-                      class="p-button-sm p-button-text"
-                      [pTooltip]="'PERSON.ABORT' | translate"
-                      [attr.aria-label]="'PERSON.ABORT' | translate"
-                      (click)="cancelRemove()"
-                    ></button>
-                  </div>
-                } @else {
-                  <div class="relation-actions">
-                    <button
-                      pButton
-                      type="button"
-                      icon="pi pi-pencil"
-                      class="p-button-text p-button-sm"
-                      [pTooltip]="changeLinkedTooltip"
-                      [attr.aria-label]="changeLinkedTooltip"
-                      (click)="startChange(row)"
-                    ></button>
-                    <button
-                      pButton
-                      type="button"
-                      icon="pi pi-trash"
-                      class="p-button-text p-button-sm p-button-danger"
-                      [pTooltip]="removeLinkedTooltip"
-                      [attr.aria-label]="removeLinkedTooltip"
-                      (click)="requestRemove(row)"
-                    ></button>
-                  </div>
-                }
-              </div>
-            } @empty {
-              <div class="relation-empty">{{ noLinkedText | translate }}</div>
-            }
-          </div>
-        }
-
-        <!-- VAR OLAN KİŞİYİ EKLE -->
-        @if (!isCreatingNewLinked) {
-          <div class="field">
-            <p-select
-              formControlName="linkedPersonId"
-              [options]="linkedPersonOptions"
-              [placeholder]="linkedSelectPlaceholder | translate"
-              optionLabel="label"
-              optionValue="value"
-              styleClass="w-100"
-              [showClear]="true"
-              appendTo="body"
-              [filter]="true"
-              filterBy="label"
-              [filterPlaceholder]="linkedFilterPlaceholder | translate"
-              [virtualScroll]="true"
-              [virtualScrollItemSize]="38"
-            />
-          </div>
-          @if (isEditMode) {
-            <button
-              pButton
-              type="button"
-              icon="pi pi-plus"
-              [label]="addLinkedButtonLabel | translate"
-              class="p-button-sm p-button-outlined w-100 mb-2"
-              (click)="addSelectedLinked()"
-            ></button>
-          }
-        }
-
-        <!-- YENİ VELİ/ÖĞRENCİ OLUŞTUR -->
-        @else {
-          <div class="p-3 border rounded bg-light">
-            <div class="field-row mb-2">
-              <div class="field">
-                <label for="yeniLinkedAd"
-                  >{{ 'PERSON.LINKED_NAME' | translate: { kind: (linkedKind | translate) } }}
-                  <span class="required">*</span></label
-                >
-                <input
-                  pInputText
-                  id="yeniLinkedAd"
-                  formControlName="yeniLinkedAd"
-                  [placeholder]="
-                    'PERSON.LINKED_NAME' | translate: { kind: (linkedKind | translate) }
-                  "
-                />
-              </div>
-              <div class="field">
-                <label for="yeniLinkedSoyad"
-                  >{{ 'PERSON.LINKED_SURNAME' | translate: { kind: (linkedKind | translate) } }}
-                  <span class="required">*</span></label
-                >
-                <input
-                  pInputText
-                  id="yeniLinkedSoyad"
-                  formControlName="yeniLinkedSoyad"
-                  [placeholder]="
-                    'PERSON.LINKED_SURNAME' | translate: { kind: (linkedKind | translate) }
-                  "
-                />
-              </div>
-            </div>
-            <div class="field">
-              <label for="yeniLinkedTelefon">{{
-                'PERSON.LINKED_PHONE' | translate: { kind: (linkedKind | translate) }
-              }}</label>
-              <input pInputText id="yeniLinkedTelefon" formControlName="yeniLinkedTelefon" placeholder="05XX XXX XX XX" />
-            </div>
-          </div>
-        }
-      </div>
+      <app-person-linked-section
+        [form]="form"
+        [userdef]="userdef"
+        [allPersons]="allPersons"
+        [isEditMode]="isEditMode"
+        [personId]="editPerson?.id ?? null"
+      />
     }
 
     <!-- Okul / Kurum Bilgileri -->
@@ -452,7 +259,7 @@
         <p-select
           id="firma"
           formControlName="firma"
-          [options]="firmaOptions"
+          [options]="options.firma()"
           optionLabel="ad"
           optionValue="id"
           [placeholder]="formConfig.placeholders.firma | translate"
@@ -470,7 +277,7 @@
             <p-select
               id="bolum"
               formControlName="bolum"
-              [options]="bolumOptions"
+              [options]="options.bolum()"
               optionLabel="ad"
               optionValue="id"
               [placeholder]="formConfig.placeholders.bolum | translate"
@@ -485,7 +292,7 @@
               <p-select
                 id="pozisyon"
                 formControlName="pozisyon"
-                [options]="pozisyonOptions"
+                [options]="options.pozisyon()"
                 optionLabel="ad"
                 optionValue="id"
                 [placeholder]="formConfig.placeholders.pozisyon | translate"
@@ -501,7 +308,7 @@
               <p-select
                 id="gorev"
                 formControlName="gorev"
-                [options]="gorevOptions"
+                [options]="options.gorev()"
                 optionLabel="ad"
                 optionValue="id"
                 [placeholder]="formConfig.placeholders.gorev | translate"
@@ -516,7 +323,7 @@
             <p-select
               id="altfirma"
               formControlName="altfirma"
-              [options]="altfirmaOptions"
+              [options]="options.altfirma()"
               optionLabel="ad"
               optionValue="id"
               [placeholder]="formConfig.placeholders.altfirma | translate"
@@ -531,7 +338,7 @@
           <p-select
             id="direktorluk"
             formControlName="direktorluk"
-            [options]="direktorlukOptions"
+            [options]="options.direktorluk()"
             optionLabel="ad"
             optionValue="id"
             [placeholder]="formConfig.placeholders.direktorluk | translate"
