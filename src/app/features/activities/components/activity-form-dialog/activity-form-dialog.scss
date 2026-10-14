@@ -1,0 +1,21 @@
+:host {
+  display: block;
+}
+
+.form-field-error {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 4px;
+  color: var(--ted-danger-fg);
+  font-size: 0.8rem;
+  font-weight: 500;
+}
+
+// Invalid form field border — login sayfasındaki is-invalid paterniyle tutarlı
+:host ::ng-deep {
+  .is-invalid {
+    border-color: var(--ted-danger-fg) !important;
+    box-shadow: 0 0 0 1px var(--ted-danger-fg) !important;
+  }
+}

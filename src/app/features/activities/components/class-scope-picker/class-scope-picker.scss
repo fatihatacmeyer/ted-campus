@@ -1,0 +1,32 @@
+::ng-deep {
+  .p-multiselect-option-group {
+    padding: 0.35rem 0.6rem !important;
+    cursor: pointer;
+  }
+
+  .classroom-group-header {
+    user-select: none;
+    border-radius: 4px;
+    transition: background-color 0.15s ease;
+
+    &:hover {
+      background-color: var(--p-primary-50, rgba(0, 102, 204, 0.08));
+    }
+  }
+}
+
+.classroom-selection-summary {
+  background-color: var(--ted-bg-subtle);
+  border-radius: 0.375rem;
+  padding: 0.35rem 0.6rem;
+}
+
+.form-field-error {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 4px;
+  color: var(--ted-danger-fg);
+  font-size: 0.8rem;
+  font-weight: 500;
+}

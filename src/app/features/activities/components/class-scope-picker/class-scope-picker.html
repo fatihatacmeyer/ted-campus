@@ -1,0 +1,90 @@
+<div class="d-flex flex-column gap-2 mb-3">
+  <label for="classroom" class="fw-semibold small text-muted"
+    >{{ 'ACTIVITIES.CLASSROOM_SCOPE' | translate }} <span class="text-primary">*</span></label
+  >
+
+  <!-- Üst aksiyon satırı: Tüm Şubeleri Seç / Seçimi Temizle -->
+  <div class="d-flex align-items-center gap-3">
+    <button
+      type="button"
+      class="btn btn-sm p-button-text p-button-sm"
+      style="color: var(--p-primary-color); text-decoration: underline; font-size: 0.8rem"
+      (click)="selectAllClasses()"
+    >
+      {{ 'ACTIVITIES.SELECT_ALL_BRANCHES' | translate }}
+    </button>
+    <button
+      type="button"
+      class="btn btn-sm p-button-text p-button-sm text-muted"
+      style="text-decoration: underline; font-size: 0.8rem"
+      (click)="clearAllClasses()"
+    >
+      {{ 'ACTIVITIES.CLEAR_SELECTION' | translate }}
+    </button>
+  </div>
+
+  <!-- Seçim özeti satırı -->
+  @if (getSelectionSummary) {
+    <div class="d-flex align-items-center gap-2 classroom-selection-summary">
+      <span class="small text-muted">
+        <i class="pi pi-info-circle me-1"></i>
+        {{ getSelectionSummary }}
+      </span>
+      <button
+        type="button"
+        class="btn btn-link btn-sm p-0 text-danger"
+        style="text-decoration: none; font-size: 0.75rem"
+        (click)="clearAllClasses()"
+      >
+        {{ 'COMMON.CLEAR' | translate }}
+      </button>
+    </div>
+  }
+
+  <!-- MultiSelect — detaylı bireysel seçim için -->
+  <p-multiSelect
+    [formControl]="control()"
+    inputId="classroom"
+    [options]="groups()"
+    [group]="true"
+    optionLabel="label"
+    optionValue="value"
+    [placeholder]="'ACTIVITIES.SELECT_CLASSROOM_PLACEHOLDER' | translate"
+    display="chip"
+    [maxSelectedLabels]="8"
+    appendTo="body"
+    [styleClass]="'w-100' + (invalid() ? ' is-invalid' : '')"
+    [readonly]="isAllClassesSelected"
+  >
+    <!-- Grup header template: dropdown içinde checkbox ile toplu seçim -->
+    <ng-template #group let-group pTemplate="group">
+      <div
+        role="button"
+        tabindex="0"
+        class="d-flex align-items-center justify-content-between w-100 px-2 py-1 cursor-pointer classroom-group-header"
+        (click)="toggleGroup(group); $event.stopPropagation()"
+        (keyup.enter)="toggleGroup(group); $event.stopPropagation()"
+        (keydown.space)="toggleGroup(group); $event.preventDefault(); $event.stopPropagation()"
+      >
+        <span class="fw-semibold">{{ group.label }}</span>
+        <div class="d-flex align-items-center gap-2">
+          <span class="text-muted small">
+            {{ getGroupSelectedCount(group) }}/{{ group.items.length }}
+          </span>
+          <p-checkbox
+            [binary]="true"
+            [ngModel]="isGroupSelected(group)"
+            [indeterminate]="isGroupIndeterminate(group)"
+            [ngModelOptions]="{ standalone: true }"
+            [readonly]="true"
+            tabindex="-1"
+            style="pointer-events: none"
+          />
+        </div>
+      </div>
+    </ng-template>
+  </p-multiSelect>
+  @if (invalid()) {
+    <small class="form-field-error">{{ 'ACTIVITIES.ERROR_CLASSROOM_REQUIRED' | translate }}</small>
+  }
+</div>

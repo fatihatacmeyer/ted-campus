@@ -1,0 +1,454 @@
+<!-- Ekleme / Düzenleme Dialog -->
+<p-dialog
+  [header]="dialogTitle"
+  [(visible)]="isDialogVisible"
+  [modal]="true"
+  [style]="{ width: '750px', maxHeight: '90vh' }"
+  [draggable]="false"
+  (onHide)="closeDialog()"
+>
+  <form
+    [formGroup]="activityForm"
+    (ngSubmit)="saveActivity()"
+    class="mt-3 d-flex flex-column gap-4 pb-3"
+  >
+    <!-- GENEL BİLGİLER -->
+    <div>
+      <h6 class="text-primary fw-bold mb-3 border-bottom pb-2">
+        {{ 'ACTIVITIES.GENERAL_INFO' | translate }}
+      </h6>
+      <div class="d-flex gap-3 mb-3">
+        <div class="w-100 d-flex flex-column gap-1">
+          <label for="activityName" class="fw-semibold small text-muted"
+            >{{ 'ACTIVITIES.NAME' | translate }} <span class="text-primary">*</span></label
+          >
+          <input
+            pInputText
+            id="activityName"
+            formControlName="name"
+            [class.is-invalid]="isFieldInvalid('name')"
+          />
+          @if (activityForm.get('name')?.touched && activityForm.get('name')?.invalid) {
+            <small class="form-field-error">{{
+              'ACTIVITIES.ERROR_REQUIRED_FIELD' | translate
+            }}</small>
+          }
+        </div>
+        <div class="w-100 d-flex flex-column gap-1">
+          <label for="activityType" class="fw-semibold small text-muted"
+            >{{ 'ACTIVITIES.TYPE' | translate }} <span class="text-primary">*</span></label
+          >
+          <p-select
+            formControlName="activityType"
+            inputId="activityType"
+            [options]="lookups.types()"
+            optionLabel="ad"
+            optionValue="ad"
+            appendTo="body"
+            [styleClass]="'w-100' + (isFieldInvalid('activityType') ? ' is-invalid' : '')"
+          ></p-select>
+          @if (
+            activityForm.get('activityType')?.touched && activityForm.get('activityType')?.invalid
+          ) {
+            <small class="form-field-error">{{
+              'ACTIVITIES.ERROR_REQUIRED_FIELD' | translate
+            }}</small>
+          }
+        </div>
+      </div>
+      <div class="d-flex gap-3">
+        <div class="w-100 d-flex flex-column gap-1">
+          <label for="eventManager" class="fw-semibold small text-muted">{{
+            'ACTIVITIES.MANAGER_RESPONSIBLE' | translate
+          }}</label>
+          <input pInputText id="eventManager" formControlName="eventManager" />
+        </div>
+        <!-- <div class="w-100 d-flex flex-column gap-1">
+          <label class="fw-semibold small text-muted"
+            >Durum <span class="text-primary">*</span></label
+          >
+          <p-select
+            formControlName="status"
+            [options]="statusOptions"
+            optionLabel="label"
+            optionValue="value"
+            appendTo="body"
+            styleClass="w-100"
+          ></p-select>
+        </div> -->
+      </div>
+    </div>
+
+    <!-- TARİH BİLGİLERİ -->
+    <div>
+      <h6 class="text-primary fw-bold mb-3 border-bottom pb-2">
+        {{ 'ACTIVITIES.DATE_INFO' | translate }}
+      </h6>
+      <div class="d-flex gap-3 mb-3">
+        <div class="w-100 d-flex flex-column gap-1">
+          <label for="startDate" class="fw-semibold small text-muted"
+            >{{ 'ACTIVITIES.START_DATE' | translate }} <span class="text-primary">*</span></label
+          >
+          <p-datepicker
+            formControlName="startDate"
+            inputId="startDate"
+            dateFormat="yy-mm-dd"
+            [showTime]="true"
+            [showSeconds]="false"
+            hourFormat="24"
+            appendTo="body"
+            [styleClass]="'w-100' + (isFieldInvalid('startDate') ? ' is-invalid' : '')"
+            [showIcon]="true"
+          ></p-datepicker>
+          @if (activityForm.get('startDate')?.touched && activityForm.get('startDate')?.invalid) {
+            <small class="form-field-error">{{
+              'ACTIVITIES.ERROR_REQUIRED_FIELD' | translate
+            }}</small>
+          }
+        </div>
+        <div class="w-100 d-flex flex-column gap-1">
+          <label for="endDate" class="fw-semibold small text-muted"
+            >{{ 'ACTIVITIES.END_DATE' | translate }} <span class="text-primary">*</span></label
+          >
+          <p-datepicker
+            formControlName="endDate"
+            inputId="endDate"
+            dateFormat="yy-mm-dd"
+            [showTime]="true"
+            [showSeconds]="false"
+            hourFormat="24"
+            appendTo="body"
+            [styleClass]="'w-100' + (isFieldInvalid('endDate') ? ' is-invalid' : '')"
+            [showIcon]="true"
+          ></p-datepicker>
+          @if (activityForm.get('endDate')?.touched && activityForm.get('endDate')?.invalid) {
+            <small class="form-field-error">{{
+              'ACTIVITIES.ERROR_REQUIRED_FIELD' | translate
+            }}</small>
+          }
+          @if (activityForm.touched && activityForm.errors?.['dateRange']) {
+            <small class="form-field-error">{{ 'ACTIVITIES.ERROR_DATE_RANGE' | translate }}</small>
+          }
+        </div>
+      </div>
+      <div class="d-flex gap-3">
+        <div class="w-100 d-flex flex-column gap-1">
+          <label for="requestStartDate" class="fw-semibold small text-muted"
+            >{{ 'ACTIVITIES.REQUEST_START' | translate }} <span class="text-primary">*</span></label
+          >
+          <p-datepicker
+            formControlName="requestStartDate"
+            inputId="requestStartDate"
+            dateFormat="yy-mm-dd"
+            [showTime]="true"
+            [showSeconds]="false"
+            hourFormat="24"
+            appendTo="body"
+            [styleClass]="'w-100' + (isFieldInvalid('requestStartDate') ? ' is-invalid' : '')"
+            [showIcon]="true"
+          ></p-datepicker>
+          @if (
+            activityForm.get('requestStartDate')?.touched &&
+            activityForm.get('requestStartDate')?.invalid
+          ) {
+            <small class="form-field-error">{{
+              'ACTIVITIES.ERROR_REQUIRED_FIELD' | translate
+            }}</small>
+          }
+        </div>
+        <div class="w-100 d-flex flex-column gap-1">
+          <label for="requestEndDate" class="fw-semibold small text-muted"
+            >{{ 'ACTIVITIES.REQUEST_END' | translate }} <span class="text-primary">*</span></label
+          >
+          <p-datepicker
+            formControlName="requestEndDate"
+            inputId="requestEndDate"
+            dateFormat="yy-mm-dd"
+            [showTime]="true"
+            [showSeconds]="false"
+            hourFormat="24"
+            appendTo="body"
+            [styleClass]="'w-100' + (isFieldInvalid('requestEndDate') ? ' is-invalid' : '')"
+            [showIcon]="true"
+          ></p-datepicker>
+          @if (
+            activityForm.get('requestEndDate')?.touched &&
+            activityForm.get('requestEndDate')?.invalid
+          ) {
+            <small class="form-field-error">{{
+              'ACTIVITIES.ERROR_REQUIRED_FIELD' | translate
+            }}</small>
+          }
+          @if (activityForm.touched && activityForm.errors?.['dateRangeRequest']) {
+            <small class="form-field-error">{{
+              'ACTIVITIES.ERROR_REQUEST_DATE_RANGE' | translate
+            }}</small>
+          }
+        </div>
+      </div>
+    </div>
+
+    <!-- KAPASİTE VE FİNANS -->
+    <div>
+      <h6 class="text-primary fw-bold mb-3 border-bottom pb-2">
+        {{ 'ACTIVITIES.CAPACITY_FINANCE' | translate }}
+      </h6>
+      <div class="d-flex gap-3 mb-3 align-items-center">
+        <div class="w-100 d-flex align-items-center gap-2">
+          <p-checkbox
+            formControlName="isParentRequired"
+            [binary]="true"
+            inputId="parentReq"
+          ></p-checkbox>
+          <label for="parentReq" class="fw-semibold small text-muted mb-0">{{
+            'ACTIVITIES.PARENT_REQUIRED_QUESTION' | translate
+          }}</label>
+        </div>
+        <div class="w-100 d-flex align-items-center gap-2">
+          <p-checkbox formControlName="isPaid" [binary]="true" inputId="isPaidCheck"></p-checkbox>
+          <label for="isPaidCheck" class="fw-semibold small text-muted mb-0">{{
+            'ACTIVITIES.PAID_ACTIVITY' | translate
+          }}</label>
+        </div>
+      </div>
+      <div class="d-flex gap-3 mb-3">
+        <div class="w-100 d-flex flex-column gap-1">
+          <label for="maxStudentCount" class="fw-semibold small text-muted"
+            >{{ 'ACTIVITIES.MAX_STUDENT' | translate }} <span class="text-primary">*</span></label
+          >
+          <input
+            pInputText
+            type="number"
+            id="maxStudentCount"
+            formControlName="maxStudentCount"
+            [class.is-invalid]="isFieldInvalid('maxStudentCount')"
+          />
+          @if (
+            activityForm.get('maxStudentCount')?.touched &&
+            activityForm.get('maxStudentCount')?.invalid
+          ) {
+            <small class="form-field-error">
+              @if (activityForm.get('maxStudentCount')?.errors?.['required']) {
+                {{ 'ACTIVITIES.ERROR_REQUIRED_FIELD' | translate }}
+              } @else if (activityForm.get('maxStudentCount')?.errors?.['min']) {
+                {{ 'ACTIVITIES.ERROR_MIN_STUDENT' | translate }}
+              }
+            </small>
+          }
+        </div>
+        <div class="w-100 d-flex flex-column gap-1">
+          <label for="studentParentCount" class="fw-semibold small text-muted"
+            >{{ 'ACTIVITIES.PARENT_QUOTA' | translate }}
+            @if (activityForm.get('isParentRequired')?.value) {
+              <span class="text-primary">*</span>
+            }
+          </label>
+          <input
+            pInputText
+            type="number"
+            id="studentParentCount"
+            formControlName="studentParentCount"
+            [class.is-invalid]="isFieldInvalid('studentParentCount')"
+          />
+          @if (
+            activityForm.get('studentParentCount')?.touched &&
+            activityForm.get('studentParentCount')?.invalid
+          ) {
+            <small class="form-field-error">
+              @if (activityForm.get('studentParentCount')?.errors?.['required']) {
+                {{ 'ACTIVITIES.ERROR_REQUIRED_FIELD' | translate }}
+              } @else if (activityForm.get('studentParentCount')?.errors?.['min']) {
+                {{ 'ACTIVITIES.ERROR_MIN_PARENT' | translate }}
+              }
+            </small>
+          }
+        </div>
+        <div class="w-100 d-flex flex-column gap-1">
+          <label for="fee" class="fw-semibold small text-muted"
+            >{{ 'ACTIVITIES.FEE' | translate }}
+            @if (activityForm.get('isPaid')?.value) {
+              <span class="text-primary">*</span>
+            }
+          </label>
+          <input
+            pInputText
+            type="number"
+            id="fee"
+            formControlName="fee"
+            [class.is-invalid]="isFieldInvalid('fee')"
+          />
+          @if (activityForm.get('fee')?.touched && activityForm.get('fee')?.invalid) {
+            <small class="form-field-error">{{
+              'ACTIVITIES.ERROR_REQUIRED_FIELD' | translate
+            }}</small>
+          }
+        </div>
+      </div>
+      <div class="d-flex gap-3">
+        <div class="w-50 d-flex flex-column gap-1">
+          <label for="maxGuestPerParent" class="fw-semibold small text-muted">{{
+            'ACTIVITIES.MAX_GUEST_PER_PARENT' | translate
+          }}</label>
+          <input
+            pInputText
+            type="number"
+            id="maxGuestPerParent"
+            formControlName="maxGuestPerParent"
+            [class.is-invalid]="isFieldInvalid('maxGuestPerParent')"
+            min="0"
+          />
+        </div>
+      </div>
+    </div>
+
+    <!-- ERİŞİM & DETAYLAR -->
+    <div>
+      <h6 class="text-primary fw-bold mb-3 border-bottom pb-2">
+        {{ 'ACTIVITIES.EXTRA_INFO' | translate }}
+      </h6>
+      <app-class-scope-picker
+        [control]="classroomControl"
+        [groups]="lookups.classroomGroups()"
+        [invalid]="isFieldInvalid('classroom')"
+      />
+
+      <!-- Eğitim Düzeyi — cbo_direktorluk lookup'undan doldurulur -->
+      <div class="d-flex flex-column gap-1 mb-3">
+        <label for="educationLevel" class="fw-semibold small text-muted">{{
+          'ACTIVITIES.EDUCATION_LEVEL' | translate
+        }}</label>
+        <p-select
+          formControlName="educationLevel"
+          inputId="educationLevel"
+          [options]="lookups.educationLevels()"
+          optionLabel="ad"
+          optionValue="ad"
+          appendTo="body"
+          styleClass="w-100"
+          [placeholder]="'ACTIVITIES.EDUCATION_LEVEL_PLACEHOLDER' | translate"
+        ></p-select>
+      </div>
+
+      <!-- Kampüs Bilgisi — cbo_firma lookup'undan doldurulur -->
+      <div class="d-flex flex-column gap-1 mb-3">
+        <label for="campus" class="fw-semibold small text-muted">{{
+          'ACTIVITIES.CAMPUS' | translate
+        }}</label>
+        <p-select
+          formControlName="campus"
+          inputId="campus"
+          [options]="lookups.campuses()"
+          optionLabel="ad"
+          optionValue="ad"
+          appendTo="body"
+          styleClass="w-100"
+          [placeholder]="'ACTIVITIES.CAMPUS_PLACEHOLDER' | translate"
+        ></p-select>
+      </div>
+
+      <!-- Ulaşım Bilgisi — UlasimCampus lookup'undan doldurulur -->
+      <div class="d-flex flex-column gap-1 mb-3">
+        <label for="transportation" class="fw-semibold small text-muted"
+          >{{ 'ACTIVITIES.COLUMN_TRANSPORTATION' | translate }}
+          <span class="text-primary">*</span></label
+        >
+        <p-select
+          formControlName="transportation"
+          inputId="transportation"
+          [options]="lookups.transportations()"
+          optionLabel="ad"
+          optionValue="ad"
+          appendTo="body"
+          [styleClass]="'w-100' + (isFieldInvalid('transportation') ? ' is-invalid' : '')"
+          [placeholder]="'ACTIVITIES.TRANSPORTATION_PLACEHOLDER' | translate"
+        ></p-select>
+        @if (
+          activityForm.get('transportation')?.touched && activityForm.get('transportation')?.invalid
+        ) {
+          <small class="form-field-error">{{
+            'ACTIVITIES.ERROR_REQUIRED_FIELD' | translate
+          }}</small>
+        }
+      </div>
+
+      <div class="w-100 d-flex flex-column gap-1 mb-3">
+        <label for="description" class="fw-semibold small text-muted">{{
+          'ACTIVITIES.DESCRIPTION' | translate
+        }}</label>
+        <textarea
+          pTextarea
+          id="description"
+          formControlName="description"
+          rows="3"
+          style="resize: vertical"
+        ></textarea>
+      </div>
+    </div>
+
+    <!-- Butonlar -->
+    <div class="d-flex justify-content-end gap-2 mt-2 pt-3 border-top bg-white sticky-bottom">
+      @if (formSubmitted() && activityForm.invalid) {
+        <div class="me-auto d-flex align-items-center gap-2 form-field-error">
+          <i class="pi pi-exclamation-circle"></i>
+          <span>{{ 'ACTIVITIES.ERROR_FILL_REQUIRED_FIELDS' | translate }}</span>
+        </div>
+      }
+      <button
+        pButton
+        type="button"
+        [label]="'COMMON.CANCEL' | translate"
+        [attr.aria-label]="'COMMON.CANCEL' | translate"
+        icon="pi pi-times"
+        class="p-button-text"
+        (click)="closeDialog()"
+      ></button>
+      <button
+        pButton
+        type="submit"
+        [label]="'COMMON.SAVE' | translate"
+        [attr.aria-label]="'COMMON.SAVE' | translate"
+        icon="pi pi-check"
+        class="p-button-primary"
+      ></button>
+    </div>
+  </form>
+</p-dialog>
+
+<!-- Tüm Sınıflar onay dialogu -->
+<p-dialog
+  [header]="'ACTIVITIES.CONFIRM_ALL_CLASSES_TITLE' | translate"
+  [(visible)]="showAllClassesConfirm"
+  [modal]="true"
+  [style]="{ width: '450px' }"
+  [draggable]="false"
+>
+  <div class="d-flex align-items-start gap-3">
+    <i class="pi pi-exclamation-triangle text-warning" style="font-size: 1.5rem"></i>
+    <div>
+      <p class="mb-2" [innerHTML]="'ACTIVITIES.CONFIRM_ALL_CLASSES_DESC' | translate"></p>
+      <p class="text-muted small mb-0">
+        {{ 'ACTIVITIES.CONFIRM_ALL_CLASSES_SUB' | translate }}
+      </p>
+    </div>
+  </div>
+  <ng-template pTemplate="footer">
+    <div class="d-flex justify-content-end gap-2">
+      <button
+        pButton
+        [label]="'COMMON.BACK' | translate"
+        [attr.aria-label]="'COMMON.BACK' | translate"
+        icon="pi pi-arrow-left"
+        class="p-button-text"
+        (click)="cancelConfirm()"
+      ></button>
+      <button
+        pButton
+        [label]="'ACTIVITIES.CONFIRM_SAVE_ACCEPT' | translate"
+        [attr.aria-label]="'ACTIVITIES.CONFIRM_SAVE_ACCEPT' | translate"
+        icon="pi pi-check"
+        class="p-button-primary"
+        (click)="confirmSave()"
+      ></button>
+    </div>
+  </ng-template>
+</p-dialog>

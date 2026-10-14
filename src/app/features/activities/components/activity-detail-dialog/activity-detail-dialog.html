@@ -1,0 +1,144 @@
+<!-- Etkinlik Detay Dialogu -->
+<p-dialog
+  [header]="selectedActivity()?.name || ('ACTIVITIES.DETAIL_TITLE' | translate)"
+  [(visible)]="isDetailVisible"
+  [modal]="true"
+  [style]="{ width: 'min(820px, 95vw)', height: 'min(80vh, 90vh)' }"
+  [draggable]="false"
+  (onHide)="closeDetailDialog()"
+>
+  <div class="detail-body">
+    <!-- ONAY DASHBOARD -->
+    <h6 class="text-primary fw-bold mb-1">{{ 'ACTIVITIES.APPROVAL_STATUS' | translate }}</h6>
+
+    @if (isLoadingStats()) {
+      <div class="d-flex justify-content-center py-4">
+        <i class="pi pi-spin pi-spinner" style="font-size: 2rem; color: var(--p-primary-color)"></i>
+      </div>
+    } @else if (approvalError()) {
+      <div class="approval-error d-flex flex-column align-items-center gap-2 py-4">
+        <span class="text-danger small">{{ approvalError() }}</span>
+        @if (selectedActivity(); as act) {
+          <button
+            pButton
+            [label]="'COMMON.RETRY' | translate"
+            icon="pi pi-refresh"
+            class="p-button-text p-button-sm"
+            (click)="loadApprovalStats(act.id)"
+          ></button>
+        }
+      </div>
+    } @else if (approvalStats(); as stats) {
+      <div class="stat-grid">
+        <div
+          class="stat-card stat-bekleyen"
+          role="button"
+          tabindex="0"
+          [class.active]="activeParticipantFilter() === 'Bekleyen'"
+          (click)="setParticipantFilter('Bekleyen')"
+          (keyup.enter)="setParticipantFilter('Bekleyen')"
+        >
+          <div class="stat-icon"><i class="pi pi-clock"></i></div>
+          <div class="stat-info">
+            <span class="stat-count">{{ stats.bekleyen }}</span>
+            <span class="stat-label">{{ 'ACTIVITIES.PENDING' | translate }}</span>
+          </div>
+        </div>
+        <div
+          class="stat-card stat-onaylanan"
+          role="button"
+          tabindex="0"
+          [class.active]="activeParticipantFilter() === 'Onaylanan'"
+          (click)="setParticipantFilter('Onaylanan')"
+          (keyup.enter)="setParticipantFilter('Onaylanan')"
+        >
+          <div class="stat-icon"><i class="pi pi-check-circle"></i></div>
+          <div class="stat-info">
+            <span class="stat-count">{{ stats.onaylanan }}</span>
+            <span class="stat-label">{{ 'ACTIVITIES.APPROVED' | translate }}</span>
+          </div>
+        </div>
+        <div
+          class="stat-card stat-reddedilen"
+          role="button"
+          tabindex="0"
+          [class.active]="activeParticipantFilter() === 'Reddedilen'"
+          (click)="setParticipantFilter('Reddedilen')"
+          (keyup.enter)="setParticipantFilter('Reddedilen')"
+        >
+          <div class="stat-icon"><i class="pi pi-times-circle"></i></div>
+          <div class="stat-info">
+            <span class="stat-count">{{ stats.reddedilen }}</span>
+            <span class="stat-label">{{ 'ACTIVITIES.REJECTED' | translate }}</span>
+          </div>
+        </div>
+        <div
+          class="stat-card stat-toplam"
+          role="button"
+          tabindex="0"
+          [class.active]="activeParticipantFilter() === 'Tümü'"
+          (click)="setParticipantFilter('Tümü')"
+          (keyup.enter)="setParticipantFilter('Tümü')"
+        >
+          <div class="stat-icon"><i class="pi pi-users"></i></div>
+          <div class="stat-info">
+            <span class="stat-count">{{ stats.toplam }}</span>
+            <span class="stat-label">{{ 'ACTIVITIES.TOTAL' | translate }}</span>
+          </div>
+        </div>
+      </div>
+    }
+
+    <!-- KATILIMCI LİSTESİ -->
+    <div
+      class="participant-header mt-2 mb-1 d-flex align-items-center justify-content-between gap-2"
+    >
+      <h6 class="text-primary fw-bold mb-0">{{ 'ACTIVITIES.PARTICIPANTS' | translate }}</h6>
+      <div class="d-flex align-items-center gap-2">
+        @if (!isLoadingParticipants()) {
+          <span class="text-muted small fw-normal participant-count-badge"
+            >{{ filteredParticipants().length }} {{ 'COMMON.PERSON' | translate }}</span
+          >
+        }
+      </div>
+    </div>
+
+    @if (isLoadingParticipants()) {
+      <div class="d-flex justify-content-center py-4">
+        <i class="pi pi-spin pi-spinner" style="font-size: 2rem; color: var(--p-primary-color)"></i>
+      </div>
+    } @else if (participantError()) {
+      <div class="d-flex flex-column align-items-center gap-2 py-4">
+        <span class="text-danger small">{{ participantError() }}</span>
+        @if (selectedActivity(); as act) {
+          <button
+            pButton
+            [label]="'COMMON.RETRY' | translate"
+            icon="pi pi-refresh"
+            class="p-button-text p-button-sm"
+            (click)="loadParticipants(act.id)"
+          ></button>
+        }
+      </div>
+    } @else {
+      <app-customizable-table
+        [rows]="filteredParticipants()"
+        [columns]="participantColumns"
+        [showSearch]="true"
+        [exportable]="true"
+        [showColumnSelector]="false"
+        [showRowNumbers]="true"
+        rowNumberHeader="#"
+        [displayMode]="'paginated'"
+        scrollHeight="calc(100vh - 420px)"
+        [emptyMessage]="'ACTIVITIES.NO_PARTICIPANTS_FOUND' | translate"
+        tableId="participant-list"
+        [persistFilters]="false"
+      >
+        <ng-template appColumnCell="durum" let-row>
+          <p-tag [value]="row.durum" [severity]="getParticipantSeverity(row.durum)"></p-tag>
+        </ng-template>
+      </app-customizable-table>
+    }
+  </div>
+</p-dialog>

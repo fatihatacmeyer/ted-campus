@@ -2,20 +2,11 @@ import {
   Component,
   ChangeDetectionStrategy,
   signal,
-  computed,
   inject,
   DestroyRef,
+  viewChild,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { CommonModule } from '@angular/common';
-import {
-  AbstractControl,
-  FormBuilder,
-  FormGroup,
-  FormsModule,
-  ReactiveFormsModule,
-  Validators,
-} from '@angular/forms';
 import {
   CustomizableTableComponent,
   ColumnCellDirective,
@@ -24,58 +15,16 @@ import {
   uniqueFilterOptions,
 } from '../../../../shared/components/customizable-table/customizable-table';
 import { ButtonModule } from 'primeng/button';
-import { DialogModule } from 'primeng/dialog';
-import { InputTextModule } from 'primeng/inputtext';
-import { TextareaModule } from 'primeng/textarea';
-import { SelectModule } from 'primeng/select';
-import { DatePickerModule } from 'primeng/datepicker';
 import { TagModule } from 'primeng/tag';
-import { CheckboxModule } from 'primeng/checkbox';
-import { MultiSelectModule } from 'primeng/multiselect';
 import { TooltipModule } from 'primeng/tooltip';
-import { forkJoin, of } from 'rxjs';
-import { catchError } from 'rxjs/operators';
-import { DropdownItem, TypesService } from '../../../persons/services/types.service';
-import {
-  ActivityApprovalStats,
-  ActivityInterface,
-  ActivityParticipant,
-} from '../../../../core/models/activity.model';
+import { ActivityInterface } from '../../../../core/models/activity.model';
 import { ActivityService } from '../../services/activity.service';
-import { formatDateTime, parseDate } from '../../../../shared/utils/date.utils';
+import { ActivityLookups } from '../../services/activity-lookups.service';
 import { NotificationService } from '../../../../core/services/notification.service';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { PageHeaderComponent } from '../../../../shared/components/page-header/page-header';
-
-/** Cross-field: Bitiş tarihi başlangıç tarihinden küçük olamaz. */
-function dateRangeValidator(startKey: string, endKey: string, errorKey: string) {
-  return (group: FormGroup) => {
-    const start = group.get(startKey)?.value;
-    const end = group.get(endKey)?.value;
-    if (!start || !end) return null;
-    return new Date(end) >= new Date(start) ? null : { [errorKey]: true };
-  };
-}
-
-/** Cross-field: isPaid true iken fee boş olamaz. */
-function paidFeeValidator(group: FormGroup) {
-  const isPaid = group.get('isPaid')?.value;
-  const fee = group.get('fee')?.value;
-  if (isPaid && (fee === null || fee === undefined || fee === '')) {
-    return { feeRequired: true };
-  }
-  return null;
-}
-
-/** En az bir sınıf seçili olmalı. */
-function minClassroomValidator(control: AbstractControl) {
-  const val = control.value;
-  if (Array.isArray(val) && val.length > 0) return null;
-  return { minClassroom: true };
-}
-
-/** Katılımcı durum filtreleri — dashboard kartlarıyla eşleşir. */
-type ParticipantFilter = 'Tümü' | ActivityParticipant['durum'];
+import { ActivityDetailDialogComponent } from '../../components/activity-detail-dialog/activity-detail-dialog';
+import { ActivityFormDialogComponent } from '../../components/activity-form-dialog/activity-form-dialog';
 
 /** Boole sütun filtreleri için Evet/Hayır seçenekleri */
 const BOOLEAN_FILTER_OPTIONS: FilterOption[] = [
@@ -83,114 +32,41 @@ const BOOLEAN_FILTER_OPTIONS: FilterOption[] = [
   { label: 'COMMON.NO', value: false },
 ];
 
+/**
+ * Etkinlik listesi sayfası: tablo ve satır işlemleri. Ekle/düzenle formu ve detay (onay durumu +
+ * katılımcılar) kendi diyalog bileşenlerinde yaşar.
+ */
 @Component({
   selector: 'app-activities',
   standalone: true,
   imports: [
     PageHeaderComponent,
-    CommonModule,
-    ReactiveFormsModule,
-    FormsModule,
     CustomizableTableComponent,
     ColumnCellDirective,
     ButtonModule,
-    DialogModule,
-    InputTextModule,
-    TextareaModule,
-    SelectModule,
-    DatePickerModule,
     TagModule,
-    CheckboxModule,
-    MultiSelectModule,
     TooltipModule,
     TranslatePipe,
+    ActivityFormDialogComponent,
+    ActivityDetailDialogComponent,
   ],
+  providers: [ActivityLookups],
   templateUrl: './activities-list.html',
   styleUrls: ['./activities-list.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ActivitiesComponent {
-  private fb = inject(FormBuilder);
   private activityService = inject(ActivityService);
-  private typesService = inject(TypesService);
   private destroyRef = inject(DestroyRef);
   private notification = inject(NotificationService);
   private translate = inject(TranslateService);
 
-  /** ngModel için düz değişken — participantSearch signal'ını senkronize eder. */
-  searchText = '';
+  private readonly formDialog = viewChild.required(ActivityFormDialogComponent);
+  private readonly detailDialog = viewChild.required(ActivityDetailDialogComponent);
 
   activities = signal<ActivityInterface[]>([]);
   isLoading = signal(false);
-  isSaving = signal(false);
-  formSubmitted = signal(false);
   errorMessage = signal<string | null>(null);
-  isDialogVisible = signal(false);
-  editingActivity = signal<ActivityInterface | null>(null);
-  showAllClassesConfirm = signal(false);
-  pendingSaveData = signal<ActivityInterface | null>(null);
-
-  isDetailVisible = signal(false);
-  selectedActivity = signal<ActivityInterface | null>(null);
-  approvalStats = signal<ActivityApprovalStats | null>(null);
-  isLoadingStats = signal(false);
-  approvalError = signal<string | null>(null);
-  participants = signal<ActivityParticipant[]>([]);
-  isLoadingParticipants = signal(false);
-  participantError = signal<string | null>(null);
-
-  /** Katılımcı listesi için aktif filtre — dashboard kartlarından seçilir. */
-  activeParticipantFilter = signal<ParticipantFilter>('Tümü');
-
-  /** Katılımcı listesi için metin araması. */
-  participantSearch = signal('');
-
-  /** Aktif filtreye göre filtrelenmiş katılımcı listesi. */
-  filteredParticipants = computed(() => {
-    const filter = this.activeParticipantFilter();
-    const search = this.participantSearch().toLocaleLowerCase('tr');
-    let list = this.participants();
-    if (filter !== 'Tümü') {
-      list = list.filter((p) => p.durum === filter);
-    }
-    if (search) {
-      list = list.filter(
-        (p) =>
-          p.ogrenci?.toLocaleLowerCase('tr').includes(search) ||
-          p.sinif?.toLocaleLowerCase('tr').includes(search) ||
-          p.veli?.toLocaleLowerCase('tr').includes(search) ||
-          p.telefon?.includes(search),
-      );
-    }
-    return list;
-  });
-
-  /** Küçük listelerde paginated, büyüklerde scroll kullan */
-  participantDisplayMode = computed(() =>
-    this.filteredParticipants().length <= 0 ? ('paginated' as const) : ('scroll' as const),
-  );
-
-  /** Katılımcı tablosu sütun tanımları — filterable: false porque filtreler header'da */
-  participantColumns: ColumnDef<ActivityParticipant>[] = [
-    // { field: 'id', header: '#', sortable: true, width: '60px' },
-    { field: 'ogrenci', header: 'ACTIVITIES.COLUMN_STUDENT', sortable: true, filterable: false },
-    {
-      field: 'sinif',
-      header: 'ACTIVITIES.COLUMN_CLASSROOM',
-      sortable: true,
-      width: '100px',
-      filterable: false,
-    },
-    { field: 'veli', header: 'ACTIVITIES.COLUMN_PARENT', sortable: true, filterable: false },
-    { field: 'telefon', header: 'ACTIVITIES.COLUMN_PHONE', width: '120px', filterable: false },
-    {
-      field: 'durum',
-      header: 'ACTIVITIES.STATUS',
-      sortable: true,
-      width: '110px',
-      filterable: false,
-    },
-  ];
 
   activityColumns: ColumnDef<ActivityInterface>[] = [
     { field: 'id', header: 'ID', sortable: true, width: '70px' },
@@ -252,7 +128,6 @@ export class ActivitiesComponent {
     { field: 'createdAt', header: 'ACTIVITIES.COLUMN_CREATED_AT' },
   ];
   defaultActivityFields = [
-    // 'id',
     'name',
     'activityType',
     'startDate',
@@ -261,70 +136,8 @@ export class ActivitiesComponent {
     'status',
   ];
 
-  activityForm: FormGroup = this.fb.group(
-    {
-      name: ['', Validators.required],
-      activityType: ['', Validators.required],
-      status: ['Aktif', Validators.required],
-      startDate: [null, Validators.required],
-      endDate: [null, Validators.required],
-      requestStartDate: [null, Validators.required],
-      requestEndDate: [null, Validators.required],
-      maxStudentCount: [null, [Validators.required, Validators.min(1)]],
-      isParentRequired: [false],
-      studentParentCount: [0],
-      maxGuestPerParent: [null],
-      isPaid: [false],
-      fee: [{ value: null, disabled: true }],
-      transportation: ['', Validators.required],
-      educationLevel: [''],
-      campus: [''],
-      eventManager: [''],
-      description: [''],
-      classroom: [[], minClassroomValidator],
-    },
-    {
-      validators: [
-        dateRangeValidator('startDate', 'endDate', 'dateRange'),
-        dateRangeValidator('requestStartDate', 'requestEndDate', 'dateRangeRequest'),
-        paidFeeValidator,
-      ],
-    },
-  );
-
   constructor() {
-    this.activityForm
-      .get('isPaid')!
-      .valueChanges.pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe((paid) => {
-        const feeCtrl = this.activityForm.get('fee');
-        if (paid) {
-          feeCtrl!.enable();
-          feeCtrl!.setValidators([Validators.required]);
-        } else {
-          feeCtrl!.disable();
-          feeCtrl!.clearValidators();
-          feeCtrl!.setValue(null);
-        }
-        feeCtrl!.updateValueAndValidity();
-        this.activityForm.updateValueAndValidity();
-      });
-
-    this.activityForm
-      .get('isParentRequired')!
-      .valueChanges.pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe((required) => {
-        const ctrl = this.activityForm.get('studentParentCount');
-        if (required) {
-          ctrl!.setValidators([Validators.required, Validators.min(1)]);
-        } else {
-          ctrl!.clearValidators();
-        }
-        ctrl!.updateValueAndValidity();
-      });
-
     this.loadActivities();
-    this.loadDropdownData();
   }
 
   /** sp_etkinlikcampus_s'ten gerçek listeyi çeker. */
@@ -347,455 +160,17 @@ export class ActivitiesComponent {
       });
   }
 
-  /**
-   * Dropdown verilerini backend lookup prosedürlerinden çeker:
-   * TurCampus (etkinlik türü), UlasimCampus (ulaşım), cbo_bolum (sınıflar),
-   * cbo_direktorluk (eğitim düzeyi).
-   */
-  private loadDropdownData(): void {
-    forkJoin({
-      TurCampus: this.typesService.getDropdownList('TurCampus').pipe(
-        catchError((err) => {
-          console.error('Etkinlik türleri yüklenirken hata:', err);
-          return of([] as DropdownItem[]);
-        }),
-      ),
-      UlasimCampus: this.typesService.getDropdownList('UlasimCampus').pipe(
-        catchError((err) => {
-          console.error('Ulaşım bilgileri yüklenirken hata:', err);
-          return of([] as DropdownItem[]);
-        }),
-      ),
-      cbo_bolum: this.typesService.getDropdownList('cbo_bolum').pipe(
-        catchError((err) => {
-          console.error('Sınıflar yüklenirken hata:', err);
-          return of([] as DropdownItem[]);
-        }),
-      ),
-      cbo_direktorluk: this.typesService.getDropdownList('cbo_direktorluk').pipe(
-        catchError((err) => {
-          console.error('Eğitim düzeyleri yüklenirken hata:', err);
-          return of([] as DropdownItem[]);
-        }),
-      ),
-      cbo_firma: this.typesService.getDropdownList('cbo_firma').pipe(
-        catchError((err) => {
-          console.error('Kampüs bilgileri yüklenirken hata:', err);
-          return of([] as DropdownItem[]);
-        }),
-      ),
-    })
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe(
-        ({ TurCampus, UlasimCampus, cbo_bolum, cbo_direktorluk, cbo_firma }) => {
-          this.typeOptions = TurCampus;
-          this.transportationOptions = UlasimCampus;
-          this.classroomOptions = cbo_bolum;
-          this.classroomGroups = this.buildClassroomGroups(cbo_bolum);
-          this.educationLevelOptions = cbo_direktorluk;
-          this.campusOptions = cbo_firma;
-        },
-      );
-  }
-
-  /**
-   * cbo_bolum'den gelen düz sınıf listesini grade gruplarına böler
-   * (örn. "1-A" → "1. Sınıflar"). Rakamla başlamayan ad'lar "Diğer" grubuna düşer.
-   */
-  private buildClassroomGroups(
-    items: DropdownItem[],
-  ): { label: string; items: { label: string; value: string }[] }[] {
-    const groups = new Map<string, { label: string; value: string }[]>();
-    for (const item of items) {
-      const gradeMatch = item.ad.trim().match(/^(\d+)/);
-      const groupLabel = gradeMatch
-        ? this.translate.instant('ACTIVITIES.GRADE_CLASSES', { grade: gradeMatch[1] })
-        : this.translate.instant('ACTIVITIES.OTHERS');
-      if (!groups.has(groupLabel)) {
-        groups.set(groupLabel, []);
-      }
-      groups.get(groupLabel)!.push({ label: item.ad, value: item.ad });
-    }
-    return Array.from(groups.entries())
-      .sort(([a], [b]) => {
-        const na = Number.parseInt(a, 10);
-        const nb = Number.parseInt(b, 10);
-        if (Number.isNaN(na)) return 1;
-        if (Number.isNaN(nb)) return -1;
-        return na - nb;
-      })
-      .map(([label, items]) => ({ label, items }));
-  }
-
-  statusOptions = [
-    { label: 'ACTIVITIES.STATUS_ACTIVE', value: 'Aktif' },
-    { label: 'ACTIVITIES.STATUS_INACTIVE', value: 'Pasif' },
-    { label: 'ACTIVITIES.CANCELLED', value: 'İptal' },
-  ];
-
-  /** Etkinlik türleri — TurCampus lookup'undan doldurulur. */
-  typeOptions: DropdownItem[] = [];
-
-  /** Ulaşım bilgileri — UlasimCampus lookup'undan doldurulur. */
-  transportationOptions: DropdownItem[] = [];
-
-  /** Eğitim düzeyleri — cbo_direktorluk lookup'undan doldurulur. */
-  educationLevelOptions: DropdownItem[] = [];
-
-  /** Kampüs seçenekleri — cbo_firma lookup'undan doldurulur. */
-  campusOptions: DropdownItem[] = [];
-
-  /** Ham sınıf listesi — cbo_bolum lookup'undan doldurulur. */
-  classroomOptions: DropdownItem[] = [];
-
-  // Sınıf seçenekleri — cbo_bolum'den gelen veriden türetilen grade grupları (1. Sınıflar, 2. Sınıflar...)
-  classroomGroups: { label: string; items: { label: string; value: string }[] }[] = [];
-
-  /** Grubun tüm şubeleri seçili mi? */
-  isGroupSelected(group: { label: string; items: { label: string; value: string }[] }): boolean {
-    const selected: string[] = this.activityForm.get('classroom')?.value || [];
-    return group.items.length > 0 && group.items.every((item) => selected.includes(item.value));
-  }
-
-  /** Grup içindeki şubelerin bir kısmı mı seçili? (Indeterminate checkbox durumu için) */
-  isGroupIndeterminate(group: {
-    label: string;
-    items: { label: string; value: string }[];
-  }): boolean {
-    const selectedCount = this.getGroupSelectedCount(group);
-    return selectedCount > 0 && selectedCount < group.items.length;
-  }
-
-  /** Grup içinde kaç şube seçili? */
-  getGroupSelectedCount(group: {
-    label: string;
-    items: { label: string; value: string }[];
-  }): number {
-    const selected: string[] = this.activityForm.get('classroom')?.value || [];
-    return group.items.filter((item) => selected.includes(item.value)).length;
-  }
-
-  /** Tüm sınıflar seçili mi? */
-  get isAllClassesSelected(): boolean {
-    if (this.allClassesCount === 0) return false;
-    const selected: string[] = this.activityForm.get('classroom')?.value || [];
-    return selected.length === this.allClassesCount;
-  }
-
-  /** Toplam sınıf sayısı */
-  get allClassesCount(): number {
-    return this.classroomGroups.reduce((sum, group) => sum + group.items.length, 0);
-  }
-
-  /** Tüm sınıfları seç */
-  selectAllClasses(): void {
-    const allValues = this.classroomGroups.flatMap((g) => g.items.map((i) => i.value));
-    const ctrl = this.activityForm.get('classroom')!;
-    ctrl.setValue(allValues);
-    ctrl.markAsDirty();
-  }
-
-  /** Seçimi temizle */
-  clearAllClasses(): void {
-    const ctrl = this.activityForm.get('classroom')!;
-    ctrl.setValue([]);
-    ctrl.markAsDirty();
-  }
-
-  /** Tüm sınıflar toggle */
-  toggleAllClasses(): void {
-    if (this.isAllClassesSelected) {
-      this.clearAllClasses();
-    } else {
-      this.selectAllClasses();
-    }
-  }
-
-  /** Seçim özeti string */
-  get getSelectionSummary(): string {
-    const selected: string[] = this.activityForm.get('classroom')?.value || [];
-    if (selected.length === 0) return '';
-    if (this.isAllClassesSelected) {
-      return this.translate.instant('ACTIVITIES.ALL_CLASSES_SELECTED', {
-        count: this.allClassesCount,
-      });
-    }
-
-    const parts: string[] = [];
-    for (const group of this.classroomGroups) {
-      const count = group.items.filter((item) => selected.includes(item.value)).length;
-      if (count > 0) {
-        parts.push(`${group.label} (${count}/${group.items.length})`);
-      }
-    }
-    return parts.join(', ');
-  }
-
-  /** Grubu aç/kapat: hepsi seçiliyse kaldır, değilse hepsini ekle */
-  toggleGroup(group: { label: string; items: { label: string; value: string }[] }): void {
-    const ctrl = this.activityForm.get('classroom')!;
-    const current: string[] = ctrl.value || [];
-    const groupValues = new Set(group.items.map((i) => i.value));
-
-    if (this.isGroupSelected(group)) {
-      // Tümünü kaldır
-      ctrl.setValue(current.filter((v) => !groupValues.has(v)));
-    } else {
-      // Tümünü ekle
-      const merged = [...new Set([...current, ...group.items.map((i) => i.value)])];
-      ctrl.setValue(merged);
-    }
-    ctrl.markAsDirty();
-  }
-
-  get dialogTitle(): string {
-    return this.editingActivity()
-      ? this.translate.instant('ACTIVITIES.EDIT')
-      : this.translate.instant('ACTIVITIES.ADD');
-  }
-
-  /** Alanın dokunulmuş ve geçersiz olup olmadığını kontrol eder (hata border + mesaj tetikleme için). */
-  isFieldInvalid(field: string): boolean {
-    const ctrl = this.activityForm.get(field);
-    return !!(ctrl && ctrl.touched && ctrl.invalid);
-  }
-
   openAddDialog() {
-    this.editingActivity.set(null);
-    this.formSubmitted.set(false);
-    this.activityForm.reset({
-      status: 'Aktif',
-      isPaid: false,
-      isParentRequired: false,
-      maxStudentCount: null,
-      studentParentCount: 0,
-      maxGuestPerParent: null,
-      classroom: [],
-      educationLevel: '',
-      campus: '',
-    });
-    this.isDialogVisible.set(true);
+    this.formDialog().openAdd();
   }
 
   openEditDialog(activity: ActivityInterface) {
-    this.editingActivity.set(activity);
-    this.formSubmitted.set(false);
-
-    // Sınıfları string'den diziye (array) çeviriyoruz
-    const classArray =
-      activity.classroom && activity.classroom !== 'Tüm Sınıflar'
-        ? activity.classroom.split(', ')
-        : [];
-
-    this.activityForm.patchValue({
-      ...activity,
-      classroom: classArray,
-      startDate: parseDate(activity.startDate),
-      endDate: parseDate(activity.endDate),
-      requestStartDate: parseDate(activity.requestStartDate),
-      requestEndDate: parseDate(activity.requestEndDate),
-    });
-    this.isDialogVisible.set(true);
+    this.formDialog().openEdit(activity);
   }
 
-  closeDialog() {
-    this.isDialogVisible.set(false);
-    this.editingActivity.set(null);
-    this.formSubmitted.set(false);
-    this.activityForm.reset();
-  }
-
-  /** Tablo satırına tıklandığında detay modalını açar ve istatistikleri + katılımcıları çeker. */
+  /** Tablo satırına tıklandığında detay diyaloğunu açar. */
   openDetailDialog(activity: ActivityInterface) {
-    this.activeParticipantFilter.set('Tümü');
-    this.participantSearch.set('');
-    this.searchText = '';
-    this.selectedActivity.set(activity);
-    this.isDetailVisible.set(true);
-    this.loadApprovalStats(activity.id);
-    this.loadParticipants(activity.id);
-  }
-
-  closeDetailDialog() {
-    this.isDetailVisible.set(false);
-    this.selectedActivity.set(null);
-    this.approvalStats.set(null);
-    this.approvalError.set(null);
-    this.participants.set([]);
-    this.participantError.set(null);
-    this.participantSearch.set('');
-    this.searchText = '';
-  }
-
-  /** sp_EtkinlikOnayCampus_s'ten o etkinliğin onay istatistiklerini çeker. */
-  loadApprovalStats(etkinlikId: number) {
-    this.isLoadingStats.set(true);
-    this.approvalError.set(null);
-    this.activityService
-      .getApprovalStats(etkinlikId)
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe({
-        next: (stats) => {
-          this.approvalStats.set(stats);
-          this.isLoadingStats.set(false);
-        },
-        error: (err) => {
-          console.error('[ActivitiesComponent] getApprovalStats error:', err);
-          this.approvalError.set(this.translate.instant('ACTIVITIES.ERROR_LOAD_APPROVAL'));
-          this.isLoadingStats.set(false);
-        },
-      });
-  }
-
-  /** sp_EtkinlikKatilimcilari_s'ten o etkinliğin katılımcılarını çeker. */
-  loadParticipants(etkinlikId: number) {
-    this.isLoadingParticipants.set(true);
-    this.participantError.set(null);
-    this.activityService
-      .getParticipants(etkinlikId)
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe({
-        next: (list) => {
-          this.participants.set(list);
-          this.isLoadingParticipants.set(false);
-        },
-        error: (err) => {
-          console.error('[ActivitiesComponent] getParticipants error:', err);
-          this.participantError.set(this.translate.instant('ACTIVITIES.ERROR_LOAD_PARTICIPANTS'));
-          this.isLoadingParticipants.set(false);
-        },
-      });
-  }
-
-  /** Katılımcı durumu için p-tag severity değeri. */
-  getParticipantSeverity(durum: string) {
-    switch (durum) {
-      case 'Onaylanan':
-        return 'success';
-      case 'Reddedilen':
-        return 'danger';
-      default:
-        return 'warn'; // Bekleyen
-    }
-  }
-
-  /** Dashboard kartına tıklanınca katılımcı listesini filtreler. */
-  setParticipantFilter(filter: ParticipantFilter) {
-    this.activeParticipantFilter.set(filter);
-  }
-
-  saveActivity() {
-    if (this.activityForm.invalid) {
-      this.formSubmitted.set(true);
-      this.activityForm.markAllAsTouched();
-      return;
-    }
-
-    const formValues = this.activityForm.getRawValue();
-
-    // Sınıf dizisine göre classroom string ve isPrivate türet
-    const hasClassroom = Array.isArray(formValues.classroom) && formValues.classroom.length > 0;
-    const classroomStr = hasClassroom ? formValues.classroom.join(', ') : 'Tüm Sınıflar';
-    const isPrivate = hasClassroom;
-
-    // Seçilen ad'lardan FK id'lerini lookup ile türet (yazma SP'leri Id bekliyor)
-    const selectedType = this.typeOptions.find((o) => o.ad === formValues.activityType);
-    const selectedTransportation = this.transportationOptions.find(
-      (o) => o.ad === formValues.transportation,
-    );
-    const selectedClasses = this.classroomOptions.filter((o) =>
-      (formValues.classroom as string[]).includes(o.ad),
-    );
-    // "Tüm Sınıflar" seçildiğinde (classroom boş) hiç sınıf id'si gönderilmiyordu;
-    // bu yüzden SP'nin EtkinlikDurumCampus kayıtları hiç oluşmuyordu. Tüm sınıf
-    // id'lerini ';' ile birleştirerek gönderiyoruz → tüm sınıflardaki öğrencilere
-    // katılımcı kaydı oluşturulur.
-    const classIdList = hasClassroom
-      ? selectedClasses.map((c) => c.id)
-      : this.classroomOptions.map((c) => c.id);
-    const selectedEducationLevel = this.educationLevelOptions.find(
-      (o) => o.ad === formValues.educationLevel,
-    );
-    const selectedCampus = this.campusOptions.find((o) => o.ad === formValues.campus);
-
-    const payload = {
-      ...formValues,
-      isPrivate,
-      classroom: classroomStr,
-      fee: formValues.isPaid ? formValues.fee : null,
-      turId: selectedType?.id ?? '',
-      ulasimId: selectedTransportation?.id ?? '',
-      // Edit'te lookup boşsa (sınıf silinmiş vb.) DB'den gelen orijinal SinifId korunur.
-      sinifId:
-        classIdList.length > 0 ? classIdList.join(';') : (this.editingActivity()?.sinifId ?? ''),
-      egitimDuzeyiId: selectedEducationLevel?.id ?? '',
-      campus: formValues.campus || '',
-      campusId: selectedCampus?.id ?? this.editingActivity()?.campusId ?? '',
-      firmaId: selectedCampus?.id ?? '',
-      maxGuestPerParent: formValues.maxGuestPerParent ?? '',
-      yasSiniri: this.editingActivity()?.yasSiniri ?? '',
-      oKod1: '',
-      oKod2: '',
-      oKod3: '',
-      oKod4: '',
-      oKod5: '',
-      startDate: formatDateTime(formValues.startDate),
-      endDate: formatDateTime(formValues.endDate),
-      requestStartDate: formatDateTime(formValues.requestStartDate),
-      requestEndDate: formatDateTime(formValues.requestEndDate),
-    };
-
-    if (!hasClassroom) {
-      this.showAllClassesConfirm.set(true);
-      this.pendingSaveData.set(payload);
-      return;
-    }
-
-    this.executeSave(payload);
-  }
-
-  private executeSave(payload: ActivityInterface) {
-    const currentActivity = this.editingActivity();
-    this.isSaving.set(true);
-    this.errorMessage.set(null);
-
-    const request = currentActivity
-      ? this.activityService.updateActivity(currentActivity.id, { ...payload })
-      : this.activityService.addActivity({ ...payload });
-
-    request.pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
-      next: () => {
-        this.isSaving.set(false);
-        this.closeDialog();
-        this.loadActivities(); // sunucudaki güncel/otoriter listeyi tekrar çek
-
-        if (currentActivity) {
-          this.notification.notifyUpdated();
-        } else {
-          this.notification.notifyAdded();
-        }
-      },
-      error: (err) => {
-        console.error('[ActivitiesComponent] save error:', err);
-        this.errorMessage.set(this.translate.instant('ACTIVITIES.ERROR_SAVE'));
-        this.notification.error('NOTIFICATIONS.MESSAGES.SAVE_FAILED');
-        this.isSaving.set(false);
-      },
-    });
-  }
-
-  confirmSave() {
-    const data = this.pendingSaveData();
-    if (!data) return;
-
-    this.executeSave(data);
-    this.showAllClassesConfirm.set(false);
-    this.pendingSaveData.set(null);
-  }
-
-  cancelConfirm() {
-    this.showAllClassesConfirm.set(false);
-    this.pendingSaveData.set(null);
+    this.detailDialog().open(activity);
   }
 
   deleteActivity(id: number) {
