@@ -93,17 +93,29 @@
           </span> -->
         </div>
 
-        <!-- İzin Ata: sağ üst köşede -->
-        <button
-          pButton
-          type="button"
-          icon="pi pi-calendar-plus"
-          [label]="'STUDENT_ATTENDANCE.ASSIGN_LEAVE' | translate"
-          size="small"
-          class="p-button-success p-button-sm"
-          [disabled]="selectedRows().length === 0"
-          (click)="openAssignLeaveDialog()"
-        ></button>
+        <!-- İzin Ata / Seçili İzinleri Sil: sağ üst köşede -->
+        <div class="d-flex align-items-center gap-2">
+          <button
+            pButton
+            type="button"
+            icon="pi pi-trash"
+            [label]="'STUDENT_ATTENDANCE.BULK_DELETE_LEAVE' | translate"
+            size="small"
+            class="p-button-danger p-button-outlined p-button-sm"
+            [disabled]="selectedLeaveIds().length === 0"
+            (click)="bulkDeleteLeaves()"
+          ></button>
+          <button
+            pButton
+            type="button"
+            icon="pi pi-calendar-plus"
+            [label]="'STUDENT_ATTENDANCE.ASSIGN_LEAVE' | translate"
+            size="small"
+            class="p-button-success p-button-sm"
+            [disabled]="selectedRows().length === 0"
+            (click)="openAssignLeaveDialog()"
+          ></button>
+        </div>
       </div>
 
       <app-customizable-table
@@ -232,3 +244,5 @@
     ></app-person-leave-dialog>
   </div>
 </div>
+
+<p-confirmdialog />

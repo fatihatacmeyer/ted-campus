@@ -483,6 +483,9 @@
     "DELETE_LEAVE": "İzini Sil",
     "MSG_LEAVE_DELETED": "İzin başarıyla silindi.",
     "MSG_LEAVE_DELETE_ERROR": "İzin silinirken bir hata oluştu.",
+    "BULK_DELETE_LEAVE": "Seçili İzinleri Sil",
+    "BULK_DELETE_CONFIRM_TITLE": "Toplu İzin Silme",
+    "BULK_DELETE_CONFIRM_MESSAGE": "Seçili öğrencilere ait {{count}} izin kaydı silinecek ve velilere bildirim gönderilecek. Onaylıyor musunuz?",
     "COL_ICON": "Simge"
   },
   "ACTIVITIES": {

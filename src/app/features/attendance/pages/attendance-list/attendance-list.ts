@@ -23,7 +23,10 @@ import {
 import { StudentAttendanceRow } from '../../../../core/models/attendance.model';
 import { AttendanceService } from '../../services/attendance.service';
 import { computePeriodRange } from '../../../../shared/utils/date.utils';
-import { TranslatePipe } from '@ngx-translate/core';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
+import { ConfirmDialogModule } from 'primeng/confirmdialog';
+import { ConfirmationService } from 'primeng/api';
+import { unwrapResponse } from '../../../../shared/utils/response.utils';
 import { Dialog, DialogModule } from 'primeng/dialog';
 import { PersonLeaveDialogComponent } from '../../../persons/components/person-leave-dialog/person-leave-dialog';
 import { PageHeaderComponent } from '../../../../shared/components/page-header/page-header';
@@ -51,17 +54,21 @@ interface TabOption {
     InputIconModule,
     TranslatePipe,
     DialogModule,
+    ConfirmDialogModule,
     PersonLeaveDialogComponent,
     ColumnCellDirective,
   ],
   templateUrl: './attendance-list.html',
   styleUrl: './attendance-list.scss',
+  providers: [ConfirmationService],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class AttendanceListComponent {
   private attendanceService = inject(AttendanceService);
   private notification = inject(NotificationService);
   private destroyRef = inject(DestroyRef);
+  private confirmationService = inject(ConfirmationService);
+  private translate = inject(TranslateService);
 
   selectedRows = signal<StudentAttendanceRow[]>([]);
   leaveIconDialogVisible = signal(false);
@@ -95,6 +102,15 @@ export class AttendanceListComponent {
 
   /** Search query for student name filtering. */
   searchQuery = signal('');
+
+  /** Seçili satırlardaki benzersiz izin kayıt Id'leri (toplu silme için). */
+  selectedLeaveIds = computed(() => [
+    ...new Set(
+      this.selectedRows()
+        .map((r) => r.izinId)
+        .filter((id): id is number => id != null),
+    ),
+  ]);
 
   /** Students who have a leave — shown in the side panel. */
   // leaveStudents = computed(() =>
@@ -321,6 +337,49 @@ export class AttendanceListComponent {
         },
         error: (err) => {
           console.error('İzin silme hatası:', err);
+          this.notification.error('STUDENT_ATTENDANCE.MSG_LEAVE_DELETE_ERROR');
+        },
+      });
+  }
+
+  /** Seçili satırların izinlerini onay sonrası tek istekle toplu siler. */
+  bulkDeleteLeaves(): void {
+    const ids = this.selectedLeaveIds();
+    if (ids.length === 0) return;
+
+    this.confirmationService.confirm({
+      message: this.translate.instant('STUDENT_ATTENDANCE.BULK_DELETE_CONFIRM_MESSAGE', {
+        count: ids.length,
+      }),
+      header: this.translate.instant('STUDENT_ATTENDANCE.BULK_DELETE_CONFIRM_TITLE'),
+      icon: 'pi pi-exclamation-triangle',
+      acceptLabel: this.translate.instant('COMMON.CONFIRM'),
+      rejectLabel: this.translate.instant('COMMON.CANCEL'),
+      acceptButtonStyleClass: 'p-button-danger',
+      rejectButtonStyleClass: 'p-button-text',
+      accept: () => this.executeBulkDelete(ids),
+    });
+  }
+
+  private executeBulkDelete(ids: number[]): void {
+    this.attendanceService
+      .deleteStudentLeave(ids)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (res) => {
+          const result = unwrapResponse<Record<string, unknown>>(
+            res as Record<string, unknown> | null | undefined,
+          );
+          if (result && String(result['Sonuc'] ?? '') === '1') {
+            this.notification.success('STUDENT_ATTENDANCE.MSG_LEAVE_DELETED');
+            this.selectedRows.set([]);
+            this.loadRows();
+          } else {
+            this.notification.error('STUDENT_ATTENDANCE.MSG_LEAVE_DELETE_ERROR');
+          }
+        },
+        error: (err) => {
+          console.error('Toplu izin silme hatası:', err);
           this.notification.error('STUDENT_ATTENDANCE.MSG_LEAVE_DELETE_ERROR');
         },
       });

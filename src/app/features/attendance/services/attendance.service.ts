@@ -333,11 +333,12 @@ export class AttendanceService {
     );
   }
 
-  deleteStudentLeave(izinId: number): Observable<unknown> {
+  /** Tek Id ya da birden fazla Id verilebilir; çoklu silme sp'ye ';' ile ayrılmış liste olarak gider. */
+  deleteStudentLeave(izinId: number | number[]): Observable<unknown> {
     return this.api.callEndpoint<unknown>('Dynamic', {
       point: 'izinlercampus',
       islemtipi: 'd',
-      izinid: izinId,
+      izinid: Array.isArray(izinId) ? izinId.join(';') : izinId,
     });
   }
 }

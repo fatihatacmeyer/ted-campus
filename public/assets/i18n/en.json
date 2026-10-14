@@ -483,6 +483,9 @@
     "DELETE_LEAVE": "Delete Leave",
     "MSG_LEAVE_DELETED": "Leave deleted successfully.",
     "MSG_LEAVE_DELETE_ERROR": "An error occurred while deleting the leave.",
+    "BULK_DELETE_LEAVE": "Delete Selected Leaves",
+    "BULK_DELETE_CONFIRM_TITLE": "Delete Leaves in Bulk",
+    "BULK_DELETE_CONFIRM_MESSAGE": "{{count}} leave record(s) will be deleted and parents will be notified. Do you confirm?",
     "COL_ICON": "Icon"
   },
   "ACTIVITIES": {
