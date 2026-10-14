@@ -11,10 +11,11 @@
 >
   <div class="d-flex flex-column gap-3 py-3">
     <div class="field d-flex flex-column gap-1">
-      <label class="font-bold text-sm text-secondary"
+      <label for="assignBus" class="font-bold text-sm text-secondary"
         >{{ 'PERSON_BUS_ASSIGN.SELECT_BUS' | translate }} <span class="text-danger">*</span></label
       >
       <p-select
+        inputId="assignBus"
         [options]="busOptions"
         optionLabel="label"
         optionValue="value"
@@ -26,10 +27,11 @@
     </div>
 
     <div class="field d-flex flex-column gap-1">
-      <label class="font-bold text-sm text-secondary"
+      <label for="assignDirection" class="font-bold text-sm text-secondary"
         >{{ 'PERSON_BUS_ASSIGN.SELECT_DIRECTION' | translate }} <span class="text-danger">*</span></label
       >
       <p-select
+        inputId="assignDirection"
         [options]="yonOptions"
         optionLabel="label"
         optionValue="value"

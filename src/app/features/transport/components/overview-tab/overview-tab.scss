@@ -17,7 +17,9 @@
   align-items: center;
   gap: 16px;
   box-shadow: $shadow-card;
-  transition: box-shadow 0.2s ease, transform 0.2s ease;
+  transition:
+    box-shadow 0.2s ease,
+    transform 0.2s ease;
   cursor: pointer;
 
   &:hover {
@@ -25,7 +27,6 @@
     transform: translateY(-2px);
   }
 }
-
 
 .stat-icon {
   width: 52px;
@@ -40,12 +41,30 @@
     font-size: 26px;
   }
 
-  &.icon-gray { background: var(--ted-bg-subtle); color: var(--ted-text-muted); }
-  &.icon-emerald { background: var(--ted-success-bg); color: var(--ted-success-solid); }
-  &.icon-blue { background: var(--ted-info-bg); color: var(--ted-info-solid); }
-  &.icon-amber { background: var(--ted-warning-bg); color: var(--ted-warning-solid); }
-  &.icon-purple { background: var(--ted-accent-bg); color: var(--ted-accent-solid); }
-  &.icon-rose { background: var(--ted-danger-bg); color: var(--ted-danger-solid); }
+  &.icon-gray {
+    background: var(--ted-bg-subtle);
+    color: var(--ted-text-muted);
+  }
+  &.icon-emerald {
+    background: var(--ted-success-bg);
+    color: var(--ted-success-solid);
+  }
+  &.icon-blue {
+    background: var(--ted-info-bg);
+    color: var(--ted-info-solid);
+  }
+  &.icon-amber {
+    background: var(--ted-warning-bg);
+    color: var(--ted-warning-solid);
+  }
+  &.icon-purple {
+    background: var(--ted-accent-bg);
+    color: var(--ted-accent-solid);
+  }
+  &.icon-rose {
+    background: var(--ted-danger-bg);
+    color: var(--ted-danger-solid);
+  }
 }
 
 .stat-info {

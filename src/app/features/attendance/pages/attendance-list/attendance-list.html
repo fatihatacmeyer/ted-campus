@@ -39,6 +39,7 @@
         text="true"
         rounded="true"
         [pTooltip]="'ATTENDANCE.PREV_PERIOD' | translate"
+        [attr.aria-label]="'ATTENDANCE.PREV_PERIOD' | translate"
         (click)="prevPeriod()"
       ></button>
       <span class="range-label fw-semibold">{{ rangeLabel() }}</span>
@@ -50,6 +51,7 @@
         text="true"
         rounded="true"
         [pTooltip]="'ATTENDANCE.NEXT_PERIOD' | translate"
+        [attr.aria-label]="'ATTENDANCE.NEXT_PERIOD' | translate"
         (click)="nextPeriod()"
       ></button>
       <button
@@ -139,7 +141,11 @@
               <i
                 class="pi pi-info-circle"
                 style="color: var(--ted-red-600); cursor: pointer; font-size: 1.2rem"
+                role="button"
+                tabindex="0"
                 (click)="openLeaveIconDialog(row); $event.stopPropagation()"
+                (keydown.enter)="openLeaveIconDialog(row); $event.stopPropagation()"
+                [attr.aria-label]="'STUDENT_ATTENDANCE.LEAVE_DETAIL' | translate"
                 [pTooltip]="'STUDENT_ATTENDANCE.LEAVE_DETAIL' | translate"
                 tooltipPosition="right"
               ></i>

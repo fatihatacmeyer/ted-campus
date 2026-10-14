@@ -9,6 +9,7 @@
       icon="pi pi-refresh"
       class="p-button-sm p-button-outlined"
       [pTooltip]="'COMMON.REFRESH' | translate"
+      [attr.aria-label]="'COMMON.REFRESH' | translate"
       (click)="loadProxies()"
     ></button>
   </app-page-header>
@@ -59,6 +60,7 @@
               icon="pi pi-check"
               class="p-button-rounded p-button-text p-button-success p-button-sm"
               [pTooltip]="'PROXIES.APPROVE' | translate"
+              [attr.aria-label]="'PROXIES.APPROVE' | translate"
               tooltipPosition="top"
               (click)="updateStatus(row, ProxyApprovalStatus.Approved); $event.stopPropagation()"
             ></button>
@@ -68,6 +70,7 @@
               icon="pi pi-times"
               class="p-button-rounded p-button-text p-button-danger p-button-sm"
               [pTooltip]="'PROXIES.REJECT' | translate"
+              [attr.aria-label]="'PROXIES.REJECT' | translate"
               tooltipPosition="top"
               (click)="updateStatus(row, ProxyApprovalStatus.Rejected); $event.stopPropagation()"
             ></button>

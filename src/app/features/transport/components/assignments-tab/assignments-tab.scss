@@ -58,13 +58,14 @@
   padding: 24px;
   box-shadow: $shadow-card;
   border-left: 4px solid var(--ted-border);
-  transition: box-shadow 0.2s ease, transform 0.2s ease;
+  transition:
+    box-shadow 0.2s ease,
+    transform 0.2s ease;
 
   &:hover {
     box-shadow: $shadow-hover;
     transform: translateY(-2px);
   }
-
 
   &.bus-waiting {
     border-left-color: var(--ted-text-muted);
@@ -89,7 +90,6 @@
     font-size: 20px;
   }
 }
-
 
 /* ── Route Info ────────────────────────────────────────── */
 .bus-route {
@@ -125,7 +125,6 @@
     font-weight: 600;
     color: $text-primary;
   }
-
 }
 
 .route-line {
@@ -176,7 +175,6 @@
       font-size: 16px;
     }
   }
-
 }
 
 /* ── Bus Yetkilileri (servis bazlı, çoklu) ─────────────── */
@@ -238,10 +236,6 @@
   border-top: 1px solid $border-light;
 }
 
-.detail-dialog {
-  max-width: 800px;
-}
-
 /* ── Dialog içi yetkili chip listesi ───────────────────── */
 .authority-chip-list {
   display: flex;
@@ -279,7 +273,9 @@
       background: transparent;
       color: $text-muted;
       cursor: pointer;
-      transition: background 0.2s, color 0.2s;
+      transition:
+        background 0.2s,
+        color 0.2s;
 
       &:hover {
         background: rgba(220, 38, 38, 0.12);

@@ -299,6 +299,7 @@
                         icon="pi pi-check"
                         class="p-button-sm p-button-success"
                         [pTooltip]="'PERSON.CONFIRM_CHANGE' | translate"
+                        [attr.aria-label]="'PERSON.CONFIRM_CHANGE' | translate"
                         (click)="confirmChange()"
                       ></button>
                       <button
@@ -307,6 +308,7 @@
                         icon="pi pi-times"
                         class="p-button-sm p-button-text"
                         [pTooltip]="'PERSON.ABORT' | translate"
+                        [attr.aria-label]="'PERSON.ABORT' | translate"
                         (click)="cancelChange()"
                       ></button>
                     </div>
@@ -323,6 +325,7 @@
                       icon="pi pi-check"
                       class="p-button-sm p-button-danger"
                       [pTooltip]="'COMMON.CONFIRM' | translate"
+                      [attr.aria-label]="'COMMON.CONFIRM' | translate"
                       (click)="confirmRemove(row)"
                     ></button>
                     <button
@@ -331,6 +334,7 @@
                       icon="pi pi-times"
                       class="p-button-sm p-button-text"
                       [pTooltip]="'PERSON.ABORT' | translate"
+                      [attr.aria-label]="'PERSON.ABORT' | translate"
                       (click)="cancelRemove()"
                     ></button>
                   </div>
@@ -342,6 +346,7 @@
                       icon="pi pi-pencil"
                       class="p-button-text p-button-sm"
                       [pTooltip]="changeLinkedTooltip"
+                      [attr.aria-label]="changeLinkedTooltip"
                       (click)="startChange(row)"
                     ></button>
                     <button
@@ -350,6 +355,7 @@
                       icon="pi pi-trash"
                       class="p-button-text p-button-sm p-button-danger"
                       [pTooltip]="removeLinkedTooltip"
+                      [attr.aria-label]="removeLinkedTooltip"
                       (click)="requestRemove(row)"
                     ></button>
                   </div>
@@ -397,12 +403,13 @@
           <div class="p-3 border rounded bg-light">
             <div class="field-row mb-2">
               <div class="field">
-                <label
+                <label for="yeniLinkedAd"
                   >{{ 'PERSON.LINKED_NAME' | translate: { kind: (linkedKind | translate) } }}
                   <span class="required">*</span></label
                 >
                 <input
                   pInputText
+                  id="yeniLinkedAd"
                   formControlName="yeniLinkedAd"
                   [placeholder]="
                     'PERSON.LINKED_NAME' | translate: { kind: (linkedKind | translate) }
@@ -410,12 +417,13 @@
                 />
               </div>
               <div class="field">
-                <label
+                <label for="yeniLinkedSoyad"
                   >{{ 'PERSON.LINKED_SURNAME' | translate: { kind: (linkedKind | translate) } }}
                   <span class="required">*</span></label
                 >
                 <input
                   pInputText
+                  id="yeniLinkedSoyad"
                   formControlName="yeniLinkedSoyad"
                   [placeholder]="
                     'PERSON.LINKED_SURNAME' | translate: { kind: (linkedKind | translate) }
@@ -424,10 +432,10 @@
               </div>
             </div>
             <div class="field">
-              <label>{{
+              <label for="yeniLinkedTelefon">{{
                 'PERSON.LINKED_PHONE' | translate: { kind: (linkedKind | translate) }
               }}</label>
-              <input pInputText formControlName="yeniLinkedTelefon" placeholder="05XX XXX XX XX" />
+              <input pInputText id="yeniLinkedTelefon" formControlName="yeniLinkedTelefon" placeholder="05XX XXX XX XX" />
             </div>
           </div>
         }

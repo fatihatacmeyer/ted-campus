@@ -4,6 +4,30 @@ import { map } from 'rxjs/operators';
 import { ApiHelperService } from '../../../core/services/api-helper.service';
 import { LastPassRecord, TerminalGroup } from '../models/last-pass.model';
 
+/** sp_lastpass_tl satırı. */
+interface TerminalGroupRow {
+  Id: number;
+  Ad: string;
+}
+
+/** sp_lastpass_pp satırı (alan anlamları LastPassRecord içinde). */
+interface LastPassRow {
+  SicilId: number;
+  FotoImage: string | null;
+  ProfilFotoDosyaAdi?: string | null;
+  KisiTipi?: string | null;
+  SicilNo: string;
+  AdSoyad: string;
+  BolumAdi: string;
+  FirmaAdi: string;
+  Pozisyon: string;
+  GecisZamani: string;
+  TerminalID: number;
+  TerminalAdi: string;
+  Mesaj: string;
+  Gecis: number;
+}
+
 @Injectable({
   providedIn: 'root',
 })
@@ -13,7 +37,7 @@ export class LastPassService {
   // sp_lastpass_tl (Terminal List)
   getTerminalGroups(): Observable<TerminalGroup[]> {
     return this.api
-      .callEndpoint<any[]>('Dynamic', {
+      .callEndpoint<TerminalGroupRow[]>('Dynamic', {
         point: 'lastpass',
         islemtipi: 'tl',
       })
@@ -30,7 +54,7 @@ export class LastPassService {
   // sp_lastpass_pp (Last Passes by Group)
   getRecentPassesByGroup(terminalGroupId: number): Observable<LastPassRecord[]> {
     return this.api
-      .callEndpoint<any[]>('Dynamic', {
+      .callEndpoint<LastPassRow[]>('Dynamic', {
         point: 'lastpasscampus',
         islemtipi: 'pp',
         terminalgrubu: terminalGroupId,

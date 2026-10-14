@@ -22,7 +22,7 @@
       </div>
 
       <div class="filter-group">
-        <label>{{ 'LAST_PASS.GRID_COUNT' | translate }}:</label>
+        <label for="gridSize">{{ 'LAST_PASS.GRID_COUNT' | translate }}:</label>
         <p-select
           inputId="gridSize"
           [options]="gridOptions"
@@ -59,7 +59,7 @@
         <span class="material-symbols-outlined">close</span>
       </button>
       <!-- } -->
-      @for (record of visibleRecords(); track trackByIndex($index, record)) {
+      @for (record of visibleRecords(); track trackByIndex($index)) {
         <div class="pass-card">
           <div class="pass-photo">
             @if (isIdleTerminal(record)) {

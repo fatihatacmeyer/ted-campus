@@ -42,7 +42,7 @@ export class PhotoApprovalService {
     onayDurumu: number,
   ): Observable<{ sonuc: number; sunucuCevap: string }> {
     return this.api
-      .callEndpoint<any[]>('Dynamic', {
+      .callEndpoint<{ Sonuc: number | string; SunucuCevap: string }[]>('Dynamic', {
         point: 'ProfilFotografTalep',
         islemtipi: 'o',
         ProfilFotografId: profilFotografId,

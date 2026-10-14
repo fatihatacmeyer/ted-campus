@@ -35,8 +35,8 @@ export class PersonProfileComponent implements OnChanges {
   @Input() visible = false;
   @Input() person: Person | null = null;
   @Input() allPersons: Person[] = [];
-  @Input() childrenMap: Map<number, Person[]> = new Map();
-  @Input() parentsMap: Map<number, Person[]> = new Map();
+  @Input() childrenMap = new Map<number, Person[]>();
+  @Input() parentsMap = new Map<number, Person[]>();
   @Input() userdefContext = UserDef.Ogrenci;
 
   @Output() visibleChange = new EventEmitter<boolean>();
@@ -77,7 +77,7 @@ export class PersonProfileComponent implements OnChanges {
     const isVekil = this.person.userdefad === 'Vekil';
 
     this.api
-      .callEndpoint<any[]>('Dynamic', {
+      .callEndpoint<{ DosyaAdi?: string }[]>('Dynamic', {
         point: 'ProfilFotografCampus',
         islemtipi: 's',
         SicilId: isVekil ? '' : this.person.id,

@@ -33,7 +33,7 @@ export class TypesService {
 
   getTerminals(): Observable<DropdownItem[]> {
     return this.api
-      .callEndpoint<any[]>('Dynamic', {
+      .callEndpoint<{ id: number; terminalname: string }[]>('Dynamic', {
         point: 'MeCampusterminal',
         islemtipi: 's',
       })

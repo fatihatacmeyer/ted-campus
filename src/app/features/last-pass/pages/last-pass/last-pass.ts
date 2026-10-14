@@ -188,7 +188,7 @@ export class LastPassComponent implements OnInit {
     (event.target as HTMLImageElement).src = DEFAULT_AVATAR;
   }
 
-  trackByIndex(index: number, _record: LastPassRecord): number {
+  trackByIndex(index: number): number {
     return index;
   }
 

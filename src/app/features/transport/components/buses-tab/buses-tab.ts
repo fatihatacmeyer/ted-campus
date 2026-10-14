@@ -1,7 +1,6 @@
 import {
   ChangeDetectionStrategy,
   Component,
-  HostListener,
   OnInit,
   computed,
   inject,
@@ -10,6 +9,7 @@ import {
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { ButtonModule } from 'primeng/button';
+import { DialogModule } from 'primeng/dialog';
 import { InputTextModule } from 'primeng/inputtext';
 import { SelectModule } from 'primeng/select';
 import { TagModule } from 'primeng/tag';
@@ -35,6 +35,7 @@ import { boldText, injectI18nVersion } from '../../utils/transport.utils';
     ReactiveFormsModule,
     TranslatePipe,
     ButtonModule,
+    DialogModule,
     InputTextModule,
     SelectModule,
     TagModule,
@@ -108,13 +109,6 @@ export class BusesTabComponent implements OnInit {
       default:
         return status;
     }
-  }
-
-  /** Esc: en üstte açık olan modalı kapatır (silme onayı forma göre üsttedir). */
-  @HostListener('document:keydown.escape')
-  protected onEscape(): void {
-    if (this.busDeleteVisible()) this.closeBusDelete();
-    else if (this.busFormVisible()) this.closeBusForm();
   }
 
   openBusForm(bus?: Bus): void {

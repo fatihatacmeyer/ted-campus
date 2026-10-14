@@ -1,6 +1,6 @@
-import { provideAppInitializer, ApplicationConfig, importProvidersFrom, inject } from '@angular/core';
+import { provideAppInitializer, ApplicationConfig, inject } from '@angular/core';
 import { provideRouter } from '@angular/router';
-import { HttpClient, provideHttpClient, withInterceptors } from '@angular/common/http';
+import { provideHttpClient, withInterceptors } from '@angular/common/http';
 import { routes } from './app.routes';
 import {
   APP_CONFIG,

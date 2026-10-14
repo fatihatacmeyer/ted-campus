@@ -12,7 +12,14 @@
       <!-- FOTOĞRAF VE BAŞLIK BÖLÜMÜ -->
       <div class="profile-header">
         @if (!photoFailed && photoUrl) {
-          <div class="profile-image-container clickable" (click)="showFullPhoto = true">
+          <div
+            class="profile-image-container clickable"
+            role="button"
+            tabindex="0"
+            [attr.aria-label]="'PERSON_PROFILE.PHOTO_ALT' | translate"
+            (click)="showFullPhoto = true"
+            (keydown.enter)="showFullPhoto = true"
+          >
             <img
               [src]="photoUrl"
               (error)="onPhotoError()"

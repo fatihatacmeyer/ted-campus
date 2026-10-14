@@ -7,6 +7,19 @@ import { TIME_FIELD_SUFFIXES, WEEKDAYS, timeField } from '../models/weekday.mode
 import { unwrapResponse } from '../../../shared/utils/response.utils';
 import { TypesService, DropdownItem } from '../../persons/services/types.service';
 
+/** Güncelleme uçlarının farklı adlarla döndürdüğü sonuç alanları (backend tutarsız). */
+interface UpdateResultLike {
+  Sonuc?: unknown;
+  sonuc?: unknown;
+  islemsonuc?: unknown;
+  islemSonuc?: unknown;
+  SunucuCevap?: unknown;
+  sunucuCevap?: unknown;
+  sunucucevap?: unknown;
+  mesaj?: unknown;
+  aciklama?: unknown;
+}
+
 @Injectable({
   providedIn: 'root',
 })
@@ -71,7 +84,7 @@ export class SchoolHoursService {
       })
       .pipe(
         map((response) => {
-          const unwrapped = unwrapResponse(response) as any;
+          const unwrapped = unwrapResponse(response) as UpdateResultLike | null;
           const sonucVal =
             unwrapped?.Sonuc ?? unwrapped?.sonuc ?? unwrapped?.islemsonuc ?? unwrapped?.islemSonuc;
           const sunucuCevapVal =

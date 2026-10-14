@@ -5,6 +5,27 @@ import { ApiHelperService } from '../../../core/services/api-helper.service';
 import { unwrapResponse } from '../../../shared/utils/response.utils';
 import { GuardianProxy, ProxyApprovalStatus } from '../../../core/models/proxy.model';
 
+/** sp_vekil..._s satırı: GuardianProxy alanlarının DB (PascalCase) karşılıkları. */
+interface GuardianProxyRow {
+  Id: number;
+  VeliSicilId: number;
+  VeliAdSoyad: string;
+  OgrenciSicilId: number;
+  OgrenciAdSoyad: string;
+  OgrenciKampus?: string | null;
+  OgrenciSinif?: string | null;
+  VekilAdSoyad: string;
+  VekilTelefon: string;
+  VekilTC: string;
+  Yakinlik: string;
+  BasTarih: string;
+  BitTarih: string;
+  IsActive: boolean;
+  OnayDurumu: ProxyApprovalStatus;
+  OnayDurumuMetni: string;
+  CreatedDate: string;
+}
+
 interface DBInsertResult {
   Sonuc: number | string;
   SunucuCevap: string;
@@ -28,7 +49,7 @@ export class ProxyService {
       params['OnayDurumu'] = onayDurumu;
     }
 
-    return this.api.callEndpoint<any[]>('Dynamic', params).pipe(
+    return this.api.callEndpoint<GuardianProxyRow[]>('Dynamic', params).pipe(
       map((rows) =>
         (rows || []).map((row) => ({
           id: row.Id,

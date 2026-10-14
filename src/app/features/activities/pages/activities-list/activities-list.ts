@@ -378,12 +378,6 @@ export class ActivitiesComponent {
           return of([] as DropdownItem[]);
         }),
       ),
-      cbo_altfirma: this.typesService.getDropdownList('cbo_altfirma').pipe(
-        catchError((err) => {
-          console.error('Altfirma yüklenirken hata:', err);
-          return of([] as DropdownItem[]);
-        }),
-      ),
       cbo_firma: this.typesService.getDropdownList('cbo_firma').pipe(
         catchError((err) => {
           console.error('Kampüs bilgileri yüklenirken hata:', err);
@@ -393,12 +387,12 @@ export class ActivitiesComponent {
     })
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(
-        ({ TurCampus, UlasimCampus, cbo_bolum, cbo_direktorluk, cbo_altfirma, cbo_firma }) => {
+        ({ TurCampus, UlasimCampus, cbo_bolum, cbo_direktorluk, cbo_firma }) => {
           this.typeOptions = TurCampus;
           this.transportationOptions = UlasimCampus;
           this.classroomOptions = cbo_bolum;
           this.classroomGroups = this.buildClassroomGroups(cbo_bolum);
-          this.educationLevelOptions = cbo_altfirma;
+          this.educationLevelOptions = cbo_direktorluk;
           this.campusOptions = cbo_firma;
         },
       );
@@ -445,7 +439,7 @@ export class ActivitiesComponent {
   /** Ulaşım bilgileri — UlasimCampus lookup'undan doldurulur. */
   transportationOptions: DropdownItem[] = [];
 
-  /** Eğitim düzeyleri — cbo_altfirma lookup'undan doldurulur. */
+  /** Eğitim düzeyleri — cbo_direktorluk lookup'undan doldurulur. */
   educationLevelOptions: DropdownItem[] = [];
 
   /** Kampüs seçenekleri — cbo_firma lookup'undan doldurulur. */

@@ -2,7 +2,6 @@ import {
   ChangeDetectionStrategy,
   Component,
   DestroyRef,
-  HostListener,
   OnInit,
   computed,
   inject,
@@ -12,6 +11,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { ButtonModule } from 'primeng/button';
+import { DialogModule } from 'primeng/dialog';
 import { InputTextModule } from 'primeng/inputtext';
 import { MultiSelectModule } from 'primeng/multiselect';
 import { SelectModule } from 'primeng/select';
@@ -41,6 +41,7 @@ import { boldText, injectI18nVersion } from '../../utils/transport.utils';
     ReactiveFormsModule,
     TranslatePipe,
     ButtonModule,
+    DialogModule,
     InputTextModule,
     MultiSelectModule,
     SelectModule,
@@ -200,14 +201,6 @@ export class PlansTabComponent implements OnInit {
       .get('repeatType')!
       .valueChanges.pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(() => this.applyPlanRepeatValidators());
-  }
-
-  /** Esc: en üstte açık olan modalı kapatır (üstteki modallar önce). */
-  @HostListener('document:keydown.escape')
-  protected onEscape(): void {
-    if (this.planBulkDeleteVisible()) this.closePlanBulkDelete();
-    else if (this.planDeleteVisible()) this.closePlanDelete();
-    else if (this.planFormVisible()) this.closePlanForm();
   }
 
   /** Tek günlükte tarih, haftalıkta hafta günü zorunlu. */

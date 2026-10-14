@@ -19,9 +19,9 @@
         @for (campus of campuses(); track campus.id) {
           <p-tabpanel [value]="campus.id">
             <div class="filter-bar">
-              <label class="filter-label">{{
+              <span class="filter-label">{{
                 'SCHOOL_HOURS.SELECT_CLASS_LABEL' | translate
-              }}</label>
+              }}</span>
 
               <app-class-multi-select
                 class="class-select"
@@ -84,6 +84,7 @@
                           class="p-button-rounded p-button-text p-button-sm p-button-secondary"
                           (click)="onRowEditInit(row)"
                           [pTooltip]="'COMMON.EDIT' | translate"
+                          [attr.aria-label]="'COMMON.EDIT' | translate"
                         ></button>
                       } @else {
                         <button
@@ -94,6 +95,7 @@
                           class="p-button-rounded p-button-text p-button-sm p-button-success"
                           (click)="onRowEditSave(row)"
                           [pTooltip]="'COMMON.SAVE' | translate"
+                          [attr.aria-label]="'COMMON.SAVE' | translate"
                         ></button>
                         <button
                           pButton
@@ -103,6 +105,7 @@
                           class="p-button-rounded p-button-text p-button-sm p-button-danger"
                           (click)="onRowEditCancel(row)"
                           [pTooltip]="'COMMON.CANCEL' | translate"
+                          [attr.aria-label]="'COMMON.CANCEL' | translate"
                         ></button>
                       }
                     </div>

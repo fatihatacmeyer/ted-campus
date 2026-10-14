@@ -1,4 +1,4 @@
-import { Component, ChangeDetectionStrategy, inject, signal } from '@angular/core';
+import { Component, ChangeDetectionStrategy, inject } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { HeaderComponent } from './header/header';
 import { SidebarComponent } from './sidebar/sidebar';

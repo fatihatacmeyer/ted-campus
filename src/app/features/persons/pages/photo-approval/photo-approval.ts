@@ -17,87 +17,6 @@ import { NotificationService } from '../../../../core/services/notification.serv
 import { AppConfig, APP_CONFIG } from '../../../../core/services/app-config.service';
 import { PageHeaderComponent } from '../../../../shared/components/page-header/page-header';
 
-const MOCK_PHOTOS: PhotoApproval[] = [
-  {
-    Id: 101,
-    SicilId: 1001,
-    SicilAdSoyad: 'Ali Yılmaz',
-    VekilCampusId: null,
-    VekilAdSoyad: null,
-    DosyaAdi: 'https://primefaces.org/cdn/primeng/images/avatar/amyelsner.png',
-    YuklemeTarihi: '2026-09-30T09:00:00',
-    IsActive: true,
-    OnayDurumu: 0,
-    OnayDurumuMetni: 'Bekliyor',
-    UserDef: 11, // ÖĞRENCİ (Mavi Rozet bekleniyor)
-  },
-  {
-    Id: 102,
-    SicilId: 1002,
-    SicilAdSoyad: 'Ayşe Kaya',
-    VekilCampusId: null,
-    VekilAdSoyad: null,
-    DosyaAdi: 'hatali-resim-linki.jpg', // RESİM KIRIK TESTİ (Gri user ikonu bekleniyor)
-    YuklemeTarihi: '2026-09-30T10:15:00',
-    IsActive: true,
-    OnayDurumu: 0,
-    OnayDurumuMetni: 'Bekliyor',
-    UserDef: 12, // VELİ (Yeşil Rozet bekleniyor)
-  },
-  {
-    Id: 103,
-    SicilId: 1003,
-    SicilAdSoyad: 'Mehmet Demir',
-    VekilCampusId: null,
-    VekilAdSoyad: null,
-    DosyaAdi: 'https://primefaces.org/cdn/primeng/images/avatar/asiyajavayant.png',
-    YuklemeTarihi: '2026-09-29T14:20:00',
-    IsActive: true,
-    OnayDurumu: 0,
-    OnayDurumuMetni: 'Bekliyor',
-    UserDef: 13, // YETKİLİ (Siyah/Contrast Rozet bekleniyor)
-  },
-  {
-    Id: 104,
-    SicilId: 1004,
-    SicilAdSoyad: 'Fatma Şahin',
-    VekilCampusId: null,
-    VekilAdSoyad: null,
-    DosyaAdi: 'https://primefaces.org/cdn/primeng/images/avatar/onyamalimba.png',
-    YuklemeTarihi: '2026-09-28T16:45:00',
-    IsActive: true,
-    OnayDurumu: 0,
-    OnayDurumuMetni: 'Bekliyor',
-    UserDef: 14, // ÖĞRETMEN (Kırmızı Rozet bekleniyor)
-  },
-  {
-    Id: 105,
-    SicilId: null,
-    SicilAdSoyad: null,
-    VekilCampusId: 5001,
-    VekilAdSoyad: 'Hasan Öz (Vekil)',
-    DosyaAdi: 'https://primefaces.org/cdn/primeng/images/avatar/ionibowcher.png',
-    YuklemeTarihi: '2026-09-27T11:10:00',
-    IsActive: true,
-    OnayDurumu: 0,
-    OnayDurumuMetni: 'Bekliyor',
-    UserDef: 0, // VEKİL (Turuncu/Sarı Rozet bekleniyor - VekilCampusId dolu olduğu için UserDef önemsiz)
-  },
-  {
-    Id: 106,
-    SicilId: 1006,
-    SicilAdSoyad: 'Bilinmeyen Personel',
-    VekilCampusId: null,
-    VekilAdSoyad: null,
-    DosyaAdi: 'https://primefaces.org/cdn/primeng/images/avatar/xuxuefeng.png',
-    YuklemeTarihi: '2026-09-26T08:30:00',
-    IsActive: true,
-    OnayDurumu: 0,
-    OnayDurumuMetni: 'Bekliyor',
-    UserDef: 99, // DİĞER/PERSONEL (Gri Rozet bekleniyor - Tanımsız ID)
-  },
-];
-
 // UI için hesaplanmış alanları barındıran genişletilmiş arayüz
 interface PhotoApprovalUI extends PhotoApproval {
   photoUrl: string;
@@ -185,8 +104,8 @@ export class PhotoApprovalComponent implements OnInit {
   private mapToUI(photo: PhotoApproval): PhotoApprovalUI {
     const baseUrl = this.config.photoBaseUrl || 'http://localhost/MeCampus/ProfilFotograflari';
 
-    let pTypeStr = 'PHOTO_APPROVAL.UNKNOWN';
-    let pSeverity: 'success' | 'info' | 'warn' | 'danger' | 'secondary' | 'contrast' = 'secondary';
+    let pTypeStr: string;
+    let pSeverity: 'success' | 'info' | 'warn' | 'danger' | 'secondary' | 'contrast';
 
     // 1. Vekil Kontrolü: VekilCampusId doluysa öncelikli olarak Vekildir
     if (photo.VekilCampusId) {

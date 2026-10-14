@@ -345,7 +345,7 @@ export class DashboardService {
   }
 
   /** @param ara isimden arama (backend @Ara); boşsa filtre uygulanmaz. */
-  getRecentTransactions(adet: number = 10, ara?: string): Observable<AccessTransaction[]> {
+  getRecentTransactions(adet = 10, ara?: string): Observable<AccessTransaction[]> {
     return this.api
       .callEndpoint<RecentTransactionRow[]>('Dynamic', {
         point: 'SonHareketlerCampus',

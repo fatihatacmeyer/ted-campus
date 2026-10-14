@@ -27,7 +27,6 @@ import { PersonService } from '../../services/person.service';
 import {
   Person,
   UserDef,
-  OperationResultResponse,
   PersonInsertRequest,
   RelationCampusRow,
 } from '../../../../core/models/person.model';
@@ -190,7 +189,6 @@ export class PersonFormComponent implements OnChanges, OnInit {
   get formConfig() {
     const isOgrenci = this.userdef === UserDef.Ogrenci;
     const isOgretmen = this.userdef === UserDef.Ogretmen;
-    const isVeli = this.userdef === UserDef.Veli;
 
     return {
       show: {
@@ -543,19 +541,13 @@ export class PersonFormComponent implements OnChanges, OnInit {
   }
 
   /** "Veli seçin" / "Öğrenci seçin" placeholder'ı (i18n anahtarı). */
-  get linkedSelectPlaceholder(): string {
-    return 'PERSON.SELECT_LINKED';
-  }
+  readonly linkedSelectPlaceholder = 'PERSON.SELECT_LINKED';
 
   /** Değiştir dropdown'ı placeholder'ı (i18n anahtarı): "Yeni veli seçin" / "Yeni öğrenci seçin". */
-  get changeLinkedPlaceholder(): string {
-    return 'PERSON.SELECT_NEW_LINKED';
-  }
+  readonly changeLinkedPlaceholder = 'PERSON.SELECT_NEW_LINKED';
 
   /** "Veli Ekle" / "Öğrenci Ekle" buton etiketi (i18n anahtarı). */
-  get addLinkedButtonLabel(): string {
-    return 'PERSON.ADD_LINKED';
-  }
+  readonly addLinkedButtonLabel = 'PERSON.ADD_LINKED';
 
   /** Değiştir tooltip'i (i18n anahtarı): "Veliyi Değiştir" / "Öğrenciyi Değiştir". */
   get changeLinkedTooltip(): string {
@@ -575,9 +567,7 @@ export class PersonFormComponent implements OnChanges, OnInit {
   }
 
   /** Dropdown içindeki arama kutusu placeholder'ı (i18n anahtarı): "Veli ara..." / "Öğrenci ara...". */
-  get linkedFilterPlaceholder(): string {
-    return 'PERSON.SEARCH_LINKED';
-  }
+  readonly linkedFilterPlaceholder = 'PERSON.SEARCH_LINKED';
 
   get linkedPersonOptions(): { label: string; value: number }[] {
     if (this.cachedLinkedOptions) return this.cachedLinkedOptions;

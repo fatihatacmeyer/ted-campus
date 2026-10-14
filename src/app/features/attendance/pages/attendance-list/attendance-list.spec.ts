@@ -1,89 +1,52 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { provideHttpClient } from '@angular/common/http';
-import { MessageService } from 'primeng/api';
-import { TranslateService } from '@ngx-translate/core';
 import { of } from 'rxjs';
 import { vi } from 'vitest';
 
 import { AttendanceListComponent } from './attendance-list';
 import { AttendanceService } from '../../services/attendance.service';
-import {
-  AttendanceRow,
-  LeaveBalance,
-  LeaveRecord,
-} from '../../../../core/models/attendance.model';
+import { StudentAttendanceRow } from '../../../../core/models/attendance.model';
 import { computePeriodRange } from '../../../../shared/utils/date.utils';
+import { provideAppTesting } from '../../../../testing/test-providers';
 
 describe('AttendanceListComponent', () => {
   let component: AttendanceListComponent;
   let fixture: ComponentFixture<AttendanceListComponent>;
-  let service: AttendanceService;
+  let service: {
+    getStudentAttendanceRows: ReturnType<typeof vi.fn>;
+    deleteStudentLeave: ReturnType<typeof vi.fn>;
+  };
 
-  /** Test row factory helper. */
-  const mockRow = (overrides: Partial<AttendanceRow> = {}): AttendanceRow => ({
+  /** Test satırı üretici. */
+  const mockRow = (overrides: Partial<StudentAttendanceRow> = {}): StudentAttendanceRow => ({
     sicilId: 1,
     sicilNo: '100',
-    ad: 'Test',
-    soyad: 'Personel',
-    adSoyad: 'Test Personel',
-    bolumAd: 'Bilgi İşlem',
-    pozisyonAd: 'Uzman',
-    mesaiTarih: '2026-08-06',
-    giris: '2026-08-06T08:05:00',
-    cikis: '2026-08-06T17:00:00',
-    girisId: 1,
-    cikisId: 1,
-    elleGiris: 0,
-    elleCikis: 0,
-    gecKalma: 0,
-    erkenCikma: 0,
-    mesaiBas: '08:00',
-    mesaiBit: '17:00',
-    mesaiSuresi: 540,
-    normalMesai: 540,
-    araSure: 60,
-    fazlaMesai: 0,
-    izinSuresi: 0,
-    yillikIzinSuresi: 0,
-    eksikMesai: 0,
-    mesaiAciklama: '',
-    izinAciklama: '',
-    kayitYetki: 0,
-    onayMiPdks: false,
+    adSoyad: 'Test Öğrenci',
+    sinif: '5-A',
+    kampus: 'Merkez',
+    egitimDuzeyi: 'Ortaokul',
+    gelisServisPlaka: null,
+    donusServisPlaka: null,
+    tarih: '2026-08-06',
+    girisSaati: '08:05',
+    cikisSaati: '15:00',
+    gecKalmaSuresiDk: 0,
+    erkenCikmaSuresiDk: 0,
+    izinId: null,
+    izinTipi: null,
+    izinSaatAraligi: null,
+    okulSaatleri: '08:00-15:00',
     ...overrides,
   });
 
   beforeEach(async () => {
-    const serviceStub = {
-      getAttendanceRows: vi.fn(() => of([])),
-      getLeaveTypes: vi.fn(() => of([])),
-      getLeaveBalance: vi.fn(() =>
-        of<LeaveBalance>({
-          yillikIzinHakTarihi: '2026-01-01',
-          kidem: 5,
-          hak: 20,
-          kullanilanYillikIzin: 3,
-          izinDevir: 0,
-          kalan: 17,
-        }),
-      ),
-      getMyLeaves: vi.fn(() => of([])),
-      requestLeave: vi.fn(() => of(null)),
-      cancelLeave: vi.fn(() => of(null)),
-    } as unknown as AttendanceService;
-    service = serviceStub;
+    service = {
+      getStudentAttendanceRows: vi.fn(() => of([] as StudentAttendanceRow[])),
+      deleteStudentLeave: vi.fn(() => of(null)),
+    };
 
     await TestBed.configureTestingModule({
       imports: [AttendanceListComponent],
-      providers: [
-        provideHttpClient(),
-        MessageService,
-        {
-          provide: TranslateService,
-          useValue: { instant: (key: string) => key },
-        },
-        { provide: AttendanceService, useValue: service },
-      ],
+      providers: [...provideAppTesting(), { provide: AttendanceService, useValue: service }],
     }).compileComponents();
 
     fixture = TestBed.createComponent(AttendanceListComponent);
@@ -95,57 +58,54 @@ describe('AttendanceListComponent', () => {
     expect(component).toBeTruthy();
   });
 
-  it('ilk yükleme listeTip 0 ve bugünün aralığıyla servisi çağırır', () => {
+  it('ilk yükleme GosterimTuru 0 ve bugünün aralığıyla servisi çağırır', () => {
     const expected = computePeriodRange('gun', new Date());
-    expect(service.getAttendanceRows).toHaveBeenCalledWith(
+    expect(service.getStudentAttendanceRows).toHaveBeenCalledWith(
       expect.objectContaining({
-        listeTip: 0,
+        GosterimTuru: 0,
         baslangic: expected.baslangic,
         bitis: expected.bitis,
       }),
     );
   });
 
-  it('sekme değişimi yeni listeTip ile listeyi yeniler', () => {
-    vi.mocked(service.getAttendanceRows).mockClear();
-    component.onTabChange(6);
-    expect(component.activeTab()).toBe(6);
-    expect(service.getAttendanceRows).toHaveBeenCalledWith(
-      expect.objectContaining({ listeTip: 6 }),
+  it('sekme değişimi yeni GosterimTuru ile listeyi yeniler', () => {
+    service.getStudentAttendanceRows.mockClear();
+    component.onTabChange(2);
+    expect(component.activeTab()).toBe(2);
+    expect(service.getStudentAttendanceRows).toHaveBeenCalledWith(
+      expect.objectContaining({ GosterimTuru: 2 }),
     );
   });
 
-  it('openLeaveDialog seçili satırı ayarlar ve dialogu gösterir', () => {
-    const row = mockRow();
-    component.openLeaveDialog(row);
-    expect(component.selectedRow()).toEqual(row);
-    expect(component.leaveDialogVisible()).toBe(true);
-    expect(service.getLeaveTypes).toHaveBeenCalled();
-    expect(service.getLeaveBalance).toHaveBeenCalled();
-    expect(component.leaveForm.get('baslangic')?.value).toEqual(
-      new Date(2026, 7, 6),
+  it('arama metni adSoyadArama olarak gönderilir', () => {
+    service.getStudentAttendanceRows.mockClear();
+    component.onSearch('ayşe');
+    expect(service.getStudentAttendanceRows).toHaveBeenCalledWith(
+      expect.objectContaining({ adSoyadArama: 'ayşe' }),
     );
   });
 
-  it('cancelLeave onay sonrası servisi çağırır ve listeyi yeniler', () => {
-    const rec: LeaveRecord = {
-      id: 5,
-      izinTipi: 'Yıllık İzin',
-      bastarih: '2026-01-01',
-      bittarih: '2026-01-02',
-      ucretli: false,
-      saatlik: false,
-      durum: 'Talep',
-    };
-    vi.mocked(service.getMyLeaves).mockClear();
+  it('openLeaveIconDialog seçili satırı ayarlar ve dialogu gösterir', () => {
+    const row = mockRow({ izinId: 5, izinTipi: 'Raporlu' });
+    component.openLeaveIconDialog(row);
+    expect(component.selectedLeaveRow()).toEqual(row);
+    expect(component.leaveIconDialogVisible()).toBe(true);
+  });
 
-    component.cancelLeave(rec);
-    expect(component.confirmCancelVisible()).toBe(true);
+  it('selectedLeaveIds aynı izin kaydını tekilleştirir, izinsizleri atlar', () => {
+    component.selectedRows.set([
+      mockRow({ sicilId: 1, izinId: 5 }),
+      mockRow({ sicilId: 2, izinId: 5 }),
+      mockRow({ sicilId: 3, izinId: null }),
+      mockRow({ sicilId: 4, izinId: 7 }),
+    ]);
+    expect(component.selectedLeaveIds()).toEqual([5, 7]);
+  });
 
-    component.confirmCancelLeave();
-    expect(service.cancelLeave).toHaveBeenCalledWith(5);
-    expect(service.getMyLeaves).toHaveBeenCalled();
-    expect(component.confirmCancelVisible()).toBe(false);
+  it('deleteLeave servisi çağırır', () => {
+    component.deleteLeave(5);
+    expect(service.deleteStudentLeave).toHaveBeenCalledWith(5);
   });
 
   it('computePeriodRange: hafta ay sınırını aşar (29 Haz – 5 Tem 2026)', () => {

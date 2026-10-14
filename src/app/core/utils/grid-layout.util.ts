@@ -12,7 +12,7 @@ export function computeOptimalGrid(
   containerWidth: number,
   containerHeight: number,
   ratio: number = 9 / 13, // genişlik / yükseklik
-  gap: number = 14,
+  gap = 14,
 ): OptimalGrid {
   if (count <= 0 || containerWidth <= 0 || containerHeight <= 0) {
     return { cols: 1, rows: 1, cardWidth: 0, cardHeight: 0 };

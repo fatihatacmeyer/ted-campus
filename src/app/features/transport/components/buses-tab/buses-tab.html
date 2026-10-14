@@ -63,218 +63,198 @@
 <!-- DIALOG: Bus Form (Add/Edit)                              -->
 <!-- ══════════════════════════════════════════════════════════ -->
 @if (busFormVisible()) {
-  <div
-    class="dialog-overlay"
-    (click)="closeBusForm()"
-    (keyup.enter)="closeBusForm()"
-    role="presentation"
+  <p-dialog
+    [visible]="true"
+    [modal]="true"
+    [draggable]="false"
+    [resizable]="false"
+    [style]="{ width: '560px' }"
+    [breakpoints]="{ '640px': '95vw' }"
+    (visibleChange)="$event || closeBusForm()"
   >
-    <div
-      class="dialog-content form-dialog"
-      (click)="$event.stopPropagation()"
-      (keyup.enter)="$event.stopPropagation()"
-      tabindex="-1"
-    >
-      <div class="dialog-header">
-        <h3>
-          <span class="material-symbols-outlined">{{ busEditing() ? 'edit' : 'add_circle' }}</span>
-          {{ (busEditing() ? 'SCHOOL_BUS.EDIT_BUS' : 'SCHOOL_BUS.ADD_BUS') | translate }}
-        </h3>
-        <button class="dialog-close" (click)="closeBusForm()">
-          <span class="material-symbols-outlined">close</span>
-        </button>
+    <ng-template pTemplate="header">
+      <h3 class="dialog-title">
+        <span class="material-symbols-outlined">{{ busEditing() ? 'edit' : 'add_circle' }}</span>
+        {{ (busEditing() ? 'SCHOOL_BUS.EDIT_BUS' : 'SCHOOL_BUS.ADD_BUS') | translate }}
+      </h3>
+    </ng-template>
+    <form [formGroup]="busForm" (ngSubmit)="submitBus()" class="entity-form">
+      <div class="form-field">
+        <label for="busPlaka"
+          ><span class="material-symbols-outlined">pin</span>
+          {{ 'SCHOOL_BUS.COL_PLATE' | translate }}</label
+        >
+        <input
+          pInputText
+          id="busPlaka"
+          formControlName="plate"
+          [placeholder]="'SCHOOL_BUS.PH_PLATE' | translate"
+          class="w-full"
+        />
+        @if (busForm.get('plate')?.invalid && busForm.get('plate')?.touched) {
+          <small class="field-error">{{ 'SCHOOL_BUS.ERR_PLATE_REQUIRED' | translate }}</small>
+        }
       </div>
-      <div class="dialog-body">
-        <form [formGroup]="busForm" (ngSubmit)="submitBus()" class="entity-form">
-          <div class="form-field">
-            <label for="busPlaka"
-              ><span class="material-symbols-outlined">pin</span>
-              {{ 'SCHOOL_BUS.COL_PLATE' | translate }}</label
-            >
-            <input
-              pInputText
-              id="busPlaka"
-              formControlName="plate"
-              [placeholder]="'SCHOOL_BUS.PH_PLATE' | translate"
-              class="w-full"
-            />
-            @if (busForm.get('plate')?.invalid && busForm.get('plate')?.touched) {
-              <small class="field-error">{{ 'SCHOOL_BUS.ERR_PLATE_REQUIRED' | translate }}</small>
-            }
-          </div>
-          <div class="form-field">
-            <label for="busBrand"
-              ><span class="material-symbols-outlined">badge</span>
-              {{ 'SCHOOL_BUS.COL_BRAND' | translate }}</label
-            >
-            <input
-              pInputText
-              id="busBrand"
-              formControlName="brand"
-              [placeholder]="'SCHOOL_BUS.PH_BRAND' | translate"
-              class="w-full"
-            />
-            @if (busForm.get('brand')?.invalid && busForm.get('brand')?.touched) {
-              <small class="field-error">{{ 'SCHOOL_BUS.ERR_BRAND_REQUIRED' | translate }}</small>
-            }
-          </div>
-          <div class="form-field">
-            <label for="busModel"
-              ><span class="material-symbols-outlined">commute</span>
-              {{ 'SCHOOL_BUS.COL_MODEL' | translate }}</label
-            >
-            <input
-              pInputText
-              id="busModel"
-              formControlName="model"
-              [placeholder]="'SCHOOL_BUS.PH_MODEL' | translate"
-              class="w-full"
-            />
-            @if (busForm.get('model')?.invalid && busForm.get('model')?.touched) {
-              <small class="field-error">{{ 'SCHOOL_BUS.ERR_MODEL_REQUIRED' | translate }}</small>
-            }
-          </div>
-          <div class="form-field">
-            <label for="busSeatCount"
-              ><span class="material-symbols-outlined">airline_seat_recline_normal</span>
-              {{ 'SCHOOL_BUS.COL_SEAT_COUNT' | translate }}</label
-            >
-            <input
-              pInputText
-              type="number"
-              id="busSeatCount"
-              formControlName="seatCount"
-              [placeholder]="'SCHOOL_BUS.PH_SEATS' | translate"
-              class="w-full"
-            />
-            @if (busForm.get('seatCount')?.invalid && busForm.get('seatCount')?.touched) {
-              <small class="field-error">{{ 'SCHOOL_BUS.ERR_SEATS_INVALID' | translate }}</small>
-            }
-          </div>
-          <div class="form-field">
-            <label for="busDescription"
-              ><span class="material-symbols-outlined">description</span>
-              {{ 'SCHOOL_BUS.COL_DESCRIPTION' | translate }}</label
-            >
-            <textarea
-              pTextarea
-              id="busDescription"
-              formControlName="description"
-              [placeholder]="'SCHOOL_BUS.PH_DESCRIPTION' | translate"
-              class="w-full"
-              rows="3"
-            ></textarea>
-          </div>
-          <div class="form-field">
-            <label for="busStatus"
-              ><span class="material-symbols-outlined">toggle_on</span>
-              {{ 'SCHOOL_BUS.COL_STATUS' | translate }}</label
-            >
-            <p-select
-              id="busStatus"
-              inputId="busStatus"
-              formControlName="status"
-              [options]="statusOptions()"
-              optionLabel="label"
-              optionValue="value"
-              [placeholder]="'SCHOOL_BUS.PH_STATUS' | translate"
-              styleClass="w-full"
-              appendTo="body"
-            />
-            @if (busForm.get('status')?.invalid && busForm.get('status')?.touched) {
-              <small class="field-error">{{ 'SCHOOL_BUS.ERR_STATUS_REQUIRED' | translate }}</small>
-            }
-          </div>
-          <div class="form-actions">
-            <button
-              type="button"
-              pButton
-              [label]="'COMMON.CANCEL' | translate"
-              icon="pi pi-times"
-              class="p-button-text"
-              (click)="closeBusForm()"
-              [attr.aria-label]="'COMMON.CANCEL' | translate"
-            ></button>
-            <button
-              type="submit"
-              pButton
-              [label]="
-                (busEditing() ? 'SCHOOL_BUS.UPDATE' : 'SCHOOL_BUS.SUBMIT_ADD_BUS') | translate
-              "
-              [attr.aria-label]="
-                (busEditing() ? 'SCHOOL_BUS.UPDATE' : 'SCHOOL_BUS.SUBMIT_ADD_BUS') | translate
-              "
-              icon="pi pi-check"
-              class="p-button-success"
-            ></button>
-          </div>
-        </form>
+      <div class="form-field">
+        <label for="busBrand"
+          ><span class="material-symbols-outlined">badge</span>
+          {{ 'SCHOOL_BUS.COL_BRAND' | translate }}</label
+        >
+        <input
+          pInputText
+          id="busBrand"
+          formControlName="brand"
+          [placeholder]="'SCHOOL_BUS.PH_BRAND' | translate"
+          class="w-full"
+        />
+        @if (busForm.get('brand')?.invalid && busForm.get('brand')?.touched) {
+          <small class="field-error">{{ 'SCHOOL_BUS.ERR_BRAND_REQUIRED' | translate }}</small>
+        }
       </div>
-    </div>
-  </div>
+      <div class="form-field">
+        <label for="busModel"
+          ><span class="material-symbols-outlined">commute</span>
+          {{ 'SCHOOL_BUS.COL_MODEL' | translate }}</label
+        >
+        <input
+          pInputText
+          id="busModel"
+          formControlName="model"
+          [placeholder]="'SCHOOL_BUS.PH_MODEL' | translate"
+          class="w-full"
+        />
+        @if (busForm.get('model')?.invalid && busForm.get('model')?.touched) {
+          <small class="field-error">{{ 'SCHOOL_BUS.ERR_MODEL_REQUIRED' | translate }}</small>
+        }
+      </div>
+      <div class="form-field">
+        <label for="busSeatCount"
+          ><span class="material-symbols-outlined">airline_seat_recline_normal</span>
+          {{ 'SCHOOL_BUS.COL_SEAT_COUNT' | translate }}</label
+        >
+        <input
+          pInputText
+          type="number"
+          id="busSeatCount"
+          formControlName="seatCount"
+          [placeholder]="'SCHOOL_BUS.PH_SEATS' | translate"
+          class="w-full"
+        />
+        @if (busForm.get('seatCount')?.invalid && busForm.get('seatCount')?.touched) {
+          <small class="field-error">{{ 'SCHOOL_BUS.ERR_SEATS_INVALID' | translate }}</small>
+        }
+      </div>
+      <div class="form-field">
+        <label for="busDescription"
+          ><span class="material-symbols-outlined">description</span>
+          {{ 'SCHOOL_BUS.COL_DESCRIPTION' | translate }}</label
+        >
+        <textarea
+          pTextarea
+          id="busDescription"
+          formControlName="description"
+          [placeholder]="'SCHOOL_BUS.PH_DESCRIPTION' | translate"
+          class="w-full"
+          rows="3"
+        ></textarea>
+      </div>
+      <div class="form-field">
+        <label for="busStatus"
+          ><span class="material-symbols-outlined">toggle_on</span>
+          {{ 'SCHOOL_BUS.COL_STATUS' | translate }}</label
+        >
+        <p-select
+          id="busStatus"
+          inputId="busStatus"
+          formControlName="status"
+          [options]="statusOptions()"
+          optionLabel="label"
+          optionValue="value"
+          [placeholder]="'SCHOOL_BUS.PH_STATUS' | translate"
+          styleClass="w-full"
+          appendTo="body"
+        />
+        @if (busForm.get('status')?.invalid && busForm.get('status')?.touched) {
+          <small class="field-error">{{ 'SCHOOL_BUS.ERR_STATUS_REQUIRED' | translate }}</small>
+        }
+      </div>
+      <div class="form-actions">
+        <button
+          type="button"
+          pButton
+          [label]="'COMMON.CANCEL' | translate"
+          icon="pi pi-times"
+          class="p-button-text"
+          (click)="closeBusForm()"
+          [attr.aria-label]="'COMMON.CANCEL' | translate"
+        ></button>
+        <button
+          type="submit"
+          pButton
+          [label]="(busEditing() ? 'SCHOOL_BUS.UPDATE' : 'SCHOOL_BUS.SUBMIT_ADD_BUS') | translate"
+          [attr.aria-label]="
+            (busEditing() ? 'SCHOOL_BUS.UPDATE' : 'SCHOOL_BUS.SUBMIT_ADD_BUS') | translate
+          "
+          icon="pi pi-check"
+          class="p-button-success"
+        ></button>
+      </div>
+    </form>
+  </p-dialog>
 }
 
 <!-- ══════════════════════════════════════════════════════════ -->
 <!-- DIALOG: Bus Delete Confirmation                           -->
 <!-- ══════════════════════════════════════════════════════════ -->
 @if (busDeleteVisible() && busDeleting()) {
-  <div
-    class="dialog-overlay"
-    (click)="closeBusDelete()"
-    (keyup.enter)="closeBusDelete()"
-    role="presentation"
+  <p-dialog
+    [visible]="true"
+    [modal]="true"
+    [draggable]="false"
+    [resizable]="false"
+    [style]="{ width: '480px' }"
+    [breakpoints]="{ '640px': '95vw' }"
+    (visibleChange)="$event || closeBusDelete()"
   >
-    <div
-      class="dialog-content delete-dialog"
-      (click)="$event.stopPropagation()"
-      (keyup.enter)="$event.stopPropagation()"
-      tabindex="-1"
-    >
-      <div class="dialog-header">
-        <h3>
-          <span class="material-symbols-outlined delete-icon">warning</span>
-          {{ 'SCHOOL_BUS.DELETE_BUS' | translate }}
-        </h3>
-        <button class="dialog-close" (click)="closeBusDelete()">
-          <span class="material-symbols-outlined">close</span>
-        </button>
+    <ng-template pTemplate="header">
+      <h3 class="dialog-title">
+        <span class="material-symbols-outlined delete-icon">warning</span>
+        {{ 'SCHOOL_BUS.DELETE_BUS' | translate }}
+      </h3>
+    </ng-template>
+    <div class="delete-confirm-content">
+      <div class="delete-warning">
+        <span class="material-symbols-outlined">error</span>
+        <p
+          [innerHTML]="
+            'SCHOOL_BUS.CONFIRM_DELETE_BUS'
+              | translate
+                : {
+                    plate: bold(busDeleting()!.plate),
+                    vehicle: bold(busDeleting()!.brand + ' ' + busDeleting()!.model),
+                  }
+          "
+        ></p>
       </div>
-      <div class="dialog-body">
-        <div class="delete-confirm-content">
-          <div class="delete-warning">
-            <span class="material-symbols-outlined">error</span>
-            <p
-              [innerHTML]="
-                'SCHOOL_BUS.CONFIRM_DELETE_BUS'
-                  | translate
-                    : {
-                        plate: bold(busDeleting()!.plate),
-                        vehicle: bold(busDeleting()!.brand + ' ' + busDeleting()!.model),
-                      }
-              "
-            ></p>
-          </div>
-          <p class="delete-note">{{ 'SCHOOL_BUS.IRREVERSIBLE' | translate }}</p>
-        </div>
-        <div class="form-actions">
-          <button
-            pButton
-            [label]="'COMMON.CANCEL' | translate"
-            icon="pi pi-times"
-            class="p-button-text"
-            (click)="closeBusDelete()"
-            [attr.aria-label]="'COMMON.CANCEL' | translate"
-          ></button>
-          <button
-            pButton
-            [label]="'COMMON.DELETE' | translate"
-            icon="pi pi-trash"
-            class="p-button-danger"
-            (click)="deleteBus()"
-            [attr.aria-label]="'COMMON.DELETE' | translate"
-          ></button>
-        </div>
-      </div>
+      <p class="delete-note">{{ 'SCHOOL_BUS.IRREVERSIBLE' | translate }}</p>
     </div>
-  </div>
+    <div class="form-actions">
+      <button
+        pButton
+        [label]="'COMMON.CANCEL' | translate"
+        icon="pi pi-times"
+        class="p-button-text"
+        (click)="closeBusDelete()"
+        [attr.aria-label]="'COMMON.CANCEL' | translate"
+      ></button>
+      <button
+        pButton
+        [label]="'COMMON.DELETE' | translate"
+        icon="pi pi-trash"
+        class="p-button-danger"
+        (click)="deleteBus()"
+        [attr.aria-label]="'COMMON.DELETE' | translate"
+      ></button>
+    </div>
+  </p-dialog>
 }

@@ -2,7 +2,6 @@ import {
   ChangeDetectionStrategy,
   Component,
   DestroyRef,
-  HostListener,
   OnInit,
   inject,
   signal,
@@ -11,6 +10,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { TranslatePipe } from '@ngx-translate/core';
 import { ButtonModule } from 'primeng/button';
+import { DialogModule } from 'primeng/dialog';
 import { InputMaskModule } from 'primeng/inputmask';
 import { InputTextModule } from 'primeng/inputtext';
 import { TooltipModule } from 'primeng/tooltip';
@@ -37,6 +37,7 @@ import { boldText } from '../../utils/transport.utils';
     ReactiveFormsModule,
     TranslatePipe,
     ButtonModule,
+    DialogModule,
     InputMaskModule,
     InputTextModule,
     TooltipModule,
@@ -96,13 +97,6 @@ export class AuthoritiesTabComponent implements OnInit {
 
   ngOnInit(): void {
     this.loadServiceAuthorities();
-  }
-
-  /** Esc: en üstte açık olan modalı kapatır. */
-  @HostListener('document:keydown.escape')
-  protected onEscape(): void {
-    if (this.authorityFormVisible()) this.closeAuthorityForm();
-    else if (this.authoritySendVisible()) this.closeAuthoritySend();
   }
 
   private loadServiceAuthorities(): void {

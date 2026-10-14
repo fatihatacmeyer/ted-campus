@@ -1,7 +1,6 @@
 import {
   ChangeDetectionStrategy,
   Component,
-  HostListener,
   OnInit,
   computed,
   inject,
@@ -16,6 +15,7 @@ import {
 } from '@angular/forms';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { ButtonModule } from 'primeng/button';
+import { DialogModule } from 'primeng/dialog';
 import { InputTextModule } from 'primeng/inputtext';
 import { SelectModule } from 'primeng/select';
 import { TagModule } from 'primeng/tag';
@@ -47,6 +47,7 @@ import { boldText, injectI18nVersion } from '../../utils/transport.utils';
     ReactiveFormsModule,
     TranslatePipe,
     ButtonModule,
+    DialogModule,
     InputTextModule,
     SelectModule,
     TagModule,
@@ -175,14 +176,6 @@ export class AssignmentsTabComponent implements OnInit {
     if (direction === 3) return bus.bosKoltukGidis <= 0 || bus.bosKoltukDonus <= 0;
 
     return false;
-  }
-
-  /** Esc: en üstte açık olan modalı kapatır (silme onayları atama penceresinin üstündedir). */
-  @HostListener('document:keydown.escape')
-  protected onEscape(): void {
-    if (this.studentAssignDeleteVisible()) this.closeStudentAssignDelete();
-    else if (this.authorityAssignDeleteVisible()) this.closeAuthorityAssignDelete();
-    else if (this.studentAssignVisible()) this.closeStudentAssign();
   }
 
   protected openStudentAssign(bus: Bus): void {

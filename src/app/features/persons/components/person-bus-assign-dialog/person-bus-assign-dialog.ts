@@ -42,7 +42,7 @@ export class PersonBusAssignDialogComponent implements OnInit {
 
   busOptions: { label: string; value: number }[] = [];
   selectedBusId: number | null = null;
-  selectedYon: number = 1; // Varsayılan Gidiş
+  selectedYon = 1; // Varsayılan Gidiş
 
   yonOptions: { label: string; value: number }[] = [];
 

@@ -9,13 +9,8 @@ import {
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute } from '@angular/router';
 import { PersonService } from '../../services/person.service';
-import { unwrapResponse, isSuccessResult } from '../../../../shared/utils/response.utils';
-import {
-  Person,
-  UserDef,
-  getUserDefLabel,
-  getUserDefLabelKey,
-} from '../../../../core/models/person.model';
+import { unwrapResponse } from '../../../../shared/utils/response.utils';
+import { Person, UserDef, getUserDefLabelKey } from '../../../../core/models/person.model';
 import {
   CustomizableTableComponent,
   ColumnCellDirective,
@@ -34,7 +29,6 @@ import { TooltipModule } from 'primeng/tooltip';
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
 import { NotificationService } from '../../../../core/services/notification.service';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
-import { OperationResultResponse } from '../../../../core/models/person.model';
 import { PersonBusAssignDialogComponent } from '../../components/person-bus-assign-dialog/person-bus-assign-dialog';
 import { BulkImportComponent } from '../../components/bulk-import/bulk-import';
 import { ImportKind } from '../../models/bulk-import.model';
@@ -134,9 +128,7 @@ export class PersonCrudComponent implements OnInit {
       : 'PERSON.ADD_' + getUserDefLabelKey(targetUserDef).split('.')[1];
   }
 
-  get descriptionTextKey(): string {
-    return 'PERSON.LIST_DESCRIPTION';
-  }
+  readonly descriptionTextKey = 'PERSON.LIST_DESCRIPTION';
 
   /** Tüm personel tiplerinde profil modalı gösterilir. */
   readonly hasProfileModal = true;
@@ -389,7 +381,9 @@ export class PersonCrudComponent implements OnInit {
           this.isLoading = false;
 
           // Dizi olarak gelen yanıtı tekil nesneye indirgiyoruz
-          const result = unwrapResponse<any>(response);
+          const result = unwrapResponse<{ Sonuc?: number | string; sunucucevap?: string | null }>(
+            response,
+          );
 
           console.log(result);
 
@@ -457,9 +451,7 @@ export class PersonCrudComponent implements OnInit {
     this.editPerson = null;
   }
 
-  onPersonSaved(response: unknown): void {
-    const personData = unwrapResponse(response) as Person;
-
+  onPersonSaved(): void {
     this.editPerson = null;
     this.fetchPersonList();
   }

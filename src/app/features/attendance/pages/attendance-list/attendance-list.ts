@@ -27,7 +27,7 @@ import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { ConfirmationService } from 'primeng/api';
 import { unwrapResponse } from '../../../../shared/utils/response.utils';
-import { Dialog, DialogModule } from 'primeng/dialog';
+import { DialogModule } from 'primeng/dialog';
 import { PersonLeaveDialogComponent } from '../../../persons/components/person-leave-dialog/person-leave-dialog';
 import { PageHeaderComponent } from '../../../../shared/components/page-header/page-header';
 

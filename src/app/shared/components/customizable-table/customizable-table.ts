@@ -9,13 +9,12 @@ import {
   HostBinding,
   HostListener,
   inject,
-  input,
   Input,
   OnInit,
   Output,
   QueryList,
   TemplateRef,
-  ViewChild,
+  ViewChild, AfterViewInit,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
@@ -85,7 +84,7 @@ export function uniqueFilterOptions<T extends object, K extends keyof T>(
 @Directive({ selector: 'ng-template[appColumnCell]', standalone: true })
 export class ColumnCellDirective {
   @Input('appColumnCell') field = '';
-  constructor(public templateRef: TemplateRef<unknown>) {}
+  readonly templateRef = inject<TemplateRef<unknown>>(TemplateRef);
 }
 
 @Component({
@@ -110,7 +109,7 @@ export class ColumnCellDirective {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class CustomizableTableComponent<T extends object = Record<string, unknown>>
-  implements OnInit, AfterContentInit
+  implements OnInit, AfterContentInit, AfterViewInit
 {
   @Input() rows: T[] = [];
   @Input() columns: ColumnDef<T>[] = [];

@@ -36,6 +36,17 @@ module.exports = defineConfig([
   {
     files: ['**/*.html'],
     extends: [angular.configs.templateRecommended, angular.configs.templateAccessibility],
-    rules: {},
+    rules: {
+      // PrimeNG pButton içeriği [label] girdisinden üretir; derleme zamanında boş görünür.
+      // Checkbox/select bileşenini saran <label> ilişkili kontrol sayılsın.
+      '@angular-eslint/template/label-has-associated-control': [
+        'error',
+        { controlComponents: ['p-checkbox', 'p-select', 'p-multiselect'] },
+      ],
+      '@angular-eslint/template/elements-content': [
+        'error',
+        { allowList: ['aria-label', 'innerHTML', 'outerHTML', 'innerText', 'textContent', 'label'] },
+      ],
+    },
   },
 ]);

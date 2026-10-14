@@ -143,20 +143,22 @@ export class SchoolHoursListComponent implements OnInit {
         this.schoolHoursService.getSchoolHours(row.CampusId, row.SinifId, s.id),
       );
 
-      forkJoin(requests).subscribe((results) => {
-        const prefill: RowSelections = {};
-        results.forEach((res, index) => {
-          const gunler = (res?.[0] as any)?.Gunler as string | undefined;
-          if (!gunler) return;
-          const sId = students[index].id;
-          gunler.split(',').forEach((val, idx) => {
-            if (idx >= 7) return;
-            const dayIndex = idx + 1;
-            prefill[dayIndex] = { ...(prefill[dayIndex] ?? {}), [sId]: val === '1' };
+      forkJoin(requests)
+        .pipe(takeUntilDestroyed(this.destroyRef))
+        .subscribe((results) => {
+          const prefill: RowSelections = {};
+          results.forEach((res, index) => {
+            const gunler = (res?.[0] as unknown as { Gunler?: string } | undefined)?.Gunler;
+            if (!gunler) return;
+            const sId = students[index].id;
+            gunler.split(',').forEach((val, idx) => {
+              if (idx >= 7) return;
+              const dayIndex = idx + 1;
+              prefill[dayIndex] = { ...(prefill[dayIndex] ?? {}), [sId]: val === '1' };
+            });
           });
+          this.prefillByRow.update((m) => ({ ...m, [row.Id]: prefill }));
         });
-        this.prefillByRow.update((m) => ({ ...m, [row.Id]: prefill }));
-      });
     }
 
     this.editingRows.update((rows) => ({ ...rows, [row.Id]: true }));

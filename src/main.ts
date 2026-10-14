@@ -5,7 +5,7 @@ import { App } from './app/app';
 
 // Production build'de debug logları (ör. "[Req] plaintext param") kapatılır.
 if (!isDevMode()) {
-  const noop = () => {};
+  const noop = () => undefined;
   console.log = noop;
   console.debug = noop;
   console.info = noop;

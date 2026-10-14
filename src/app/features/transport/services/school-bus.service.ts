@@ -89,6 +89,14 @@ interface AuthorityServisRow {
   CreatedDate: string | null;
 }
 
+interface ServisDashboardRow {
+  ToplamServisKullanan: number;
+  ToplamArac: number;
+  AktifArac: number;
+  BakimdakiArac: number;
+  PasifArac: number;
+}
+
 @Injectable({
   providedIn: 'root',
 })
@@ -97,16 +105,16 @@ export class SchoolBusService {
 
   getDashboardStats(): Observable<BusDashboardStats> {
     return this.api
-      .callEndpoint<any[]>('Dynamic', { point: 'ServisDashboard', islemtipi: 's' })
+      .callEndpoint<ServisDashboardRow[]>('Dynamic', { point: 'ServisDashboard', islemtipi: 's' })
       .pipe(
         map((rows) => {
-          const row = rows && rows.length > 0 ? rows[0] : {};
+          const row = rows?.[0];
           return {
-            totalPassengers: Number(row.ToplamServisKullanan) || 0,
-            totalBuses: Number(row.ToplamArac) || 0,
-            activeBuses: Number(row.AktifArac) || 0,
-            maintenanceBuses: Number(row.BakimdakiArac) || 0,
-            passiveBuses: Number(row.PasifArac) || 0,
+            totalPassengers: row?.ToplamServisKullanan ?? 0,
+            totalBuses: row?.ToplamArac ?? 0,
+            activeBuses: row?.AktifArac ?? 0,
+            maintenanceBuses: row?.BakimdakiArac ?? 0,
+            passiveBuses: row?.PasifArac ?? 0,
           };
         }),
       );
