@@ -1,0 +1,63 @@
+/* Tablo sayfası yerleşimi: sayfa kaymaz, kart ve tablo kalan yüksekliği doldurur,
+   yalnızca tablo kendi içinde kayar. Kullanım: sayfa SCSS'inde @use ve tabloya
+   displayMode="scroll" + scrollHeight="flex" verilir. (öğrenci / veli / vekil / etkinlikler) */
+:host {
+  display: block;
+  height: 100%;
+  overflow: hidden;
+}
+
+.admin-wrapper {
+  height: 100% !important;
+  min-height: 0 !important;
+  overflow: hidden !important;
+  display: flex;
+  flex-direction: column;
+  padding-bottom: 0;
+
+  .admin-card {
+    flex: 1 1 0;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    margin-bottom: 0;
+
+    /* Filtre sekmeleri sabit yükseklikte kalır */
+    > *:not(app-customizable-table) {
+      flex-shrink: 0;
+    }
+
+    /* Tablo bileşeni kalan yüksekliği doldurur */
+    app-customizable-table {
+      flex: 1 1 0;
+      min-height: 0;
+      display: flex;
+      flex-direction: column;
+    }
+  }
+}
+
+:host ::ng-deep {
+  .admin-table {
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 0;
+    min-height: 0;
+  }
+
+  .p-datatable {
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 0;
+    min-height: 0;
+  }
+
+  .p-datatable-wrapper,
+  .p-datatable-table-container {
+    flex: 1 1 0 !important;
+    height: auto !important;
+    max-height: none !important;
+    overflow: auto !important;
+  }
+}
