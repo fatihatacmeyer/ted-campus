@@ -1,0 +1,50 @@
+@use '../../styles/tokens' as *;
+@use '../../styles/card';
+@use '../../styles/person';
+@use '../../styles/dialog';
+
+:host {
+  display: block;
+}
+
+/* ── Show More Button ──────────────────────────────────── */
+.show-more-btn {
+  display: block;
+  width: 100%;
+  margin-top: 12px;
+  padding: 10px;
+  text-align: center;
+  background: none;
+  border: 1px dashed $border-light;
+  border-radius: $radius-sm;
+  color: $brand-red;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+
+  &:hover {
+    background: $brand-red-light;
+    border-color: rgba($brand-red, 0.25);
+  }
+}
+
+/* Kart içi arama: kart genişliğini doldurur */
+.card-search {
+  margin-bottom: 10px;
+}
+
+.dialog-search {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 12px;
+
+  app-search-box {
+    width: 280px;
+    max-width: 100%;
+  }
+}
+
+.detail-card {
+  height: 100%;
+}

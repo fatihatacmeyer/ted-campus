@@ -1,0 +1,26 @@
+@use '../../styles/tokens' as *;
+@use '../../styles/card';
+@use '../../styles/dialog';
+
+:host {
+  display: block;
+}
+
+.header-search {
+  width: 220px;
+
+  @media (max-width: 600px) {
+    width: 140px;
+  }
+}
+
+.dialog-search {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 12px;
+
+  app-search-box {
+    width: 280px;
+    max-width: 100%;
+  }
+}

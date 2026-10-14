@@ -32,7 +32,7 @@ describe('BusesTabComponent', () => {
     }) as Bus;
 
   const dialogs = (): HTMLElement[] =>
-    Array.from(document.querySelectorAll<HTMLElement>('.p-dialog'));
+    Array.from(fixture.nativeElement.querySelectorAll('.p-dialog') as NodeListOf<HTMLElement>);
 
   beforeEach(async () => {
     busService = {
@@ -74,16 +74,16 @@ describe('BusesTabComponent', () => {
     fixture.detectChanges();
     await fixture.whenStable();
 
-    expect(dialogs()).toHaveLength(1);
+    await vi.waitFor(() => expect(dialogs()).toHaveLength(1));
     expect(dialogs()[0].querySelector('form')).not.toBeNull();
 
     // p-dialog kapat butonu -> visibleChange(false) -> closeBusForm()
-    document.querySelector<HTMLElement>('.p-dialog-close-button')?.click();
+    fixture.nativeElement.querySelector('.p-dialog-close-button')?.click();
     fixture.detectChanges();
     await fixture.whenStable();
 
     expect(component['busFormVisible']()).toBe(false);
-    expect(dialogs()).toHaveLength(0);
+    await vi.waitFor(() => expect(dialogs()).toHaveLength(0));
   });
 
   it('geçerli form kaydedilince servis çağrılır, liste yenilenir ve dialog kapanır', async () => {
@@ -105,7 +105,7 @@ describe('BusesTabComponent', () => {
     fixture.detectChanges();
     await fixture.whenStable();
 
-    expect(dialogs()).toHaveLength(1);
+    await vi.waitFor(() => expect(dialogs()).toHaveLength(1));
     expect(dialogs()[0].querySelector('.delete-warning')).not.toBeNull();
 
     component['deleteBus']();
@@ -114,6 +114,6 @@ describe('BusesTabComponent', () => {
 
     expect(busService.deleteBus).toHaveBeenCalledWith(1);
     expect(component['busDeleteVisible']()).toBe(false);
-    expect(dialogs()).toHaveLength(0);
+    await vi.waitFor(() => expect(dialogs()).toHaveLength(0));
   });
 });

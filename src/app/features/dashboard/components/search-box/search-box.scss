@@ -1,0 +1,44 @@
+@use '../../styles/tokens' as *;
+
+:host {
+  display: block;
+}
+
+.search-box {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%;
+
+  > .material-symbols-outlined {
+    position: absolute;
+    left: 10px;
+    font-size: 18px;
+    color: $text-muted;
+    pointer-events: none;
+  }
+
+  input {
+    width: 100%;
+    padding: 6px 32px 6px 36px;
+    font-size: 0.85rem;
+  }
+
+  .search-box-clear {
+    position: absolute;
+    right: 6px;
+    display: flex;
+    padding: 2px;
+    border: 0;
+    background: transparent;
+    color: $text-muted;
+    cursor: pointer;
+
+    .material-symbols-outlined {
+      font-size: 16px;
+    }
+    &:hover {
+      color: $text-secondary;
+    }
+  }
+}

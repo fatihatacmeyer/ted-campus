@@ -1,0 +1,25 @@
+@use 'tokens' as *;
+/* Kişi türü rozeti (öğrenci / veli / vekil). */
+
+/* ── Badges ────────────────────────────────────────────── */
+.person-badge {
+  font-size: 0.7rem;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: $radius-full;
+  white-space: nowrap;
+  flex-shrink: 0;
+
+  &.badge-student {
+    background: var(--ted-success-bg);
+    color: var(--ted-success-solid);
+  }
+  &.badge-parent {
+    background: var(--ted-orange-bg);
+    color: var(--ted-orange-solid);
+  }
+  &.badge-proxy {
+    background: var(--ted-cyan-bg);
+    color: var(--ted-cyan-solid);
+  }
+}

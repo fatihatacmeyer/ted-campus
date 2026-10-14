@@ -1,0 +1,223 @@
+<div class="txn-table-wrapper">
+  <table class="txn-table">
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>{{ 'DASHBOARD.COLUMN_NAME' | translate }}</th>
+        <th>{{ 'DASHBOARD.COLUMN_CLASS' | translate }}</th>
+        <th>{{ 'DASHBOARD.COLUMN_CAMPUS' | translate }}</th>
+        <th>{{ 'DASHBOARD.COLUMN_SICIL' | translate }}</th>
+        <th>{{ 'DASHBOARD.COLUMN_CARD' | translate }}</th>
+        <th>{{ 'DASHBOARD.COLUMN_DIRECTION' | translate }}</th>
+        <th>{{ 'DASHBOARD.COLUMN_DEVICE' | translate }}</th>
+        <th>{{ 'DASHBOARD.COLUMN_TIME' | translate }}</th>
+        <th>{{ 'DASHBOARD.COLUMN_RESULT' | translate }}</th>
+      </tr>
+      @if (filterable()) {
+        @let f = filters();
+        <tr class="txn-filter-row">
+          <th>
+            @if (filtersActive()) {
+              <button
+                pButton
+                type="button"
+                class="p-button-text p-button-sm p-button-rounded"
+                icon="pi pi-filter-slash"
+                pTooltip="{{ 'COMMON.CLEAR_FILTERS' | translate }}"
+                tooltipPosition="bottom"
+                aria-label="{{ 'COMMON.CLEAR_FILTERS' | translate }}"
+                (click)="clearFilters()"
+              ></button>
+            }
+          </th>
+          <th>
+            <p-select
+              class="txn-filter"
+              appendTo="body"
+              [options]="typeOptions"
+              optionLabel="label"
+              optionValue="value"
+              [ngModel]="f.type || null"
+              (ngModelChange)="setFilter('type', $event)"
+              [showClear]="true"
+              [placeholder]="'DASHBOARD.FILTER_ALL_TYPES' | translate"
+            >
+              <ng-template #selectedItem let-o>{{ o.label | translate }}</ng-template>
+              <ng-template #item let-o>{{ o.label | translate }}</ng-template>
+            </p-select>
+          </th>
+          <th>
+            <p-select
+              class="txn-filter"
+              appendTo="body"
+              [options]="classOptions()"
+              [ngModel]="f.className || null"
+              (ngModelChange)="setFilter('className', $event)"
+              [filter]="true"
+              [showClear]="true"
+              [placeholder]="'DASHBOARD.FILTER_ALL_CLASSES' | translate"
+              [emptyFilterMessage]="'DASHBOARD.NO_SEARCH_RESULT' | translate"
+            />
+          </th>
+          <th>
+            <p-select
+              class="txn-filter"
+              appendTo="body"
+              [options]="campusOptions()"
+              [ngModel]="f.campus || null"
+              (ngModelChange)="setFilter('campus', $event)"
+              [filter]="true"
+              [showClear]="true"
+              [placeholder]="'DASHBOARD.FILTER_ALL_CAMPUSES' | translate"
+              [emptyFilterMessage]="'DASHBOARD.NO_SEARCH_RESULT' | translate"
+            />
+          </th>
+          <th>
+            <input
+              pInputText
+              class="txn-filter"
+              type="text"
+              [ngModel]="f.sicil"
+              (ngModelChange)="setFilter('sicil', $event)"
+              [placeholder]="'COMMON.SEARCH' | translate"
+            />
+          </th>
+          <th>
+            <input
+              pInputText
+              class="txn-filter"
+              type="text"
+              [ngModel]="f.card"
+              (ngModelChange)="setFilter('card', $event)"
+              [placeholder]="'COMMON.SEARCH' | translate"
+            />
+          </th>
+          <th>
+            <p-select
+              class="txn-filter"
+              appendTo="body"
+              [options]="directionOptions"
+              optionLabel="label"
+              optionValue="value"
+              [ngModel]="f.direction || null"
+              (ngModelChange)="setFilter('direction', $event)"
+              [showClear]="true"
+              [placeholder]="'DASHBOARD.FILTER_ALL_DIRECTIONS' | translate"
+            >
+              <ng-template #selectedItem let-o>{{ o.label | translate }}</ng-template>
+              <ng-template #item let-o>{{ o.label | translate }}</ng-template>
+            </p-select>
+          </th>
+          <th>
+            <p-select
+              class="txn-filter"
+              appendTo="body"
+              [options]="deviceOptions()"
+              [ngModel]="f.device || null"
+              (ngModelChange)="setFilter('device', $event)"
+              [filter]="true"
+              [showClear]="true"
+              [placeholder]="'DASHBOARD.FILTER_ALL_DEVICES' | translate"
+              [emptyFilterMessage]="'DASHBOARD.NO_SEARCH_RESULT' | translate"
+            >
+              <ng-template #selectedItem let-d>{{ d | translate }}</ng-template>
+              <ng-template #item let-d>{{ d | translate }}</ng-template>
+            </p-select>
+          </th>
+          <th>
+            <p-datepicker
+              styleClass="txn-filter"
+              appendTo="body"
+              selectionMode="range"
+              dateFormat="dd.mm.yy"
+              [readonlyInput]="true"
+              [showClear]="true"
+              [showIcon]="true"
+              [ngModel]="f.range"
+              (ngModelChange)="setFilter('range', $event)"
+              [placeholder]="'DASHBOARD.FILTER_DATE_RANGE' | translate"
+            />
+          </th>
+          <th>
+            <p-select
+              class="txn-filter"
+              appendTo="body"
+              [options]="resultOptions"
+              optionLabel="label"
+              optionValue="value"
+              [ngModel]="f.result || null"
+              (ngModelChange)="setFilter('result', $event)"
+              [showClear]="true"
+              [placeholder]="'DASHBOARD.FILTER_ALL_RESULTS' | translate"
+            >
+              <ng-template #selectedItem let-o>{{ o.label | translate }}</ng-template>
+              <ng-template #item let-o>{{ o.label | translate }}</ng-template>
+            </p-select>
+          </th>
+        </tr>
+      }
+    </thead>
+    <tbody>
+      @for (txn of visibleRows(); track txn.id) {
+        <tr [class.txn-failed]="txn.result === 'failed'">
+          <td class="txn-id">{{ txn.id }}</td>
+          <td>
+            <div class="txn-person">
+              <span class="person-badge" [class]="txn.badgeClass">
+                {{ translated() ? (txn.badgeLabel | translate) : txn.badgeLabel }}
+              </span>
+              {{ txn.personName }}
+            </div>
+          </td>
+          <td>{{ txn.className || '-' }}</td>
+          <td>{{ txn.campusName || '-' }}</td>
+          <td class="txn-sicil">{{ txn.registryNo }}</td>
+          <td class="txn-card">{{ txn.cardId }}</td>
+          <td>
+            <span
+              class="txn-direction"
+              [class.direction-in]="txn.direction === 'in'"
+              [class.direction-out]="txn.direction === 'out'"
+            >
+              @if (txn.direction) {
+                <span class="material-symbols-outlined">{{
+                  txn.direction === 'in' ? 'login' : 'logout'
+                }}</span>
+              }
+              {{
+                translated() ? (directionLabel(txn.direction) | translate) : txn.rawDirectionText
+              }}
+            </span>
+          </td>
+          <td>{{ translated() ? (txn.device | translate) : txn.device }}</td>
+          <td class="txn-time">{{ txn.time }}</td>
+          <td>
+            <span
+              class="txn-result"
+              [class.result-ok]="txn.result === 'success'"
+              [class.result-service]="txn.result === 'service'"
+              [class.result-fail]="txn.result === 'failed'"
+            >
+              {{
+                translated() && !txn.isProxy
+                  ? (resultLabel(txn.result) | translate)
+                  : txn.rawResultText
+              }}
+            </span>
+          </td>
+        </tr>
+      } @empty {
+        <tr class="txn-empty">
+          <td colspan="10">
+            {{
+              (searching() || filtersActive()
+                ? 'DASHBOARD.NO_SEARCH_RESULT'
+                : 'DASHBOARD.NO_TRANSACTIONS'
+              ) | translate
+            }}
+          </td>
+        </tr>
+      }
+    </tbody>
+  </table>
+</div>

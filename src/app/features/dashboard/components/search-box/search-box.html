@@ -1,0 +1,21 @@
+<div class="search-box">
+  <span class="material-symbols-outlined">search</span>
+  <input
+    pInputText
+    type="text"
+    [ngModel]="value()"
+    (ngModelChange)="value.set($event)"
+    [placeholder]="'DASHBOARD.SEARCH_BY_NAME' | translate"
+    [attr.aria-label]="'DASHBOARD.SEARCH_BY_NAME' | translate"
+  />
+  @if (value()) {
+    <button
+      type="button"
+      class="search-box-clear"
+      [attr.aria-label]="'COMMON.CLEAR' | translate"
+      (click)="value.set('')"
+    >
+      <span class="material-symbols-outlined">close</span>
+    </button>
+  }
+</div>

@@ -15,7 +15,7 @@ describe('PlansTabComponent', () => {
   let busService: { getStudentBusPlans: ReturnType<typeof vi.fn> };
 
   const dialogs = (): HTMLElement[] =>
-    Array.from(document.querySelectorAll<HTMLElement>('.p-dialog'));
+    Array.from(fixture.nativeElement.querySelectorAll('.p-dialog') as NodeListOf<HTMLElement>);
 
   beforeEach(async () => {
     busService = { getStudentBusPlans: vi.fn(() => of([] as StudentBusPlan[])) };
@@ -51,8 +51,10 @@ describe('PlansTabComponent', () => {
     fixture.detectChanges();
     await fixture.whenStable();
 
-    expect(dialogs()).toHaveLength(1);
-    expect(document.querySelector('.p-dialog-close-button')).not.toBeNull();
+    await vi.waitFor(() => expect(dialogs()).toHaveLength(1));
+    await vi.waitFor(() =>
+      expect(fixture.nativeElement.querySelector('.p-dialog-close-button')).not.toBeNull(),
+    );
   });
 
   it('kaydederken dialog kapatılamaz (kapat butonu kalkar, closePlanForm engellenir)', async () => {
@@ -61,7 +63,9 @@ describe('PlansTabComponent', () => {
     fixture.detectChanges();
     await fixture.whenStable();
 
-    expect(document.querySelector('.p-dialog-close-button')).toBeNull();
+    await vi.waitFor(() =>
+      expect(fixture.nativeElement.querySelector('.p-dialog-close-button')).toBeNull(),
+    );
 
     component['closePlanForm']();
     expect(component['planFormVisible']()).toBe(true);

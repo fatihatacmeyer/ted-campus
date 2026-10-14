@@ -1,0 +1,140 @@
+@use 'tokens' as *;
+@use 'badge';
+/* Kişi satırı (liste kartları ve diyaloglar). */
+
+.person-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.dialog-list {
+  max-height: 60vh;
+  overflow-y: auto;
+  overscroll-behavior: contain; /* liste sonuna gelince arka sayfanın kaymasını engeller */
+  padding: 4px 0;
+}
+
+.person-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: $radius-sm;
+  transition: background 0.15s ease;
+
+  &:hover {
+    background: $bg-muted;
+  }
+}
+
+.person-avatar {
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.8rem;
+  font-weight: 700;
+  flex-shrink: 0;
+  letter-spacing: 0.02em;
+
+  &.avatar-student {
+    background: var(--ted-success-bg);
+    color: var(--ted-success-solid);
+  }
+  &.avatar-late {
+    background: var(--ted-orange-bg);
+    color: var(--ted-orange-solid);
+  }
+  &.avatar-parent {
+    background: var(--ted-orange-bg);
+    color: var(--ted-orange-solid);
+  }
+
+  .material-symbols-outlined {
+    font-size: 18px;
+  }
+}
+
+.person-info {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  flex: 1;
+  min-width: 0;
+}
+
+.person-name {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: $text-primary;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.person-meta {
+  font-size: 0.78rem;
+  color: $text-muted;
+}
+
+.person-col {
+  flex: 1;
+  min-width: 0;
+  font-size: 0.85rem;
+  color: $text-primary;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+
+  &.person-col-name {
+    font-weight: 600;
+  }
+}
+
+.person-exit-time {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.8rem;
+  color: $text-secondary;
+  white-space: nowrap;
+  flex-shrink: 0;
+
+  .material-symbols-outlined {
+    font-size: 16px;
+  }
+}
+
+.person-times {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 2px;
+}
+
+.person-exit-time {
+  &.time-early,
+  &.time-late,
+  &.time-absent {
+    font-weight: 600;
+  }
+  &.time-early {
+    color: var(--ted-red-600);
+  }
+  &.time-late {
+    color: var(--ted-orange-solid);
+  }
+  &.time-absent {
+    color: var(--ted-text-muted);
+  }
+}
+
+.person-expected {
+  font-size: 0.7rem;
+  color: var(--ted-text-muted);
+  white-space: nowrap;
+}

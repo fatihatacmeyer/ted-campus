@@ -1,0 +1,62 @@
+<div class="full-card">
+  @let collapseOrAll =
+    showAllTransactions() ? ('DASHBOARD.COLLAPSE' | translate) : ('DASHBOARD.SHOW_ALL' | translate);
+  <div class="detail-card-header">
+    <div class="detail-card-title">
+      <div class="detail-icon icon-slate">
+        <span class="material-symbols-outlined">receipt_long</span>
+      </div>
+      <div>
+        <h3>{{ 'DASHBOARD.RECENT_TRANSACTIONS' | translate }}</h3>
+        <span class="detail-subtitle">{{
+          'DASHBOARD.LAST_TRANSACTIONS' | translate: { count: transactionCount() }
+        }}</span>
+      </div>
+    </div>
+    <div class="header-actions">
+      <app-search-box
+        class="header-search"
+        [value]="txnSearch()"
+        (valueChange)="onTxnSearch($event)"
+      />
+      <button
+        pButton
+        [label]="collapseOrAll"
+        [attr.aria-label]="collapseOrAll"
+        class="p-button-outlined p-button-sm"
+        (click)="toggleAllTransactions()"
+      ></button>
+      <button
+        pButton
+        class="p-button-text p-button-sm p-button-rounded"
+        icon="pi pi-expand"
+        pTooltip="{{ 'COMMON.VIEW_FULL' | translate }}"
+        tooltipPosition="bottom"
+        aria-label="{{ 'COMMON.VIEW_FULL' | translate }}"
+        (click)="openDialog()"
+      ></button>
+    </div>
+  </div>
+  <app-transactions-table [rows]="transactions()" [searching]="!!appliedTxnSearch()" />
+</div>
+
+<p-dialog
+  [header]="'DASHBOARD.TRANSACTION_HISTORY' | translate"
+  [(visible)]="dialogVisible"
+  [modal]="true"
+  [style]="{ width: '90vw', maxHeight: '85vh' }"
+  [draggable]="false"
+  [resizable]="false"
+  styleClass="dashboard-dialog"
+>
+  <div class="dialog-search">
+    <app-search-box [value]="txnSearch()" (valueChange)="onTxnSearch($event)" />
+  </div>
+  <app-transactions-table
+    [rows]="transactions()"
+    [translated]="true"
+    [filterable]="true"
+    [searching]="!!appliedTxnSearch()"
+    [(filters)]="filters"
+  />
+</p-dialog>

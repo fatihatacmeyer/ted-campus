@@ -1,0 +1,151 @@
+@use '../../styles/tokens' as *;
+@use '../../styles/badge';
+
+:host {
+  display: block;
+}
+
+.txn-table-wrapper {
+  overflow-x: auto;
+  padding: 0 4px;
+}
+
+.txn-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+
+  th {
+    text-align: left;
+    font-weight: 600;
+    color: $text-secondary;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    padding: 12px 14px;
+    background: $bg-muted;
+    border-bottom: 1px solid $border-light;
+    white-space: nowrap;
+
+    &:first-child {
+      padding-left: 20px;
+    }
+    &:last-child {
+      padding-right: 20px;
+    }
+  }
+
+  td {
+    padding: 10px 14px;
+    border-bottom: 1px solid $border-light;
+    color: $text-primary;
+    white-space: nowrap;
+
+    &:first-child {
+      padding-left: 20px;
+    }
+    &:last-child {
+      padding-right: 20px;
+    }
+  }
+
+  tbody tr {
+    transition: background 0.12s ease;
+
+    &:hover {
+      background: $bg-muted;
+    }
+
+    &.txn-failed {
+      background: var(--ted-danger-bg);
+
+      &:hover {
+        background: var(--ted-danger-bg-strong);
+      }
+    }
+  }
+}
+
+.txn-id {
+  color: $text-muted;
+  font-weight: 500;
+  width: 40px;
+}
+
+.txn-person {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 500;
+}
+
+/* Son işlemler dialog'undaki kolon filtreleri (ikinci başlık satırı) */
+.txn-table .txn-filter-row th {
+  padding: 8px 14px;
+  text-transform: none;
+  background: $bg-muted;
+
+  .txn-filter {
+    width: 100%;
+    min-width: 130px;
+  }
+}
+
+.txn-empty td {
+  padding: 24px 20px;
+  text-align: center;
+  color: $text-muted;
+}
+
+.txn-sicil,
+.txn-card {
+  font-family: 'Menlo', 'Consolas', monospace;
+  font-size: 0.8rem;
+  color: $text-secondary;
+}
+
+.txn-time {
+  font-family: 'Menlo', 'Consolas', monospace;
+  font-size: 0.8rem;
+  color: $text-secondary;
+}
+
+.txn-direction {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-weight: 500;
+  font-size: 0.82rem;
+
+  .material-symbols-outlined {
+    font-size: 16px;
+  }
+
+  &.direction-in {
+    color: var(--ted-success-solid);
+  }
+  &.direction-out {
+    color: var(--ted-orange-solid);
+  }
+}
+
+.txn-result {
+  display: inline-block;
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 3px 10px;
+  border-radius: $radius-full;
+
+  &.result-ok {
+    background: var(--ted-success-bg);
+    color: var(--ted-success-solid);
+  }
+  &.result-service {
+    background: var(--ted-info-bg);
+    color: var(--ted-info-solid);
+  }
+  &.result-fail {
+    background: var(--ted-danger-bg);
+    color: $brand-red;
+  }
+}

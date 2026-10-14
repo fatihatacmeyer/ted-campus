@@ -1,0 +1,22 @@
+<div
+  class="stat-card"
+  [class]="cls()"
+  (click)="selected.emit()"
+  (keyup.enter)="selected.emit()"
+  tabindex="0"
+  role="button"
+>
+  <div class="stat-icon" [class]="iconCls()">
+    <span class="material-symbols-outlined">{{ icon() }}</span>
+  </div>
+  <div class="stat-info">
+    <span class="stat-count">
+      {{ registered() }}<span class="stat-slash">/</span
+      ><span class="stat-inside">{{ inside() }}</span>
+    </span>
+    <span class="stat-label"
+      >{{ labelKey() | translate }} &middot; {{ 'DASHBOARD.REGISTERED_INSIDE' | translate }}</span
+    >
+  </div>
+  <span class="material-symbols-outlined stat-arrow">arrow_forward</span>
+</div>

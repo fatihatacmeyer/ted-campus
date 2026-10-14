@@ -39,7 +39,7 @@ describe('AssignmentsTabComponent', () => {
     }) as Bus;
 
   const dialogs = (): HTMLElement[] =>
-    Array.from(document.querySelectorAll<HTMLElement>('.p-dialog'));
+    Array.from(fixture.nativeElement.querySelectorAll('.p-dialog') as NodeListOf<HTMLElement>);
 
   beforeEach(async () => {
     store = {
@@ -86,7 +86,7 @@ describe('AssignmentsTabComponent', () => {
     component['openStudentAssign'](bus());
     fixture.detectChanges();
     await fixture.whenStable();
-    expect(dialogs()).toHaveLength(1);
+    await vi.waitFor(() => expect(dialogs()).toHaveLength(1));
     expect(store.ensureStudents).toHaveBeenCalled();
 
     component['confirmStudentAssignDelete']({
@@ -95,12 +95,12 @@ describe('AssignmentsTabComponent', () => {
     } as StudentAssignment);
     fixture.detectChanges();
     await fixture.whenStable();
-    expect(dialogs()).toHaveLength(2);
+    await vi.waitFor(() => expect(dialogs()).toHaveLength(2));
 
     component['closeStudentAssignDelete']();
     fixture.detectChanges();
     await fixture.whenStable();
-    expect(dialogs()).toHaveLength(1);
+    await vi.waitFor(() => expect(dialogs()).toHaveLength(1));
   });
 
   it('dolu araca atama butonu kapalıdır', () => {

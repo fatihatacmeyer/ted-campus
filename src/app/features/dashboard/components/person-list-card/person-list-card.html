@@ -1,0 +1,111 @@
+<div class="detail-card">
+  <div class="detail-card-header">
+    <div class="detail-card-title">
+      <div class="detail-icon" [class]="iconCls()">
+        <span class="material-symbols-outlined">{{ icon() }}</span>
+      </div>
+      <div>
+        <h3>{{ titleKey() | translate }}</h3>
+        <span class="detail-subtitle">{{ people().length }} {{ 'COMMON.PERSON' | translate }}</span>
+      </div>
+    </div>
+    <button
+      pButton
+      class="p-button-text p-button-sm p-button-rounded"
+      icon="pi pi-expand"
+      pTooltip="{{ 'COMMON.VIEW_FULL' | translate }}"
+      tooltipPosition="bottom"
+      aria-label="{{ 'COMMON.VIEW_FULL' | translate }}"
+      (click)="dialogVisible.set(true)"
+    ></button>
+  </div>
+  <div class="detail-card-body">
+    @if (people().length === 0) {
+      <div class="empty-state">
+        <span class="material-symbols-outlined">check_circle</span>
+        <p>{{ emptyKey() | translate }}</p>
+      </div>
+    } @else {
+      <app-search-box class="card-search" [(value)]="search" />
+      @if (filtered().length === 0) {
+        <div class="empty-state">
+          <p>{{ 'DASHBOARD.NO_SEARCH_RESULT' | translate }}</p>
+        </div>
+      }
+      <div class="person-list">
+        @for (person of preview(); track $index) {
+          <ng-container *ngTemplateOutlet="personRow; context: { person: person }" />
+        }
+      </div>
+      @if (extra() > 0) {
+        <button class="show-more-btn" (click)="dialogVisible.set(true)">
+          +{{ extra() }} {{ 'DASHBOARD.MORE_PEOPLE' | translate }} &hellip;
+        </button>
+      }
+    }
+  </div>
+</div>
+
+<p-dialog
+  [header]="titleKey() | translate"
+  [(visible)]="dialogVisible"
+  [modal]="true"
+  [style]="{ width: '60vw', maxHeight: '80vh' }"
+  [draggable]="false"
+  [resizable]="false"
+  styleClass="dashboard-dialog"
+>
+  <div class="dialog-search">
+    <app-search-box [(value)]="search" />
+  </div>
+  <div class="person-list dialog-list">
+    @for (person of filtered(); track $index) {
+      <ng-container *ngTemplateOutlet="personRow; context: { person: person }" />
+    }
+  </div>
+</p-dialog>
+
+<!-- ── Kişi satırı (erken çıkan / geç kalan / gelmeyen) ───── -->
+<ng-template #personRow let-person="person">
+  <div class="person-row">
+    <div class="person-avatar" [class]="kind() === 'late' ? 'avatar-late' : 'avatar-student'">
+      {{ person.fullName ? person.fullName.charAt(0) : '?' }}
+    </div>
+
+    <div class="person-info">
+      <span class="person-name">{{ person.fullName }}</span>
+      <span class="person-meta">{{ person.className }} &middot; {{ person.schoolName }}</span>
+    </div>
+
+    <span class="person-badge badge-student">{{ 'USERDEF.STUDENT' | translate }}</span>
+
+    <div class="person-times">
+      @switch (kind()) {
+        @case ('early') {
+          <span class="person-exit-time time-early">
+            <span class="material-symbols-outlined">logout</span>
+            {{ person.exitTime | date: 'HH:mm:ss' }}
+          </span>
+          <span class="person-expected"
+            >{{ 'DASHBOARD.EXPECTED' | translate }}: {{ person.expectedExitTime }}</span
+          >
+        }
+        @case ('late') {
+          <span class="person-exit-time time-late">
+            <span class="material-symbols-outlined">login</span>
+            {{ person.entryTime | date: 'HH:mm:ss' }}
+          </span>
+          <span class="person-expected"
+            >{{ 'DASHBOARD.EXPECTED' | translate }}: {{ person.expectedEntryTime }}</span
+          >
+        }
+        @default {
+          <span class="person-exit-time time-absent">
+            <span class="material-symbols-outlined">close</span>
+            {{ 'DASHBOARD.NO_ENTRY' | translate }}
+          </span>
+        }
+      }
+    </div>
+  </div>
+</ng-template>

@@ -1,0 +1,62 @@
+<div class="full-card kvkk-card">
+  <div class="detail-card-header">
+    <div class="detail-card-title">
+      <div class="detail-icon icon-purple">
+        <span class="material-symbols-outlined">verified_user</span>
+      </div>
+      <div>
+        <h3>{{ 'DASHBOARD.KVKK_TITLE' | translate }}</h3>
+        <span class="detail-subtitle">{{ 'DASHBOARD.KVKK_SUBTITLE' | translate }}</span>
+      </div>
+    </div>
+  </div>
+
+  @if (loading()) {
+    <div class="kvkk-state">
+      <p-progressSpinner strokeWidth="4" styleClass="kvkk-spinner" animationDuration=".8s" />
+    </div>
+  } @else if (error()) {
+    <div class="kvkk-state error-banner">
+      <span class="material-symbols-outlined">error</span>
+      <span>{{ 'DASHBOARD.LOAD_ERROR' | translate }}</span>
+      <button
+        pButton
+        aria-label="{{ 'COMMON.RETRY' | translate }}"
+        label="{{ 'COMMON.RETRY' | translate }}"
+        icon="pi pi-refresh"
+        class="p-button-sm p-button-text"
+        (click)="reload()"
+      ></button>
+    </div>
+  } @else {
+    <div class="kvkk-grid">
+      @for (block of blocks(); track block.cls) {
+        <div class="kvkk-block" [class]="block.cls">
+          <div class="kvkk-block-head">
+            <span class="material-symbols-outlined">{{ block.icon }}</span>
+            <span class="kvkk-label">{{ block.labelKey | translate }}</span>
+          </div>
+          <div class="kvkk-count">
+            {{ block.approved }}
+            @if (block.registered !== null) {
+              <span class="kvkk-registered">/ {{ block.registered }}</span>
+              <span class="kvkk-percent">%{{ block.percent }}</span>
+            }
+          </div>
+          @if (block.percent !== null) {
+            <div
+              class="kvkk-bar"
+              role="progressbar"
+              [attr.aria-valuenow]="block.percent"
+              aria-valuemin="0"
+              aria-valuemax="100"
+              [attr.aria-label]="block.labelKey | translate"
+            >
+              <div class="kvkk-bar-fill" [style.width.%]="block.percent"></div>
+            </div>
+          }
+        </div>
+      }
+    </div>
+  }
+</div>

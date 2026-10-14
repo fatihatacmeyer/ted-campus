@@ -1,0 +1,144 @@
+@let dialog = state();
+<p-dialog
+  header="{{
+    dialog.type === 'STUDENT'
+      ? ('DASHBOARD.STUDENTS_INSIDE' | translate)
+      : dialog.type === 'PARENT'
+        ? ('DASHBOARD.PARENTS_INSIDE' | translate)
+        : ('DASHBOARD.PEOPLE_INSIDE' | translate)
+  }}"
+  [(visible)]="visible"
+  [modal]="true"
+  [style]="{ width: '60vw', height: '80vh' }"
+  [draggable]="false"
+  [resizable]="false"
+  styleClass="dashboard-dialog dashboard-inside-dialog"
+>
+  @if (dialog.loading) {
+    <div class="loading-container">
+      <p-progressSpinner strokeWidth="4" animationDuration=".8s" />
+      <p class="loading-text">{{ 'DASHBOARD.LOADING_DATA' | translate }}</p>
+    </div>
+  } @else if (dialog.error) {
+    <div class="error-banner">
+      <span class="material-symbols-outlined">error</span>
+      <span>{{ 'DASHBOARD.LOAD_ERROR' | translate }}</span>
+    </div>
+  } @else if (dialog.persons.length === 0) {
+    <div class="empty-state">{{ 'DASHBOARD.NO_ONE_INSIDE' | translate }}</div>
+  } @else {
+    <div class="inside-count">
+      <span class="material-symbols-outlined">groups</span>
+      <span class="count-num">{{ filteredInsidePersons().length }}</span>
+      @if (filteredInsidePersons().length !== dialog.persons.length) {
+        <span class="count-total">/ {{ dialog.persons.length }}</span>
+      }
+      <span class="count-unit">{{ 'DASHBOARD.PERSON_UNIT' | translate }}</span>
+    </div>
+
+    <div class="inside-header" [class.with-students]="showInsideStudentsCol()">
+      <div class="inside-header-col inside-search">
+        <span class="material-symbols-outlined">search</span>
+        <input
+          pInputText
+          type="text"
+          [(ngModel)]="insideSearch"
+          [placeholder]="'COMMON.SEARCH' | translate"
+        />
+      </div>
+
+      <p-select
+        class="inside-header-col"
+        appendTo="body"
+        [options]="insideClassOptions()"
+        [ngModel]="insideClassFilter() || null"
+        (ngModelChange)="insideClassFilter.set($event ?? '')"
+        [filter]="true"
+        [showClear]="true"
+        [placeholder]="'DASHBOARD.FILTER_ALL_CLASSES' | translate"
+        [emptyFilterMessage]="'DASHBOARD.NO_SEARCH_RESULT' | translate"
+      />
+
+      <p-select
+        class="inside-header-col"
+        appendTo="body"
+        [options]="insideSchoolOptions()"
+        [ngModel]="insideSchoolFilter() || null"
+        (ngModelChange)="onInsideSchoolChange($event ?? '')"
+        [filter]="true"
+        [showClear]="true"
+        [placeholder]="'DASHBOARD.FILTER_ALL_SCHOOLS' | translate"
+        [emptyFilterMessage]="'DASHBOARD.NO_SEARCH_RESULT' | translate"
+      />
+
+      @if (showInsideStudentsCol()) {
+        <p-select
+          class="inside-header-col"
+          appendTo="body"
+          [options]="insideStudentOptions()"
+          [ngModel]="insideStudentFilter() || null"
+          (ngModelChange)="insideStudentFilter.set($event ?? '')"
+          [filter]="true"
+          [showClear]="true"
+          [placeholder]="'DASHBOARD.STUDENTS_OF_PARENT' | translate"
+          [emptyFilterMessage]="'DASHBOARD.NO_SEARCH_RESULT' | translate"
+        />
+      }
+
+      <div class="inside-header-type">
+        @if (dialog.type === null) {
+          <p-select
+            appendTo="body"
+            [options]="insideTypeOptions"
+            optionLabel="label"
+            optionValue="value"
+            [ngModel]="insideTypeFilter() || null"
+            (ngModelChange)="insideTypeFilter.set($event ?? '')"
+            [showClear]="true"
+            [placeholder]="'DASHBOARD.FILTER_ALL_TYPES' | translate"
+          >
+            <ng-template #selectedItem let-type>{{ type.label | translate }}</ng-template>
+            <ng-template #item let-type>{{ type.label | translate }}</ng-template>
+          </p-select>
+        }
+      </div>
+    </div>
+
+    <div class="person-list dialog-list">
+      @for (k of filteredInsidePersons(); track k.id) {
+        <div class="person-row">
+          <div
+            class="person-avatar"
+            [class.avatar-student]="k.type === 'STUDENT'"
+            [class.avatar-parent]="k.type !== 'STUDENT'"
+          >
+            {{ k.fullName ? k.fullName.charAt(0) : '?' }}
+          </div>
+
+          <span class="person-col person-col-name">{{ k.fullName }}</span>
+          <span class="person-col">{{ k.className || '-' }}</span>
+          <span class="person-col">{{ k.schoolName || '-' }}</span>
+          @if (showInsideStudentsCol()) {
+            <span class="person-col" [title]="k.students || ''">{{ k.students || '-' }}</span>
+          }
+
+          <span class="person-type-col">
+            <span
+              class="person-badge"
+              [class.badge-student]="k.type === 'STUDENT'"
+              [class.badge-parent]="k.type !== 'STUDENT'"
+            >
+              {{
+                k.type === 'STUDENT'
+                  ? ('USERDEF.STUDENT' | translate)
+                  : ('USERDEF.PARENT' | translate)
+              }}
+            </span>
+          </span>
+        </div>
+      } @empty {
+        <div class="empty-state">{{ 'DASHBOARD.NO_SEARCH_RESULT' | translate }}</div>
+      }
+    </div>
+  }
+</p-dialog>
