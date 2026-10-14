@@ -4,7 +4,6 @@ import { appConfig } from './app/app.config';
 import { App } from './app/app';
 
 // Production build'de debug logları (ör. "[Req] plaintext param") kapatılır.
-// console.error / console.warn bilerek açık bırakıldı.
 if (!isDevMode()) {
   const noop = () => {};
   console.log = noop;
@@ -12,5 +11,4 @@ if (!isDevMode()) {
   console.info = noop;
 }
 
-bootstrapApplication(App, appConfig)
-  .catch((err) => console.error(err));
+bootstrapApplication(App, appConfig).catch((err) => console.error(err));
