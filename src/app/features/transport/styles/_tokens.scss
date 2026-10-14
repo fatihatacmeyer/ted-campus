@@ -1,0 +1,19 @@
+@use '../../../../styles/vars' as t;
+/* Servis sayfası ortak SCSS değişkenleri (CSS üretmez). */
+
+$brand-red: t.$red-600;
+$brand-red-light: t.$danger-bg;
+$bg-page: t.$bg-page;
+$bg-surface: t.$bg-surface;
+$bg-muted: t.$bg-subtle;
+$border-light: t.$bg-hover;
+$text-primary: t.$text;
+$text-secondary: t.$text-secondary;
+$text-muted: t.$text-muted;
+$shadow-sm: t.$shadow-sm;
+$shadow-card: t.$shadow-card;
+$shadow-hover: t.$shadow-hover;
+$radius-sm: t.$radius-xl;
+$radius-md: t.$radius-2xl;
+$radius-lg: t.$radius-3xl;
+$radius-full: t.$radius-full;

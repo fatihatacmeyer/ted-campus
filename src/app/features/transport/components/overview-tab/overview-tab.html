@@ -1,0 +1,63 @@
+<div class="tab-content">
+  <div class="stat-grid">
+    <div class="stat-card stat-total">
+      <div class="stat-icon icon-gray">
+        <span class="material-symbols-outlined">directions_bus</span>
+      </div>
+      <div class="stat-info">
+        <span class="stat-count">{{ dashboardStats()?.totalBuses || 0 }}</span>
+        <span class="stat-label">{{ 'SCHOOL_BUS.STAT_TOTAL_BUSES' | translate }}</span>
+      </div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-icon icon-emerald">
+        <span class="material-symbols-outlined">check_circle</span>
+      </div>
+      <div class="stat-info">
+        <span class="stat-count">{{ dashboardStats()?.activeBuses || 0 }}</span>
+        <span class="stat-label">{{ 'SCHOOL_BUS.STAT_ACTIVE_BUSES' | translate }}</span>
+      </div>
+    </div>
+
+    <div class="stat-card stat-passenger">
+      <div class="stat-icon icon-blue">
+        <span class="material-symbols-outlined">groups</span>
+      </div>
+      <div class="stat-info">
+        <span class="stat-count">{{ dashboardStats()?.totalPassengers || 0 }}</span>
+        <span class="stat-label">{{ 'SCHOOL_BUS.STAT_PASSENGERS' | translate }}</span>
+      </div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-icon icon-amber">
+        <span class="material-symbols-outlined">build</span>
+      </div>
+      <div class="stat-info">
+        <span class="stat-count">{{ dashboardStats()?.maintenanceBuses || 0 }}</span>
+        <span class="stat-label">{{ 'SCHOOL_BUS.STAT_MAINTENANCE' | translate }}</span>
+      </div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-icon icon-rose">
+        <span class="material-symbols-outlined">do_not_disturb_on</span>
+      </div>
+      <div class="stat-info">
+        <span class="stat-count">{{ dashboardStats()?.passiveBuses || 0 }}</span>
+        <span class="stat-label">{{ 'SCHOOL_BUS.STAT_PASSIVE' | translate }}</span>
+      </div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-icon icon-purple">
+        <span class="material-symbols-outlined">verified_user</span>
+      </div>
+      <div class="stat-info">
+        <span class="stat-count">{{ kvkkServiceApproved() }}</span>
+        <span class="stat-label">{{ 'SCHOOL_BUS.STAT_KVKK_APPROVED' | translate }}</span>
+      </div>
+    </div>
+  </div>
+</div>

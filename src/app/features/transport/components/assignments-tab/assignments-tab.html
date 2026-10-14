@@ -1,0 +1,520 @@
+<div class="tab-content">
+  <div class="section-header">
+    <div class="section-title">
+      <span class="material-symbols-outlined">assignment</span>
+      <h2>{{ 'SCHOOL_BUS.ASSIGNMENTS_TITLE' | translate }}</h2>
+    </div>
+  </div>
+
+  <div class="search-bar">
+    <span class="material-symbols-outlined">search</span>
+    <input
+      pInputText
+      [ngModel]="assignmentBusSearchValue"
+      (ngModelChange)="assignmentBusSearchValue = $event; assignmentBusSearch.set($event)"
+      [placeholder]="'SCHOOL_BUS.SEARCH_BUS_PLACEHOLDER' | translate"
+      class="w-full"
+    />
+  </div>
+
+  <!-- Araç bazlı atama kartları: Plaka, Koltuk Sayısı, Gidiş/Dönüş Doluluk, Açıklama -->
+  @if (filteredAssignmentBuses().length === 0) {
+    <p class="empty-state">{{ 'SCHOOL_BUS.NO_BUS' | translate }}</p>
+  } @else {
+    <div class="bus-grid">
+      @for (bus of filteredAssignmentBuses(); track bus.id) {
+        <div
+          class="bus-card"
+          [class.bus-waiting]="bus.bosKoltukGidis <= 0 && bus.bosKoltukDonus <= 0"
+        >
+          <!-- Bus Header -->
+          <div class="bus-card-header">
+            <div class="bus-plate">
+              <span class="material-symbols-outlined">pin</span>
+              {{ bus.plate }}
+            </div>
+            <div class="bus-card-tags">
+              <p-tag
+                [value]="'SCHOOL_BUS.SEATS_TAG' | translate: { count: bus.seatCount }"
+                severity="info"
+              />
+            </div>
+          </div>
+
+          <!-- Araç Info -->
+          <div class="bus-route">
+            <div class="route-point">
+              <span class="material-symbols-outlined">directions_bus</span>
+              <div>
+                <span class="route-label">{{ 'SCHOOL_BUS.VEHICLE' | translate }}</span>
+                <span class="route-value">{{ bus.brand }} {{ bus.model }}</span>
+              </div>
+            </div>
+            <br />
+            <!-- <div class="route-line">
+              <span class="material-symbols-outlined">airline_seat_recline_normal</span>
+            </div> -->
+            <div class="route-point">
+              <span class="material-symbols-outlined">airline_seat_recline_normal</span>
+              <span class="route-label">{{ 'SCHOOL_BUS.COL_SEAT_COUNT' | translate }}</span>
+              <span class="route-value">{{ bus.seatCount }}</span>
+            </div>
+          </div>
+
+          <!-- Açıklama -->
+          <div class="bus-route-name">
+            <span class="material-symbols-outlined">info</span>
+            {{ bus.description || ('SCHOOL_BUS.NO_DESCRIPTION' | translate) }}
+          </div>
+
+          <!-- Gidiş / Dönüş Doluluk -->
+          <div class="bus-passengers">
+            <div class="passenger-stats">
+              <span class="passenger-count">
+                <span class="material-symbols-outlined">arrow_forward</span>
+                {{
+                  'SCHOOL_BUS.DEPARTURE_STATS'
+                    | translate: { full: bus.doluKoltukGidis, empty: bus.bosKoltukGidis }
+                }}
+              </span>
+              <span class="passenger-count">
+                <span class="material-symbols-outlined">arrow_back</span>
+                {{
+                  'SCHOOL_BUS.RETURN_STATS'
+                    | translate: { full: bus.doluKoltukDonus, empty: bus.bosKoltukDonus }
+                }}
+              </span>
+            </div>
+          </div>
+
+          <!-- Servis Yetkilileri (servis bazlı, çoklu) -->
+          <div class="bus-authorities">
+            <div class="bus-authorities-header">
+              <span class="material-symbols-outlined">badge</span>
+              {{ 'SCHOOL_BUS.AUTHORITIES' | translate }}
+            </div>
+            @if (authorityAssignmentsForBus(bus.id).length === 0) {
+              <span class="bus-authorities-empty">{{
+                'SCHOOL_BUS.NO_ASSIGNED_AUTHORITY' | translate
+              }}</span>
+            } @else {
+              <div class="bus-authorities-list">
+                @for (authority of authorityAssignmentsForBus(bus.id); track authority.id) {
+                  <span class="bus-authority-chip"
+                    ><span class="material-symbols-outlined">badge</span>
+                    {{ authority.authorityName }}</span
+                  >
+                }
+              </div>
+            }
+          </div>
+
+          <!-- Actions -->
+          <div class="bus-actions">
+            <button
+              pButton
+              [label]="'SCHOOL_BUS.DETAIL' | translate"
+              icon="pi pi-eye"
+              class="p-button-sm p-button-text"
+              (click)="openStudentAssign(bus)"
+              pTooltip="{{ 'SCHOOL_BUS.VIEW_EDIT_STUDENTS' | translate }}"
+              aria-label="{{ 'SCHOOL_BUS.VIEW_EDIT_STUDENTS' | translate }}"
+            ></button>
+          </div>
+        </div>
+      }
+    </div>
+  }
+</div>
+
+<!-- ══════════════════════════════════════════════════════════ -->
+<!-- DIALOG: Öğrenci Servis Atama (araca bağlı)                 -->
+<!-- ══════════════════════════════════════════════════════════ -->
+@if (studentAssignVisible() && studentAssignBus(); as bus) {
+  <div
+    class="dialog-overlay"
+    (click)="closeStudentAssign()"
+    (keyup.enter)="closeStudentAssign()"
+    role="presentation"
+  >
+    <div
+      class="dialog-content detail-dialog"
+      (click)="$event.stopPropagation()"
+      (keyup.enter)="$event.stopPropagation()"
+      tabindex="-1"
+    >
+      <div class="dialog-header">
+        <h3>
+          <span class="material-symbols-outlined">directions_bus</span>
+          {{ bus.plate }} — {{ bus.brand }} {{ bus.model }}
+        </h3>
+        <button class="dialog-close" (click)="closeStudentAssign()">
+          <span class="material-symbols-outlined">close</span>
+        </button>
+      </div>
+      <div class="dialog-body">
+        <!-- Araç özeti -->
+        <div class="dialog-summary">
+          <div class="summary-item">
+            <span class="material-symbols-outlined">pin</span>
+            <div>
+              <span class="summary-label">{{ 'SCHOOL_BUS.COL_PLATE' | translate }}</span>
+              <span class="summary-value">{{ bus.plate }}</span>
+            </div>
+          </div>
+          <div class="summary-item">
+            <span class="material-symbols-outlined">airline_seat_recline_normal</span>
+            <div>
+              <span class="summary-label">{{ 'SCHOOL_BUS.COL_SEAT_COUNT' | translate }}</span>
+              <span class="summary-value">{{ bus.seatCount }}</span>
+            </div>
+          </div>
+          <div class="summary-item">
+            <span class="material-symbols-outlined">arrow_forward</span>
+            <div>
+              <span class="summary-label">{{ 'SCHOOL_BUS.SUMMARY_DEPARTURE' | translate }}</span>
+              <span class="summary-value"
+                >{{ bus.doluKoltukGidis }} / {{ bus.bosKoltukGidis }}</span
+              >
+            </div>
+          </div>
+          <div class="summary-item">
+            <span class="material-symbols-outlined">arrow_back</span>
+            <div>
+              <span class="summary-label">{{ 'SCHOOL_BUS.SUMMARY_RETURN' | translate }}</span>
+              <span class="summary-value"
+                >{{ bus.doluKoltukDonus }} / {{ bus.bosKoltukDonus }}</span
+              >
+            </div>
+          </div>
+          <div class="summary-item">
+            <span class="material-symbols-outlined">info</span>
+            <div>
+              <span class="summary-label">{{ 'SCHOOL_BUS.COL_DESCRIPTION' | translate }}</span>
+              <span class="summary-value">{{ bus.description || '—' }}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Servis Yetkilisi bölümü (öğrenci seçiminin üstünde) -->
+        <div class="dialog-section-divider">
+          <span class="material-symbols-outlined">badge</span>
+          {{ 'SCHOOL_BUS.AUTHORITY_SECTION' | translate }}
+        </div>
+
+        <!-- Bu araca atanmış yetkililer (çoklu) -->
+        <div class="authority-chip-list">
+          @for (authority of authorityAssignmentsForBus(bus.id); track authority.id) {
+            <span class="authority-chip">
+              <span class="material-symbols-outlined">badge</span>
+              {{ authority.authorityName }}
+              <button
+                class="authority-chip-remove"
+                (click)="confirmAuthorityAssignDelete(authority)"
+                pTooltip="{{ 'SCHOOL_BUS.REMOVE_ASSIGNMENT_TOOLTIP' | translate }}"
+                aria-label="{{ 'SCHOOL_BUS.REMOVE_ASSIGNMENT_TOOLTIP' | translate }}"
+              >
+                <span class="material-symbols-outlined">close</span>
+              </button>
+            </span>
+          } @empty {
+            <span class="authority-chip-empty">{{
+              'SCHOOL_BUS.NO_AUTHORITY_ON_BUS' | translate
+            }}</span>
+          }
+        </div>
+
+        <form
+          [formGroup]="authorityAssignForm"
+          (ngSubmit)="submitAuthorityAssign()"
+          class="entity-form"
+        >
+          <div class="form-field">
+            <label for="assignAuthority"
+              ><span class="material-symbols-outlined">badge</span>
+              {{ 'SCHOOL_BUS.AUTHORITY' | translate }}</label
+            >
+            <p-select
+              id="assignAuthority"
+              inputId="assignAuthority"
+              formControlName="authorityId"
+              [options]="authorityOptions()"
+              optionLabel="label"
+              optionValue="value"
+              [filter]="true"
+              filterBy="label"
+              [placeholder]="'SCHOOL_BUS.PH_AUTHORITY' | translate"
+              styleClass="w-full"
+              appendTo="body"
+            />
+            @if (
+              authorityAssignForm.get('authorityId')?.invalid &&
+              authorityAssignForm.get('authorityId')?.touched
+            ) {
+              <small class="field-error">{{
+                'SCHOOL_BUS.ERR_AUTHORITY_REQUIRED' | translate
+              }}</small>
+            }
+          </div>
+          <div class="form-actions">
+            <button
+              type="submit"
+              pButton
+              [label]="'SCHOOL_BUS.ASSIGN_AUTHORITY' | translate"
+              [attr.aria-label]="'SCHOOL_BUS.ASSIGN_AUTHORITY' | translate"
+              icon="pi pi-check"
+              class="p-button-success"
+              [disabled]="authorityAssignForm.invalid"
+            ></button>
+          </div>
+        </form>
+
+        <!-- Öğrenci atama formu -->
+        <form
+          [formGroup]="studentAssignForm"
+          (ngSubmit)="submitStudentAssign()"
+          class="entity-form"
+        >
+          <div class="form-field">
+            <label for="assignStudent"
+              ><span class="material-symbols-outlined">person</span>
+              {{ 'SCHOOL_BUS.COL_STUDENT' | translate }}</label
+            >
+            <p-select
+              id="assignStudent"
+              inputId="assignStudent"
+              formControlName="studentId"
+              [options]="studentOptions()"
+              optionLabel="label"
+              optionValue="value"
+              [filter]="true"
+              filterBy="label"
+              [placeholder]="'SCHOOL_BUS.PH_STUDENT' | translate"
+              styleClass="w-full"
+              appendTo="body"
+              [virtualScroll]="true"
+              [virtualScrollItemSize]="38"
+            />
+            @if (
+              studentAssignForm.get('studentId')?.invalid &&
+              studentAssignForm.get('studentId')?.touched
+            ) {
+              <small class="field-error">{{ 'SCHOOL_BUS.ERR_STUDENT_REQUIRED' | translate }}</small>
+            }
+          </div>
+          <div class="form-field">
+            <label for="assignDirection"
+              ><span class="material-symbols-outlined">swap_horiz</span>
+              {{ 'SCHOOL_BUS.DIRECTION' | translate }}</label
+            >
+            <p-select
+              id="assignDirection"
+              inputId="assignDirection"
+              formControlName="direction"
+              [options]="directionOptions()"
+              optionLabel="label"
+              optionValue="value"
+              [placeholder]="'SCHOOL_BUS.PH_DIRECTION' | translate"
+              styleClass="w-full"
+              appendTo="body"
+            />
+            @if (
+              studentAssignForm.get('direction')?.invalid &&
+              studentAssignForm.get('direction')?.touched
+            ) {
+              <small class="field-error">{{
+                'SCHOOL_BUS.ERR_DIRECTION_REQUIRED' | translate
+              }}</small>
+            }
+          </div>
+          <div class="form-actions">
+            <button
+              type="submit"
+              pButton
+              [label]="'SCHOOL_BUS.ASSIGN_STUDENT' | translate"
+              [attr.aria-label]="'SCHOOL_BUS.ASSIGN_STUDENT' | translate"
+              icon="pi pi-check"
+              class="p-button-success"
+              [disabled]="checkAssignButtonDisabled(bus)"
+            ></button>
+          </div>
+        </form>
+
+        <!-- Gidiş / Dönüş sekmeleri (aynı anda tek liste gösterilir) -->
+        <div class="sefer-filter-bar direction-tab-bar">
+          <button
+            class="sefer-filter-btn"
+            [class.active]="studentAssignDirectionTab() === 1"
+            (click)="setStudentAssignDirectionTab(1)"
+          >
+            <span class="material-symbols-outlined">wb_sunny</span>
+            {{ 'SCHOOL_BUS.TAB_DEPARTURE' | translate: { count: studentAssignDepartureCount() } }}
+          </button>
+          <button
+            class="sefer-filter-btn"
+            [class.active]="studentAssignDirectionTab() === 2"
+            (click)="setStudentAssignDirectionTab(2)"
+          >
+            <span class="material-symbols-outlined">nights_stay</span>
+            {{ 'SCHOOL_BUS.TAB_RETURN' | translate: { count: studentAssignReturnCount() } }}
+          </button>
+        </div>
+
+        <app-customizable-table
+          [rows]="studentAssignActiveList()"
+          [columns]="assignedStudentColumns"
+          tableId="school_bus_student_assignments"
+          [persistFilters]="false"
+          [showRowNumbers]="true"
+          [exportable]="false"
+          [emptyMessage]="
+            studentAssignDirectionTab() === 1
+              ? 'SCHOOL_BUS.NO_STUDENT_DEPARTURE'
+              : 'SCHOOL_BUS.NO_STUDENT_RETURN'
+          "
+          [actionsTemplate]="studentAssignActionsTpl"
+          displayMode="fit"
+        >
+          <ng-template #studentAssignActionsTpl let-row>
+            <div class="row-actions">
+              <button
+                pButton
+                icon="pi pi-trash"
+                class="p-button-sm p-button-text p-button-danger"
+                (click)="confirmStudentAssignDelete(row)"
+                pTooltip="{{ 'SCHOOL_BUS.REMOVE_ASSIGNMENT_TOOLTIP' | translate }}"
+                aria-label="{{ 'SCHOOL_BUS.REMOVE_ASSIGNMENT_TOOLTIP' | translate }}"
+              ></button>
+            </div>
+          </ng-template>
+        </app-customizable-table>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- ══════════════════════════════════════════════════════════ -->
+<!-- DIALOG: Öğrenci Servis Ataması Silme Onayı                 -->
+<!-- ══════════════════════════════════════════════════════════ -->
+@if (studentAssignDeleteVisible() && studentAssignDeleting(); as deleting) {
+  <div
+    class="dialog-overlay"
+    (click)="closeStudentAssignDelete()"
+    (keyup.enter)="closeStudentAssignDelete()"
+    role="presentation"
+  >
+    <div
+      class="dialog-content delete-dialog"
+      (click)="$event.stopPropagation()"
+      (keyup.enter)="$event.stopPropagation()"
+      tabindex="-1"
+    >
+      <div class="dialog-header">
+        <h3>
+          <span class="material-symbols-outlined delete-icon">warning</span>
+          {{ 'SCHOOL_BUS.REMOVE_ASSIGNMENT' | translate }}
+        </h3>
+        <button class="dialog-close" (click)="closeStudentAssignDelete()">
+          <span class="material-symbols-outlined">close</span>
+        </button>
+      </div>
+      <div class="dialog-body">
+        <div class="delete-confirm-content">
+          <div class="delete-warning">
+            <span class="material-symbols-outlined">error</span>
+            <p
+              [innerHTML]="
+                'SCHOOL_BUS.CONFIRM_REMOVE_STUDENT'
+                  | translate
+                    : {
+                        name: bold(deleting.ogrenciAdSoyad),
+                        direction: bold(directionText(deleting.yon)),
+                      }
+              "
+            ></p>
+          </div>
+          <p class="delete-note">{{ 'SCHOOL_BUS.IRREVERSIBLE' | translate }}</p>
+        </div>
+        <div class="form-actions">
+          <button
+            pButton
+            [label]="'COMMON.CANCEL' | translate"
+            icon="pi pi-times"
+            class="p-button-text"
+            (click)="closeStudentAssignDelete()"
+            [attr.aria-label]="'COMMON.CANCEL' | translate"
+          ></button>
+          <button
+            pButton
+            [label]="'SCHOOL_BUS.REMOVE' | translate"
+            icon="pi pi-trash"
+            class="p-button-danger"
+            (click)="deleteStudentAssign()"
+            [attr.aria-label]="'SCHOOL_BUS.REMOVE' | translate"
+          ></button>
+        </div>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- ══════════════════════════════════════════════════════════ -->
+<!-- DIALOG: Yetkili Servis Ataması Silme Onayı                 -->
+<!-- ══════════════════════════════════════════════════════════ -->
+@if (authorityAssignDeleteVisible() && authorityAssignDeleting(); as deleting) {
+  <div
+    class="dialog-overlay"
+    (click)="closeAuthorityAssignDelete()"
+    (keyup.enter)="closeAuthorityAssignDelete()"
+    role="presentation"
+  >
+    <div
+      class="dialog-content delete-dialog"
+      (click)="$event.stopPropagation()"
+      (keyup.enter)="$event.stopPropagation()"
+      tabindex="-1"
+    >
+      <div class="dialog-header">
+        <h3>
+          <span class="material-symbols-outlined delete-icon">warning</span>
+          {{ 'SCHOOL_BUS.REMOVE_ASSIGNMENT' | translate }}
+        </h3>
+        <button class="dialog-close" (click)="closeAuthorityAssignDelete()">
+          <span class="material-symbols-outlined">close</span>
+        </button>
+      </div>
+      <div class="dialog-body">
+        <div class="delete-confirm-content">
+          <div class="delete-warning">
+            <span class="material-symbols-outlined">error</span>
+            <p
+              [innerHTML]="
+                'SCHOOL_BUS.CONFIRM_REMOVE_AUTHORITY'
+                  | translate: { name: bold(deleting.authorityName) }
+              "
+            ></p>
+          </div>
+          <p class="delete-note">{{ 'SCHOOL_BUS.IRREVERSIBLE' | translate }}</p>
+        </div>
+        <div class="form-actions">
+          <button
+            pButton
+            [label]="'COMMON.CANCEL' | translate"
+            icon="pi pi-times"
+            class="p-button-text"
+            (click)="closeAuthorityAssignDelete()"
+            [attr.aria-label]="'COMMON.CANCEL' | translate"
+          ></button>
+          <button
+            pButton
+            [label]="'SCHOOL_BUS.REMOVE' | translate"
+            icon="pi pi-trash"
+            class="p-button-danger"
+            (click)="deleteAuthorityAssign()"
+            [attr.aria-label]="'SCHOOL_BUS.REMOVE' | translate"
+          ></button>
+        </div>
+      </div>
+    </div>
+  </div>
+}

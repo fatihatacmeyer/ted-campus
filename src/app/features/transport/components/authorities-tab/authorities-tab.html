@@ -1,0 +1,282 @@
+<div class="tab-content">
+  <div class="section-header">
+    <div class="section-title">
+      <span class="material-symbols-outlined">admin_panel_settings</span>
+      <h2>{{ 'SCHOOL_BUS.AUTHORITIES_TITLE' | translate }}</h2>
+    </div>
+    <button
+      pButton
+      [label]="'SCHOOL_BUS.ADD_AUTHORITY' | translate"
+      [attr.aria-label]="'SCHOOL_BUS.ADD_AUTHORITY' | translate"
+      icon="pi pi-plus"
+      class="p-button-sm p-button-success"
+      (click)="openAuthorityForm()"
+    ></button>
+  </div>
+
+  <app-customizable-table
+    [rows]="serviceAuthorities()"
+    [columns]="serviceAuthorityColumns"
+    [loading]="serviceAuthoritiesLoading()"
+    tableId="school_bus_authorities"
+    [persistFilters]="false"
+    emptyMessage="SCHOOL_BUS.NO_AUTHORITY"
+    exportFilename="servis_yetkilileri"
+    [showRowNumbers]="true"
+    [actionsTemplate]="authorityActionsTpl"
+    displayMode="fit"
+  >
+    <ng-template #authorityActionsTpl let-row>
+      <div class="row-actions">
+        <button
+          pButton
+          type="button"
+          icon="pi pi-pencil"
+          class="p-button-sm p-button-text p-button-warning"
+          [loading]="authorityLoadingId() === row.sicilId"
+          (click)="openAuthorityForm(row)"
+          pTooltip="{{ 'COMMON.EDIT' | translate }}"
+          tooltipPosition="top"
+          [attr.aria-label]="'COMMON.EDIT' | translate"
+        ></button>
+        <button
+          pButton
+          type="button"
+          icon="pi pi-sign-out"
+          class="p-button-sm p-button-text p-button-danger"
+          (click)="openAuthorityExit(row)"
+          pTooltip="{{ 'SCHOOL_BUS.AUTHORITY_EXIT' | translate }}"
+          tooltipPosition="top"
+          [attr.aria-label]="'SCHOOL_BUS.AUTHORITY_EXIT' | translate"
+        ></button>
+        <button
+          pButton
+          type="button"
+          icon="pi pi-key"
+          class="p-button-sm p-button-text p-button-help"
+          (click)="confirmAuthoritySend(row)"
+          pTooltip="{{ 'SCHOOL_BUS.SEND_INFO_TOOLTIP' | translate }}"
+          tooltipPosition="top"
+          [attr.aria-label]="'SCHOOL_BUS.SEND_INFO' | translate"
+        ></button>
+      </div>
+    </ng-template>
+  </app-customizable-table>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════ -->
+<!-- DIALOG: Yetkili Ekle / Düzenle                             -->
+<!-- ══════════════════════════════════════════════════════════ -->
+@if (authorityFormVisible()) {
+  <div
+    class="dialog-overlay"
+    (click)="closeAuthorityForm()"
+    (keyup.enter)="closeAuthorityForm()"
+    role="presentation"
+  >
+    <div
+      class="dialog-content form-dialog"
+      (click)="$event.stopPropagation()"
+      (keyup.enter)="$event.stopPropagation()"
+      tabindex="-1"
+    >
+      <div class="dialog-header">
+        <h3>
+          <span class="material-symbols-outlined">{{
+            authorityEditing() ? 'edit' : 'person_add'
+          }}</span>
+          {{
+            (authorityEditing() ? 'SCHOOL_BUS.EDIT_AUTHORITY' : 'SCHOOL_BUS.ADD_AUTHORITY')
+              | translate
+          }}
+        </h3>
+        <button class="dialog-close" (click)="closeAuthorityForm()">
+          <span class="material-symbols-outlined">close</span>
+        </button>
+      </div>
+      <div class="dialog-body">
+        <form [formGroup]="authorityForm" (ngSubmit)="submitAuthority()" class="entity-form">
+          <div class="form-field">
+            <label for="authAd"
+              ><span class="material-symbols-outlined">badge</span>
+              {{ 'SCHOOL_BUS.LABEL_FIRST_NAME' | translate }}</label
+            >
+            <input
+              pInputText
+              id="authAd"
+              formControlName="ad"
+              class="w-full"
+              maxlength="50"
+              autocomplete="off"
+            />
+            @if (authorityForm.get('ad')?.invalid && authorityForm.get('ad')?.touched) {
+              <small class="field-error">{{
+                'SCHOOL_BUS.ERR_FIRST_NAME_REQUIRED' | translate
+              }}</small>
+            }
+          </div>
+          <div class="form-field">
+            <label for="authSoyad"
+              ><span class="material-symbols-outlined">badge</span>
+              {{ 'SCHOOL_BUS.LABEL_LAST_NAME' | translate }}</label
+            >
+            <input
+              pInputText
+              id="authSoyad"
+              formControlName="soyad"
+              class="w-full"
+              maxlength="50"
+              autocomplete="off"
+            />
+            @if (authorityForm.get('soyad')?.invalid && authorityForm.get('soyad')?.touched) {
+              <small class="field-error">{{
+                'SCHOOL_BUS.ERR_LAST_NAME_REQUIRED' | translate
+              }}</small>
+            }
+          </div>
+          <div class="form-field">
+            <label for="authSicilNo"
+              ><span class="material-symbols-outlined">pin</span>
+              {{ 'SCHOOL_BUS.COL_REG_NO' | translate }}</label
+            >
+            <input
+              pInputText
+              id="authSicilNo"
+              formControlName="sicilno"
+              class="w-full"
+              maxlength="20"
+              autocomplete="off"
+            />
+          </div>
+          <div class="form-field">
+            <label for="authPhone"
+              ><span class="material-symbols-outlined">call</span>
+              {{ 'SCHOOL_BUS.COL_PHONE' | translate }}</label
+            >
+            <p-inputMask
+              inputId="authPhone"
+              formControlName="ceptelefon"
+              mask="0 (999) 999 99 99"
+              placeholder="0 (5XX) XXX XX XX"
+              [unmask]="true"
+              styleClass="w-full"
+            />
+            @if (
+              authorityForm.get('ceptelefon')?.invalid && authorityForm.get('ceptelefon')?.touched
+            ) {
+              <small class="field-error">{{ 'SCHOOL_BUS.ERR_PHONE_INVALID' | translate }}</small>
+            }
+            <small class="field-hint">{{ 'SCHOOL_BUS.AUTHORITY_CONTACT_HINT' | translate }}</small>
+          </div>
+          <div class="form-field">
+            <label for="authEmail"
+              ><span class="material-symbols-outlined">mail</span>
+              {{ 'SCHOOL_BUS.COL_EMAIL' | translate }}</label
+            >
+            <input
+              pInputText
+              id="authEmail"
+              type="email"
+              formControlName="email"
+              class="w-full"
+              maxlength="100"
+              autocomplete="off"
+            />
+            @if (authorityForm.get('email')?.invalid && authorityForm.get('email')?.touched) {
+              <small class="field-error">{{ 'SCHOOL_BUS.ERR_EMAIL_INVALID' | translate }}</small>
+            }
+          </div>
+          <div class="form-actions">
+            <button
+              type="button"
+              pButton
+              [label]="'COMMON.CANCEL' | translate"
+              icon="pi pi-times"
+              class="p-button-text"
+              [disabled]="authoritySaving()"
+              (click)="closeAuthorityForm()"
+              [attr.aria-label]="'COMMON.CANCEL' | translate"
+            ></button>
+            <button
+              type="submit"
+              pButton
+              [label]="
+                (authorityEditing() ? 'SCHOOL_BUS.UPDATE' : 'SCHOOL_BUS.SUBMIT_ADD_AUTHORITY')
+                  | translate
+              "
+              icon="pi pi-check"
+              class="p-button-success"
+              [loading]="authoritySaving()"
+            ></button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+}
+
+<app-person-exit-dialog
+  [visible]="authorityExitVisible"
+  [person]="authorityExitPerson"
+  mode="exit"
+  (visibleChange)="onAuthorityExitVisibleChange($event)"
+  (confirmed)="afterAuthorityChange()"
+></app-person-exit-dialog>
+
+<!-- ══════════════════════════════════════════════════════════ -->
+<!-- DIALOG: Yetkiliye Giriş Bilgilerini Gönder Onayı           -->
+<!-- ══════════════════════════════════════════════════════════ -->
+@if (authoritySendVisible() && authoritySendTarget(); as sending) {
+  <div
+    class="dialog-overlay"
+    (click)="closeAuthoritySend()"
+    (keyup.enter)="closeAuthoritySend()"
+    role="presentation"
+  >
+    <div
+      class="dialog-content delete-dialog"
+      (click)="$event.stopPropagation()"
+      (keyup.enter)="$event.stopPropagation()"
+      tabindex="-1"
+    >
+      <div class="dialog-header">
+        <h3>
+          <span class="material-symbols-outlined">warning</span>
+          {{ 'SCHOOL_BUS.SEND_INFO_TITLE' | translate }}
+        </h3>
+        <button class="dialog-close" (click)="closeAuthoritySend()">
+          <span class="material-symbols-outlined">close</span>
+        </button>
+      </div>
+      <div class="dialog-body">
+        <div class="delete-confirm-content">
+          <p
+            [innerHTML]="
+              'SCHOOL_BUS.SEND_INFO_CONFIRM' | translate: { name: bold(sending.adSoyad) }
+            "
+          ></p>
+        </div>
+        <div class="form-actions">
+          <button
+            pButton
+            [label]="'COMMON.CANCEL' | translate"
+            icon="pi pi-times"
+            class="p-button-text p-button-danger"
+            [disabled]="authoritySendLoading()"
+            (click)="closeAuthoritySend()"
+            [attr.aria-label]="'COMMON.CANCEL' | translate"
+          ></button>
+          <button
+            pButton
+            [label]="'SCHOOL_BUS.YES_SEND' | translate"
+            icon="pi pi-key"
+            class="p-button-success"
+            [loading]="authoritySendLoading()"
+            (click)="sendAuthorityLogin()"
+            [attr.aria-label]="'SCHOOL_BUS.YES_SEND' | translate"
+          ></button>
+        </div>
+      </div>
+    </div>
+  </div>
+}

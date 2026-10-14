@@ -1,0 +1,280 @@
+<div class="tab-content">
+  <div class="section-header">
+    <div class="section-title">
+      <span class="material-symbols-outlined">directions_bus</span>
+      <h2>{{ 'SCHOOL_BUS.BUSES_TITLE' | translate }}</h2>
+    </div>
+    <button
+      pButton
+      [label]="'SCHOOL_BUS.ADD_BUS' | translate"
+      [attr.aria-label]="'SCHOOL_BUS.ADD_BUS' | translate"
+      icon="pi pi-plus"
+      class="p-button-sm p-button-success"
+      (click)="openBusForm()"
+    ></button>
+  </div>
+
+  <!-- Table -->
+  <app-customizable-table
+    [rows]="buses()"
+    [columns]="busColumns"
+    tableId="school_bus_buses"
+    emptyMessage="SCHOOL_BUS.NO_BUS"
+    exportFilename="servis_araclari"
+    [showRowNumbers]="true"
+    [actionsTemplate]="busActionsTpl"
+    displayMode="fit"
+  >
+    <ng-template appColumnCell="plate" let-bus>
+      <strong>{{ bus.plate }}</strong>
+    </ng-template>
+    <ng-template appColumnCell="status" let-bus>
+      <p-tag
+        [value]="statusLabel(bus.status) | translate"
+        [severity]="
+          bus.status === 'Aktif' ? 'success' : bus.status === 'Bakımda' ? 'warn' : 'danger'
+        "
+      />
+    </ng-template>
+    <ng-template #busActionsTpl let-bus>
+      <div class="row-actions">
+        <button
+          pButton
+          icon="pi pi-pencil"
+          class="p-button-sm p-button-text p-button-warning"
+          (click)="openBusForm(bus)"
+          pTooltip="{{ 'COMMON.EDIT' | translate }}"
+          aria-label="{{ 'COMMON.EDIT' | translate }}"
+        ></button>
+        <button
+          pButton
+          icon="pi pi-trash"
+          class="p-button-sm p-button-text p-button-danger"
+          (click)="confirmBusDelete(bus)"
+          pTooltip="{{ 'COMMON.DELETE' | translate }}"
+          aria-label="{{ 'COMMON.DELETE' | translate }}"
+        ></button>
+      </div>
+    </ng-template>
+  </app-customizable-table>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════ -->
+<!-- DIALOG: Bus Form (Add/Edit)                              -->
+<!-- ══════════════════════════════════════════════════════════ -->
+@if (busFormVisible()) {
+  <div
+    class="dialog-overlay"
+    (click)="closeBusForm()"
+    (keyup.enter)="closeBusForm()"
+    role="presentation"
+  >
+    <div
+      class="dialog-content form-dialog"
+      (click)="$event.stopPropagation()"
+      (keyup.enter)="$event.stopPropagation()"
+      tabindex="-1"
+    >
+      <div class="dialog-header">
+        <h3>
+          <span class="material-symbols-outlined">{{ busEditing() ? 'edit' : 'add_circle' }}</span>
+          {{ (busEditing() ? 'SCHOOL_BUS.EDIT_BUS' : 'SCHOOL_BUS.ADD_BUS') | translate }}
+        </h3>
+        <button class="dialog-close" (click)="closeBusForm()">
+          <span class="material-symbols-outlined">close</span>
+        </button>
+      </div>
+      <div class="dialog-body">
+        <form [formGroup]="busForm" (ngSubmit)="submitBus()" class="entity-form">
+          <div class="form-field">
+            <label for="busPlaka"
+              ><span class="material-symbols-outlined">pin</span>
+              {{ 'SCHOOL_BUS.COL_PLATE' | translate }}</label
+            >
+            <input
+              pInputText
+              id="busPlaka"
+              formControlName="plate"
+              [placeholder]="'SCHOOL_BUS.PH_PLATE' | translate"
+              class="w-full"
+            />
+            @if (busForm.get('plate')?.invalid && busForm.get('plate')?.touched) {
+              <small class="field-error">{{ 'SCHOOL_BUS.ERR_PLATE_REQUIRED' | translate }}</small>
+            }
+          </div>
+          <div class="form-field">
+            <label for="busBrand"
+              ><span class="material-symbols-outlined">badge</span>
+              {{ 'SCHOOL_BUS.COL_BRAND' | translate }}</label
+            >
+            <input
+              pInputText
+              id="busBrand"
+              formControlName="brand"
+              [placeholder]="'SCHOOL_BUS.PH_BRAND' | translate"
+              class="w-full"
+            />
+            @if (busForm.get('brand')?.invalid && busForm.get('brand')?.touched) {
+              <small class="field-error">{{ 'SCHOOL_BUS.ERR_BRAND_REQUIRED' | translate }}</small>
+            }
+          </div>
+          <div class="form-field">
+            <label for="busModel"
+              ><span class="material-symbols-outlined">commute</span>
+              {{ 'SCHOOL_BUS.COL_MODEL' | translate }}</label
+            >
+            <input
+              pInputText
+              id="busModel"
+              formControlName="model"
+              [placeholder]="'SCHOOL_BUS.PH_MODEL' | translate"
+              class="w-full"
+            />
+            @if (busForm.get('model')?.invalid && busForm.get('model')?.touched) {
+              <small class="field-error">{{ 'SCHOOL_BUS.ERR_MODEL_REQUIRED' | translate }}</small>
+            }
+          </div>
+          <div class="form-field">
+            <label for="busSeatCount"
+              ><span class="material-symbols-outlined">airline_seat_recline_normal</span>
+              {{ 'SCHOOL_BUS.COL_SEAT_COUNT' | translate }}</label
+            >
+            <input
+              pInputText
+              type="number"
+              id="busSeatCount"
+              formControlName="seatCount"
+              [placeholder]="'SCHOOL_BUS.PH_SEATS' | translate"
+              class="w-full"
+            />
+            @if (busForm.get('seatCount')?.invalid && busForm.get('seatCount')?.touched) {
+              <small class="field-error">{{ 'SCHOOL_BUS.ERR_SEATS_INVALID' | translate }}</small>
+            }
+          </div>
+          <div class="form-field">
+            <label for="busDescription"
+              ><span class="material-symbols-outlined">description</span>
+              {{ 'SCHOOL_BUS.COL_DESCRIPTION' | translate }}</label
+            >
+            <textarea
+              pTextarea
+              id="busDescription"
+              formControlName="description"
+              [placeholder]="'SCHOOL_BUS.PH_DESCRIPTION' | translate"
+              class="w-full"
+              rows="3"
+            ></textarea>
+          </div>
+          <div class="form-field">
+            <label for="busStatus"
+              ><span class="material-symbols-outlined">toggle_on</span>
+              {{ 'SCHOOL_BUS.COL_STATUS' | translate }}</label
+            >
+            <p-select
+              id="busStatus"
+              inputId="busStatus"
+              formControlName="status"
+              [options]="statusOptions()"
+              optionLabel="label"
+              optionValue="value"
+              [placeholder]="'SCHOOL_BUS.PH_STATUS' | translate"
+              styleClass="w-full"
+              appendTo="body"
+            />
+            @if (busForm.get('status')?.invalid && busForm.get('status')?.touched) {
+              <small class="field-error">{{ 'SCHOOL_BUS.ERR_STATUS_REQUIRED' | translate }}</small>
+            }
+          </div>
+          <div class="form-actions">
+            <button
+              type="button"
+              pButton
+              [label]="'COMMON.CANCEL' | translate"
+              icon="pi pi-times"
+              class="p-button-text"
+              (click)="closeBusForm()"
+              [attr.aria-label]="'COMMON.CANCEL' | translate"
+            ></button>
+            <button
+              type="submit"
+              pButton
+              [label]="
+                (busEditing() ? 'SCHOOL_BUS.UPDATE' : 'SCHOOL_BUS.SUBMIT_ADD_BUS') | translate
+              "
+              [attr.aria-label]="
+                (busEditing() ? 'SCHOOL_BUS.UPDATE' : 'SCHOOL_BUS.SUBMIT_ADD_BUS') | translate
+              "
+              icon="pi pi-check"
+              class="p-button-success"
+            ></button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- ══════════════════════════════════════════════════════════ -->
+<!-- DIALOG: Bus Delete Confirmation                           -->
+<!-- ══════════════════════════════════════════════════════════ -->
+@if (busDeleteVisible() && busDeleting()) {
+  <div
+    class="dialog-overlay"
+    (click)="closeBusDelete()"
+    (keyup.enter)="closeBusDelete()"
+    role="presentation"
+  >
+    <div
+      class="dialog-content delete-dialog"
+      (click)="$event.stopPropagation()"
+      (keyup.enter)="$event.stopPropagation()"
+      tabindex="-1"
+    >
+      <div class="dialog-header">
+        <h3>
+          <span class="material-symbols-outlined delete-icon">warning</span>
+          {{ 'SCHOOL_BUS.DELETE_BUS' | translate }}
+        </h3>
+        <button class="dialog-close" (click)="closeBusDelete()">
+          <span class="material-symbols-outlined">close</span>
+        </button>
+      </div>
+      <div class="dialog-body">
+        <div class="delete-confirm-content">
+          <div class="delete-warning">
+            <span class="material-symbols-outlined">error</span>
+            <p
+              [innerHTML]="
+                'SCHOOL_BUS.CONFIRM_DELETE_BUS'
+                  | translate
+                    : {
+                        plate: bold(busDeleting()!.plate),
+                        vehicle: bold(busDeleting()!.brand + ' ' + busDeleting()!.model),
+                      }
+              "
+            ></p>
+          </div>
+          <p class="delete-note">{{ 'SCHOOL_BUS.IRREVERSIBLE' | translate }}</p>
+        </div>
+        <div class="form-actions">
+          <button
+            pButton
+            [label]="'COMMON.CANCEL' | translate"
+            icon="pi pi-times"
+            class="p-button-text"
+            (click)="closeBusDelete()"
+            [attr.aria-label]="'COMMON.CANCEL' | translate"
+          ></button>
+          <button
+            pButton
+            [label]="'COMMON.DELETE' | translate"
+            icon="pi pi-trash"
+            class="p-button-danger"
+            (click)="deleteBus()"
+            [attr.aria-label]="'COMMON.DELETE' | translate"
+          ></button>
+        </div>
+      </div>
+    </div>
+  </div>
+}

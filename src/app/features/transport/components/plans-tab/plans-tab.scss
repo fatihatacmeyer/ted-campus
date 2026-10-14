@@ -1,0 +1,7 @@
+@use '../../styles/common';
+@use '../../styles/dialog';
+
+.no-service-label {
+  color: var(--ted-text-muted);
+  font-style: italic;
+}
