@@ -50,24 +50,24 @@
       <p-select
         class="inside-header-col"
         appendTo="body"
-        [options]="insideClassOptions()"
-        [ngModel]="insideClassFilter() || null"
-        (ngModelChange)="insideClassFilter.set($event ?? '')"
+        [options]="insideSchoolOptions()"
+        [ngModel]="insideSchoolFilter() || null"
+        (ngModelChange)="insideSchoolFilter.set($event ?? '')"
         [filter]="true"
         [showClear]="true"
-        [placeholder]="'DASHBOARD.FILTER_ALL_CLASSES' | translate"
+        [placeholder]="'DASHBOARD.FILTER_ALL_SCHOOLS' | translate"
         [emptyFilterMessage]="'DASHBOARD.NO_SEARCH_RESULT' | translate"
       />
 
       <p-select
         class="inside-header-col"
         appendTo="body"
-        [options]="insideSchoolOptions()"
-        [ngModel]="insideSchoolFilter() || null"
-        (ngModelChange)="onInsideSchoolChange($event ?? '')"
+        [options]="insideClassOptions()"
+        [ngModel]="insideClassFilter() || null"
+        (ngModelChange)="insideClassFilter.set($event ?? '')"
         [filter]="true"
         [showClear]="true"
-        [placeholder]="'DASHBOARD.FILTER_ALL_SCHOOLS' | translate"
+        [placeholder]="'DASHBOARD.FILTER_ALL_CLASSES' | translate"
         [emptyFilterMessage]="'DASHBOARD.NO_SEARCH_RESULT' | translate"
       />
 
@@ -116,8 +116,8 @@
           </div>
 
           <span class="person-col person-col-name">{{ k.fullName }}</span>
-          <span class="person-col">{{ k.className || '-' }}</span>
           <span class="person-col">{{ k.schoolName || '-' }}</span>
+          <span class="person-col">{{ k.className || '-' }}</span>
           @if (showInsideStudentsCol()) {
             <span class="person-col" [title]="k.students || ''">{{ k.students || '-' }}</span>
           }

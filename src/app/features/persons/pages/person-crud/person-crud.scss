@@ -8,3 +8,23 @@
   white-space: normal;
   line-height: 1.35;
 }
+
+/* Toplu bilgi gönderimi: seçim modunda tablonun üstündeki yönlendirme satırı */
+.bulk-send-hint {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--ted-border);
+  border-radius: 6px;
+  background: var(--ted-bg-subtle);
+  color: var(--ted-text-muted);
+  font-size: 0.875rem;
+}
+
+.bulk-send-names {
+  color: var(--ted-text-muted);
+  font-size: 0.875rem;
+  line-height: 1.4;
+}

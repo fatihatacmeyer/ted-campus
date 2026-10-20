@@ -381,34 +381,6 @@ export class SchoolBusService {
       );
   }
 
-  /**
-   * "Bilgileri Gönder": öğrenci/veli akışındaki sp_loginsendcampus_d ile aynı —
-   * kullanıcının mevcut giriş kaydı silinir ve yeni giriş bilgileri gönderilir.
-   * Yanıt alan adlarının büyük/küçük harfi prosedürde değişebildiği için
-   * (Sonuc / sunucucevap) harf duyarsız okunur.
-   */
-  sendAuthorityLogin(sicilId: number): Observable<{ sonuc: number; sunucuCevap: string }> {
-    return this.api
-      .callEndpoint<Record<string, unknown>[]>('Dynamic', {
-        point: 'loginsendcampus',
-        islemtipi: 'd',
-        xsicilid: sicilId,
-      })
-      .pipe(
-        map((response) => {
-          const row = unwrapResponse(response);
-          const pick = (name: string): unknown => {
-            const key = row ? Object.keys(row).find((k) => k.toLowerCase() === name) : undefined;
-            return key && row ? row[key] : undefined;
-          };
-          return {
-            sonuc: row ? Number(pick('sonuc')) : -1,
-            sunucuCevap: row ? String(pick('sunucucevap') ?? '') : 'SCHOOL_BUS.MSG_NO_RESPONSE',
-          };
-        }),
-      );
-  }
-
   getAuthorityAssignments(): Observable<AuthorityAssignment[]> {
     return this.api
       .callEndpoint<AuthorityServisRow[]>('Dynamic', { point: 'yetkiliservis', islemtipi: 's' })

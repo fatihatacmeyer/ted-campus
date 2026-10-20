@@ -112,10 +112,10 @@ export class BulkImportService {
       if (row.status === 'exists' && row.existingId !== null) parentIds.set(row.rowNo, row.existingId);
     }
 
-    const insert$ = from(rows.filter((row) => row.status === 'ready' && row.payload)).pipe(
+    const insert$ = from(rows.filter((row) => (row.status === 'ready' || row.status === 'update') && row.payload)).pipe(
       mergeMap(
         (row) =>
-          this.insertRow(row).pipe(
+          this.saveRow(row).pipe(
             tap((outcome) => {
               if (!outcome.ok) return;
               insertedOk.add(row.rowNo);
@@ -134,13 +134,21 @@ export class BulkImportService {
     );
   }
 
-  private insertRow(row: ImportRow): Observable<ImportOutcome> {
-    return this.personService.insertPerson(row.payload!).pipe(
+  /** 'update' satırı mevcut kaydı günceller, 'ready' satırı yeni kayıt ekler. */
+  private saveRow(row: ImportRow): Observable<ImportOutcome> {
+    const isUpdate = row.status === 'update';
+    const request$ = isUpdate
+      ? this.personService.updatePerson({ ...row.payload!, id: row.existingId! })
+      : this.personService.insertPerson(row.payload!);
+    return request$.pipe(
       map((response): ImportOutcome => {
         const result = unwrapResponse<Person>(response);
         const id = extractNewId(result);
-        // Başarı: islemsonuc=1 ya da yeni kayıt ID'si dönmüş olması.
-        const ok = isSuccessResult(result) || id !== null;
+        // Ekleme: islemsonuc=1 ya da yeni kayıt ID'si dönmüş olması.
+        // Güncelleme: yanıt sonuç kodu taşımıyorsa HTTP başarısı yeterli, taşıyorsa 1 olmalı.
+        const ok = isUpdate
+          ? result?.islemsonuc === undefined || result.islemsonuc === null || isSuccessResult(result)
+          : isSuccessResult(result) || id !== null;
         if (!ok) console.warn('[BulkImport] satır kaydedilemedi:', row.rowNo, response);
         return {
           rowNo: row.rowNo,

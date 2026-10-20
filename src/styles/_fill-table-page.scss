@@ -38,7 +38,9 @@
   }
 }
 
-:host ::ng-deep {
+/* Yalnızca sayfa kartındaki tablo: sayfa içinde render edilen diyaloglardaki tablolar
+   (örn. toplu aktarım önizlemesi) etkilenmesin; yoksa flex-basis 0 ile yükseklikleri 0'a çöker. */
+:host ::ng-deep .admin-card {
   .admin-table {
     display: flex;
     flex-direction: column;

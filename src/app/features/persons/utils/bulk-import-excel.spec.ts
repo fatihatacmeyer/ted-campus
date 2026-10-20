@@ -23,10 +23,10 @@ describe('readImportWorkbook', () => {
   it('öğrenci şablonunu satır numaralarıyla okur', async () => {
     const parsed = await readImportWorkbook(
       makeXlsx([
-        ['Ad *', 'Soyad *', 'Okul No', 'Sınıf / Şube', 'Doğum Tarihi'],
-        ['excel', 'excel', 1001, '5-A', '15.03.2012'],
-        ['', '', '', '', ''],
-        ['Ali', 'Kaya', '', '', ''],
+        ['Ad *', 'Soyad *', 'TC Kimlik No *', 'Okul No', 'Sınıf / Şube', 'Doğum Tarihi'],
+        ['excel', 'excel', '12345678901', 1001, '5-A', '15.03.2012'],
+        ['', '', '', '', '', ''],
+        ['Ali', 'Kaya', '12345678902', '', '', ''],
       ]),
       'student',
     );
@@ -49,8 +49,8 @@ describe('readImportWorkbook', () => {
   });
 
   it('Excel tarih hücresini seri numarası olarak verir', async () => {
-    const sheet = XLSX.utils.aoa_to_sheet([['Ad', 'Soyad', 'Doğum Tarihi'], ['A', 'B', '']]);
-    sheet['C2'] = { t: 'd', v: new Date(Date.UTC(2012, 2, 15)), z: 'dd.mm.yyyy' };
+    const sheet = XLSX.utils.aoa_to_sheet([['Ad', 'Soyad', 'TC Kimlik No', 'Doğum Tarihi'], ['A', 'B', '12345678901', '']]);
+    sheet['D2'] = { t: 'd', v: new Date(Date.UTC(2012, 2, 15)), z: 'dd.mm.yyyy' };
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, sheet, 'Öğrenciler');
     const bytes = XLSX.write(workbook, { type: 'array', bookType: 'xlsx' }) as ArrayBuffer;
@@ -69,9 +69,46 @@ describe('readImportWorkbook', () => {
     expect(await failureKey(readImportWorkbook(new File(['düz metin'], 'a.xlsx'), 'student'))).toBe(
       'BULK_IMPORT.ERR_FILE_SIGNATURE',
     );
-    expect(await failureKey(readImportWorkbook(makeXlsx([['Ad', 'Soyad']]), 'student'))).toBe(
+    expect(await failureKey(readImportWorkbook(makeXlsx([['Ad', 'Soyad', 'TC Kimlik No']]), 'student'))).toBe(
       'BULK_IMPORT.ERR_FILE_EMPTY',
     );
+  });
+});
+
+describe('readImportWorkbook (yanlış şablon)', () => {
+  const STUDENT_ROWS = [
+    ['Ad *', 'Soyad *', 'TC Kimlik No *', 'Okul No', 'Sınıf / Şube'],
+    ['Ali', 'Kaya', '12345678901', '1001', '5-A'],
+  ];
+  const PARENT_ROWS = [
+    ['Ad *', 'Soyad *', 'TC Kimlik No', 'Öğrenci ID(ler)'],
+    ['Ayşe', 'Yılmaz', '11111111111', '239'],
+  ];
+
+  it('öğrenci şablonunu veli aktarımında sayfa adından reddeder', async () => {
+    expect(await failureKey(readImportWorkbook(makeXlsx(STUDENT_ROWS, 'Öğrenciler'), 'parent'))).toBe(
+      'BULK_IMPORT.ERR_WRONG_TEMPLATE_STUDENT',
+    );
+  });
+
+  it('veli şablonunu öğrenci aktarımında sayfa adından reddeder', async () => {
+    expect(await failureKey(readImportWorkbook(makeXlsx(PARENT_ROWS, 'Veliler'), 'student'))).toBe(
+      'BULK_IMPORT.ERR_WRONG_TEMPLATE_PARENT',
+    );
+  });
+
+  it('sayfa adı değiştirilmişse diğer şablona özgü sütunlardan reddeder', async () => {
+    expect(await failureKey(readImportWorkbook(makeXlsx(STUDENT_ROWS, 'Sayfa1'), 'parent'))).toBe(
+      'BULK_IMPORT.ERR_WRONG_TEMPLATE_STUDENT',
+    );
+    expect(await failureKey(readImportWorkbook(makeXlsx(PARENT_ROWS, 'Sayfa1'), 'student'))).toBe(
+      'BULK_IMPORT.ERR_WRONG_TEMPLATE_PARENT',
+    );
+  });
+
+  it('doğru şablonu farklı sayfa adıyla da kabul eder', async () => {
+    const parsed = await readImportWorkbook(makeXlsx(STUDENT_ROWS, 'Sayfa1'), 'student');
+    expect(parsed.rows).toHaveLength(1);
   });
 });
 

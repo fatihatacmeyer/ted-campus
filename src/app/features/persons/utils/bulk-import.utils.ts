@@ -10,7 +10,16 @@ import {
   RawImportRow,
   RowIssue,
   ValidationContext,
+  ValidationOptions,
+  FieldChange,
 } from '../models/bulk-import.model';
+import { formatDate, parseDate } from '../../../shared/utils/date.utils';
+
+/**
+ * "Düzeltilecek satırlar" dosyasında hata açıklamasının yazıldığı son sütun. Dosya düzeltilip
+ * yeniden yüklendiğinde bu sütun sessizce yok sayılır.
+ */
+export const ERROR_COLUMN_HEADER = 'Aktarım Hatası';
 
 /** Tek dosyada kabul edilen en fazla veri satırı. */
 export const MAX_IMPORT_ROWS = 2000;
@@ -97,10 +106,14 @@ const STUDENT_COLUMNS: ImportColumn[] = [
     header: 'Okul No',
     kind: 'text',
     aliases: ['sicilno'],
-    description: 'Boş bırakılırsa sistem otomatik numara üretir. Sistemde kayıtlıysa satır atlanır.',
+    description: 'Boş bırakılırsa sistem otomatik numara üretir. Aynı numara birden fazla öğrencide olabilir.',
     example: '1001',
   },
-  COMMON['personelno'],
+  {
+    ...COMMON['personelno'],
+    required: true,
+    description: '11 haneli olmalıdır. Aynı TC ile kayıtlı öğrenci sistemde varsa satır atlanır.',
+  },
   { ...COMMON['dogumtarih'], example: '15.03.2012' },
   COMMON['cinsiyet'],
   COMMON['kangrubu'],
@@ -337,7 +350,7 @@ export function parseSheetMatrix(kind: ImportKind, matrix: unknown[][]): ParsedS
 
   headerRow.forEach((cell, index) => {
     const key = normalizeHeader(cell);
-    if (!key) return;
+    if (!key || key === normalizeHeader(ERROR_COLUMN_HEADER)) return;
     const column = headerMap.get(key);
     if (!column) {
       unknownHeaders.push(cellToText(cell));
@@ -366,6 +379,49 @@ export function parseSheetMatrix(kind: ImportKind, matrix: unknown[][]): ParsedS
   return { rows, unknownHeaders, missingRequired };
 }
 
+/**
+ * Tanınmayan başlıklardan, yalnızca diğer türün şablonunda bulunan sütunlara ait olanları döner
+ * (örn. veli aktarımında "Sınıf / Şube", öğrenci aktarımında "Öğrenci ID(ler)").
+ */
+export function otherTemplateHeaders(kind: ImportKind, unknownHeaders: string[]): string[] {
+  const ownFields = new Set(getImportColumns(kind).map((c) => c.field));
+  const otherMap = HEADER_MAPS[kind === 'student' ? 'parent' : 'student'];
+  return unknownHeaders.filter((header) => {
+    const column = otherMap.get(normalizeHeader(header));
+    return column !== undefined && !ownFields.has(column.field);
+  });
+}
+
+/** Hücreyi düzeltme dosyasına yazılacak metne çevirir; tarih seri numaraları GG.AA.YYYY olur. */
+function fixCellText(column: ImportColumn, cell: unknown): string {
+  if (column.kind === 'date') {
+    const result = parseDateValue(cell);
+    if (result.ok && result.value) {
+      const [year, month, day] = result.value.split('-');
+      return `${day}.${month}.${year}`;
+    }
+  }
+  return cellToText(cell);
+}
+
+/**
+ * Düzeltilecek satırları şablon düzeninde (başlık + orijinal değerler + hata sütunu) hazırlar.
+ * Değerler metin olarak yazılır; böylece TC ve okul no'daki baştaki sıfırlar korunur.
+ */
+export function buildFixSheetRows(
+  kind: ImportKind,
+  items: { raw: RawImportRow; error: string }[],
+): string[][] {
+  const columns = getImportColumns(kind);
+  return [
+    [...columns.map((c) => (c.required ? `${c.header} *` : c.header)), ERROR_COLUMN_HEADER],
+    ...items.map(({ raw, error }) => [
+      ...columns.map((c) => fixCellText(c, raw.cells[c.field])),
+      error,
+    ]),
+  ];
+}
+
 // ─── Doğrulama bağlamı ───
 
 function relationKey(studentId: number, parentId: number): string {
@@ -378,14 +434,19 @@ export function buildValidationContext(
   persons: Person[],
   relations: RelationCampusRow[],
 ): ValidationContext {
-  const existingSchoolNos = new Set<string>();
+  const existingStudentsByTc = new Map<string, Person[]>();
   const studentIds = new Set<number>();
   const existingParentIdsByTc = new Map<string, number>();
 
   for (const person of persons) {
     if (person.userdef === UserDef.Ogrenci) {
       studentIds.add(person.id);
-      if (person.sicilno) existingSchoolNos.add(normalizeKey(person.sicilno));
+      if (person.personelno) {
+        const tc = normalizeKey(person.personelno);
+        const sameTc = existingStudentsByTc.get(tc) ?? [];
+        // Liste aynı kaydı birden fazla satırda döndürebilir; "tek öğrenci" kontrolü ID'ye göre yapılır.
+        if (!sameTc.some((p) => p.id === person.id)) existingStudentsByTc.set(tc, [...sameTc, person]);
+      }
     } else if (person.userdef === UserDef.Veli && person.personelno) {
       const tc = normalizeKey(person.personelno);
       if (!existingParentIdsByTc.has(tc)) existingParentIdsByTc.set(tc, person.id);
@@ -401,7 +462,7 @@ export function buildValidationContext(
     }
   }
 
-  return { lookups, existingSchoolNos, studentIds, existingParentIdsByTc, relationKeys };
+  return { lookups, existingStudentsByTc, studentIds, existingParentIdsByTc, relationKeys };
 }
 
 export { relationKey };
@@ -512,6 +573,66 @@ function buildPayload(kind: ImportKind, values: FieldValues): PersonInsertReques
   };
 }
 
+/** Sistemdeki kaydın lookup değerini (ad, takma ad veya ID) şablondaki ID biçimine çevirir. */
+function existingLookupId(index: LookupIndex, raw: unknown): string {
+  const text = cellToText(raw);
+  if (!text) return '';
+  const id = resolveLookup(index, text);
+  return id === null ? text : String(id); // Eşleşmezse ham değer (zaten ID olabilir) korunur.
+}
+
+/** Sistemdeki tarihi 'YYYY-MM-DD'ye çevirir; çözülemezse ham değeri korur. */
+function existingDate(raw: unknown): string {
+  const text = cellToText(raw);
+  if (!text) return '';
+  const date = parseDate(text);
+  return date ? formatDate(date) : text;
+}
+
+/** Sistemdeki öğrenci kaydını, Excel değerleriyle karşılaştırılabilir alan değerlerine çevirir. */
+function personToValues(
+  person: Person,
+  indexes: Record<ImportLookupKey, LookupIndex>,
+): FieldValues {
+  const text = (value: unknown): string => cellToText(value);
+  const phone = normalizePhone(person.ceptelefon);
+  return {
+    ...emptyValues(),
+    ad: text(person.ad),
+    soyad: text(person.soyad),
+    sicilno: text(person.sicilno),
+    personelno: text(person.personelno),
+    dogumtarih: existingDate(person.dogumtarih),
+    cinsiyet: existingLookupId(indexes.cinsiyet, person.cinsiyet),
+    kangrubu: existingLookupId(indexes.kangrubu, person.kangrubu),
+    cardid: text(person.cardid),
+    ceptelefon: phone.ok ? phone.value : text(person.ceptelefon),
+    telefon1: text(person.telefon1),
+    email: text(person.email),
+    adres: text(person.adres),
+    il: text(person.il),
+    ilce: text(person.ilce),
+    firma: text(person.firma),
+    direktorluk: text(person.direktorluk),
+    bolum: text(person.bolum),
+    altfirma: text(person.altfirma),
+    giristarih: existingDate(person.giristarih),
+  };
+}
+
+/** Doğrulanmış alan değerini ekranda gösterilecek metne çevirir (liste ID'si → ad, ISO tarih → GG.AA.YYYY). */
+function displayValue(column: ImportColumn, value: string, lookups: ImportLookups): string {
+  if (!value) return '';
+  if (column.kind === 'lookup') {
+    return lookups[column.lookup!].find((o) => String(o.id) === value)?.ad ?? value;
+  }
+  if (column.kind === 'date') {
+    const iso = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value);
+    return iso ? `${iso[3]}.${iso[2]}.${iso[1]}` : value;
+  }
+  return value;
+}
+
 /** Velinin "Öğrenci ID(ler)" hücresini çözer; geçersiz/bulunamayan ID'leri `issues`'a yazar. */
 function resolveStudentRefs(
   cell: unknown,
@@ -541,6 +662,7 @@ export function validateImportRows(
   kind: ImportKind,
   rawRows: RawImportRow[],
   context: ValidationContext,
+  options: ValidationOptions = {},
 ): ImportRow[] {
   const columns = getImportColumns(kind);
   const indexes = Object.fromEntries(
@@ -560,12 +682,13 @@ export function validateImportRows(
       values[column.field] = validateColumn(column, raw.cells[column.field], indexes, fieldIssues);
     }
 
-    // Tekrar anahtarı: öğrencide Okul No, velide TC.
-    const keyValue = kind === 'student' ? values.sicilno : values.personelno;
+    // Tekrar anahtarı: hem öğrencide hem velide TC (Okul No tekrar edebilir).
+    const keyValue = values.personelno;
     const key = normalizeKey(keyValue);
     const rowIssues: RowIssue[] = [];
     let existingId: number | null = null;
     let exists = false;
+    let existingStudents: Person[] = [];
 
     if (key) {
       const firstRow = firstRowByKey.get(key);
@@ -580,7 +703,8 @@ export function validateImportRows(
       } else {
         firstRowByKey.set(key, raw.rowNo);
         if (kind === 'student') {
-          exists = context.existingSchoolNos.has(key);
+          existingStudents = context.existingStudentsByTc.get(key) ?? [];
+          exists = existingStudents.length > 0;
         } else {
           existingId = context.existingParentIdsByTc.get(key) ?? null;
           exists = existingId !== null;
@@ -593,12 +717,61 @@ export function validateImportRows(
 
     if (kind === 'student') {
       if (exists) {
-        return {
+        const skipped = (issue: RowIssue): ImportRow => ({
           ...base,
           ...noRelations,
           payload: null,
           status: 'exists',
-          issues: [{ key: 'BULK_IMPORT.ISSUE_EXISTS' }],
+          issues: [issue],
+        });
+        if (!options.updateExisting) return skipped({ key: 'BULK_IMPORT.ISSUE_EXISTS' });
+        // Aynı TC'de birden fazla öğrenci varsa hangisinin güncelleneceği belli değildir.
+        if (existingStudents.length > 1) {
+          return skipped({
+            key: 'BULK_IMPORT.ISSUE_EXISTS_MULTIPLE',
+            params: { count: existingStudents.length },
+          });
+        }
+
+        const issues = [...fieldIssues, ...rowIssues];
+        if (issues.length > 0) return { ...base, ...noRelations, payload: null, status: 'error', issues };
+
+        const current = existingStudents[0];
+        const currentValues = personToValues(current, indexes);
+        const changes: FieldChange[] = columns
+          .filter((c) => values[c.field] !== '' && values[c.field] !== currentValues[c.field])
+          .map((c) => ({
+            field: c.header,
+            from: displayValue(c, currentValues[c.field], context.lookups),
+            to: displayValue(c, values[c.field], context.lookups),
+          }));
+        if (changes.length === 0) return skipped({ key: 'BULK_IMPORT.ISSUE_EXISTS_NO_CHANGES' });
+
+        // Boş hücre mevcut değeri korur; yalnızca dolu hücreler üzerine yazar.
+        const merged = { ...values };
+        for (const field of ALL_FIELDS) {
+          if (merged[field] === '') merged[field] = currentValues[field];
+        }
+        return {
+          ...base,
+          ...noRelations,
+          existingId: current.id,
+          payload: {
+            ...buildPayload(kind, merged),
+            // Şablonda olmayan ama güncellemede gönderilen alanlar mevcut değerleriyle korunur.
+            pozisyon: cellToText(current.pozisyon),
+            gorev: cellToText(current.gorev),
+            yaka: cellToText(current.yaka),
+            okod1: cellToText(current.okod1),
+          },
+          status: 'update',
+          changes,
+          issues: [
+            {
+              key: 'BULK_IMPORT.ISSUE_WILL_UPDATE',
+              params: { fields: changes.map((c) => c.field).join(', ') },
+            },
+          ],
         };
       }
       const issues = [...fieldIssues, ...rowIssues];

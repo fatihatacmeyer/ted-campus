@@ -44,25 +44,25 @@
     <!-- Kişisel Bilgiler -->
     <div class="form-section">
       <h5>{{ 'PERSON.PERSONAL_INFO' | translate }}</h5>
-      <div class="field-row">
-        <div class="field">
-          <label for="ad"
-            >{{ 'PERSON.FIRST_NAME' | translate }} <span class="required">*</span></label
-          >
-          <input
-            pInputText
-            id="ad"
-            formControlName="ad"
-            [placeholder]="'PERSON.FIRST_NAME_PLACEHOLDER' | translate"
-          />
-          @if (form.get('ad')?.invalid && form.get('ad')?.touched) {
-            <small class="field-error">{{ 'PERSON.ERROR_FIRST_NAME_REQUIRED' | translate }}</small>
-          }
-        </div>
+
+      <div class="field">
+        <label for="ad"
+          >{{ 'PERSON.FIRST_NAME' | translate }} <span class="required">*</span></label
+        >
+        <input
+          pInputText
+          id="ad"
+          formControlName="ad"
+          [placeholder]="'PERSON.FIRST_NAME_PLACEHOLDER' | translate"
+        />
         @if (form.get('ad')?.invalid && form.get('ad')?.touched) {
           <small class="field-error">{{ 'PERSON.ERROR_FIRST_NAME_REQUIRED' | translate }}</small>
         }
       </div>
+      <!-- @if (form.get('ad')?.invalid && form.get('ad')?.touched) {
+          <small class="field-error">{{ 'PERSON.ERROR_FIRST_NAME_REQUIRED' | translate }}</small>
+        } -->
+
       <div class="field">
         <label for="soyad"
           >{{ 'PERSON.LAST_NAME' | translate }} <span class="required">*</span></label

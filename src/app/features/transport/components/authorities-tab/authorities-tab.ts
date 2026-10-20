@@ -3,12 +3,13 @@ import {
   Component,
   DestroyRef,
   OnInit,
+  computed,
   inject,
   signal,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
-import { TranslatePipe } from '@ngx-translate/core';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { ButtonModule } from 'primeng/button';
 import { DialogModule } from 'primeng/dialog';
 import { InputMaskModule } from 'primeng/inputmask';
@@ -24,6 +25,7 @@ import {
 import { unwrapResponse } from '../../../../shared/utils/response.utils';
 import { PersonExitDialogComponent } from '../../../persons/components/person-exit-dialog/person-exit-dialog';
 import { PersonService } from '../../../persons/services/person.service';
+import { LOGIN_SEND_MAX, summarizeNames } from '../../../persons/utils/login-send.utils';
 import { ServiceAuthority } from '../../models/school-bus.model';
 import { BusStoreService } from '../../services/bus-store.service';
 import { SchoolBusService } from '../../services/school-bus.service';
@@ -53,6 +55,7 @@ export class AuthoritiesTabComponent implements OnInit {
   private busService = inject(SchoolBusService);
   private personService = inject(PersonService);
   private notification = inject(NotificationService);
+  private translate = inject(TranslateService);
   private destroyRef = inject(DestroyRef);
   private store = inject(BusStoreService);
 
@@ -69,10 +72,20 @@ export class AuthoritiesTabComponent implements OnInit {
   protected authorityExitVisible = false;
   protected authorityExitPerson: Person | null = null;
 
-  /** "Bilgileri Gönder" onayı. */
+  /** "Bilgileri Gönder" onayı: satırdan tek kişi ya da toplu seçimden birden fazla kişi. */
   protected readonly authoritySendVisible = signal(false);
-  protected readonly authoritySendTarget = signal<ServiceAuthority | null>(null);
+  protected readonly authoritySendTargets = signal<ServiceAuthority[]>([]);
   protected readonly authoritySendLoading = signal(false);
+  protected readonly authoritySendNames = computed(() =>
+    summarizeNames(this.authoritySendTargets().map((t) => t.adSoyad)),
+  );
+
+  /**
+   * Toplu gönderim: tablo varsayılan olarak seçimsizdir; "Bilgileri Toplu Gönder" ile çoklu
+   * seçim açılır. Seçim satır referansıyla tutulduğu için liste yenilenince sıfırlanır.
+   */
+  protected readonly bulkSendMode = signal(false);
+  protected readonly bulkSendSelected = signal<ServiceAuthority[]>([]);
 
   /**
    * Telefon p-inputMask ('0 (999) 999 99 99', unmask) ile girilir; değer baştaki 0 olmadan
@@ -100,6 +113,7 @@ export class AuthoritiesTabComponent implements OnInit {
   }
 
   private loadServiceAuthorities(): void {
+    this.exitBulkSend();
     this.serviceAuthoritiesLoading.set(true);
     this.busService
       .getServiceAuthorities()
@@ -268,36 +282,65 @@ export class AuthoritiesTabComponent implements OnInit {
     this.store.invalidateAuthorities();
   }
 
+  /** Satırdaki anahtar butonu: tek yetkiliye gönderim onayı. */
   protected confirmAuthoritySend(row: ServiceAuthority): void {
-    this.authoritySendTarget.set(row);
+    this.authoritySendTargets.set([row]);
+    this.authoritySendVisible.set(true);
+  }
+
+  /** "Bilgileri Toplu Gönder": tabloda çoklu seçimi açar. */
+  protected startBulkSend(): void {
+    this.bulkSendSelected.set([]);
+    this.bulkSendMode.set(true);
+  }
+
+  /** Seçim modundan çıkar ve seçimi temizler (iptal, başarılı gönderim, liste yenileme). */
+  protected exitBulkSend(): void {
+    this.bulkSendMode.set(false);
+    this.bulkSendSelected.set([]);
+  }
+
+  /** Seçilenler için ortak onay penceresini açar. */
+  protected confirmBulkSend(): void {
+    const selected = this.bulkSendSelected();
+    if (!selected.length) return;
+    if (selected.length > LOGIN_SEND_MAX) {
+      this.notification.warning(
+        this.translate.instant('SCHOOL_BUS.BULK_SEND_LIMIT', { max: LOGIN_SEND_MAX }),
+      );
+      return;
+    }
+    this.authoritySendTargets.set(selected);
     this.authoritySendVisible.set(true);
   }
 
   protected closeAuthoritySend(): void {
     if (this.authoritySendLoading()) return;
     this.authoritySendVisible.set(false);
-    this.authoritySendTarget.set(null);
+    this.authoritySendTargets.set([]);
   }
 
   /** Giriş bilgilerini yeniden gönderir (mevcut giriş kaydı silinir, yenisi iletilir). */
   protected sendAuthorityLogin(): void {
-    const target = this.authoritySendTarget();
-    if (!target || this.authoritySendLoading()) return;
+    const targets = this.authoritySendTargets();
+    if (!targets.length || this.authoritySendLoading()) return;
 
     this.authoritySendLoading.set(true);
-    this.busService
-      .sendAuthorityLogin(target.sicilId)
+    this.personService
+      .sendLoginInfo(targets.map((t) => t.sicilId))
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: (res) => {
           this.authoritySendLoading.set(false);
           if (res.sonuc === 1) {
             this.notification.success(res.sunucuCevap || 'SCHOOL_BUS.MSG_INFO_SENT');
+            // Toplu gönderim başarılıysa seçim modundan çıkılır; hata durumunda seçim korunur
+            if (this.bulkSendMode()) this.exitBulkSend();
           } else {
             this.notification.error(res.sunucuCevap || 'SCHOOL_BUS.MSG_INFO_SEND_ERROR');
           }
           this.authoritySendVisible.set(false);
-          this.authoritySendTarget.set(null);
+          this.authoritySendTargets.set([]);
         },
         error: () => {
           this.authoritySendLoading.set(false);

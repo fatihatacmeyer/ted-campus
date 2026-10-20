@@ -1,7 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import { Person } from '../../../core/models/person.model';
-import { ImportKind, ImportLookups } from '../models/bulk-import.model';
+import { ImportKind, ImportLookups, ValidationOptions } from '../models/bulk-import.model';
 import {
+  ERROR_COLUMN_HEADER,
+  buildFixSheetRows,
   buildLookupIndex,
   buildValidationContext,
   normalizeHeader,
@@ -35,8 +37,8 @@ function person(partial: Partial<Person>): Person {
 
 /** İki öğrenci (239, 240), bir mevcut veli (500, TC 11111111111), 500–239 ilişkisi. */
 const PERSONS: Person[] = [
-  person({ id: 239, userdef: 11, sicilno: '1001' }),
-  person({ id: 240, userdef: 11, sicilno: '1002' }),
+  person({ id: 239, userdef: 11, sicilno: '1001', personelno: '44444444444' }),
+  person({ id: 240, userdef: 11, sicilno: '1002', personelno: '55555555555' }),
   person({ id: 500, userdef: 12, personelno: '11111111111' }),
 ];
 const RELATIONS = [{ VeliSicilId: 500, OgrenciSicilId: 239 }];
@@ -46,11 +48,13 @@ function validate(
   cells: Record<string, unknown>[],
   persons: Person[] = PERSONS,
   relations = RELATIONS,
+  options: ValidationOptions = {},
 ) {
   return validateImportRows(
     kind,
     cells.map((c, i) => ({ rowNo: i + 2, cells: c })),
     buildValidationContext(LOOKUPS, persons, relations),
+    options,
   );
 }
 
@@ -120,10 +124,10 @@ describe('parseStudentIds', () => {
 describe('parseSheetMatrix', () => {
   it('başlıkları eşler, boş satırı atlar ve Excel satır numarasını korur', () => {
     const parsed = parseSheetMatrix('student', [
-      ['Ad *', 'Soyad *', 'Sınıf / Şube', 'Gereksiz'],
-      ['Ayşe', 'Yılmaz', '5-A', 'x'],
-      ['', '', '', ''],
-      ['Ali', 'Kaya', '', ''],
+      ['Ad *', 'Soyad *', 'TC Kimlik No *', 'Sınıf / Şube', 'Gereksiz'],
+      ['Ayşe', 'Yılmaz', '12345678901', '5-A', 'x'],
+      ['', '', '', '', ''],
+      ['Ali', 'Kaya', '12345678902', '', ''],
     ]);
     expect(parsed.missingRequired).toEqual([]);
     expect(parsed.unknownHeaders).toEqual(['Gereksiz']);
@@ -132,7 +136,7 @@ describe('parseSheetMatrix', () => {
   });
 
   it('zorunlu sütun eksikse bildirir', () => {
-    expect(parseSheetMatrix('student', [['Ad']]).missingRequired).toEqual(['Soyad']);
+    expect(parseSheetMatrix('student', [['Ad']]).missingRequired).toEqual(['Soyad', 'TC Kimlik No']);
   });
 
   it('veli şablonunda ilişki sütununu tanır, öğrenciye özgü sütunu tanımaz', () => {
@@ -147,9 +151,11 @@ describe('parseSheetMatrix', () => {
 
 describe('validateImportRows (öğrenci)', () => {
   it('yalnızca ad-soyad ile kaydedilebilir satır üretir', () => {
-    const [row] = validate('student', [{ ad: 'excel', soyad: 'excel' }]);
+    const [row] = validate('student', [
+      { ad: 'excel', soyad: 'excel', personelno: '12345678901' },
+    ]);
     expect(row.status).toBe('ready');
-    expect(row.payload).toMatchObject({ ad: 'excel', soyad: 'excel', userdef: 11, sicilno: '' });
+    expect(row.payload).toMatchObject({ ad: 'excel', soyad: 'excel', userdef: 11, sicilno: '', personelno: '12345678901' });
   });
 
   it('liste alanlarını ID olarak yazar, telefonu ve tarihi dönüştürür', () => {
@@ -157,6 +163,7 @@ describe('validateImportRows (öğrenci)', () => {
       {
         ad: 'Ayşe',
         soyad: 'Yılmaz',
+        personelno: '12345678901',
         bolum: '5-a',
         firma: 'merkez kampus',
         cinsiyet: 'K',
@@ -177,7 +184,7 @@ describe('validateImportRows (öğrenci)', () => {
   it('zorunlu alan ve bulunamayan liste değerini hata sayar', () => {
     const [missing, badLookup] = validate('student', [
       { ad: 'Ali' },
-      { ad: 'A', soyad: 'B', bolum: '9-Z' },
+      { ad: 'A', soyad: 'B', personelno: '12345678901', bolum: '9-Z' },
     ]);
     expect(missing.status).toBe('error');
     expect(missing.issues[0].key).toBe('BULK_IMPORT.ISSUE_REQUIRED');
@@ -186,7 +193,7 @@ describe('validateImportRows (öğrenci)', () => {
   });
 
   it("'&' ve '=' içeren değeri reddeder", () => {
-    const [row] = validate('student', [{ ad: 'A', soyad: 'B', adres: 'Gül & Sok.' }]);
+    const [row] = validate('student', [{ ad: 'A', soyad: 'B', personelno: '12345678901', adres: 'Gül & Sok.' }]);
     expect(row.status).toBe('error');
     expect(row.issues[0].key).toBe('BULK_IMPORT.ISSUE_FORBIDDEN_CHARS');
   });
@@ -199,17 +206,195 @@ describe('validateImportRows (öğrenci)', () => {
     ]);
   });
 
-  it('sistemde var olan Okul No satırını atlar, dosyadaki tekrarı hata sayar', () => {
+  it('TC boşsa satırı hata sayar', () => {
+    const [row] = validate('student', [{ ad: 'A', soyad: 'B' }]);
+    expect(row.status).toBe('error');
+    expect(row.issues[0]).toMatchObject({
+      key: 'BULK_IMPORT.ISSUE_REQUIRED',
+      params: { field: 'TC Kimlik No' },
+    });
+  });
+
+  it('sistemde var olan TC satırını atlar, dosyadaki tekrarı hata sayar', () => {
     const rows = validate('student', [
-      { ad: 'A', soyad: 'B', sicilno: '1001' },
-      { ad: 'C', soyad: 'D', sicilno: '2002' },
-      { ad: 'E', soyad: 'F', sicilno: '2002' },
+      { ad: 'A', soyad: 'B', personelno: '44444444444' },
+      { ad: 'C', soyad: 'D', personelno: '66666666666' },
+      { ad: 'E', soyad: 'F', personelno: '66666666666' },
     ]);
     expect(rows.map((r) => r.status)).toEqual(['exists', 'ready', 'error']);
     expect(rows[2].issues[0]).toMatchObject({
       key: 'BULK_IMPORT.ISSUE_DUPLICATE_IN_FILE',
       params: { row: 3 },
     });
+  });
+
+  it("Okul No aynı olsa da farklı TC'li öğrencileri ekler", () => {
+    const rows = validate('student', [
+      { ad: 'A', soyad: 'B', sicilno: '1001', personelno: '77777777777' },
+      { ad: 'C', soyad: 'D', sicilno: '1001', personelno: '88888888888' },
+    ]);
+    expect(rows.map((r) => r.status)).toEqual(['ready', 'ready']);
+  });
+});
+
+describe('validateImportRows (öğrenci güncelleme)', () => {
+  const UPDATE = { updateExisting: true };
+  /** Sistemdeki öğrenci: tüm alanlar dolu, liste alanları ad/ham değer olarak. */
+  const EXISTING = person({
+    id: 300,
+    userdef: 11,
+    ad: 'Ayşe',
+    soyad: 'Yılmaz',
+    sicilno: '1001',
+    personelno: '99999999999',
+    ceptelefon: '05551234567',
+    email: 'eski@ornek.com',
+    adres: 'Eski Mah.',
+    dogumtarih: '2012-03-15T00:00:00',
+    cinsiyet: 'K',
+    firma: '1',
+    bolum: '10',
+    pozisyon: '7',
+    gorev: '8',
+    yaka: '9',
+    okod1: 'x',
+  });
+  const persons = [...PERSONS, EXISTING];
+
+  it('onay kutusu kapalıyken mevcut TC satırını bugünkü gibi atlar', () => {
+    const [row] = validate(
+      'student',
+      [{ ad: 'Ayşe', soyad: 'Yılmaz', personelno: '99999999999', email: 'yeni@ornek.com' }],
+      persons,
+    );
+    expect(row.status).toBe('exists');
+    expect(row.issues[0].key).toBe('BULK_IMPORT.ISSUE_EXISTS');
+  });
+
+  it('açıkken tek eşleşmeyi günceller; boş hücre mevcut değeri korur', () => {
+    const [row] = validate(
+      'student',
+      [{ ad: 'Ayşe', soyad: 'Yılmaz', personelno: '99999999999', email: 'yeni@ornek.com' }],
+      persons,
+      RELATIONS,
+      UPDATE,
+    );
+    expect(row.status).toBe('update');
+    expect(row.existingId).toBe(300);
+    expect(row.issues[0]).toMatchObject({
+      key: 'BULK_IMPORT.ISSUE_WILL_UPDATE',
+      params: { fields: 'E-posta' },
+    });
+    expect(row.payload).toMatchObject({
+      email: 'yeni@ornek.com',
+      adres: 'Eski Mah.',
+      ceptelefon: '5551234567',
+      dogumtarih: '2012-03-15',
+      cinsiyet: '2',
+      firma: '1',
+      bolum: '10',
+      sicilno: '1001',
+      pozisyon: '7',
+      gorev: '8',
+      yaka: '9',
+      okod1: 'x',
+      userdef: 11,
+    });
+  });
+
+  it('hiçbir değer farklı değilse satırı atlar', () => {
+    const [row] = validate(
+      'student',
+      [{ ad: 'Ayşe', soyad: 'Yılmaz', personelno: '99999999999', cinsiyet: 'Kadın', bolum: '5-A' }],
+      persons,
+      RELATIONS,
+      UPDATE,
+    );
+    expect(row.status).toBe('exists');
+    expect(row.issues[0].key).toBe('BULK_IMPORT.ISSUE_EXISTS_NO_CHANGES');
+  });
+
+  it('listede aynı kayıt tekrar gelse de tek öğrenci sayar ve günceller', () => {
+    const [row] = validate(
+      'student',
+      [{ ad: 'Ayşe', soyad: 'Yılmaz', personelno: '99999999999', bolum: '5-B' }],
+      [...persons, EXISTING],
+      RELATIONS,
+      UPDATE,
+    );
+    expect(row.status).toBe('update');
+    expect(row.payload).toMatchObject({ bolum: '11', email: 'eski@ornek.com' });
+    expect(row.issues[0].params).toEqual({ fields: 'Sınıf / Şube' });
+    // Ekranda liste ID'leri ad olarak gösterilir.
+    expect(row.changes).toEqual([{ field: 'Sınıf / Şube', from: '5-A', to: '5-B' }]);
+  });
+
+  it('değişiklikte tarihi GG.AA.YYYY, boş eski değeri boş metin olarak verir', () => {
+    const [row] = validate(
+      'student',
+      [{ ad: 'Ayşe', soyad: 'Yılmaz', personelno: '99999999999', dogumtarih: '16.03.2012', il: 'İzmir' }],
+      persons,
+      RELATIONS,
+      UPDATE,
+    );
+    expect(row.changes).toEqual([
+      { field: 'Doğum Tarihi', from: '15.03.2012', to: '16.03.2012' },
+      { field: 'İl', from: '', to: 'İzmir' },
+    ]);
+  });
+
+  it('aynı TC ile birden fazla öğrenci varsa güncellemez', () => {
+    const twin = person({ id: 301, userdef: 11, personelno: '99999999999' });
+    const [row] = validate(
+      'student',
+      [{ ad: 'Ayşe', soyad: 'Yılmaz', personelno: '99999999999', email: 'yeni@ornek.com' }],
+      [...persons, twin],
+      RELATIONS,
+      UPDATE,
+    );
+    expect(row.status).toBe('exists');
+    expect(row.payload).toBeNull();
+    expect(row.issues[0]).toMatchObject({
+      key: 'BULK_IMPORT.ISSUE_EXISTS_MULTIPLE',
+      params: { count: 2 },
+    });
+  });
+
+  it('güncellenecek satırda alan hatası varsa hata sayar', () => {
+    const [row] = validate(
+      'student',
+      [{ ad: 'Ayşe', soyad: 'Yılmaz', personelno: '99999999999', email: 'x@' }],
+      persons,
+      RELATIONS,
+      UPDATE,
+    );
+    expect(row.status).toBe('error');
+    expect(row.issues[0].key).toBe('BULK_IMPORT.ISSUE_INVALID_EMAIL');
+  });
+
+  it('dosyada tekrarlanan TC ikinci satırı güncellemede de hata sayar', () => {
+    const rows = validate(
+      'student',
+      [
+        { ad: 'Ayşe', soyad: 'Yılmaz', personelno: '99999999999', email: 'a@ornek.com' },
+        { ad: 'Ayşe', soyad: 'Yılmaz', personelno: '99999999999', email: 'b@ornek.com' },
+      ],
+      persons,
+      RELATIONS,
+      UPDATE,
+    );
+    expect(rows.map((r) => r.status)).toEqual(['update', 'error']);
+  });
+
+  it('yeni TC\'li satır güncelleme açıkken de eklenir', () => {
+    const [row] = validate(
+      'student',
+      [{ ad: 'Yeni', soyad: 'Kişi', personelno: '12312312312' }],
+      persons,
+      RELATIONS,
+      UPDATE,
+    );
+    expect(row.status).toBe('ready');
   });
 });
 
@@ -292,11 +477,42 @@ describe('validateImportRows (veli)', () => {
   });
 });
 
+describe('düzeltme dosyası', () => {
+  it('şablon başlıkları, orijinal değerler ve hata sütunuyla satır üretir', () => {
+    const rows = buildFixSheetRows('student', [
+      {
+        raw: { rowNo: 5, cells: { ad: 'Ali', soyad: 'Kaya', personelno: 12345678901, sicilno: '0012', dogumtarih: 45000, bolum: '9-Z' } },
+        error: 'Sınıf / Şube listede yok',
+      },
+    ]);
+    const header = rows[0];
+    const value = (name: string) => rows[1][header.indexOf(name)];
+    expect(header[0]).toBe('Ad *');
+    expect(header).toContain('TC Kimlik No *');
+    expect(header[header.length - 1]).toBe(ERROR_COLUMN_HEADER);
+    expect(value('TC Kimlik No *')).toBe('12345678901');
+    expect(value('Okul No')).toBe('0012');
+    expect(value('Doğum Tarihi')).toBe('15.03.2023');
+    expect(value('Sınıf / Şube')).toBe('9-Z');
+    expect(value(ERROR_COLUMN_HEADER)).toBe('Sınıf / Şube listede yok');
+  });
+
+  it('yeniden yüklemede hata sütununu uyarı vermeden yok sayar', () => {
+    const rows = buildFixSheetRows('student', [
+      { raw: { rowNo: 2, cells: { ad: 'Ali', soyad: 'Kaya', personelno: '12345678901' } }, error: 'x' },
+    ]);
+    const parsed = parseSheetMatrix('student', rows);
+    expect(parsed.unknownHeaders).toEqual([]);
+    expect(parsed.missingRequired).toEqual([]);
+    expect(parsed.rows[0].cells).toMatchObject({ ad: 'Ali', personelno: '12345678901' });
+  });
+});
+
 describe('buildValidationContext', () => {
   it('öğrenci, veli ve ilişki yapılarını kurar', () => {
     const context = buildValidationContext(LOOKUPS, PERSONS, RELATIONS);
     expect(context.studentIds).toEqual(new Set([239, 240]));
-    expect(context.existingSchoolNos.has('1001')).toBe(true);
+    expect(context.existingStudentsByTc.get('44444444444')?.map((p) => p.id)).toEqual([239]);
     expect(context.existingParentIdsByTc.get('11111111111')).toBe(500);
     expect(context.relationKeys.has('239:500')).toBe(true);
   });

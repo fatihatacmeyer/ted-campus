@@ -20,12 +20,19 @@ function setup(options: FakeOptions = {}) {
   let nextId = 1000;
   const relations = [...(options.initialRelations ?? [])];
   const added: string[] = [];
+  const updated: unknown[] = [];
 
   const fakePerson = {
     insertPerson: (payload: { ad: string }) =>
       options.failInsertFor?.includes(payload.ad)
         ? of([{ islemsonuc: '2', sunucucevap: 'hata', id: 0 }])
         : of([{ islemsonuc: '1', id: nextId++ }]),
+    updatePerson: (payload: { ad: string }) => {
+      updated.push(payload);
+      return options.failInsertFor?.includes(payload.ad)
+        ? of([{ islemsonuc: '2', sunucucevap: 'hata' }])
+        : of([{ islemsonuc: '1' }]);
+    },
     getAllRelations: () => of([...relations]),
     addRelationCampus: (studentId: number, parentId: number) => {
       const key = `${studentId}:${parentId}`;
@@ -44,7 +51,7 @@ function setup(options: FakeOptions = {}) {
       { provide: BulkImportService, useClass: BulkImportService, deps: [] },
     ],
   });
-  return { service: injector.get(BulkImportService), added, relations };
+  return { service: injector.get(BulkImportService), added, relations, updated };
 }
 
 function row(partial: Partial<ImportRow> & { rowNo: number; ad: string }): ImportRow {
@@ -149,6 +156,25 @@ describe('BulkImportService.importRows', () => {
     const events = await run(service, 'student', [row({ rowNo: 2, ad: 'Öğrenci' })]);
     expect(events.map((e) => e.type)).toEqual(['record']);
     expect(added).toEqual([]);
+  });
+
+  it('update satırını insert yerine mevcut ID ile günceller', async () => {
+    const { service, updated } = setup();
+    const events = await run(service, 'student', [
+      row({ rowNo: 2, ad: 'Güncel', status: 'update', existingId: 300 }),
+    ]);
+    expect(updated).toEqual([expect.objectContaining({ ad: 'Güncel', id: 300 })]);
+    expect(events).toEqual([{ type: 'record', outcome: { rowNo: 2, ok: true } }]);
+  });
+
+  it('başarısız güncellemeyi satır hatası olarak yayımlar', async () => {
+    const { service } = setup({ failInsertFor: ['Hatalı'] });
+    const events = await run(service, 'student', [
+      row({ rowNo: 2, ad: 'Hatalı', status: 'update', existingId: 300 }),
+    ]);
+    expect(events).toEqual([
+      { type: 'record', outcome: { rowNo: 2, ok: false, message: 'hata' } },
+    ]);
   });
 
   it('istek hatasını satır hatası olarak yayımlar', async () => {

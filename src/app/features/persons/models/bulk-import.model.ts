@@ -1,4 +1,4 @@
-import { PersonInsertRequest } from '../../../core/models/person.model';
+import { Person, PersonInsertRequest } from '../../../core/models/person.model';
 
 /** Toplu aktarımın hedef kişi türü. */
 export type ImportKind = 'student' | 'parent';
@@ -61,29 +61,41 @@ export interface RawImportRow {
 
 /**
  * ready  → yeni kayıt eklenecek
+ * update → sistemdeki tek eşleşen öğrenci güncellenecek ("Mevcut kayıtları güncelle" açıkken)
  * exists → sistemde zaten var (öğrencide atlanır; velide yalnızca yeni ilişkiler eklenir)
  * error  → düzeltilmesi gereken sorun var
  */
-export type ImportRowStatus = 'ready' | 'exists' | 'error';
+export type ImportRowStatus = 'ready' | 'update' | 'exists' | 'error';
 /** partial: veli eklendi ama bazı ilişkiler kurulamadı. */
 export type ImportOutcomeStatus = 'imported' | 'partial' | 'failed';
+
+/** Güncellenecek satırda bir alanın okunur eski ve yeni değeri. */
+export interface FieldChange {
+  /** Alanın Excel başlığı (örn. 'Sınıf / Şube'). */
+  field: string;
+  /** Sistemdeki değer; boşsa ''. */
+  from: string;
+  to: string;
+}
 
 export interface ImportRow {
   rowNo: number;
   ad: string;
   soyad: string;
-  /** Öğrencide Okul No, velide TC Kimlik No (tekrar kontrolünde kullanılan anahtar). */
+  /** TC Kimlik No (öğrenci ve veli için tekrar kontrolünde kullanılan anahtar). */
   key: string;
-  /** Yalnızca status === 'ready' iken dolu. */
+  /** Yalnızca status === 'ready' veya 'update' iken dolu. */
   payload: PersonInsertRequest | null;
   status: ImportRowStatus;
   issues: RowIssue[];
-  /** Veli: sistemde zaten kayıtlı velinin ID'si (status === 'exists'). */
+  /** Sistemde kayıtlı kişinin ID'si (veli: 'exists', öğrenci: 'update'). */
   existingId: number | null;
   /** Veli: bu aktarımda kurulacak yeni ilişkilerin öğrenci ID'leri. */
   relationStudentIds: number[];
   /** Veli: satırda belirtilip sistemde zaten ilişkili olan öğrenci sayısı. */
   alreadyLinked: number;
+  /** Öğrenci 'update': değişecek alanlar (eski → yeni). */
+  changes?: FieldChange[];
   /** Aktarım sonrası doldurulur. */
   outcome?: ImportOutcomeStatus;
   outcomeIssue?: RowIssue;
@@ -117,12 +129,18 @@ export interface ParsedSheet {
 /** Doğrulamanın dayandığı, sistemden okunan mevcut veriler. */
 export interface ValidationContext {
   lookups: ImportLookups;
-  /** Sistemde kayıtlı öğrenci Okul No'ları (normalizeKey ile). */
-  existingSchoolNos: Set<string>;
+  /** Sistemdeki öğrenciler, TC Kimlik No'ya (normalizeKey ile) göre gruplu. */
+  existingStudentsByTc: Map<string, Person[]>;
   /** Sistemdeki öğrenci ID'leri. */
   studentIds: Set<number>;
   /** Sistemdeki velilerin TC (normalizeKey) → ID haritası. */
   existingParentIdsByTc: Map<string, number>;
   /** Mevcut ilişkiler: "ogrenciId:veliId". */
   relationKeys: Set<string>;
+}
+
+/** Doğrulama seçenekleri. */
+export interface ValidationOptions {
+  /** Öğrenci: TC'si sistemde tek kayıtla eşleşen satırlar atlanmak yerine güncellenir. */
+  updateExisting?: boolean;
 }

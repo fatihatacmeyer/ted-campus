@@ -20,6 +20,7 @@ import { AuthService } from '../../../core/services/auth.service';
 import { PrepareService } from '../../../core/services/prepare.service';
 import { ApiHelperService } from '../../../core/services/api-helper.service';
 import { unwrapResponse } from '../../../shared/utils/response.utils';
+import { LoginSendResult, parseLoginSendResponse, toSicilIdList } from '../utils/login-send.utils';
 
 /**
  * sp_sicilcampus_s'ten dönen ham DB satırı (Türkçe/DB sütun adları).
@@ -621,11 +622,18 @@ export class PersonService {
     });
   }
 
-  sendPasswordReminder(sicilId: number): Observable<OperationResultResponse[]> {
-    return this.api.callEndpoint<OperationResultResponse[]>('Dynamic', {
-      point: 'loginsendcampus',
-      islemtipi: 'd',
-      xsicilid: sicilId,
-    });
+  /**
+   * "Bilgileri Gönder" (sp_loginsendcampus_d): verilen sicillerin login kaydı silinir,
+   * AutoUserWorker yeni parolayla tekrar açıp SMS gönderir. Tek kişi için `[id]` verilir;
+   * birden fazla Id tek istekte ('5;6;7') ve tek transaction'da işlenir.
+   */
+  sendLoginInfo(sicilIds: readonly number[]): Observable<LoginSendResult> {
+    return this.api
+      .callEndpoint<unknown>('Dynamic', {
+        point: 'loginsendcampus',
+        islemtipi: 'd',
+        xsicilid: toSicilIdList(sicilIds),
+      })
+      .pipe(map(parseLoginSendResponse));
   }
 }

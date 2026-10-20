@@ -4,20 +4,63 @@
       <span class="material-symbols-outlined">admin_panel_settings</span>
       <h2>{{ 'SCHOOL_BUS.AUTHORITIES_TITLE' | translate }}</h2>
     </div>
-    <button
-      pButton
-      [label]="'SCHOOL_BUS.ADD_AUTHORITY' | translate"
-      [attr.aria-label]="'SCHOOL_BUS.ADD_AUTHORITY' | translate"
-      icon="pi pi-plus"
-      class="p-button-sm p-button-success"
-      (click)="openAuthorityForm()"
-    ></button>
+    <div class="section-actions">
+      @if (bulkSendMode()) {
+        <button
+          pButton
+          [label]="'COMMON.CANCEL' | translate"
+          [attr.aria-label]="'COMMON.CANCEL' | translate"
+          icon="pi pi-times"
+          class="p-button-sm p-button-text"
+          (click)="exitBulkSend()"
+        ></button>
+        @let sendSelectedLabel =
+          'SCHOOL_BUS.BULK_SEND_SELECTED' | translate: { count: bulkSendSelected().length };
+        <button
+          pButton
+          [label]="sendSelectedLabel"
+          [attr.aria-label]="sendSelectedLabel"
+          icon="pi pi-key"
+          class="p-button-sm p-button-help"
+          [disabled]="!bulkSendSelected().length"
+          (click)="confirmBulkSend()"
+        ></button>
+      } @else {
+        <button
+          pButton
+          [label]="'SCHOOL_BUS.BULK_SEND' | translate"
+          [attr.aria-label]="'SCHOOL_BUS.BULK_SEND' | translate"
+          icon="pi pi-key"
+          class="p-button-sm p-button-outlined p-button-help"
+          [disabled]="serviceAuthoritiesLoading() || !serviceAuthorities().length"
+          (click)="startBulkSend()"
+        ></button>
+      }
+      <button
+        pButton
+        [label]="'SCHOOL_BUS.ADD_AUTHORITY' | translate"
+        [attr.aria-label]="'SCHOOL_BUS.ADD_AUTHORITY' | translate"
+        icon="pi pi-plus"
+        class="p-button-sm p-button-success"
+        (click)="openAuthorityForm()"
+      ></button>
+    </div>
   </div>
+
+  @if (bulkSendMode()) {
+    <div class="bulk-send-hint" role="status">
+      <span class="pi pi-info-circle" aria-hidden="true"></span>
+      {{ 'SCHOOL_BUS.BULK_SEND_HINT' | translate }}
+    </div>
+  }
 
   <app-customizable-table
     [rows]="serviceAuthorities()"
     [columns]="serviceAuthorityColumns"
     [loading]="serviceAuthoritiesLoading()"
+    [selectionMode]="bulkSendMode() ? 'multiple' : null"
+    [selectedRows]="bulkSendSelected()"
+    (selectedRowsChange)="bulkSendSelected.set($event)"
     tableId="school_bus_authorities"
     [persistFilters]="false"
     emptyMessage="SCHOOL_BUS.NO_AUTHORITY"
@@ -214,7 +257,8 @@
 <!-- ══════════════════════════════════════════════════════════ -->
 <!-- DIALOG: Yetkiliye Giriş Bilgilerini Gönder Onayı           -->
 <!-- ══════════════════════════════════════════════════════════ -->
-@if (authoritySendVisible() && authoritySendTarget(); as sending) {
+@if (authoritySendVisible() && authoritySendTargets().length) {
+  @let targets = authoritySendTargets();
   <p-dialog
     [visible]="true"
     [modal]="true"
@@ -233,9 +277,22 @@
       </h3>
     </ng-template>
     <div class="delete-confirm-content">
-      <p
-        [innerHTML]="'SCHOOL_BUS.SEND_INFO_CONFIRM' | translate: { name: bold(sending.adSoyad) }"
-      ></p>
+      @if (targets.length === 1) {
+        <p
+          [innerHTML]="
+            'SCHOOL_BUS.SEND_INFO_CONFIRM' | translate: { name: bold(targets[0].adSoyad) }
+          "
+        ></p>
+      } @else {
+        @let names = authoritySendNames();
+        <p>{{ 'SCHOOL_BUS.BULK_SEND_CONFIRM' | translate: { count: targets.length } }}</p>
+        <p class="bulk-send-names">
+          {{ names.shown }}
+          @if (names.rest) {
+            {{ 'SCHOOL_BUS.BULK_SEND_MORE' | translate: { count: names.rest } }}
+          }
+        </p>
+      }
     </div>
     <div class="form-actions">
       <button

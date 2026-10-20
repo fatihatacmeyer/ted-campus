@@ -9,7 +9,7 @@ import {
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute } from '@angular/router';
 import { PersonService } from '../../services/person.service';
-import { unwrapResponse } from '../../../../shared/utils/response.utils';
+import { LOGIN_SEND_MAX, summarizeNames } from '../../utils/login-send.utils';
 import { Person, UserDef, getUserDefLabelKey } from '../../../../core/models/person.model';
 import {
   CustomizableTableComponent,
@@ -83,6 +83,15 @@ export class PersonCrudComponent implements OnInit {
   /** Toplu aktarım diyaloğu (yalnızca öğrenci sayfası). Aktarım sürerken kapatılamaz. */
   showBulkImport = false;
   bulkImporting = false;
+
+  /**
+   * Toplu bilgi gönderimi: tablo varsayılan olarak seçimsizdir; "Bilgileri Toplu Gönder"
+   * ile çoklu seçim açılır. Seçim satır referansıyla tutulduğu için liste yenilenince sıfırlanır.
+   */
+  bulkSendMode = false;
+  bulkSendSelected: Person[] = [];
+  showBulkSendConfirm = false;
+  bulkSending = false;
 
   /** Veli sayfası: veliId → çocukları (sp_relationcampus_s tip=0'dan tek çağrıda kurulur). */
   childrenMap = new Map<number, Person[]>();
@@ -285,6 +294,7 @@ export class PersonCrudComponent implements OnInit {
   fetchPersonList(): void {
     this.isLoading = true;
     this.errorMessage = '';
+    if (this.bulkSendMode) this.exitBulkSend();
 
     this.personService
       .getPersonListCampus()
@@ -365,7 +375,7 @@ export class PersonCrudComponent implements OnInit {
 
   onForgotPasswordRequest(person: Person): void {
     // Sadece öğrenci ve veli için geçerli kısıtlaması
-    if (this.USERDEF !== UserDef.Ogrenci && this.USERDEF !== UserDef.Veli) {
+    if (!this.canSendLoginInfo) {
       this.notification.error('PERSON_CRUD.ONLY_STUDENT_PARENT');
       return;
     }
@@ -374,24 +384,15 @@ export class PersonCrudComponent implements OnInit {
     this.cdr.markForCheck();
 
     this.personService
-      .sendPasswordReminder(person.id)
+      .sendLoginInfo([person.id])
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
-        next: (response) => {
+        next: (result) => {
           this.isLoading = false;
-
-          // Dizi olarak gelen yanıtı tekil nesneye indirgiyoruz
-          const result = unwrapResponse<{ Sonuc?: number | string; sunucucevap?: string | null }>(
-            response,
-          );
-
-          console.log(result);
-
-          // Prosedür güncellendiği için artık projenin standart helper'ını kullanabiliriz
-          if (result && (result.Sonuc === 1 || result.Sonuc === '1')) {
-            this.notification.success(result.sunucucevap || 'PERSON_CRUD.LOGIN_DELETED');
+          if (result.sonuc === 1) {
+            this.notification.success(result.sunucuCevap || 'PERSON_CRUD.LOGIN_DELETED');
           } else {
-            this.notification.error(result?.sunucucevap || 'PERSON_CRUD.LOGIN_NOT_FOUND');
+            this.notification.error(result.sunucuCevap || 'PERSON_CRUD.LOGIN_NOT_FOUND');
           }
 
           this.showProfileModal = false;
@@ -399,6 +400,84 @@ export class PersonCrudComponent implements OnInit {
         },
         error: () => {
           this.isLoading = false;
+          this.notification.error('COMMON.SERVER_ERROR');
+          this.cdr.markForCheck();
+        },
+      });
+  }
+
+  // ─── Toplu bilgi gönderimi ───
+
+  /** Bilgi gönderimi (tekli ve toplu) yalnızca Öğrenci ve Veli sayfalarında vardır. */
+  get canSendLoginInfo(): boolean {
+    return this.USERDEF === UserDef.Ogrenci || this.USERDEF === UserDef.Veli;
+  }
+
+  get bulkSendOverLimit(): boolean {
+    return this.bulkSendSelected.length > LOGIN_SEND_MAX;
+  }
+
+  /** Onay penceresindeki ad listesi (ilk 5 ad + kalan sayısı). */
+  get bulkSendNames(): { shown: string; rest: number } {
+    return summarizeNames(this.bulkSendSelected.map((p) => p.adsoyad));
+  }
+
+  /** "Bilgileri Toplu Gönder": tabloda çoklu seçimi açar. */
+  startBulkSend(): void {
+    this.bulkSendMode = true;
+    this.bulkSendSelected = [];
+  }
+
+  /** Seçim modundan çıkar ve seçimi temizler (iptal, başarılı gönderim, liste yenileme). */
+  exitBulkSend(): void {
+    this.bulkSendMode = false;
+    this.bulkSendSelected = [];
+    this.showBulkSendConfirm = false;
+    this.cdr.markForCheck();
+  }
+
+  onBulkSelectionChange(rows: Person[]): void {
+    this.bulkSendSelected = rows;
+  }
+
+  openBulkSendConfirm(): void {
+    if (!this.bulkSendSelected.length) return;
+    if (this.bulkSendOverLimit) {
+      this.notification.warning(
+        this.translate.instant('PERSON_CRUD.BULK_SEND_LIMIT', { max: LOGIN_SEND_MAX }),
+      );
+      return;
+    }
+    this.showBulkSendConfirm = true;
+  }
+
+  closeBulkSendConfirm(): void {
+    if (this.bulkSending) return;
+    this.showBulkSendConfirm = false;
+  }
+
+  sendBulkLoginInfo(): void {
+    if (this.bulkSending || !this.bulkSendSelected.length || this.bulkSendOverLimit) return;
+
+    this.bulkSending = true;
+    this.personService
+      .sendLoginInfo(this.bulkSendSelected.map((p) => p.id))
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (result) => {
+          this.bulkSending = false;
+          if (result.sonuc === 1) {
+            this.notification.success(result.sunucuCevap || 'PERSON_CRUD.BULK_SEND_SUCCESS');
+            this.exitBulkSend();
+          } else {
+            // Hata: seçim korunur, kullanıcı tekrar deneyebilir
+            this.notification.error(result.sunucuCevap || 'PERSON_CRUD.LOGIN_NOT_FOUND');
+            this.showBulkSendConfirm = false;
+            this.cdr.markForCheck();
+          }
+        },
+        error: () => {
+          this.bulkSending = false;
           this.notification.error('COMMON.SERVER_ERROR');
           this.cdr.markForCheck();
         },
@@ -443,6 +522,8 @@ export class PersonCrudComponent implements OnInit {
   }
 
   onRowClick(person: Person): void {
+    // Seçim modunda satır tıklaması profil açmaz; seçim checkbox ile yapılır
+    if (this.bulkSendMode) return;
     this.selectedProfilePerson = person;
     this.showProfileModal = true;
   }

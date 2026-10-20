@@ -10,6 +10,7 @@ import {
 import { firstValueFrom } from 'rxjs';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { ButtonModule } from 'primeng/button';
+import { InputTextModule } from 'primeng/inputtext';
 import { ProgressBarModule } from 'primeng/progressbar';
 import { TableModule } from 'primeng/table';
 import { TagModule } from 'primeng/tag';
@@ -20,19 +21,56 @@ import {
   ImportKind,
   ImportRow,
   ImportOutcomeStatus,
+  RawImportRow,
   RowIssue,
+  ValidationContext,
 } from '../../models/bulk-import.model';
 import { BulkImportService } from '../../services/bulk-import.service';
 import {
   ImportFileError,
+  downloadFixFile,
   downloadImportTemplate,
   readImportWorkbook,
 } from '../../utils/bulk-import-excel';
 import { MAX_IMPORT_ROWS, validateImportRows } from '../../utils/bulk-import.utils';
+import {
+  ReasonGroup,
+  ReasonKind,
+  RowFilter,
+  groupReasons,
+  matchesRowFilter,
+  matchesSearch,
+  reasonIdsOf,
+} from '../../utils/bulk-import-summary.utils';
 
 type ImportStep = 'upload' | 'preview' | 'importing' | 'done';
 type ImportPhase = 'records' | 'relations';
 type TagSeverity = 'success' | 'info' | 'warn' | 'danger' | 'secondary';
+
+/** Çözüm ipucu gösterilen sorun türleri (i18n: BULK_IMPORT.REASON_HINT.<anahtar>). */
+const HINTED_REASONS = new Set([
+  'ISSUE_EXISTS',
+  'ISSUE_EXISTS_MULTIPLE',
+  'ISSUE_EXISTS_NO_CHANGES',
+  'ISSUE_LOOKUP_NOT_FOUND',
+  'ISSUE_DUPLICATE_IN_FILE',
+  'ISSUE_DUPLICATE_TC_IN_FILE',
+  'ISSUE_STUDENT_NOT_FOUND',
+  'ISSUE_INVALID_STUDENT_ID',
+  'ERR_SERVER',
+]);
+
+/** Neden paneli satırı: grup + gösterim anahtarları. */
+interface ReasonItem extends ReasonGroup {
+  labelKey: string;
+  hintKey: string | null;
+}
+
+interface ReasonSection {
+  kind: ReasonKind;
+  titleKey: string;
+  items: ReasonItem[];
+}
 
 /** Aktarım sırasında satır başına biriken sonuçlar; bitişte satıra yazılır. */
 interface RowRun {
@@ -46,7 +84,7 @@ interface RowRun {
 @Component({
   selector: 'app-bulk-import',
   standalone: true,
-  imports: [TranslatePipe, ButtonModule, ProgressBarModule, TableModule, TagModule],
+  imports: [TranslatePipe, ButtonModule, InputTextModule, ProgressBarModule, TableModule, TagModule],
   templateUrl: './bulk-import.html',
   styleUrl: './bulk-import.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -73,16 +111,24 @@ export class BulkImportComponent {
   readonly rows = signal<ImportRow[]>([]);
   readonly fileError = signal<RowIssue | null>(null);
   readonly warnings = signal<RowIssue[]>([]);
-  readonly onlyIssues = signal(false);
+  /** Özet kutucuğuyla seçilen durum filtresi. */
+  readonly statusFilter = signal<RowFilter>('all');
+  /** Neden panelinden seçilen sorun grubu (ReasonGroup.id). */
+  readonly reasonFilter = signal<string | null>(null);
+  readonly search = signal('');
+  /** Öğrenci: TC'si sistemde tek kayıtla eşleşen satırlar atlanmak yerine güncellenir. */
+  readonly updateExisting = signal(false);
+
+  /** Önizleme, onay kutusu değiştiğinde yeniden doğrulanabilsin diye saklanır. */
+  private rawRows: RawImportRow[] = [];
+  private context: ValidationContext | null = null;
   readonly progress = signal({ done: 0, total: 0 });
 
   readonly isParent = computed(() => this.kind() === 'parent');
   readonly descriptionKey = computed(() =>
     this.isParent() ? 'BULK_IMPORT.DESCRIPTION_PARENT' : 'BULK_IMPORT.DESCRIPTION',
   );
-  readonly keyColumnLabel = computed(() =>
-    this.isParent() ? 'BULK_IMPORT.COL_TC' : 'BULK_IMPORT.COL_SCHOOL_NO',
-  );
+  readonly keyColumnLabel = computed(() => 'BULK_IMPORT.COL_TC');
   readonly startLabelKey = computed(() =>
     this.isParent() ? 'BULK_IMPORT.START_IMPORT_PARENT' : 'BULK_IMPORT.START_IMPORT',
   );
@@ -94,19 +140,24 @@ export class BulkImportComponent {
       total: list.length,
       /** Eklenecek yeni kişi sayısı. */
       ready: list.filter((r) => r.status === 'ready').length,
+      /** Güncellenecek mevcut öğrenci sayısı. */
+      update: list.filter((r) => r.status === 'update').length,
       exists: list.filter((r) => r.status === 'exists').length,
       error: list.filter((r) => r.status === 'error').length,
       /** Bu aktarımda kurulacak veli–öğrenci ilişkisi sayısı. */
       relations: active.reduce((sum, r) => sum + r.relationStudentIds.length, 0),
       /** Çalıştırılacak iş var mı (yeni kişi veya yeni ilişki)? */
-      work: list.filter((r) => r.status === 'ready' || this.hasWork(r)).length,
-      imported: list.filter((r) => r.outcome === 'imported').length,
+      work: list.filter((r) => this.needsRecord(r) || this.hasWork(r)).length,
+      imported: list.filter((r) => r.outcome === 'imported' && r.status !== 'update').length,
+      updated: list.filter((r) => r.outcome === 'imported' && r.status === 'update').length,
       partial: list.filter((r) => r.outcome === 'partial').length,
       failed: list.filter((r) => r.outcome === 'failed').length,
+      /** Düzeltilip yeniden yüklenebilecek satır sayısı. */
+      fixable: list.filter((r) => this.isFixRow(r)).length,
     };
   });
 
-  /** Raporda ve "sadece sorunlu" filtresinde gösterilen satırlar. */
+  /** Excel raporunda yer alan satırlar. */
   private isIssueRow(row: ImportRow): boolean {
     return (
       row.status === 'error' ||
@@ -116,14 +167,81 @@ export class BulkImportComponent {
     );
   }
 
+  /** Düzeltilip yeniden yüklenmesi gereken satır mı (hatalı ya da aktarılamamış)? */
+  private isFixRow(row: ImportRow): boolean {
+    return row.status === 'error' || row.outcome === 'failed' || row.outcome === 'partial';
+  }
+
+  /** Kayıt isteği atılacak satır mı (yeni ekleme veya güncelleme)? */
+  private needsRecord(row: ImportRow): boolean {
+    return row.status === 'ready' || row.status === 'update';
+  }
+
   /** Mevcut veli satırında kurulacak yeni ilişki var mı? */
   private hasWork(row: ImportRow): boolean {
     return row.status === 'exists' && row.relationStudentIds.length > 0;
   }
 
-  readonly visibleRows = computed(() =>
-    this.onlyIssues() ? this.rows().filter((r) => this.isIssueRow(r)) : this.rows(),
+  readonly visibleRows = computed(() => {
+    const filter = this.statusFilter();
+    const reason = this.reasonFilter();
+    const term = this.search();
+    return this.rows().filter(
+      (r) =>
+        matchesRowFilter(r, filter) &&
+        (reason === null || reasonIdsOf(r).includes(reason)) &&
+        matchesSearch(r, term),
+    );
+  });
+
+  readonly hasFilter = computed(
+    () => this.statusFilter() !== 'all' || this.reasonFilter() !== null || this.search().trim() !== '',
   );
+
+  /** Hatalı / atlanan / aktarılamayan satırların sorun türüne göre dökümü. */
+  readonly reasonSections = computed((): ReasonSection[] => {
+    const groups = groupReasons(this.rows());
+    const titles: Record<ReasonKind, string> = {
+      error: 'BULK_IMPORT.REASONS_ERROR',
+      skipped: 'BULK_IMPORT.REASONS_SKIPPED',
+      failed: 'BULK_IMPORT.REASONS_FAILED',
+    };
+    return (Object.keys(titles) as ReasonKind[])
+      .map((kind) => ({
+        kind,
+        titleKey: titles[kind],
+        items: groups.filter((g) => g.kind === kind).map((g) => this.toReasonItem(g)),
+      }))
+      .filter((section) => section.items.length > 0);
+  });
+
+  private toReasonItem(group: ReasonGroup): ReasonItem {
+    const name = group.issueKey.replace(/^BULK_IMPORT\./, '');
+    // "Güncellemek için kutuyu işaretleyin" ipucu yalnızca kutu kapalıyken anlamlı.
+    const hinted = HINTED_REASONS.has(name) && !(name === 'ISSUE_EXISTS' && this.updateExisting());
+    return {
+      ...group,
+      labelKey: `BULK_IMPORT.REASON.${name}`,
+      hintKey: hinted ? `BULK_IMPORT.REASON_HINT.${name}` : null,
+    };
+  }
+
+  /** Kutucuğa tıklama: aynı kutuya tekrar tıklanınca filtre kalkar. */
+  setStatusFilter(filter: RowFilter): void {
+    this.statusFilter.set(this.statusFilter() === filter ? 'all' : filter);
+    this.reasonFilter.set(null);
+  }
+
+  setReasonFilter(id: string): void {
+    this.reasonFilter.set(this.reasonFilter() === id ? null : id);
+    this.statusFilter.set('all');
+  }
+
+  clearFilters(): void {
+    this.statusFilter.set('all');
+    this.reasonFilter.set(null);
+    this.search.set('');
+  }
 
   readonly percent = computed(() => {
     const { done, total } = this.progress();
@@ -165,9 +283,10 @@ export class BulkImportComponent {
     try {
       const kind = this.kind();
       const parsed = await readImportWorkbook(file, kind);
-      const context = await firstValueFrom(this.importService.loadValidationContext(kind));
-
-      this.rows.set(validateImportRows(kind, parsed.rows, context));
+      this.context = await firstValueFrom(this.importService.loadValidationContext(kind));
+      this.rawRows = parsed.rows;
+      // Onay kutusu kullanıcının tercihi: dosya yeniden yüklense de korunur.
+      this.revalidate();
       if (parsed.unknownHeaders.length > 0) {
         this.warnings.set([
           {
@@ -177,7 +296,7 @@ export class BulkImportComponent {
         ]);
       }
       this.fileName.set(file.name);
-      this.onlyIssues.set(false);
+      this.clearFilters();
       this.step.set('preview');
     } catch (error) {
       this.fileError.set(
@@ -188,11 +307,26 @@ export class BulkImportComponent {
     }
   }
 
+  /** Ham satırları güncel seçeneklerle yeniden doğrular (dosya ve sistem verisi yeniden okunmaz). */
+  private revalidate(): void {
+    if (!this.context) return;
+    this.rows.set(
+      validateImportRows(this.kind(), this.rawRows, this.context, {
+        updateExisting: this.updateExisting(),
+      }),
+    );
+  }
+
+  onUpdateExistingChange(checked: boolean): void {
+    this.updateExisting.set(checked);
+    this.revalidate();
+  }
+
   // ─── Aktarım ───
 
   startImport(): void {
-    const toProcess = this.rows().filter((r) => r.status === 'ready' || this.hasWork(r));
-    const toInsert = toProcess.filter((r) => r.status === 'ready');
+    const toProcess = this.rows().filter((r) => this.needsRecord(r) || this.hasWork(r));
+    const toInsert = toProcess.filter((r) => this.needsRecord(r));
     if (toProcess.length === 0) return;
 
     const runs = new Map<number, RowRun>();
@@ -249,7 +383,7 @@ export class BulkImportComponent {
         let outcome: ImportOutcomeStatus;
         let outcomeIssue: RowIssue | undefined;
 
-        if (row.status === 'ready' && !run.recordOk) {
+        if (this.needsRecord(row) && !run.recordOk) {
           outcome = 'failed';
           outcomeIssue = run.recordMessage
             ? { key: 'BULK_IMPORT.ERR_SERVER', params: { message: run.recordMessage } }
@@ -269,25 +403,36 @@ export class BulkImportComponent {
       }),
     );
 
+    this.clearFilters();
     this.step.set('done');
     this.importingChange.emit(false);
 
-    const { imported, partial, failed } = this.counts();
+    const { imported, updated, partial, failed } = this.counts();
     const problems = partial + failed;
     const relationsMade = Array.from(runs.values()).reduce((sum, r) => sum + r.relationsOk, 0);
     if (imported + partial > 0) this.imported.emit();
 
-    const params = { count: imported + partial, imported, failed: problems, relations: relationsMade };
+    const params = {
+      count: imported + partial,
+      imported,
+      updated,
+      failed: problems,
+      relations: relationsMade,
+    };
+    // Güncelleme içeren öğrenci aktarımı "eklendi / güncellendi" ayrımını gösterir.
     const prefix = this.isParent() ? 'BULK_IMPORT.TOAST_PARENT' : 'BULK_IMPORT.TOAST';
+    const suffix = !this.isParent() && updated > 0 ? '_UPDATE' : '';
     if (problems === 0) {
-      this.notification.success(this.translate.instant(`${prefix}_DONE`, params));
+      this.notification.success(this.translate.instant(`${prefix}_DONE${suffix}`, params));
     } else {
-      this.notification.warning(this.translate.instant(`${prefix}_PARTIAL`, params));
+      this.notification.warning(this.translate.instant(`${prefix}_PARTIAL${suffix}`, params));
     }
   }
 
   reset(): void {
     this.rows.set([]);
+    this.rawRows = [];
+    this.context = null;
     this.fileName.set('');
     this.warnings.set([]);
     this.fileError.set(null);
@@ -298,12 +443,19 @@ export class BulkImportComponent {
   // ─── Gösterim yardımcıları ───
 
   statusTag(row: ImportRow): { labelKey: string; severity: TagSeverity } {
-    if (row.outcome === 'imported') return { labelKey: 'BULK_IMPORT.STATUS_IMPORTED', severity: 'success' };
+    if (row.outcome === 'imported') {
+      return {
+        labelKey: row.status === 'update' ? 'BULK_IMPORT.STATUS_UPDATED' : 'BULK_IMPORT.STATUS_IMPORTED',
+        severity: 'success',
+      };
+    }
     if (row.outcome === 'partial') return { labelKey: 'BULK_IMPORT.STATUS_PARTIAL', severity: 'warn' };
     if (row.outcome === 'failed') return { labelKey: 'BULK_IMPORT.STATUS_FAILED', severity: 'danger' };
     switch (row.status) {
       case 'ready':
         return { labelKey: 'BULK_IMPORT.STATUS_READY', severity: 'info' };
+      case 'update':
+        return { labelKey: 'BULK_IMPORT.STATUS_UPDATE', severity: 'info' };
       case 'exists':
         return this.hasWork(row)
           ? { labelKey: 'BULK_IMPORT.STATUS_EXISTS_LINK', severity: 'info' }
@@ -315,6 +467,21 @@ export class BulkImportComponent {
 
   rowIssues(row: ImportRow): RowIssue[] {
     return row.outcomeIssue ? [row.outcomeIssue] : row.issues;
+  }
+
+  /** Hatalı ve aktarılamayan satırları, düzeltilip yeniden yüklenebilecek şablon olarak indirir. */
+  downloadFixRows(): void {
+    const rawByRow = new Map(this.rawRows.map((raw) => [raw.rowNo, raw]));
+    const items = this.rows()
+      .filter((r) => this.isFixRow(r) && rawByRow.has(r.rowNo))
+      .map((r) => ({
+        raw: rawByRow.get(r.rowNo)!,
+        error: this.rowIssues(r)
+          .map((issue) => this.translate.instant(issue.key, issue.params) as string)
+          .join('; '),
+      }));
+    if (items.length === 0) return;
+    downloadFixFile(this.kind(), items, this.context?.lookups ?? null);
   }
 
   /** Atlanan, hatalı ve kaydedilemeyen satırları Excel olarak indirir. */

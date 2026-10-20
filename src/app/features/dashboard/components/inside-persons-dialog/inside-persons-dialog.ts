@@ -73,22 +73,22 @@ export class InsidePersonsDialogComponent {
     { label: 'USERDEF.PARENT', value: 'PARENT' },
   ];
 
-  /** Filtre seçenekleri: listedeki benzersiz okullar ve (seçili okula ait) sınıflar. */
+  /**
+   * Karşılıklı daralan (faceted) filtre seçenekleri: her dropdown, KENDİ filtresi
+   * hariç diğer tüm filtrelere ve aramaya uyan kişilerden üretilir. Böylece
+   * hiçbir filtre kendiliğinden sıfırlanmaz ve boş sonuç veren kombinasyon oluşmaz.
+   */
   protected readonly insideSchoolOptions = computed(() =>
-    uniqueSorted(this.state().persons.map((p) => p.schoolName)),
+    uniqueSorted(this.personsMatching('school').map((p) => p.schoolName)),
   );
-  protected readonly insideClassOptions = computed(() => {
-    const school = this.insideSchoolFilter();
-    return uniqueSorted(
-      this.state()
-        .persons.filter((p) => !school || p.schoolName === school)
-        .map((p) => p.className),
-    );
-  });
-
+  protected readonly insideClassOptions = computed(() =>
+    uniqueSorted(this.personsMatching('class').map((p) => p.className)),
+  );
   /** Veli satırlarındaki öğrenciler için filtre seçenekleri ("Ad Soyad (Sınıf)"). */
   protected readonly insideStudentOptions = computed(() =>
-    uniqueSorted(this.state().persons.flatMap((p) => (p.students ? p.students.split(', ') : []))),
+    uniqueSorted(
+      this.personsMatching('student').flatMap((p) => (p.students ? p.students.split(', ') : [])),
+    ),
   );
 
   /** Öğrenci kolonu yalnızca veli içeren görünümde anlamlıdır. */
@@ -96,13 +96,18 @@ export class InsidePersonsDialogComponent {
     () => this.state().type !== 'STUDENT' && this.insideTypeFilter() !== 'STUDENT',
   );
 
-  /** Arama metni ve filtrelere göre daraltılmış kişi listesi. */
-  protected readonly filteredInsidePersons = computed(() => {
+  /** Arama metni ve tüm filtrelere göre daraltılmış kişi listesi. */
+  protected readonly filteredInsidePersons = computed(() => this.personsMatching());
+
+  /** `skip` verilen filtre hariç, arama ve diğer filtrelere uyan kişiler. */
+  private personsMatching(skip?: 'school' | 'class' | 'student'): InsidePerson[] {
     const q = toLowerTr(this.insideSearch().trim());
-    const school = this.insideSchoolFilter();
-    const cls = this.insideClassFilter();
+    const school = skip === 'school' ? '' : this.insideSchoolFilter();
+    const cls = skip === 'class' ? '' : this.insideClassFilter();
+    // Öğrenci filtresi gizliyken (yalnızca öğrenci görünümü) uygulanmamalı.
+    const student =
+      skip === 'student' || !this.showInsideStudentsCol() ? '' : this.insideStudentFilter();
     const type = this.insideTypeFilter();
-    const student = this.insideStudentFilter();
     return this.state().persons.filter(
       (p) =>
         (!school || p.schoolName === school) &&
@@ -116,7 +121,7 @@ export class InsidePersonsDialogComponent {
           toLowerTr(p.registryNo).includes(q) ||
           toLowerTr(p.students).includes(q)),
     );
-  });
+  }
 
   /**
    * Diyaloğu açıp "o an okulda olan" kişileri yükler (SadeceOkulda=1 sabit).
@@ -142,11 +147,5 @@ export class InsidePersonsDialogComponent {
           this.state.update((s) => ({ ...s, loading: false, error: true }));
         },
       });
-  }
-
-  /** Okul değişince, o okulda olmayan sınıf seçimini temizler. */
-  protected onInsideSchoolChange(school: string): void {
-    this.insideSchoolFilter.set(school);
-    this.insideClassFilter.set('');
   }
 }

@@ -126,7 +126,7 @@ export class ProxyService {
    * Deletes the proxy login record (LoginMeCampus) and triggers sending a new
    * password via SMS.
    * Calls sp_vekilloginsendcampus_d — the proxy counterpart of the student
-   * flow sendPasswordReminder (sp_loginsendcampus_d).
+   * flow sendLoginInfo (sp_loginsendcampus_d).
    */
   sendProxyLogin(
     proxyCampusId: number,

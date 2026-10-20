@@ -15,6 +15,21 @@
       </div>
     }
 
+    <!-- Yüklemeden önce de seçilebilir; önizlemede değiştirilince satırlar yeniden doğrulanır. -->
+    @if (!isParent() && (step() === 'upload' || step() === 'preview')) {
+      <label class="update-existing">
+        <input
+          type="checkbox"
+          [checked]="updateExisting()"
+          (change)="onUpdateExistingChange($any($event.target).checked)"
+        />
+        <span class="update-existing-text">
+          <span class="update-existing-title">{{ 'BULK_IMPORT.UPDATE_EXISTING' | translate }}</span>
+          <span class="update-existing-hint">{{ 'BULK_IMPORT.UPDATE_EXISTING_HINT' | translate }}</span>
+        </span>
+      </label>
+    }
+
     @if (step() === 'upload') {
       <div class="steps">
         <div class="step-box">
@@ -70,48 +85,90 @@
       </div>
 
       <div class="summary">
-        <div class="chip">
+        <button type="button" class="chip" [class.active]="statusFilter() === 'all' && !reasonFilter()" (click)="clearFilters()">
           <span class="chip-value">{{ counts().total }}</span>
           <span class="chip-label">{{ 'BULK_IMPORT.SUMMARY_TOTAL' | translate }}</span>
-        </div>
-        <div class="chip chip-info">
+        </button>
+        <button type="button" class="chip chip-info" [class.active]="statusFilter() === 'ready'" [disabled]="counts().ready === 0" (click)="setStatusFilter('ready')">
           <span class="chip-value">{{ counts().ready }}</span>
           <span class="chip-label">{{ 'BULK_IMPORT.SUMMARY_READY' | translate }}</span>
-        </div>
+        </button>
+        @if (!isParent() && updateExisting()) {
+          <button type="button" class="chip chip-info" [class.active]="statusFilter() === 'update'" [disabled]="counts().update === 0" (click)="setStatusFilter('update')">
+            <span class="chip-value">{{ counts().update }}</span>
+            <span class="chip-label">{{ 'BULK_IMPORT.SUMMARY_UPDATE' | translate }}</span>
+          </button>
+        }
         @if (isParent()) {
           <div class="chip chip-info">
             <span class="chip-value">{{ counts().relations }}</span>
             <span class="chip-label">{{ 'BULK_IMPORT.SUMMARY_RELATIONS' | translate }}</span>
           </div>
         }
-        <div class="chip chip-warn">
+        <button type="button" class="chip chip-warn" [class.active]="statusFilter() === 'exists'" [disabled]="counts().exists === 0" (click)="setStatusFilter('exists')">
           <span class="chip-value">{{ counts().exists }}</span>
           <span class="chip-label">{{
             (isParent() ? 'BULK_IMPORT.SUMMARY_EXISTS_PARENT' : 'BULK_IMPORT.SUMMARY_EXISTS')
               | translate
           }}</span>
-        </div>
-        <div class="chip chip-danger">
+        </button>
+        <button type="button" class="chip chip-danger" [class.active]="statusFilter() === 'error'" [disabled]="counts().error === 0" (click)="setStatusFilter('error')">
           <span class="chip-value">{{ counts().error }}</span>
           <span class="chip-label">{{ 'BULK_IMPORT.SUMMARY_ERRORS' | translate }}</span>
-        </div>
+        </button>
         @if (step() !== 'preview') {
-          <div class="chip chip-success">
+          <button type="button" class="chip chip-success" [class.active]="statusFilter() === 'imported'" [disabled]="counts().imported === 0" (click)="setStatusFilter('imported')">
             <span class="chip-value">{{ counts().imported }}</span>
             <span class="chip-label">{{ 'BULK_IMPORT.SUMMARY_IMPORTED' | translate }}</span>
-          </div>
+          </button>
+          @if (!isParent() && counts().updated > 0) {
+            <button type="button" class="chip chip-success" [class.active]="statusFilter() === 'updated'" (click)="setStatusFilter('updated')">
+              <span class="chip-value">{{ counts().updated }}</span>
+              <span class="chip-label">{{ 'BULK_IMPORT.SUMMARY_UPDATED' | translate }}</span>
+            </button>
+          }
           @if (isParent()) {
-            <div class="chip chip-warn">
+            <button type="button" class="chip chip-warn" [class.active]="statusFilter() === 'partial'" [disabled]="counts().partial === 0" (click)="setStatusFilter('partial')">
               <span class="chip-value">{{ counts().partial }}</span>
               <span class="chip-label">{{ 'BULK_IMPORT.SUMMARY_PARTIAL' | translate }}</span>
-            </div>
+            </button>
           }
-          <div class="chip chip-danger">
+          <button type="button" class="chip chip-danger" [class.active]="statusFilter() === 'failed'" [disabled]="counts().failed === 0" (click)="setStatusFilter('failed')">
             <span class="chip-value">{{ counts().failed }}</span>
             <span class="chip-label">{{ 'BULK_IMPORT.SUMMARY_FAILED' | translate }}</span>
-          </div>
+          </button>
         }
       </div>
+
+      @if (step() !== 'importing' && reasonSections().length > 0) {
+        <div class="reasons">
+          @for (section of reasonSections(); track section.kind) {
+            <div class="reason-section" [attr.data-kind]="section.kind">
+              <div class="reason-title">{{ section.titleKey | translate }}</div>
+              @for (item of section.items; track item.id) {
+                <button
+                  type="button"
+                  class="reason"
+                  [class.active]="reasonFilter() === item.id"
+                  (click)="setReasonFilter(item.id)"
+                >
+                  <span class="reason-count">{{ item.count }}</span>
+                  <span class="reason-text">
+                    <span class="reason-label">{{ item.labelKey | translate: { field: item.field ?? '' } }}</span>
+                    @if (item.hintKey) {
+                      <span class="reason-hint">{{ item.hintKey | translate }}</span>
+                    }
+                  </span>
+                  <i class="pi pi-filter reason-icon"></i>
+                </button>
+              }
+              @if (section.kind !== 'skipped') {
+                <div class="reason-footer">{{ 'BULK_IMPORT.DOWNLOAD_FIX_HINT' | translate }}</div>
+              }
+            </div>
+          }
+        </div>
+      }
 
       @if (step() === 'importing') {
         <div class="progress-box">
@@ -139,7 +196,10 @@
             type="button"
             class="p-button-sm"
             icon="pi pi-check"
-            [label]="startLabelKey() | translate: { count: counts().ready, relations: counts().relations }"
+            [label]="
+              startLabelKey()
+                | translate: { count: counts().ready + counts().update, relations: counts().relations }
+            "
             [disabled]="counts().work === 0"
             (click)="startImport()"
           ></button>
@@ -156,6 +216,17 @@
             (click)="reset()"
           ></button>
         }
+        @if (counts().fixable > 0 && step() !== 'importing') {
+          <button
+            pButton
+            type="button"
+            class="p-button-sm p-button-outlined p-button-danger"
+            icon="pi pi-wrench"
+            [label]="'BULK_IMPORT.DOWNLOAD_FIX' | translate: { count: counts().fixable }"
+            [title]="'BULK_IMPORT.DOWNLOAD_FIX_HINT' | translate"
+            (click)="downloadFixRows()"
+          ></button>
+        }
         @if (
           counts().exists + counts().error + counts().failed + counts().partial > 0 &&
           step() !== 'importing'
@@ -169,14 +240,33 @@
             (click)="downloadReport()"
           ></button>
         }
-        <label class="only-issues">
+      </div>
+
+      <div class="table-tools">
+        <span class="search-box">
+          <i class="pi pi-search"></i>
           <input
-            type="checkbox"
-            [checked]="onlyIssues()"
-            (change)="onlyIssues.set($any($event.target).checked)"
+            pInputText
+            type="search"
+            class="p-inputtext-sm"
+            [value]="search()"
+            [placeholder]="'BULK_IMPORT.SEARCH_PLACEHOLDER' | translate"
+            (input)="search.set($any($event.target).value)"
           />
-          {{ 'BULK_IMPORT.ONLY_ISSUES' | translate }}
-        </label>
+        </span>
+        <span class="text-muted small">{{
+          'BULK_IMPORT.SHOWING_ROWS' | translate: { shown: visibleRows().length, total: counts().total }
+        }}</span>
+        @if (hasFilter()) {
+          <button
+            pButton
+            type="button"
+            class="p-button-sm p-button-text"
+            icon="pi pi-filter-slash"
+            [label]="'BULK_IMPORT.CLEAR_FILTERS' | translate"
+            (click)="clearFilters()"
+          ></button>
+        }
       </div>
 
       <p-table
@@ -219,10 +309,24 @@
               ></p-tag>
             </td>
             <td>
-              @for (issue of rowIssues(row); track $index) {
-                <div class="issue" [class.issue-info]="row.status !== 'error' && !row.outcomeIssue">
-                  {{ issue.key | translate: issue.params }}
-                </div>
+              @if (row.changes?.length && !row.outcomeIssue) {
+                <!-- Güncellenecek / güncellenen öğrenci: alan bazında eski → yeni -->
+                <ul class="changes">
+                  @for (change of row.changes; track change.field) {
+                    <li>
+                      <span class="change-field">{{ change.field }}:</span>
+                      <span class="change-from">{{ change.from || ('BULK_IMPORT.EMPTY_VALUE' | translate) }}</span>
+                      <i class="pi pi-arrow-right"></i>
+                      <span class="change-to">{{ change.to }}</span>
+                    </li>
+                  }
+                </ul>
+              } @else {
+                @for (issue of rowIssues(row); track $index) {
+                  <div class="issue" [class.issue-info]="row.status !== 'error' && !row.outcomeIssue">
+                    {{ issue.key | translate: issue.params }}
+                  </div>
+                }
               }
             </td>
           </tr>

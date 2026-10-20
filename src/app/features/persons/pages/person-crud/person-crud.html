@@ -4,6 +4,39 @@
     [subtitle]="descriptionTextKey | translate"
     icon="group"
   >
+    @if (canSendLoginInfo) {
+      @if (bulkSendMode) {
+        <button
+          pButton
+          class="p-button-sm p-button-text"
+          icon="pi pi-times"
+          [label]="'COMMON.CANCEL' | translate"
+          [attr.aria-label]="'COMMON.CANCEL' | translate"
+          (click)="exitBulkSend()"
+        ></button>
+        @let sendSelectedLabel =
+          'PERSON_CRUD.BULK_SEND_SELECTED' | translate: { count: bulkSendSelected.length };
+        <button
+          pButton
+          class="p-button-sm p-button-help"
+          icon="pi pi-key"
+          [label]="sendSelectedLabel"
+          [attr.aria-label]="sendSelectedLabel"
+          [disabled]="!bulkSendSelected.length"
+          (click)="openBulkSendConfirm()"
+        ></button>
+      } @else {
+        <button
+          pButton
+          class="p-button-sm p-button-outlined p-button-help"
+          icon="pi pi-key"
+          [label]="'PERSON_CRUD.BULK_SEND' | translate"
+          [attr.aria-label]="'PERSON_CRUD.BULK_SEND' | translate"
+          [disabled]="isLoading"
+          (click)="startBulkSend()"
+        ></button>
+      }
+    }
     @if (canBulkImport) {
       <button
         pButton
@@ -43,6 +76,12 @@
     }
 
     @if (!isLoading && !errorMessage) {
+      @if (bulkSendMode) {
+        <div class="bulk-send-hint" role="status">
+          <span class="pi pi-info-circle" aria-hidden="true"></span>
+          {{ 'PERSON_CRUD.BULK_SEND_HINT' | translate }}
+        </div>
+      }
       <app-customizable-table
         [rows]="persons"
         [columns]="columns"
@@ -50,7 +89,10 @@
         [tableId]="USERDEF.toString()"
         [defaultFields]="currentDefaultFields"
         [emptyCellValue]="''"
-        [rowClickable]="true"
+        [selectionMode]="bulkSendMode ? 'multiple' : null"
+        [selectedRows]="bulkSendSelected"
+        (selectedRowsChange)="onBulkSelectionChange($event)"
+        [rowClickable]="!bulkSendMode"
         [showRowNumbers]="true"
         [exportFilename]="'person_liste_' + USERDEF.toString()"
         [actionsTemplate]="showActionsColumn ? actionsTpl : null"
@@ -170,6 +212,49 @@
         (importingChange)="onBulkImportingChange($event)"
       ></app-bulk-import>
     }
+  </p-dialog>
+}
+
+@if (showBulkSendConfirm) {
+  <p-dialog
+    [header]="'PERSON_CRUD.BULK_SEND_TITLE' | translate"
+    [visible]="true"
+    [modal]="true"
+    [draggable]="false"
+    [resizable]="false"
+    [closable]="!bulkSending"
+    [closeOnEscape]="!bulkSending"
+    [style]="{ width: '480px', maxWidth: '95vw' }"
+    (visibleChange)="$event || closeBulkSendConfirm()"
+  >
+    @let names = bulkSendNames;
+    <p>{{ 'PERSON_CRUD.BULK_SEND_CONFIRM' | translate: { count: bulkSendSelected.length } }}</p>
+    <p class="bulk-send-names">
+      {{ names.shown }}
+      @if (names.rest) {
+        {{ 'PERSON_CRUD.BULK_SEND_MORE' | translate: { count: names.rest } }}
+      }
+    </p>
+    <ng-template pTemplate="footer">
+      <button
+        pButton
+        class="p-button-text p-button-danger"
+        icon="pi pi-times"
+        [label]="'COMMON.CANCEL' | translate"
+        [attr.aria-label]="'COMMON.CANCEL' | translate"
+        [disabled]="bulkSending"
+        (click)="closeBulkSendConfirm()"
+      ></button>
+      <button
+        pButton
+        class="p-button-success"
+        icon="pi pi-key"
+        [label]="'PERSON_CRUD.YES_SEND' | translate"
+        [attr.aria-label]="'PERSON_CRUD.YES_SEND' | translate"
+        [loading]="bulkSending"
+        (click)="sendBulkLoginInfo()"
+      ></button>
+    </ng-template>
   </p-dialog>
 }
 
