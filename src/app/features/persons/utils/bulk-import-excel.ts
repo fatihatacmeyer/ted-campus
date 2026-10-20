@@ -76,7 +76,7 @@ export async function readImportWorkbook(file: File, kind: ImportKind): Promise<
   const otherKind: ImportKind = kind === 'student' ? 'parent' : 'student';
 
   let matrix: unknown[][];
-  let isOtherTemplate = false;
+  let isOtherTemplate: boolean;
   try {
     const workbook = XLSX.read(buffer, { type: 'array' });
     const findSheet = (k: ImportKind) =>

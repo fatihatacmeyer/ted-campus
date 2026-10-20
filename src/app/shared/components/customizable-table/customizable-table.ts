@@ -2,9 +2,11 @@ import {
   AfterContentInit,
   ChangeDetectionStrategy,
   Component,
+  ChangeDetectorRef,
   ContentChildren,
   DestroyRef,
   Directive,
+  ElementRef,
   EventEmitter,
   HostBinding,
   HostListener,
@@ -165,6 +167,9 @@ export class CustomizableTableComponent<T extends object = Record<string, unknow
   /** Başlık filtresi popup'ı — açık sütun ve ekran koordinatları (fixed konumlu) */
   filterPopup: { col: ColumnDef<T>; x: number; y: number } | null = null;
 
+  /** Popup'ın açıldığı filtre butonu ve o andaki ekran konumu (kaydırmada kopma kontrolü) */
+  private filterAnchor: { el: HTMLElement; top: number; left: number } | null = null;
+
   /** Sütun bazlı aktif filtreler (field → değer) — localStorage'da saklanır */
   private columnFilters = new Map<string, unknown>();
 
@@ -172,6 +177,8 @@ export class CustomizableTableComponent<T extends object = Record<string, unknow
   private currentFirst = 0;
 
   private destroyRef = inject(DestroyRef);
+  private hostRef = inject<ElementRef<HTMLElement>>(ElementRef);
+  private cdr = inject(ChangeDetectorRef);
   private translateService = inject(TranslateService);
   private primeFilterService = inject(FilterService);
   private classGroupCache = new Map<string, { rows: T[]; groups: ClassGroup[] }>();
@@ -207,6 +214,7 @@ export class CustomizableTableComponent<T extends object = Record<string, unknow
       (value: unknown, filter: string[] | null) =>
         matchesClassSelection(extractClassNames(value as string | null), filter),
     );
+    this.listenScrollToCloseFilter();
     this.loadPageSize();
     this.loadColumnWidths();
     this.loadColumnFilters();
@@ -443,7 +451,62 @@ export class CustomizableTableComponent<T extends object = Record<string, unknow
     if (y + popupHeight > window.innerHeight) {
       y = Math.max(8, rect.top - popupHeight - 4);
     }
-    this.filterPopup = { col, x, y };
+    // Tablo transform'lu bir kabın içindeyse (ör. p-dialog) fixed konum o kaba göre hesaplanır;
+    // ekran koordinatlarından kabın konumu düşülmezse popup kabın ofseti kadar kayar.
+    const origin = this.fixedContainingBlockOrigin();
+    this.filterPopup = { col, x: x - origin.x, y: y - origin.y };
+    this.filterAnchor = { el: btn, top: rect.top, left: rect.left };
+  }
+
+  /**
+   * position: fixed bir öğenin konumlandığı kabın ekrandaki sol-üst köşesi. Ata zincirinde
+   * transform / filter / perspective / contain / will-change olan ilk öğe kap olur; yoksa ekran.
+   */
+  private fixedContainingBlockOrigin(): { x: number; y: number } {
+    let el: HTMLElement | null = this.hostRef.nativeElement;
+    while (el && el !== document.body && el !== document.documentElement) {
+      const s = getComputedStyle(el);
+      const createsBlock =
+        s.transform !== 'none' ||
+        s.perspective !== 'none' ||
+        s.filter !== 'none' ||
+        (s.backdropFilter ?? 'none') !== 'none' ||
+        /paint|layout|strict|content/.test(s.contain) ||
+        /transform|perspective|filter/.test(s.willChange);
+      if (createsBlock) {
+        const r = el.getBoundingClientRect();
+        // Fixed öğe kabın dolgu kutusuna göre yerleşir: kenarlık kalınlığı da düşülür.
+        return { x: r.left + el.clientLeft, y: r.top + el.clientTop };
+      }
+      el = el.parentElement;
+    }
+    return { x: 0, y: 0 };
+  }
+
+  /**
+   * Sayfa ya da herhangi bir kap (modal içeriği, tablonun kaydırma alanı) kaydırılıp filtre
+   * butonu yer değiştirince popup butondan kopacağı için kapatılır. Buton yerinde kalıyorsa
+   * (yapışkan başlık, süzme sonrası liste kısalması) popup açık kalır. Kaydırma olayı
+   * kabarcıklanmadığından capture ile dinlenir.
+   */
+  private listenScrollToCloseFilter(): void {
+    const onScroll = (event: Event) => {
+      const anchor = this.filterAnchor;
+      if (!this.filterPopup || !anchor) return;
+      const target = event.target;
+      // Popup'ın kendi içindeki (sınıf listesi) ve select açılır listesindeki kaydırma hariç.
+      if (target instanceof Element && target.closest('.col-filter-popup, .p-select-overlay')) {
+        return;
+      }
+      const rect = anchor.el.getBoundingClientRect();
+      if (Math.abs(rect.top - anchor.top) < 1 && Math.abs(rect.left - anchor.left) < 1) return;
+      this.closeFilterPopup();
+      this.cdr.markForCheck();
+    };
+    document.addEventListener('scroll', onScroll, { capture: true, passive: true });
+    this.destroyRef.onDestroy(() =>
+      document.removeEventListener('scroll', onScroll, { capture: true }),
+    );
   }
 
   /** Popup'ı kapatır (× butonu, Escape, dışarı tıklama, kaydırma) */

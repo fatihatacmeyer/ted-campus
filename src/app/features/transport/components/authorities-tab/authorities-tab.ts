@@ -24,6 +24,7 @@ import {
 } from '../../../../shared/components/customizable-table/customizable-table';
 import { unwrapResponse } from '../../../../shared/utils/response.utils';
 import { PersonExitDialogComponent } from '../../../persons/components/person-exit-dialog/person-exit-dialog';
+import { PersonProfileComponent } from '../../../persons/components/person-profile/person-profile';
 import { PersonService } from '../../../persons/services/person.service';
 import { LOGIN_SEND_MAX, summarizeNames } from '../../../persons/utils/login-send.utils';
 import { ServiceAuthority } from '../../models/school-bus.model';
@@ -45,6 +46,7 @@ import { boldText } from '../../utils/transport.utils';
     TooltipModule,
     CustomizableTableComponent,
     PersonExitDialogComponent,
+    PersonProfileComponent,
   ],
   templateUrl: './authorities-tab.html',
   styleUrl: './authorities-tab.scss',
@@ -71,6 +73,11 @@ export class AuthoritiesTabComponent implements OnInit {
   private authorityEditPerson: Person | null = null;
   protected authorityExitVisible = false;
   protected authorityExitPerson: Person | null = null;
+
+  /** Satıra tıklanınca açılan kişisel profil; butonları bu sekmedeki işlemlere bağlıdır. */
+  protected profileVisible = false;
+  protected profilePerson: Person | null = null;
+  private profileRow: ServiceAuthority | null = null;
 
   /** "Bilgileri Gönder" onayı: satırdan tek kişi ya da toplu seçimden birden fazla kişi. */
   protected readonly authoritySendVisible = signal(false);
@@ -107,6 +114,7 @@ export class AuthoritiesTabComponent implements OnInit {
   ];
 
   protected readonly bold = boldText;
+  protected readonly authorityUserDef = UserDef.Authority;
 
   ngOnInit(): void {
     this.loadServiceAuthorities();
@@ -262,6 +270,53 @@ export class AuthoritiesTabComponent implements OnInit {
         this.notification.error('SCHOOL_BUS.MSG_SERVER_ERROR');
       },
     });
+  }
+
+  /** Satır tıklaması: toplu seçim modunda tıklama seçime aittir, profil açılmaz. */
+  protected openAuthorityProfile(row: ServiceAuthority): void {
+    if (this.bulkSendMode()) return;
+    this.profileRow = row;
+    this.profilePerson = {
+      id: row.sicilId,
+      adsoyad: row.adSoyad,
+      ad: row.adSoyad,
+      soyad: '',
+      sicilno: row.sicilNo,
+      ceptelefon: row.cepTelefon ?? '',
+      email: row.email ?? '',
+      cardid: '',
+      userdef: UserDef.Authority,
+      userdefad: this.translate.instant('SCHOOL_BUS.AUTHORITY'),
+    } as Person;
+    this.profileVisible = true;
+  }
+
+  protected onProfileVisibleChange(visible: boolean): void {
+    this.profileVisible = visible;
+    if (!visible) {
+      this.profilePerson = null;
+      this.profileRow = null;
+    }
+  }
+
+  protected onProfileEdit(): void {
+    const row = this.profileRow;
+    this.onProfileVisibleChange(false);
+    if (row) this.openAuthorityForm(row);
+  }
+
+  protected onProfileExit(): void {
+    const row = this.profileRow;
+    this.onProfileVisibleChange(false);
+    if (row) this.openAuthorityExit(row);
+  }
+
+  /** Profil kendi onayını zaten aldığı için gönderim doğrudan yapılır. */
+  protected onProfileSendInfo(): void {
+    const row = this.profileRow;
+    if (!row) return;
+    this.authoritySendTargets.set([row]);
+    this.sendAuthorityLogin();
   }
 
   /** Çıkış: kişi ortak çıkış penceresiyle (neden + tarih) ayrılır. */

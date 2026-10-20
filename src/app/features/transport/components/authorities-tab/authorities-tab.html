@@ -67,9 +67,12 @@
     exportFilename="servis_yetkilileri"
     [showRowNumbers]="true"
     [actionsTemplate]="authorityActionsTpl"
+    [rowClickable]="!bulkSendMode()"
+    (rowClick)="openAuthorityProfile($event)"
     displayMode="fit"
   >
     <ng-template #authorityActionsTpl let-row>
+      <!-- Satır tıklaması profili açar; butonlar olayı durdurup kendi işlemini yapar -->
       <div class="row-actions">
         <button
           pButton
@@ -77,7 +80,7 @@
           icon="pi pi-pencil"
           class="p-button-sm p-button-text p-button-warning"
           [loading]="authorityLoadingId() === row.sicilId"
-          (click)="openAuthorityForm(row)"
+          (click)="openAuthorityForm(row); $event.stopPropagation()"
           pTooltip="{{ 'COMMON.EDIT' | translate }}"
           tooltipPosition="top"
           [attr.aria-label]="'COMMON.EDIT' | translate"
@@ -87,7 +90,7 @@
           type="button"
           icon="pi pi-sign-out"
           class="p-button-sm p-button-text p-button-danger"
-          (click)="openAuthorityExit(row)"
+          (click)="openAuthorityExit(row); $event.stopPropagation()"
           pTooltip="{{ 'SCHOOL_BUS.AUTHORITY_EXIT' | translate }}"
           tooltipPosition="top"
           [attr.aria-label]="'SCHOOL_BUS.AUTHORITY_EXIT' | translate"
@@ -97,7 +100,7 @@
           type="button"
           icon="pi pi-key"
           class="p-button-sm p-button-text p-button-help"
-          (click)="confirmAuthoritySend(row)"
+          (click)="confirmAuthoritySend(row); $event.stopPropagation()"
           pTooltip="{{ 'SCHOOL_BUS.SEND_INFO_TOOLTIP' | translate }}"
           tooltipPosition="top"
           [attr.aria-label]="'SCHOOL_BUS.SEND_INFO' | translate"
@@ -244,6 +247,18 @@
       </div>
     </form>
   </p-dialog>
+}
+
+@if (profileVisible) {
+  <app-person-profile
+    [visible]="profileVisible"
+    (visibleChange)="onProfileVisibleChange($event)"
+    [person]="profilePerson"
+    [userdefContext]="authorityUserDef"
+    (editRequest)="onProfileEdit()"
+    (exitRequest)="onProfileExit()"
+    (forgotPasswordRequest)="onProfileSendInfo()"
+  ></app-person-profile>
 }
 
 <app-person-exit-dialog

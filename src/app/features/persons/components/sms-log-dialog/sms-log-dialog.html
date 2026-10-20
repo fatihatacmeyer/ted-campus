@@ -1,0 +1,143 @@
+<p-dialog
+  [visible]="visible"
+  (visibleChange)="$event || close()"
+  [modal]="true"
+  [draggable]="false"
+  [resizable]="false"
+  [style]="{ width: '960px' }"
+  [breakpoints]="{ '1000px': '95vw' }"
+  [header]="('SMS_LOG.TITLE' | translate) + (personName ? ' — ' + personName : '')"
+  [baseZIndex]="10020"
+  appendTo="body"
+>
+  <div class="sms-log-body">
+    <!-- Tarih aralığı: hızlı seçimler hemen listeler, özel aralık Listele ile uygulanır -->
+    <div class="sms-log-filters">
+      <div class="range-presets" role="group" [attr.aria-label]="'SMS_LOG.RANGE' | translate">
+        @for (p of presets; track p.value) {
+          <button
+            pButton
+            type="button"
+            class="p-button-sm"
+            [class.p-button-outlined]="preset() !== p.value"
+            [label]="p.label | translate"
+            [attr.aria-pressed]="preset() === p.value"
+            [disabled]="loading()"
+            (click)="selectPreset(p.value)"
+          ></button>
+        }
+      </div>
+
+      <div class="custom-range">
+        <p-datepicker
+          inputId="smsLogStart"
+          [(ngModel)]="startDate"
+          (ngModelChange)="onDateChange()"
+          dateFormat="dd.mm.yy"
+          [showIcon]="true"
+          [showOnFocus]="false"
+          [maxDate]="endDate"
+          [placeholder]="'SMS_LOG.FILTER_START' | translate"
+          [ariaLabel]="'SMS_LOG.FILTER_START' | translate"
+          appendTo="body"
+        />
+        <span class="range-sep" aria-hidden="true">–</span>
+        <p-datepicker
+          inputId="smsLogEnd"
+          [(ngModel)]="endDate"
+          (ngModelChange)="onDateChange()"
+          dateFormat="dd.mm.yy"
+          [showIcon]="true"
+          [showOnFocus]="false"
+          [minDate]="startDate"
+          [placeholder]="'SMS_LOG.FILTER_END' | translate"
+          [ariaLabel]="'SMS_LOG.FILTER_END' | translate"
+          appendTo="body"
+        />
+        <button
+          pButton
+          type="button"
+          icon="pi pi-search"
+          class="p-button-sm"
+          [class.p-button-outlined]="preset() !== 'custom'"
+          [label]="'SMS_LOG.APPLY' | translate"
+          [loading]="loading()"
+          (click)="load()"
+        ></button>
+      </div>
+    </div>
+
+    @if (isProxy) {
+      <div class="sms-log-hint" role="note">
+        <span class="pi pi-info-circle" aria-hidden="true"></span>
+        {{ 'SMS_LOG.PROXY_HINT' | translate }}
+      </div>
+    }
+
+    @if (errorMessage()) {
+      <div class="error-box" role="alert">{{ errorMessage() | translate }}</div>
+    } @else {
+      <!-- Durum sayaçları: tıklanınca liste o duruma süzülür (sunucuya gidilmez) -->
+      @if (rows().length) {
+        <div class="status-chips" role="group" [attr.aria-label]="'SMS_LOG.COL_STATUS' | translate">
+          <button
+            type="button"
+            class="status-chip"
+            [class.active]="activeStatus() === null"
+            [attr.aria-pressed]="activeStatus() === null"
+            (click)="toggleStatus(null)"
+          >
+            {{ 'SMS_LOG.STATUS_ALL' | translate }}
+            <span class="chip-count">{{ rows().length }}</span>
+          </button>
+          @for (c of statusCounts(); track c.status) {
+            <button
+              type="button"
+              [class]="'status-chip sev-' + statusSeverity(c.status)"
+              [class.active]="activeStatus() === c.status"
+              [attr.aria-pressed]="activeStatus() === c.status"
+              (click)="toggleStatus(c.status)"
+            >
+              {{ statusLabel(c.status) | translate }}
+              <span class="chip-count">{{ c.count }}</span>
+            </button>
+          }
+        </div>
+      }
+
+      @if (limitReached()) {
+        <div class="sms-log-hint warn" role="status">
+          <span class="pi pi-exclamation-triangle" aria-hidden="true"></span>
+          {{ 'SMS_LOG.LIMIT_HINT' | translate: { max: limit } }}
+        </div>
+      }
+
+      <app-customizable-table
+        [rows]="filteredRows()"
+        [columns]="columns"
+        [loading]="loading()"
+        tableId="sms_log"
+        [persistFilters]="false"
+        [showColumnSelector]="false"
+        [showRowNumbers]="true"
+        emptyMessage="SMS_LOG.EMPTY"
+        exportFilename="bilgi_gonderim_gecmisi"
+        displayMode="scroll"
+        scrollHeight="55vh"
+      >
+        <ng-template appColumnCell="durum" let-row>
+          <p-tag [value]="statusLabel(row.durum) | translate" [severity]="statusSeverity(row.durum)"></p-tag>
+        </ng-template>
+        <ng-template appColumnCell="gatewayCevap" let-row>
+          @if (row.gatewayCevap) {
+            <span class="gateway-text" [pTooltip]="row.gatewayCevap" tooltipPosition="left">
+              {{ row.gatewayCevap }}
+            </span>
+          } @else {
+            -
+          }
+        </ng-template>
+      </app-customizable-table>
+    }
+  </div>
+</p-dialog>

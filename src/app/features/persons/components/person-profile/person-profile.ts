@@ -21,11 +21,20 @@ import { AppConfig, APP_CONFIG } from '../../../../core/services/app-config.serv
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { ConfirmationService } from 'primeng/api';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
+import { SmsLogDialogComponent } from '../sms-log-dialog/sms-log-dialog';
 
 @Component({
   selector: 'app-person-profile',
   standalone: true,
-  imports: [CommonModule, DialogModule, ButtonModule, ConfirmDialogModule, TooltipModule, TranslatePipe],
+  imports: [
+    CommonModule,
+    DialogModule,
+    ButtonModule,
+    ConfirmDialogModule,
+    TooltipModule,
+    TranslatePipe,
+    SmsLogDialogComponent,
+  ],
   providers: [ConfirmationService],
   templateUrl: './person-profile.html',
   styleUrl: './person-profile.scss',
@@ -38,6 +47,8 @@ export class PersonProfileComponent implements OnChanges {
   @Input() childrenMap = new Map<number, Person[]>();
   @Input() parentsMap = new Map<number, Person[]>();
   @Input() userdefContext = UserDef.Ogrenci;
+  /** Kişi türü: vekiller Sicil kaydı değildir, id'leri VekilCampusId'dir. */
+  @Input() kind: 'sicil' | 'vekil' = 'sicil';
 
   @Output() visibleChange = new EventEmitter<boolean>();
   @Output() personClick = new EventEmitter<Person>();
@@ -54,12 +65,14 @@ export class PersonProfileComponent implements OnChanges {
   private translate = inject(TranslateService);
 
   showFullPhoto = false;
+  showSmsLog = false;
   photoUrl: string | null = null;
   photoFailed = false;
 
   ngOnChanges(changes: SimpleChanges): void {
     // Farklı bir kişiye tıklandığında veya modal açıldığında hata durumunu sıfırlıyoruz
     if (changes['person']) {
+      this.showSmsLog = false;
       this.photoFailed = false;
       this.photoUrl = null;
       this.loadProfilePhoto();
@@ -74,7 +87,7 @@ export class PersonProfileComponent implements OnChanges {
   private loadProfilePhoto(): void {
     if (!this.person) return;
 
-    const isVekil = this.person.userdefad === 'Vekil';
+    const isVekil = this.isProxyPerson;
 
     this.api
       .callEndpoint<{ DosyaAdi?: string }[]>('Dynamic', {
@@ -242,6 +255,6 @@ export class PersonProfileComponent implements OnChanges {
   }
 
   get isProxyPerson(): boolean {
-    return this.person?.userdefad === 'Vekil';
+    return this.kind === 'vekil';
   }
 }

@@ -71,7 +71,7 @@ export class ProxyListComponent implements OnInit {
 
   onRowClick(proxy: GuardianProxy): void {
     // Vekil verisini Person modeline uyarlayarak profile gönderiyoruz.
-    // userdefad alanına 'Vekil' yazıyoruz ki modal içinde bunun vekil olduğunu anlayalım.
+    // Vekil olduğu profile kind="vekil" girişiyle bildirilir (userdefad yalnızca görünen etikettir).
     this.selectedProfilePerson = {
       id: proxy.id, // Bu aslında VekilCampusId
       adsoyad: proxy.vekilAdSoyad,

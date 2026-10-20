@@ -1,0 +1,123 @@
+.sms-log-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.sms-log-filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.range-presets {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.custom-range {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+
+  p-datepicker {
+    width: 150px;
+  }
+
+  @media (max-width: 720px) {
+    flex-wrap: wrap;
+  }
+}
+
+.range-sep {
+  color: var(--ted-text-muted);
+}
+
+.status-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.status-chip {
+  --chip-color: var(--ted-text-muted);
+
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.3rem 0.75rem;
+  border: 1px solid var(--ted-border);
+  border-radius: 999px;
+  background: none;
+  color: var(--chip-color);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  cursor: pointer;
+
+  &.sev-success {
+    --chip-color: var(--p-green-600);
+  }
+
+  &.sev-danger {
+    --chip-color: var(--p-red-600);
+  }
+
+  &.sev-info {
+    --chip-color: var(--p-blue-600);
+  }
+
+  &:hover {
+    border-color: var(--chip-color);
+  }
+
+  &.active {
+    border-color: var(--chip-color);
+    background: color-mix(in srgb, var(--chip-color) 12%, transparent);
+    font-weight: 600;
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--p-primary-color);
+    outline-offset: 2px;
+  }
+}
+
+.chip-count {
+  font-weight: 700;
+}
+
+.sms-log-hint {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--ted-border);
+  border-radius: 6px;
+  background: var(--ted-bg-subtle);
+  color: var(--ted-text-muted);
+  font-size: 0.875rem;
+
+  &.warn {
+    border-color: var(--p-amber-400);
+  }
+}
+
+.error-box {
+  background: var(--ted-danger-bg);
+  border: 1px solid var(--ted-danger-border);
+  border-radius: 8px;
+  padding: 0.75rem 1rem;
+  color: var(--ted-danger-fg);
+  font-size: 0.875rem;
+}
+
+.gateway-text {
+  display: inline-block;
+  max-width: 260px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  vertical-align: middle;
+}

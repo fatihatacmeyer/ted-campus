@@ -38,6 +38,16 @@
         }
         <h4 class="profile-name">{{ person.adsoyad }}</h4>
         <span class="profile-title">{{ person.userdefad || '-' }}</span>
+        <!-- SMS geçmişi: işlem butonlarından ayrı tutulur (yanlışlıkla gönderime tıklanmasın) -->
+        <button
+          type="button"
+          class="sms-log-link"
+          [attr.aria-label]="'SMS_LOG.TITLE' | translate"
+          (click)="showSmsLog = true"
+        >
+          <i class="pi pi-history" aria-hidden="true"></i>
+          {{ 'SMS_LOG.TITLE' | translate }}
+        </button>
       </div>
       <div class="profile-info">
         <div class="info-row">
@@ -179,6 +189,15 @@
 >
   <img [src]="photoUrl" [alt]="'PERSON_PROFILE.PHOTO_ALT_LARGE' | translate" class="full-size-img" />
 </p-dialog>
+
+@if (showSmsLog && person) {
+  <app-sms-log-dialog
+    [(visible)]="showSmsLog"
+    [sicilId]="isProxyPerson ? null : person.id"
+    [vekilCampusId]="isProxyPerson ? person.id : null"
+    [personName]="person.adsoyad"
+  ></app-sms-log-dialog>
+}
 
 <p-confirmDialog appendTo="body" [style]="{ width: '450px' }" [baseZIndex]="10010">
 </p-confirmDialog>
