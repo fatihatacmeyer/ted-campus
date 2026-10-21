@@ -52,9 +52,11 @@
     </div>
   } @else {
     <div class="last-pass-grid" [ngClass]="gridClass()">
+      <!-- @if (isFullScreen()) { -->
       <button class="exit-fullscreen-btn" (click)="toggleFullScreen()">
         <span class="material-symbols-outlined">close</span>
       </button>
+      <!-- } -->
       @for (record of visibleRecords(); track trackByIndex($index)) {
         <div class="pass-card">
           <div class="pass-photo">

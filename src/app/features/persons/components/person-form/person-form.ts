@@ -142,7 +142,7 @@ export class PersonFormComponent implements OnChanges, OnInit {
 
     return {
       show: {
-        personelno: true,
+        personelno: true, //isOgrenci || isOgretmen,
         kurumsal: isOgrenci || isOgretmen, // Veli'nin sınıfı, branşı olmaz
         pozisyon: !isOgrenci,
         gorev: !isOgrenci,
@@ -349,6 +349,13 @@ export class PersonFormComponent implements OnChanges, OnInit {
     saveObs.subscribe({
       next: (stdRes) => {
         const stdResult = unwrapResponse<Person>(stdRes);
+        // if (!isSuccessResult(stdResult)) {
+        //   this.errorMessage =
+        //     stdResult?.sunucucevap || this.translate.instant('PERSON.SAVE_FAILED');
+        //   this.isSaving = false;
+        //   this.cdr.markForCheck();
+        //   return;
+        // }
 
         const personId = this.isEditMode ? this.editPerson!.id : extractNewId(stdResult);
         const linked = this.linked();

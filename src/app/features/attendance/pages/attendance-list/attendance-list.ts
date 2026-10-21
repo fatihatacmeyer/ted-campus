@@ -108,6 +108,11 @@ export class AttendanceListComponent {
     ),
   ]);
 
+  /** Students who have a leave — shown in the side panel. */
+  // leaveStudents = computed(() =>
+  //   this.rows().filter((r) => r.izinTipi != null && r.izinTipi !== ''),
+  // );
+
   leaveStudents = computed(() =>
     this.selectedRows().filter((r) => r.izinTipi != null && r.izinTipi !== ''),
   );
@@ -130,6 +135,7 @@ export class AttendanceListComponent {
       alwaysVisible: true,
       filterable: false,
     },
+    //{ field: 'sicilId', header: '', sortable: true },
     {
       field: 'sicilNo',
       header: 'SN',

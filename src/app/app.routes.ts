@@ -6,6 +6,7 @@ import { UserDef } from './core/models/person.model';
 export const routes: Routes = [
   {
     path: 'login',
+    //data: { titleKey: 'LOGIN.TITLE' },
     loadComponent: () => import('./features/auth/pages/login/login').then((m) => m.LoginComponent),
   },
   {
@@ -14,8 +15,10 @@ export const routes: Routes = [
     loadComponent: () =>
       import('./features/layout/pages/layout/layout').then((m) => m.LayoutComponent),
     children: [
+      //{ path: '', redirectTo: 'anasayfa', pathMatch: 'full' },
       {
         path: '',
+        //data: { titleKey: 'DASHBOARD.TITLE' },
         data: { scrollable: true },
         loadComponent: () =>
           import('./features/dashboard/pages/dashboard/dashboard').then(

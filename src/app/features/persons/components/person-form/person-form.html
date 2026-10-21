@@ -8,6 +8,39 @@
   [baseZIndex]="10000"
 >
   <form [formGroup]="form" (ngSubmit)="submit()" class="person-form">
+    <!-- Fotoğraf -->
+    <!-- <div class="form-section">
+      <h5>{{ 'PERSON.PHOTO' | translate }}</h5>
+      @if (selectedPhoto) {
+        <div class="photo-preview">
+          <img [src]="selectedPhoto" [attr.alt]="'PERSON.PHOTO_PREVIEW' | translate" />
+          <button
+            pButton
+            type="button"
+            icon="pi pi-times"
+            class="p-button-danger p-button-rounded p-button-sm remove-photo"
+            [attr.aria-label]="'PERSON.REMOVE_PHOTO' | translate"
+            (click)="removePhoto()"
+            [pTooltip]="'PERSON.REMOVE_PHOTO' | translate"
+            tooltipPosition="top"
+          ></button>
+        </div>
+        <div class="photo-file-name">{{ photoFileName }}</div>
+      } @else {
+        <label class="photo-upload-area" for="photoInput">
+          <i class="pi pi-camera"></i>
+          <span>{{ 'PERSON.UPLOAD_PHOTO' | translate }}</span>
+          <span class="photo-hint">{{ 'PERSON.PHOTO_HINT' | translate }}</span>
+          <input
+            type="file"
+            id="photoInput"
+            accept="image/*"
+            (change)="onPhotoSelected($event)"
+            class="hidden-file-input"
+          />
+        </label>
+      }
+    </div> -->
     <div class="form-section">
       <h5>{{ 'PERSON.PERSONAL_INFO' | translate }}</h5>
 
@@ -25,6 +58,9 @@
           <small class="field-error">{{ 'PERSON.ERROR_FIRST_NAME_REQUIRED' | translate }}</small>
         }
       </div>
+      <!-- @if (form.get('ad')?.invalid && form.get('ad')?.touched) {
+          <small class="field-error">{{ 'PERSON.ERROR_FIRST_NAME_REQUIRED' | translate }}</small>
+        } -->
 
       <div class="field">
         <label for="soyad"
@@ -141,6 +177,15 @@
           >
           </p-inputMask>
         </div>
+        <!-- <div class="field">
+          <label for="telefon1">Telefon</label>
+          <input
+            pInputText
+            id="telefon1"
+            formControlName="telefon1"
+            placeholder="Telefon numarası"
+          />
+        </div> -->
       </div>
       <div class="field">
         <label for="email">{{ 'PERSON.EMAIL' | translate }}</label>

@@ -8,7 +8,7 @@ export const adminGuard: CanActivateFn = () => {
 
   const user = authService.currentUserValue;
 
-  const isAdmin = user?.admin === true;
+  const isAdmin = user?.admin === true; //|| user?.admin === 1;
 
   if (isAdmin) {
     return true;

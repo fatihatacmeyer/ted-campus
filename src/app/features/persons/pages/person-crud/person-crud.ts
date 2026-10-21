@@ -294,6 +294,7 @@ export class PersonCrudComponent implements OnInit {
 
     this.personService
       .getPersonListCampus()
+      //.getPersonList()
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: (data: Person[]) => {

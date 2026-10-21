@@ -36,6 +36,7 @@ export class SidebarComponent implements OnInit {
     { labelKey: 'MENU.HOME', route: '/home', icon: 'dashboard' },
     { labelKey: 'MENU.STUDENTS', route: '/home/students', icon: 'school' },
     { labelKey: 'MENU.PARENTS', route: '/home/parents', icon: 'group' },
+    // { labelKey: 'MENU.TEACHERS', route: '/home/teachers', icon: 'badge' },
     { labelKey: 'MENU.PROXIES', route: '/home/proxies', icon: 'supervisor_account' },
     { labelKey: 'MENU.TRANSPORT', route: '/home/transport', icon: 'directions_bus' },
     { labelKey: 'MENU.ACTIVITIES', route: '/home/activities', icon: 'event' },
@@ -49,7 +50,7 @@ export class SidebarComponent implements OnInit {
 
   ngOnInit(): void {
     const user = this.authService.currentUserValue;
-    const isAdmin = user?.admin === true;
+    const isAdmin = user?.admin === true; //|| user?.admin === 1;
 
     this.navItems = isAdmin
       ? this.allNavItems

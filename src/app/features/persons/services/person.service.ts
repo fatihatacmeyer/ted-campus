@@ -521,6 +521,7 @@ export class PersonService {
       .callEndpoint<RelationCampusRow[]>('Dynamic', {
         point: 'relationcampus',
         islemtipi: 's',
+        //islemno: '',
         tip: 2,
         vsicilid: '',
         osicilid: ogrenciSicilId,
@@ -542,6 +543,7 @@ export class PersonService {
       .callEndpoint<RelationCampusRow[]>('Dynamic', {
         point: 'relationcampus',
         islemtipi: 's',
+        //islemno: '',
         tip: 1,
         vsicilid: veliSicilId,
         osicilid: '',
@@ -564,6 +566,7 @@ export class PersonService {
       .callEndpoint<RelationCampusRow[]>('Dynamic', {
         point: 'relationcampus',
         islemtipi: 's',
+        //islemno: '',
         tip: 0,
         vsicilid: '',
         osicilid: '',
