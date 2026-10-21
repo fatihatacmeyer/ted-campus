@@ -1,32 +1,32 @@
 export interface ActivityInterface {
-  id: number; // etkinlik id'si
-  name: string; // etkinlik adı
-  startDate: Date | string; // etkinlik başlangıç tarihi
-  endDate: Date | string; // etkinlik bitiş tarihi
+  id: number;
+  name: string;
+  startDate: Date | string;
+  endDate: Date | string;
   activityType: string; // etkinlik türü/ pilav günü, mezuniyet gecesi, ankara gezisi vs
-  isPaid: boolean; // ücretli / ücretsiz durumu
+  isPaid: boolean;
   fee: number | null; // ödenecek ücret eğer isPaid 1 ise
-  status: string; // durum / aktif pasif // boolean da olabilir
+  status: string;
   requestStartDate: Date | string; // etkinlik için başvurulabilecek ilk tarih
   requestEndDate: Date | string; // etkinlik için başvurulabilecek son tarih
   isParentRequired: boolean; // veli getirmek zorunlu mu
-  description: string; // açıklama
+  description: string;
   maxStudentCount: number; // etkinliğe katılabilecek maksimum öğrenci sayısı
   studentParentCount: number; // öğrencinin getirebileceği veli sayısı
   maxGuestPerParent?: number; // veli başına maksimum misafir sayısı (VeliBasinaMisafirSayisi)
-  transportation: string; // ulaşım
+  transportation: string;
   educationLevel?: string; // eğitim düzeyi (cbo_direktorluk lookup'ından, ekranda ad saklanır)
   campus?: string; // kampüs bilgisi (cbo_firma lookup'ından, ekranda ad saklanır)
   campusId?: number; // kampüs id'si (CampusId) — _s prosedürü döndüğünden beri edit'te korunur
-  eventManager: string; // etkinlik yöneticisi
+  eventManager: string;
   sorumluSicilId?: number; // etkinlik sorumlusunun sicil id'si (SorumluSicilId)
   yasSiniri?: string; // yaş sınırı (YasSiniri)
   sinifId?: string; // ';' ile ayrılmış sınıf id listesi (SinifId)
-  oKod1: string; // ekstra alanlar 1
+  oKod1: string;
   oKod2: string;
   oKod3: string;
   oKod4: string;
-  oKod5: string; // estra alanlar 5, bitiş
+  oKod5: string;
   xSicilID: number; // etkinliği oluşturan
   createdAt: Date | string;
   isPrivate: boolean; // sadece belli sınıfları seçebilmek için
@@ -47,9 +47,9 @@ export interface ActivityParticipant {
   id: number; // SiraNo
   ogrenciSicilId: number;
   ogrenci: string; // Ogrenci (ad soyad)
-  sinif: string; // Sinif
+  sinif: string;
   veliSicilId: number;
   veli: string; // Veli (ad soyad)
-  telefon: string; // Telefon
+  telefon: string;
   durum: 'Bekleyen' | 'Onaylanan' | 'Reddedilen'; // DurumMetni
 }

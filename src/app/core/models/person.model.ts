@@ -1,4 +1,3 @@
-/** Backend'deki userdef değerlerini temsil eden enum. */
 export enum UserDef {
   Ogrenci = 11,
   Veli = 12,
@@ -66,21 +65,20 @@ export interface Person {
 
   // Referans alanları — API hem ID hem text döndürebilir
   firma?: string; // Firma ID (backend'e update'te ID olarak gönderilir)
-  firmaad: string; // Firma adı (görünen metin)
-  bolum?: string; // Bölüm ID
-  bolumad: string; // Bölüm adı
-  pozisyon?: string; // Pozisyon ID
-  pozisyonad: string; // Pozisyon adı
-  altfirma?: string; // Alt firma ID
-  altfirmaad: string; // Alt firma adı
-  direktorluk?: string; // Directorate ID
-  direktorlukad: string; // Directorate adı
-  gorev?: string; // Görev ID
-  gorevad: string; // Görev adı
-  yaka?: string; // Yaka ID
-  yakaad: string; // Yaka adı
+  firmaad: string;
+  bolum?: string;
+  bolumad: string;
+  pozisyon?: string;
+  pozisyonad: string;
+  altfirma?: string;
+  altfirmaad: string;
+  direktorluk?: string;
+  direktorlukad: string;
+  gorev?: string;
+  gorevad: string;
+  yaka?: string;
+  yakaad: string;
 
-  // Ek alanlar
   credit: number;
   indirimorani: number;
   ceptelefon: string;
@@ -122,35 +120,25 @@ export interface Person {
   ogrenciKampusleri?: string | null;
 }
 
-/**
- * Yeni sicil (kayıt) ekleme isteği için kullanılan DTO.
- * Formdan gelen alanlar + hangi component'ten geldiğini belirten userdef.
- * Bakınız: UserDef enum'u.
- */
 export interface PersonInsertRequest {
-  // Kişisel Bilgiler
   ad: string;
   soyad: string;
   dogumtarih?: string;
   cinsiyet?: string;
   kangrubu?: string;
 
-  // Kimlik / Numara
   sicilno?: string;
   personelno?: string;
   cardid?: string;
 
-  // İletişim
   ceptelefon?: string;
   telefon1?: string;
   email?: string;
 
-  // Adres
   adres?: string;
   il?: string;
   ilce?: string;
 
-  // Kurumsal
   firma?: string;
   okod1?: string;
   bolum?: string;
@@ -161,7 +149,6 @@ export interface PersonInsertRequest {
   yaka?: string;
   giristarih?: string;
 
-  // Sistem
   userdef: number;
 
   // Fotoğraf (base64 data-URL veya null)
@@ -198,10 +185,9 @@ export interface User {
   accessmenu: boolean;
   admin: boolean;
   islemsonuc: number | string;
-  [key: string]: unknown; // Backend'in döndüğü ek alanlar için open-ended
+  [key: string]: unknown;
 }
 
-/** Ayrılış nedeni dropdown seçeneği */
 export interface ExitReason {
   tip: string;
   ad: string;
@@ -244,7 +230,6 @@ export interface LeaveRequestResponse {
   formid: string;
 }
 
-/** PDF rapor linki */
 export interface ReportLinkResponse {
   link: string;
 }
@@ -258,7 +243,7 @@ export interface PersonLeaveRequest {
   izinadresi: string; // leave address
   ulasim: number; // transport: 0 or 1
   yemek: number; // meal: 0 or 1
-  aciklama: string; // description
+  aciklama: string;
   kaynak: string; // fixed: 'izin'
   point: string; // fixed: 'talep'
 }

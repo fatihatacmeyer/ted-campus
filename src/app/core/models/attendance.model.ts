@@ -78,10 +78,6 @@ export interface LeaveRecord {
   durum: string; // 'Talep' | 'Onaylandı' | 'Reddedildi'
 }
 
-// ─────────────────────────────────────────────────────────────────
-// Öğrenci Devam (sp_OgrenciHareketRaporu_s)
-// ─────────────────────────────────────────────────────────────────
-
 /** Student attendance display type: 0=all, 1=on leave, 2=early leavers, 3=late arrivals. */
 export type StudentAttendanceFilterType = 0 | 1 | 2 | 3;
 

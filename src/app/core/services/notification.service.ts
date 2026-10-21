@@ -22,46 +22,30 @@ export class NotificationService {
   private messageService = inject(MessageService);
   private translateService = inject(TranslateService);
 
-  /** Başarılı işlem bildirimi. */
   success(keyOrMessage: string): void {
     this.show('success', keyOrMessage);
   }
 
-  /** Hata bildirimi. */
   error(keyOrMessage: string): void {
     this.show('error', keyOrMessage);
   }
 
-  /** Bilgilendirme bildirimi. */
   info(keyOrMessage: string): void {
     this.show('info', keyOrMessage);
   }
 
-  /** Uyarı bildirimi. */
   warning(keyOrMessage: string): void {
     this.show('warn', keyOrMessage);
   }
 
-  /**
-   * "Kayıt başarıyla eklendi." kısayolu.
-   * Anahtar: NOTIFICATIONS.MESSAGES.RECORD_ADDED
-   */
   notifyAdded(): void {
     this.success('NOTIFICATIONS.MESSAGES.RECORD_ADDED');
   }
 
-  /**
-   * "Kayıt başarıyla güncellendi." kısayolu.
-   * Anahtar: NOTIFICATIONS.MESSAGES.RECORD_UPDATED
-   */
   notifyUpdated(): void {
     this.success('NOTIFICATIONS.MESSAGES.RECORD_UPDATED');
   }
 
-  /**
-   * "Kayıt başarıyla silindi." kısayolu.
-   * Anahtar: NOTIFICATIONS.MESSAGES.RECORD_DELETED
-   */
   notifyDeleted(): void {
     this.success('NOTIFICATIONS.MESSAGES.RECORD_DELETED');
   }

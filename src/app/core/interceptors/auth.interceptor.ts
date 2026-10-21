@@ -34,7 +34,6 @@ export const SILENT_ERROR = new HttpContextToken<boolean>(() => false);
  * kendi hata akışını (inline errorMessage vb.) kaybetmez.
  */
 export const authInterceptor: HttpInterceptorFn = (req, next) => {
-  // Login endpoint'i token ve hata toast'u gerektirmez
   if (req.url.includes('/Login')) {
     return next(req);
   }

@@ -8,12 +8,11 @@ export const adminGuard: CanActivateFn = () => {
 
   const user = authService.currentUserValue;
 
-  const isAdmin = user?.admin === true; //|| user?.admin === 1;
+  const isAdmin = user?.admin === true;
 
   if (isAdmin) {
-    return true; // Adminse geçişe izin ver
+    return true;
   }
 
-  // Admin değilse, zorla anasayfaya (dashboard) yönlendir
   return router.parseUrl('/home');
 };
