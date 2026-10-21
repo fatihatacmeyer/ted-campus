@@ -10,7 +10,6 @@ export interface GuardianProxy {
   veliAdSoyad: string;
   ogrenciSicilId: number;
   ogrenciAdSoyad: string;
-  /** Öğrencinin kampüsü (Sicil.firma) ve sınıfı (Sicil.bolum); tanımsızsa null. */
   ogrenciKampus: string | null;
   ogrenciSinif: string | null;
   vekilAdSoyad: string;

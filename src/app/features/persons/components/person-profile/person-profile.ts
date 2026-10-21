@@ -47,7 +47,6 @@ export class PersonProfileComponent implements OnChanges {
   @Input() childrenMap = new Map<number, Person[]>();
   @Input() parentsMap = new Map<number, Person[]>();
   @Input() userdefContext = UserDef.Ogrenci;
-  /** Kişi türü: vekiller Sicil kaydı değildir, id'leri VekilCampusId'dir. */
   @Input() kind: 'sicil' | 'vekil' = 'sicil';
 
   @Output() visibleChange = new EventEmitter<boolean>();
@@ -70,7 +69,6 @@ export class PersonProfileComponent implements OnChanges {
   photoFailed = false;
 
   ngOnChanges(changes: SimpleChanges): void {
-    // Farklı bir kişiye tıklandığında veya modal açıldığında hata durumunu sıfırlıyoruz
     if (changes['person']) {
       this.showSmsLog = false;
       this.photoFailed = false;
@@ -127,23 +125,16 @@ export class PersonProfileComponent implements OnChanges {
 
     const ctx = this.person.userdef ?? this.userdefContext;
 
-    // Veli profili → çocuklar; childrenMap (sp_relationcampus_s tip=0) üzerinden çözülür.
-    // NOT: veli satırlarında VeliSicilId null gelir (yalnızca öğrenci satırlarında dolu),
-    // o yüzden veli dalı childrenMap'e bakmak zorundadır.
     if (ctx === UserDef.Veli) {
       const kids = this.childrenMap.get(this.person.id) ?? [];
       return kids.map((k) => ({ id: k.id, name: k.adsoyad, sicilno: k.sicilno }));
     }
 
-    // Öğrenci profili → veliler; parentsMap (sp_relationcampus_s tip=0) üzerinden çözülür.
-    // Tüm veliler gelir (sicilcampus yalnızca TOP(1) ilk veliyi döndürür).
     const parents = this.parentsMap.get(this.person.id) ?? [];
     if (parents.length) {
       return parents.map((p) => ({ id: p.id, name: p.adsoyad, sicilno: p.sicilno }));
     }
 
-    // Harita boşsa (ilişki verisi yüklenmemişse) eski davranışa düş:
-    // veliSicilId üzerinden tek veli (sp_sicilcampus_s TOP(1) sonucu).
     if (!this.person.veliSicilId) return [];
 
     const veliId = Number(this.person.veliSicilId);
@@ -154,7 +145,6 @@ export class PersonProfileComponent implements OnChanges {
       return [{ id: found.id, name: found.adsoyad, sicilno: found.sicilno }];
     }
 
-    // Eğer allPersons içinde bulamazsa (ya da liste yüklenmemişse), backend'in doğrudan verdiği VeliAdSoyad metnini göster.
     return [
       {
         id: veliId,
@@ -164,7 +154,6 @@ export class PersonProfileComponent implements OnChanges {
     ];
   }
 
-  /** Öğrenci (UserDef.Ogrenci) ise veliler görünür */
   get showLinkedPersons(): boolean {
     const ctx = this.person?.userdef ?? this.userdefContext;
     return ctx === UserDef.Ogrenci || ctx === UserDef.Veli;
@@ -187,8 +176,6 @@ export class PersonProfileComponent implements OnChanges {
     if (found) {
       this.personClick.emit(found);
     } else {
-      // Eğer listede bulamazsa (API'den gelmemişse), elimizdeki isim ve ID ile
-      // modalı en azından temel bilgilerle açması için sahte (kısmi) bir profil fırlatıyoruz.
       const fallbackPerson = {
         id: linked.id,
         adsoyad: linked.name,

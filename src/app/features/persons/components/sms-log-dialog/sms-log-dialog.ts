@@ -29,7 +29,6 @@ import { formatDate } from '../../../../shared/utils/date.utils';
 import { SmsLog, SmsLogStatus } from '../../models/sms-log.model';
 import { SmsLogError, SmsLogService } from '../../services/sms-log.service';
 
-/** Tablo satırı: tarihler arama / dışa aktarma için metne çevrilmiş halde tutulur. */
 interface SmsLogTableRow extends SmsLog {
   createdAtText: string;
   sentAtText: string;
@@ -37,10 +36,8 @@ interface SmsLogTableRow extends SmsLog {
 
 type TagSeverity = 'success' | 'info' | 'warn' | 'danger' | 'secondary';
 
-/** Hızlı tarih aralığı; 'custom' tarih kutularıyla seçilen aralıktır. */
 type RangePreset = '7' | '30' | 'all' | 'custom';
 
-/** Prosedürden istenen en fazla kayıt; bu kadar gelirse daha eskileri kesilmiş olabilir. */
 export const SMS_LOG_LIMIT = 200;
 
 const STATUS_LABELS: Record<SmsLogStatus, string> = {
@@ -57,7 +54,6 @@ const STATUS_SEVERITY: Record<SmsLogStatus, TagSeverity> = {
   [SmsLogStatus.Basarisiz]: 'danger',
 };
 
-/** Sayaç etiketlerinin sırası. */
 const STATUS_ORDER: SmsLogStatus[] = [
   SmsLogStatus.Gonderildi,
   SmsLogStatus.Basarisiz,
@@ -65,11 +61,6 @@ const STATUS_ORDER: SmsLogStatus[] = [
   SmsLogStatus.Gonderiliyor,
 ];
 
-/**
- * Kişinin bilgi gönderim (SMS) logu (sp_smskuyrukcampus_s). Sicil kişileri (öğrenci / veli /
- * yetkili) sicilId ile, vekiller vekilCampusId ile sorgulanır; ikisinden tam biri verilmelidir.
- * Tarih aralığı sunucuda, durum süzmesi ön yüzde (sayaç etiketleri) uygulanır.
- */
 @Component({
   selector: 'app-sms-log-dialog',
   standalone: true,
@@ -102,10 +93,8 @@ export class SmsLogDialogComponent implements OnChanges {
 
   protected readonly rows = signal<SmsLogTableRow[]>([]);
   protected readonly loading = signal(false);
-  /** Prosedürün ret mesajı (SunucuCevap) ya da çeviri anahtarı. */
   protected readonly errorMessage = signal('');
 
-  /** null = tüm durumlar. */
   protected readonly activeStatus = signal<SmsLogStatus | null>(null);
   protected readonly preset = signal<RangePreset>('all');
   protected startDate: Date | null = null;
@@ -119,7 +108,6 @@ export class SmsLogDialogComponent implements OnChanges {
     { value: 'all', label: 'SMS_LOG.RANGE_ALL' },
   ];
 
-  /** Yalnızca listede bulunan durumların sayaçları. */
   protected readonly statusCounts = computed(() => {
     const counts = new Map<SmsLogStatus, number>();
     for (const row of this.rows()) counts.set(row.durum, (counts.get(row.durum) ?? 0) + 1);
@@ -199,7 +187,6 @@ export class SmsLogDialogComponent implements OnChanges {
       });
   }
 
-  /** Hızlı aralık: tarihleri bugünden geriye kurar (bugün dahil) ve hemen listeler. */
   protected selectPreset(preset: Exclude<RangePreset, 'custom'>): void {
     this.preset.set(preset);
     if (preset === 'all') {
@@ -216,12 +203,10 @@ export class SmsLogDialogComponent implements OnChanges {
     this.load();
   }
 
-  /** Tarih kutusu elle değişince aralık "özel" olur; Listele ile uygulanır. */
   protected onDateChange(): void {
     this.preset.set(this.startDate || this.endDate ? 'custom' : 'all');
   }
 
-  /** Aynı etikete tekrar tıklamak süzmeyi kaldırır. */
   protected toggleStatus(status: SmsLogStatus | null): void {
     this.activeStatus.set(this.activeStatus() === status ? null : status);
   }
@@ -247,7 +232,6 @@ export class SmsLogDialogComponent implements OnChanges {
     this.endDate = null;
   }
 
-  /** 'yyyy-MM-ddTHH:mm:ss[.fff]' → 'dd.MM.yyyy HH:mm'; tanınmazsa olduğu gibi. */
   private formatDateTime(value: string | null): string {
     if (!value) return '';
     const m = /^(\d{4})-(\d{2})-(\d{2})[T ](\d{2}):(\d{2})/.exec(value);

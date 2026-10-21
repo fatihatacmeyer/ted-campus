@@ -27,7 +27,6 @@ import { BusStoreService } from '../../services/bus-store.service';
 import { SchoolBusService } from '../../services/school-bus.service';
 import { boldText, injectI18nVersion } from '../../utils/transport.utils';
 
-/** Araçlar sekmesi: araç listesi, ekle/düzenle formu ve silme onayı. */
 @Component({
   selector: 'app-buses-tab',
   standalone: true,
@@ -81,7 +80,6 @@ export class BusesTabComponent implements OnInit {
     { field: 'status', header: 'SCHOOL_BUS.COL_STATUS', sortable: true },
   ];
 
-  /** `value` DB'deki durum metnidir (Aktif/Bakımda/Pasif); yalnızca etiket çevrilir. */
   protected readonly statusOptions = computed(() => {
     this.i18nVersion();
     return [
@@ -97,7 +95,6 @@ export class BusesTabComponent implements OnInit {
     this.store.ensureBuses();
   }
 
-  /** DB durum metnini çeviri anahtarına çevirir (bilinmeyen değer olduğu gibi gösterilir). */
   protected statusLabel(status: string): string {
     switch (status) {
       case 'Aktif':

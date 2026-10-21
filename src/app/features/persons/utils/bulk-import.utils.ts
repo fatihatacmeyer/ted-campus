@@ -15,35 +15,25 @@ import {
 } from '../models/bulk-import.model';
 import { formatDate, parseDate } from '../../../shared/utils/date.utils';
 
-/**
- * "Düzeltilecek satırlar" dosyasında hata açıklamasının yazıldığı son sütun. Dosya düzeltilip
- * yeniden yüklendiğinde bu sütun sessizce yok sayılır.
- */
 export const ERROR_COLUMN_HEADER = 'Aktarım Hatası';
 
-/** Tek dosyada kabul edilen en fazla veri satırı. */
 export const MAX_IMPORT_ROWS = 2000;
 
 type ColumnKind = 'text' | 'date' | 'phone' | 'email' | 'tc' | 'lookup' | 'students';
 
 export interface ImportColumn {
   field: ImportField;
-  /** Şablondaki Excel başlığı (uygulamadaki form etiketleriyle aynı). */
   header: string;
   required?: boolean;
   kind: ColumnKind;
   lookup?: ImportLookupKey;
-  /** Başlık eşleştirmesinde kabul edilen ek yazımlar. */
   aliases?: string[];
   description: string;
   example: string;
 }
 
-// Sütun tanımları (şablonun tek kaynağı)
-
 const LIST_HINT = "'Listeler' sayfasındaki değerlerden biri";
 
-/** Öğrenci ve veli şablonlarında ortak olan sütunlar. */
 const COMMON: Record<string, ImportColumn> = {
   ad: { field: 'ad', header: 'Ad', required: true, kind: 'text', description: 'Adı', example: 'Ayşe' },
   soyad: { field: 'soyad', header: 'Soyad', required: true, kind: 'text', description: 'Soyadı', example: 'Yılmaz' },
@@ -173,14 +163,10 @@ export function getImportColumns(kind: ImportKind): ImportColumn[] {
   return kind === 'student' ? STUDENT_COLUMNS : PARENT_COLUMNS;
 }
 
-/** Kişi türünün DB tip kodu (PersonInsertRequest.userdef). */
 export function userdefOf(kind: ImportKind): number {
   return kind === 'student' ? UserDef.Ogrenci : UserDef.Veli;
 }
 
-// Metin normalizasyonu
-
-/** Büyük/küçük harf ve Türkçe karakter farklarını yok sayan karşılaştırma anahtarı. */
 export function normalizeKey(value: unknown): string {
   if (value === null || value === undefined) return '';
   return String(value)
@@ -192,20 +178,16 @@ export function normalizeKey(value: unknown): string {
     .replace(/\s+/g, ' ');
 }
 
-/** Başlık eşleştirmesi için ayraç ve işaretleri de atar ("Sınıf / Şube *" → "sinifsube"). */
 export function normalizeHeader(value: unknown): string {
   return normalizeKey(value).replace(/[*\s_\-/().]/g, '');
 }
 
-/** Hücre değerini düz metne çevirir (sayılar yazıldığı haliyle, boşluklar kırpılır). */
 export function cellToText(value: unknown): string {
   if (value === null || value === undefined) return '';
   if (typeof value === 'number') return Number.isFinite(value) ? String(value) : '';
   if (value instanceof Date) return '';
   return String(value).replace(/\s+/g, ' ').trim();
 }
-
-// Değer ayrıştırıcıları
 
 export type ParseResult = { ok: true; value: string } | { ok: false };
 
@@ -225,11 +207,6 @@ function buildIsoDate(year: number, month: number, day: number): ParseResult {
   return valid ? { ok: true, value: `${year}-${pad2(month)}-${pad2(day)}` } : { ok: false };
 }
 
-/**
- * Tarih hücresini 'YYYY-MM-DD'ye çevirir (boş → '').
- * Excel tarih hücreleri seri numarası (number) olarak gelir; UTC aritmetiğiyle
- * çözülür, böylece saat dilimi kaynaklı gün kayması olmaz.
- */
 export function parseDateValue(value: unknown): ParseResult {
   if (value === null || value === undefined || value === '') return OK_EMPTY;
 
@@ -256,10 +233,6 @@ export function parseDateValue(value: unknown): ParseResult {
   return { ok: false };
 }
 
-/**
- * Cep telefonunu formun maske çıktısıyla aynı biçime (10 hane, baştaki 0 yok) çevirir.
- * '0555…', '+90 555…' ve '555…' yazımlarının hepsi kabul edilir.
- */
 export function normalizePhone(value: unknown): ParseResult {
   const text = cellToText(value);
   if (!text) return OK_EMPTY;
@@ -273,7 +246,6 @@ export function normalizePhone(value: unknown): ParseResult {
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-/** "239; 241,242" → benzersiz öğrenci ID'leri; sayı olmayan parçalar `invalid`'e düşer. */
 export function parseStudentIds(value: unknown): { ids: number[]; invalid: string[] } {
   const text = cellToText(value);
   const ids: number[] = [];
@@ -290,8 +262,6 @@ export function parseStudentIds(value: unknown): { ids: number[]; invalid: strin
   }
   return { ids, invalid };
 }
-
-// Liste (lookup) çözümü
 
 export interface LookupIndex {
   exact: Map<string, number>;
@@ -313,14 +283,11 @@ export function buildLookupIndex(options: LookupOption[]): LookupIndex {
   return { exact, loose };
 }
 
-/** Önce birebir, sonra harf/aksan farkını yok sayarak eşler; bulunamazsa null. */
 export function resolveLookup(index: LookupIndex, text: string): number | null {
   const trimmed = text.trim();
   const id = index.exact.get(trimmed) ?? index.loose.get(normalizeKey(trimmed));
   return id === undefined ? null : id;
 }
-
-// Sayfa (sheet) ayrıştırma
 
 const HEADER_MAPS: Record<ImportKind, Map<string, ImportColumn>> = {
   student: buildHeaderMap(STUDENT_COLUMNS),
@@ -337,10 +304,6 @@ function buildHeaderMap(columns: ImportColumn[]): Map<string, ImportColumn> {
   return map;
 }
 
-/**
- * Sayfa matrisini (ilk satır başlık) ham satırlara çevirir.
- * Tamamen boş satırlar atlanır; satır numaraları Excel'dekiyle birebir tutulur.
- */
 export function parseSheetMatrix(kind: ImportKind, matrix: unknown[][]): ParsedSheet {
   const columns = getImportColumns(kind);
   const headerMap = HEADER_MAPS[kind];
@@ -379,10 +342,6 @@ export function parseSheetMatrix(kind: ImportKind, matrix: unknown[][]): ParsedS
   return { rows, unknownHeaders, missingRequired };
 }
 
-/**
- * Tanınmayan başlıklardan, yalnızca diğer türün şablonunda bulunan sütunlara ait olanları döner
- * (örn. veli aktarımında "Sınıf / Şube", öğrenci aktarımında "Öğrenci ID(ler)").
- */
 export function otherTemplateHeaders(kind: ImportKind, unknownHeaders: string[]): string[] {
   const ownFields = new Set(getImportColumns(kind).map((c) => c.field));
   const otherMap = HEADER_MAPS[kind === 'student' ? 'parent' : 'student'];
@@ -392,7 +351,6 @@ export function otherTemplateHeaders(kind: ImportKind, unknownHeaders: string[])
   });
 }
 
-/** Hücreyi düzeltme dosyasına yazılacak metne çevirir; tarih seri numaraları GG.AA.YYYY olur. */
 function fixCellText(column: ImportColumn, cell: unknown): string {
   if (column.kind === 'date') {
     const result = parseDateValue(cell);
@@ -404,10 +362,6 @@ function fixCellText(column: ImportColumn, cell: unknown): string {
   return cellToText(cell);
 }
 
-/**
- * Düzeltilecek satırları şablon düzeninde (başlık + orijinal değerler + hata sütunu) hazırlar.
- * Değerler metin olarak yazılır; böylece TC ve okul no'daki baştaki sıfırlar korunur.
- */
 export function buildFixSheetRows(
   kind: ImportKind,
   items: { raw: RawImportRow; error: string }[],
@@ -422,13 +376,10 @@ export function buildFixSheetRows(
   ];
 }
 
-// Doğrulama bağlamı
-
 function relationKey(studentId: number, parentId: number): string {
   return `${studentId}:${parentId}`;
 }
 
-/** Sistemden okunan kişi ve ilişki listelerinden doğrulamanın ihtiyaç duyduğu yapıları kurar. */
 export function buildValidationContext(
   lookups: ImportLookups,
   persons: Person[],
@@ -444,7 +395,6 @@ export function buildValidationContext(
       if (person.personelno) {
         const tc = normalizeKey(person.personelno);
         const sameTc = existingStudentsByTc.get(tc) ?? [];
-        // Liste aynı kaydı birden fazla satırda döndürebilir; "tek öğrenci" kontrolü ID'ye göre yapılır.
         if (!sameTc.some((p) => p.id === person.id)) existingStudentsByTc.set(tc, [...sameTc, person]);
       }
     } else if (person.userdef === UserDef.Veli && person.personelno) {
@@ -467,8 +417,6 @@ export function buildValidationContext(
 
 export { relationKey };
 
-// Satır doğrulama
-
 type FieldValues = Record<ImportField, string>;
 
 const ALL_FIELDS: ImportField[] = [
@@ -481,7 +429,6 @@ function emptyValues(): FieldValues {
   return Object.fromEntries(ALL_FIELDS.map((field) => [field, ''])) as FieldValues;
 }
 
-/** İstek paramı '&' ve '=' ile ayrıştırıldığı için bu karakterler değerlerde kullanılamaz. */
 const FORBIDDEN_PARAM_CHARS = /[&=]/;
 
 function validateColumn(
@@ -500,7 +447,7 @@ function validateColumn(
 
   switch (column.kind) {
     case 'students':
-      return ''; // İlişki kolonu satır düzeyinde işlenir.
+      return '';
     case 'date': {
       const result = parseDateValue(cell);
       if (!result.ok) {
@@ -573,15 +520,13 @@ function buildPayload(kind: ImportKind, values: FieldValues): PersonInsertReques
   };
 }
 
-/** Sistemdeki kaydın lookup değerini (ad, takma ad veya ID) şablondaki ID biçimine çevirir. */
 function existingLookupId(index: LookupIndex, raw: unknown): string {
   const text = cellToText(raw);
   if (!text) return '';
   const id = resolveLookup(index, text);
-  return id === null ? text : String(id); // Eşleşmezse ham değer (zaten ID olabilir) korunur.
+  return id === null ? text : String(id);
 }
 
-/** Sistemdeki tarihi 'YYYY-MM-DD'ye çevirir; çözülemezse ham değeri korur. */
 function existingDate(raw: unknown): string {
   const text = cellToText(raw);
   if (!text) return '';
@@ -589,7 +534,6 @@ function existingDate(raw: unknown): string {
   return date ? formatDate(date) : text;
 }
 
-/** Sistemdeki öğrenci kaydını, Excel değerleriyle karşılaştırılabilir alan değerlerine çevirir. */
 function personToValues(
   person: Person,
   indexes: Record<ImportLookupKey, LookupIndex>,
@@ -620,7 +564,6 @@ function personToValues(
   };
 }
 
-/** Doğrulanmış alan değerini ekranda gösterilecek metne çevirir (liste ID'si → ad, ISO tarih → GG.AA.YYYY). */
 function displayValue(column: ImportColumn, value: string, lookups: ImportLookups): string {
   if (!value) return '';
   if (column.kind === 'lookup') {
@@ -633,7 +576,6 @@ function displayValue(column: ImportColumn, value: string, lookups: ImportLookup
   return value;
 }
 
-/** Velinin "Öğrenci ID(ler)" hücresini çözer; geçersiz/bulunamayan ID'leri `issues`'a yazar. */
 function resolveStudentRefs(
   cell: unknown,
   context: ValidationContext,
@@ -651,13 +593,6 @@ function resolveStudentRefs(
   return resolved;
 }
 
-/**
- * Ham satırları doğrular ve kaydedilebilir hale getirir. Hiçbir istek atmaz.
- *
- * Öğrenci: sistemde var > hata > eklenecek (var olan satır tamamen atlanır).
- * Veli: hata > var > eklenecek. Mevcut veli eklenmez ama satırdaki yeni öğrenci
- * ilişkileri kurulur; bu yüzden öğrenci referansı hataları mevcut velide de geçerlidir.
- */
 export function validateImportRows(
   kind: ImportKind,
   rawRows: RawImportRow[],
@@ -682,7 +617,6 @@ export function validateImportRows(
       values[column.field] = validateColumn(column, raw.cells[column.field], indexes, fieldIssues);
     }
 
-    // Tekrar anahtarı: hem öğrencide hem velide TC (Okul No tekrar edebilir).
     const keyValue = values.personelno;
     const key = normalizeKey(keyValue);
     const rowIssues: RowIssue[] = [];
@@ -725,7 +659,6 @@ export function validateImportRows(
           issues: [issue],
         });
         if (!options.updateExisting) return skipped({ key: 'BULK_IMPORT.ISSUE_EXISTS' });
-        // Aynı TC'de birden fazla öğrenci varsa hangisinin güncelleneceği belli değildir.
         if (existingStudents.length > 1) {
           return skipped({
             key: 'BULK_IMPORT.ISSUE_EXISTS_MULTIPLE',
@@ -747,7 +680,6 @@ export function validateImportRows(
           }));
         if (changes.length === 0) return skipped({ key: 'BULK_IMPORT.ISSUE_EXISTS_NO_CHANGES' });
 
-        // Boş hücre mevcut değeri korur; yalnızca dolu hücreler üzerine yazar.
         const merged = { ...values };
         for (const field of ALL_FIELDS) {
           if (merged[field] === '') merged[field] = currentValues[field];
@@ -758,7 +690,6 @@ export function validateImportRows(
           existingId: current.id,
           payload: {
             ...buildPayload(kind, merged),
-            // Şablonda olmayan ama güncellemede gönderilen alanlar mevcut değerleriyle korunur.
             pozisyon: cellToText(current.pozisyon),
             gorev: cellToText(current.gorev),
             yaka: cellToText(current.yaka),
@@ -779,10 +710,8 @@ export function validateImportRows(
       return { ...base, ...noRelations, payload: buildPayload(kind, values), status: 'ready', issues };
     }
 
-    // Veli: önce ilişki hücresi, sonra durum.
     const studentRefIssues: RowIssue[] = [];
     const studentIds = resolveStudentRefs(raw.cells['ogrenciler'], context, studentRefIssues);
-    // Mevcut velide alan hataları önemsizdir (veli güncellenmez); sadece ilişki ve tekrar hataları sayılır.
     const issues = exists
       ? [...rowIssues, ...studentRefIssues]
       : [...fieldIssues, ...rowIssues, ...studentRefIssues];

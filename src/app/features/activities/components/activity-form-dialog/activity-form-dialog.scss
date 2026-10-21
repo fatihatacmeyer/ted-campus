@@ -12,7 +12,6 @@
   font-weight: 500;
 }
 
-// Invalid form field border — login sayfasındaki is-invalid paterniyle tutarlı
 :host ::ng-deep {
   .is-invalid {
     border-color: var(--ted-danger-fg) !important;

@@ -33,14 +33,11 @@ import {
   TxnFilters,
 } from '../transactions-table/transactions-table';
 
-/** Son hareketler yenileme aralığı (ms). */
 const TRANSACTION_POLL_MS = 1500;
 const TRANSACTION_LIMIT_DEFAULT = 10;
 const TRANSACTION_LIMIT_FULL = 100;
-/** Arama kutusu için yazma sonrası bekleme (ms). */
 const TRANSACTION_SEARCH_DEBOUNCE_MS = 300;
 
-/** Son hareketler kartı: periyodik yoklama, backend araması ve tam ekran filtreli diyalog. */
 @Component({
   selector: 'app-transactions-card',
   standalone: true,
@@ -63,7 +60,6 @@ export class TransactionsCardComponent implements OnInit {
 
   protected readonly transactions = signal<AccessTransaction[]>([]);
 
-  /** Arama kutusundaki metin (anlık) ve backend'e uygulanmış metin (debounce sonrası). */
   protected readonly txnSearch = signal('');
   protected readonly appliedTxnSearch = signal('');
   protected readonly showAllTransactions = signal(false);
@@ -72,10 +68,8 @@ export class TransactionsCardComponent implements OnInit {
   );
 
   protected readonly dialogVisible = signal(false);
-  /** Diyalog kapanıp açılınca filtreler korunur. */
   protected readonly filters = signal<TxnFilters>(EMPTY_TXN_FILTERS);
 
-  /** Yoklama akışını anında yeniden başlatan tetikleyici (arama, limit değişimi, diyalog açılışı). */
   private readonly refresh$ = new Subject<void>();
   private readonly searchInput$ = new Subject<string>();
 
@@ -84,10 +78,6 @@ export class TransactionsCardComponent implements OnInit {
     this.initTransactionSearch();
   }
 
-  /**
-   * Son hareketleri periyodik yoklar. Sekme arka plandayken istek atılmaz,
-   * hata oluşursa yoklama durmaz, veri değişmediyse yeniden render edilmez.
-   */
   private initTransactionStream(): void {
     this.refresh$
       .pipe(
@@ -110,7 +100,6 @@ export class TransactionsCardComponent implements OnInit {
       .subscribe((data) => this.transactions.set(data));
   }
 
-  /** Arama metni durulunca uygulanır ve yoklama akışı anında yeniden başlatılır. */
   private initTransactionSearch(): void {
     this.searchInput$
       .pipe(
@@ -135,7 +124,6 @@ export class TransactionsCardComponent implements OnInit {
       : TRANSACTION_LIMIT_DEFAULT;
   }
 
-  /** Tam ekran işlemler tablosu diyaloğunu açar ve 100 limitli veriyi anında çeker. */
   protected openDialog(): void {
     this.dialogVisible.set(true);
     this.refresh$.next();

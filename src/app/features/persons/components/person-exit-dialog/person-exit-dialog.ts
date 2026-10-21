@@ -170,14 +170,12 @@ export class PersonExitDialogComponent implements OnChanges {
     }
   }
 
-  /** Hata nesnesinden kullanıcıya gösterilecek çevrilmiş mesajı üretir. */
   private errorText(err: unknown): string {
     return this.translate.instant('COMMON.ERROR_OCCURRED', {
       message: err instanceof Error ? err.message : this.translate.instant('COMMON.UNKNOWN_ERROR'),
     });
   }
 
-  /** `[innerHTML]` çevirilerinde kullanıcı verisini kaçışlayıp kalın yazar. */
   bold(value: string | null | undefined): string {
     const escaped = String(value ?? '')
       .replace(/&/g, '&amp;')

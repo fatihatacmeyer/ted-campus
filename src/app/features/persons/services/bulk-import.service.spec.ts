@@ -9,9 +9,7 @@ import { PersonService } from './person.service';
 import { TypesService } from './types.service';
 
 interface FakeOptions {
-  /** Hangi satır adı (ad) eklenemesin. */
   failInsertFor?: string[];
-  /** "ogrenciId:veliId" çiftleri sunucuda sessizce oluşmasın. */
   dropPairs?: string[];
   initialRelations?: { VeliSicilId: number; OgrenciSicilId: number }[];
 }
@@ -144,7 +142,6 @@ describe('BulkImportService.importRows', () => {
     const events = await run(service, 'parent', [
       row({ rowNo: 2, ad: 'Ayşe', relationStudentIds: [239] }),
     ]);
-    // Yeni veli 1000 ID'sini alır; 239:1000 zaten ilişkili olduğundan eklenmez.
     expect(added).toEqual([]);
     expect(results(events)).toEqual([
       { type: 'relationResult', rowNo: 2, studentId: 239, ok: true },

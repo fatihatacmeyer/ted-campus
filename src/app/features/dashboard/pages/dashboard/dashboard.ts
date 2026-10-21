@@ -37,10 +37,6 @@ const EMPTY_STATS: DashboardCampusStats = {
   totalInsideCount: 0,
 };
 
-/**
- * Ana sayfa kabuğu: karşılama başlığı, özet sayılar ve erken çıkan / geç kalan / gelmeyen
- * listeleri. KVKK şeridi, son hareketler ve "okulda olanlar" diyaloğu kendi bileşenlerinde yaşar.
- */
 @Component({
   selector: 'app-dashboard',
   imports: [
@@ -66,7 +62,6 @@ export class DashboardComponent implements OnInit {
   private readonly insideDialog = viewChild.required(InsidePersonsDialogComponent);
 
   /* State */
-  /** Özet sayılar (sp_DashboardCampus_s): Kayıtlı / Okulda */
   private readonly statsResource = this.createResource(
     () => this.dashboardService.getDashboardStats(),
     EMPTY_STATS,
@@ -100,11 +95,9 @@ export class DashboardComponent implements OnInit {
     this.resources.some((r) => r.error()) ? 'DASHBOARD.LOAD_ERROR' : '',
   );
 
-  /** Oturum başına bir kez hesaplanan değerler */
   protected readonly greeting = this.buildGreeting();
   protected readonly userName = signal('');
 
-  /** Banner'da gösterilen uzun tarih (dil değişince güncellenir). */
   protected readonly todayLabel = computed(() =>
     new Date().toLocaleDateString(this.translate.currentLang() === 'en' ? 'en-GB' : 'tr-TR', {
       weekday: 'long',
@@ -114,7 +107,6 @@ export class DashboardComponent implements OnInit {
     }),
   );
 
-  /* Lifecycle */
   ngOnInit(): void {
     const user = this.authService.currentUserValue;
     this.userName.set(
@@ -123,7 +115,6 @@ export class DashboardComponent implements OnInit {
   }
 
   /* Data */
-  /** Kart verilerini yeniden yükler ("Tekrar dene"). */
   protected fetchData(): void {
     this.resources.forEach((r) => r.reload());
   }
@@ -138,11 +129,6 @@ export class DashboardComponent implements OnInit {
     });
   }
 
-  /* UI actions */
-  /**
-   * Özet kartına tıklanınca "o an okulda olan" kişi listesini diyalogda gösterir.
-   * type: 'STUDENT' | 'PARENT' | null (ikisi birden).
-   */
   protected openInside(type: PersonType | null): void {
     this.insideDialog().open(type);
   }

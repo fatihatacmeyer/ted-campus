@@ -31,14 +31,12 @@ const STUDENTS_SHEET = 'Öğrenci Listesi';
 
 const MAX_FILE_BYTES = 5 * 1024 * 1024;
 
-/** Kullanıcıya gösterilecek, çevrilebilir dosya hatası. */
 export class ImportFileError extends Error {
   constructor(public readonly issue: RowIssue) {
     super(issue.key);
   }
 }
 
-/** .xlsx (ZIP) veya .xls (OLE2) imzasını kontrol eder; uzantısı değiştirilmiş dosyaları eler. */
 export function hasExcelSignature(bytes: Uint8Array): boolean {
   const isZip =
     bytes.length > 4 && bytes[0] === 0x50 && bytes[1] === 0x4b && bytes[2] === 0x03 && bytes[3] === 0x04;
@@ -55,7 +53,6 @@ export function hasExcelSignature(bytes: Uint8Array): boolean {
   return isZip || isOle;
 }
 
-/** Yüklenen Excel dosyasını okuyup doğrulamaya hazır hale getirir. */
 export async function readImportWorkbook(file: File, kind: ImportKind): Promise<ParsedSheet> {
   const name = file.name.toLowerCase();
   if (!name.endsWith('.xlsx') && !name.endsWith('.xls')) {
@@ -82,10 +79,8 @@ export async function readImportWorkbook(file: File, kind: ImportKind): Promise<
     const findSheet = (k: ImportKind) =>
       workbook.SheetNames.find((n) => normalizeKey(n) === normalizeKey(DATA_SHEET[k]));
     const ownSheet = findSheet(kind);
-    // Beklenen sayfa yok ama diğer türün sayfası varsa yanlış şablon yüklenmiştir.
     isOtherTemplate = !ownSheet && findSheet(otherKind) !== undefined;
     const sheetName = ownSheet ?? workbook.SheetNames[0];
-    // blankrows: true → satır numaraları Excel'deki ile birebir kalır.
     matrix = XLSX.utils.sheet_to_json<unknown[]>(workbook.Sheets[sheetName], {
       header: 1,
       defval: '',
@@ -98,7 +93,6 @@ export async function readImportWorkbook(file: File, kind: ImportKind): Promise<
   if (isOtherTemplate) throw wrongTemplate;
 
   const parsed = parseSheetMatrix(kind, matrix);
-  // Sayfa adı değiştirilmiş olsa da diğer şablona özgü sütunlar yanlış şablonu ele verir.
   if (otherTemplateHeaders(kind, parsed.unknownHeaders).length > 0) throw wrongTemplate;
   if (parsed.missingRequired.length > 0) {
     throw new ImportFileError({
@@ -154,7 +148,6 @@ function kindRules(kind: ImportKind): string[] {
   ];
 }
 
-/** Şablonda kullanılan listeler, her biri ayrı sütun. */
 function buildListsSheet(kind: ImportKind, lookups: ImportLookups): XLSX.WorkSheet {
   const listColumns = getImportColumns(kind)
     .filter((c) => c.lookup)
@@ -169,10 +162,6 @@ function buildListsSheet(kind: ImportKind, lookups: ImportLookups): XLSX.WorkShe
   return sheet;
 }
 
-/**
- * Hatalı / aktarılamayan satırları, orijinal değerleri ve hata açıklamalarıyla şablon düzeninde
- * indirir. Kullanıcı düzeltip aynı dosyayı yeniden yükleyebilir ("Aktarım Hatası" sütunu yok sayılır).
- */
 export function downloadFixFile(
   kind: ImportKind,
   items: { raw: RawImportRow; error: string }[],
@@ -187,7 +176,6 @@ export function downloadFixFile(
   XLSX.writeFile(workbook, FIX_FILE[kind]);
 }
 
-/** Güncel liste değerleriyle doldurulmuş şablonu indirir (veli şablonuna öğrenci listesi de eklenir). */
 export function downloadImportTemplate(
   kind: ImportKind,
   lookups: ImportLookups,
@@ -196,13 +184,11 @@ export function downloadImportTemplate(
   const columns = getImportColumns(kind);
   const workbook = XLSX.utils.book_new();
 
-  // 1) Veri sayfası: yalnızca başlıklar (zorunlu olanlar '*' ile işaretli).
   const headers = columns.map((c) => (c.required ? `${c.header} *` : c.header));
   const dataSheet = XLSX.utils.aoa_to_sheet([headers]);
   dataSheet['!cols'] = headers.map((h) => ({ wch: Math.max(h.length + 4, 16) }));
   XLSX.utils.book_append_sheet(workbook, dataSheet, DATA_SHEET[kind]);
 
-  // 2) Açıklama sayfası: alan tablosu + kurallar.
   const title = kind === 'student' ? 'Öğrenci Aktarım Şablonu' : 'Veli Aktarım Şablonu';
   const guideRows: string[][] = [
     [title],
@@ -217,10 +203,8 @@ export function downloadImportTemplate(
   guideSheet['!cols'] = [{ wch: 22 }, { wch: 10 }, { wch: 70 }, { wch: 28 }];
   XLSX.utils.book_append_sheet(workbook, guideSheet, GUIDE_SHEET);
 
-  // 3) Listeler sayfası.
   XLSX.utils.book_append_sheet(workbook, buildListsSheet(kind, lookups), LISTS_SHEET);
 
-  // 4) Öğrenci Listesi: veli şablonunda ilişki ID'lerini bulmak için başvuru sayfası.
   if (kind === 'parent') {
     const sorted = [...students].sort(
       (a, b) =>

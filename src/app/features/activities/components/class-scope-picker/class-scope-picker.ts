@@ -6,13 +6,6 @@ import { MultiSelectModule } from 'primeng/multiselect';
 
 import { ClassGroup } from '../../services/activity-lookups.service';
 
-/**
- * Etkinliğin sınıf kapsamı seçicisi: "Tüm şubeleri seç / Temizle" kısayolları, seçim özeti ve
- * seviye başlıklı çoklu seçim. Değer, seçili sınıf adlarının dizisidir (`control` üzerinde tutulur).
- *
- * Form değerleri dışarıdan (üst formun `patchValue`'su) değiştiği için varsayılan değişiklik
- * algılama kullanılır; OnPush olsaydı özet ve onay kutuları eski değerde kalırdı.
- */
 @Component({
   selector: 'app-class-scope-picker',
   standalone: true,
@@ -23,7 +16,6 @@ import { ClassGroup } from '../../services/activity-lookups.service';
 export class ClassScopePickerComponent {
   readonly control = input.required<FormControl<string[] | null>>();
   readonly groups = input.required<ClassGroup[]>();
-  /** Doğrulama hatası gösterimi (dokunulmuş ve geçersiz). */
   readonly invalid = input(false);
 
   private readonly translate = inject(TranslateService);
@@ -38,7 +30,6 @@ export class ClassScopePickerComponent {
     );
   }
 
-  /** Grup içindeki şubelerin bir kısmı mı seçili? (Indeterminate checkbox durumu için) */
   isGroupIndeterminate(group: ClassGroup): boolean {
     const selectedCount = this.getGroupSelectedCount(group);
     return selectedCount > 0 && selectedCount < group.items.length;
@@ -84,7 +75,6 @@ export class ClassScopePickerComponent {
     return parts.join(', ');
   }
 
-  /** Grubu aç/kapat: hepsi seçiliyse kaldır, değilse hepsini ekle */
   toggleGroup(group: ClassGroup): void {
     const current = this.selected;
     const groupValues = new Set(group.items.map((i) => i.value));

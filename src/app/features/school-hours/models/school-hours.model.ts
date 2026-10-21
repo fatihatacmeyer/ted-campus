@@ -11,7 +11,6 @@ export interface SchoolHours extends DayTimeFields {
   SinifSeviyesi: string;
   Aciklama?: string;
 
-  /** Toplu format: "SicilId;1,0,0,1,0,0,0-SicilId2;1,1,1,..." */
   GunlerVeSiciller?: string;
 }
 

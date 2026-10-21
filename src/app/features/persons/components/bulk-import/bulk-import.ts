@@ -47,7 +47,6 @@ type ImportStep = 'upload' | 'preview' | 'importing' | 'done';
 type ImportPhase = 'records' | 'relations';
 type TagSeverity = 'success' | 'info' | 'warn' | 'danger' | 'secondary';
 
-/** Çözüm ipucu gösterilen sorun türleri (i18n: BULK_IMPORT.REASON_HINT.<anahtar>). */
 const HINTED_REASONS = new Set([
   'ISSUE_EXISTS',
   'ISSUE_EXISTS_MULTIPLE',
@@ -60,7 +59,6 @@ const HINTED_REASONS = new Set([
   'ERR_SERVER',
 ]);
 
-/** Neden paneli satırı: grup + gösterim anahtarları. */
 interface ReasonItem extends ReasonGroup {
   labelKey: string;
   hintKey: string | null;
@@ -72,7 +70,6 @@ interface ReasonSection {
   items: ReasonItem[];
 }
 
-/** Aktarım sırasında satır başına biriken sonuçlar; bitişte satıra yazılır. */
 interface RowRun {
   recordOk?: boolean;
   recordMessage?: string;
@@ -80,7 +77,6 @@ interface RowRun {
   relationsFailed: number;
 }
 
-/** Toplu aktarım akışı (şablon → yükle → önizle → aktar). Diyalog içinde kullanılır. */
 @Component({
   selector: 'app-bulk-import',
   standalone: true,
@@ -94,12 +90,9 @@ export class BulkImportComponent {
   private notification = inject(NotificationService);
   private translate = inject(TranslateService);
 
-  /** Aktarılacak kişi türü: öğrenci veya veli. */
   readonly kind = input.required<ImportKind>();
 
-  /** En az bir kayıt/ilişki eklendiğinde yayımlanır; üst sayfa listeyi yeniler. */
   readonly imported = output<void>();
-  /** Aktarım sürerken true; üst diyalog bu sırada kapatılamaz. */
   readonly importingChange = output<boolean>();
 
   readonly maxRows = MAX_IMPORT_ROWS;
@@ -111,15 +104,11 @@ export class BulkImportComponent {
   readonly rows = signal<ImportRow[]>([]);
   readonly fileError = signal<RowIssue | null>(null);
   readonly warnings = signal<RowIssue[]>([]);
-  /** Özet kutucuğuyla seçilen durum filtresi. */
   readonly statusFilter = signal<RowFilter>('all');
-  /** Neden panelinden seçilen sorun grubu (ReasonGroup.id). */
   readonly reasonFilter = signal<string | null>(null);
   readonly search = signal('');
-  /** Öğrenci: TC'si sistemde tek kayıtla eşleşen satırlar atlanmak yerine güncellenir. */
   readonly updateExisting = signal(false);
 
-  /** Önizleme, onay kutusu değiştiğinde yeniden doğrulanabilsin diye saklanır. */
   private rawRows: RawImportRow[] = [];
   private context: ValidationContext | null = null;
   readonly progress = signal({ done: 0, total: 0 });
@@ -138,26 +127,20 @@ export class BulkImportComponent {
     const active = list.filter((r) => r.status !== 'error');
     return {
       total: list.length,
-      /** Eklenecek yeni kişi sayısı. */
       ready: list.filter((r) => r.status === 'ready').length,
-      /** Güncellenecek mevcut öğrenci sayısı. */
       update: list.filter((r) => r.status === 'update').length,
       exists: list.filter((r) => r.status === 'exists').length,
       error: list.filter((r) => r.status === 'error').length,
-      /** Bu aktarımda kurulacak veli–öğrenci ilişkisi sayısı. */
       relations: active.reduce((sum, r) => sum + r.relationStudentIds.length, 0),
-      /** Çalıştırılacak iş var mı (yeni kişi veya yeni ilişki)? */
       work: list.filter((r) => this.needsRecord(r) || this.hasWork(r)).length,
       imported: list.filter((r) => r.outcome === 'imported' && r.status !== 'update').length,
       updated: list.filter((r) => r.outcome === 'imported' && r.status === 'update').length,
       partial: list.filter((r) => r.outcome === 'partial').length,
       failed: list.filter((r) => r.outcome === 'failed').length,
-      /** Düzeltilip yeniden yüklenebilecek satır sayısı. */
       fixable: list.filter((r) => this.isFixRow(r)).length,
     };
   });
 
-  /** Excel raporunda yer alan satırlar. */
   private isIssueRow(row: ImportRow): boolean {
     return (
       row.status === 'error' ||
@@ -167,17 +150,14 @@ export class BulkImportComponent {
     );
   }
 
-  /** Düzeltilip yeniden yüklenmesi gereken satır mı (hatalı ya da aktarılamamış)? */
   private isFixRow(row: ImportRow): boolean {
     return row.status === 'error' || row.outcome === 'failed' || row.outcome === 'partial';
   }
 
-  /** Kayıt isteği atılacak satır mı (yeni ekleme veya güncelleme)? */
   private needsRecord(row: ImportRow): boolean {
     return row.status === 'ready' || row.status === 'update';
   }
 
-  /** Mevcut veli satırında kurulacak yeni ilişki var mı? */
   private hasWork(row: ImportRow): boolean {
     return row.status === 'exists' && row.relationStudentIds.length > 0;
   }
@@ -198,7 +178,6 @@ export class BulkImportComponent {
     () => this.statusFilter() !== 'all' || this.reasonFilter() !== null || this.search().trim() !== '',
   );
 
-  /** Hatalı / atlanan / aktarılamayan satırların sorun türüne göre dökümü. */
   readonly reasonSections = computed((): ReasonSection[] => {
     const groups = groupReasons(this.rows());
     const titles: Record<ReasonKind, string> = {
@@ -217,7 +196,6 @@ export class BulkImportComponent {
 
   private toReasonItem(group: ReasonGroup): ReasonItem {
     const name = group.issueKey.replace(/^BULK_IMPORT\./, '');
-    // "Güncellemek için kutuyu işaretleyin" ipucu yalnızca kutu kapalıyken anlamlı.
     const hinted = HINTED_REASONS.has(name) && !(name === 'ISSUE_EXISTS' && this.updateExisting());
     return {
       ...group,
@@ -226,7 +204,6 @@ export class BulkImportComponent {
     };
   }
 
-  /** Kutucuğa tıklama: aynı kutuya tekrar tıklanınca filtre kalkar. */
   setStatusFilter(filter: RowFilter): void {
     this.statusFilter.set(this.statusFilter() === filter ? 'all' : filter);
     this.reasonFilter.set(null);
@@ -248,8 +225,6 @@ export class BulkImportComponent {
     return total === 0 ? 0 : Math.round((done / total) * 100);
   });
 
-  // Şablon
-
   async downloadTemplate(): Promise<void> {
     this.busy.set(true);
     this.fileError.set(null);
@@ -257,7 +232,6 @@ export class BulkImportComponent {
       const kind = this.kind();
       const [lookups, students] = await Promise.all([
         firstValueFrom(this.importService.loadLookups()),
-        // Veli şablonundaki "Öğrenci Listesi" sayfası için.
         kind === 'parent' ? firstValueFrom(this.importService.loadStudents()) : Promise.resolve([]),
       ]);
       downloadImportTemplate(kind, lookups, students);
@@ -268,12 +242,9 @@ export class BulkImportComponent {
     }
   }
 
-  // Dosya yükleme ve doğrulama
-
   async onFileSelected(event: Event): Promise<void> {
     const input = event.target as HTMLInputElement;
     const file = input.files?.[0];
-    // Aynı dosya tekrar seçilebilsin diye sıfırlanır.
     input.value = '';
     if (!file) return;
 
@@ -285,7 +256,6 @@ export class BulkImportComponent {
       const parsed = await readImportWorkbook(file, kind);
       this.context = await firstValueFrom(this.importService.loadValidationContext(kind));
       this.rawRows = parsed.rows;
-      // Onay kutusu kullanıcının tercihi: dosya yeniden yüklense de korunur.
       this.revalidate();
       if (parsed.unknownHeaders.length > 0) {
         this.warnings.set([
@@ -307,7 +277,6 @@ export class BulkImportComponent {
     }
   }
 
-  /** Ham satırları güncel seçeneklerle yeniden doğrular (dosya ve sistem verisi yeniden okunmaz). */
   private revalidate(): void {
     if (!this.context) return;
     this.rows.set(
@@ -321,8 +290,6 @@ export class BulkImportComponent {
     this.updateExisting.set(checked);
     this.revalidate();
   }
-
-  // Aktarım
 
   startImport(): void {
     const toProcess = this.rows().filter((r) => this.needsRecord(r) || this.hasWork(r));
@@ -373,7 +340,6 @@ export class BulkImportComponent {
     });
   }
 
-  /** Biriken sonuçları satırlara yazar, özeti gösterir. */
   private finish(runs: Map<number, RowRun>): void {
     this.rows.update((list) =>
       list.map((row) => {
@@ -390,7 +356,6 @@ export class BulkImportComponent {
             : { key: 'BULK_IMPORT.ERR_SAVE_FAILED' };
         } else if (run.relationsFailed > 0) {
           const total = run.relationsOk + run.relationsFailed;
-          // Yeni veli eklendiyse kısmi, mevcut velide hiç ilişki kurulamadıysa başarısız.
           outcome = row.status === 'ready' || run.relationsOk > 0 ? 'partial' : 'failed';
           outcomeIssue = {
             key: 'BULK_IMPORT.ERR_RELATIONS_FAILED',
@@ -419,7 +384,6 @@ export class BulkImportComponent {
       failed: problems,
       relations: relationsMade,
     };
-    // Güncelleme içeren öğrenci aktarımı "eklendi / güncellendi" ayrımını gösterir.
     const prefix = this.isParent() ? 'BULK_IMPORT.TOAST_PARENT' : 'BULK_IMPORT.TOAST';
     const suffix = !this.isParent() && updated > 0 ? '_UPDATE' : '';
     if (problems === 0) {
@@ -439,8 +403,6 @@ export class BulkImportComponent {
     this.progress.set({ done: 0, total: 0 });
     this.step.set('upload');
   }
-
-  // Gösterim yardımcıları
 
   statusTag(row: ImportRow): { labelKey: string; severity: TagSeverity } {
     if (row.outcome === 'imported') {
@@ -469,7 +431,6 @@ export class BulkImportComponent {
     return row.outcomeIssue ? [row.outcomeIssue] : row.issues;
   }
 
-  /** Hatalı ve aktarılamayan satırları, düzeltilip yeniden yüklenebilecek şablon olarak indirir. */
   downloadFixRows(): void {
     const rawByRow = new Map(this.rawRows.map((raw) => [raw.rowNo, raw]));
     const items = this.rows()
@@ -484,7 +445,6 @@ export class BulkImportComponent {
     downloadFixFile(this.kind(), items, this.context?.lookups ?? null);
   }
 
-  /** Atlanan, hatalı ve kaydedilemeyen satırları Excel olarak indirir. */
   downloadReport(): void {
     const t = (key: string, params?: Record<string, string | number>) =>
       this.translate.instant(key, params) as string;

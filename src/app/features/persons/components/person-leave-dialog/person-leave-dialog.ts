@@ -60,10 +60,8 @@ export class PersonLeaveDialogComponent implements OnChanges {
 
   @Input() multiPersons: { id: number; adSoyad: string }[] = [];
 
-  /** Doluysa dialog düzenleme modunda çalışır: önce bu izin silinir, sonra yenisi eklenir. */
   @Input() replaceLeaveId: number | null = null;
 
-  /** Formun başlangıç/bitiş tarihi; verilmezse bugün kullanılır. */
   @Input() initialDate: Date | null = null;
 
   @Output() visibleChange = new EventEmitter<boolean>();
@@ -86,8 +84,8 @@ export class PersonLeaveDialogComponent implements OnChanges {
   isProcessing = false;
   errorMessage = '';
   leaveTypes: LeaveType[] = [];
-  isBlok = true; // varsayılan: blok izin
-  isSaatlik = false; // varsayılan: tüm gün
+  isBlok = true;
+  isSaatlik = false;
 
   ngOnChanges(changes: SimpleChanges): void {
     if (changes['visible'] && this.visible) {
@@ -100,7 +98,6 @@ export class PersonLeaveDialogComponent implements OnChanges {
   selectedTerminal: number | null = null;
   terminals: DropdownItem[] = [];
 
-  /** sp_MeCampusterminal_s'ten çıkış terminali (kapı) listesini çeker. */
   private loadTerminals(): void {
     this.typesService
       .getTerminals()
@@ -182,7 +179,6 @@ export class PersonLeaveDialogComponent implements OnChanges {
     return true;
   }
 
-  /** 2+ kişiye izin atanacaksa önce onay penceresi gösterir; aksi halde doğrudan kaydeder. */
   onConfirm(): void {
     if (
       (!this.person && (!this.multiPersons || this.multiPersons.length === 0)) ||
@@ -217,7 +213,6 @@ export class PersonLeaveDialogComponent implements OnChanges {
     const bastarih = `${this.startDateStr}T${basSaat}`;
     const bittarih = `${this.endDateStr}T${bitSaat}`;
 
-    // Hedef sicil ID'lerini belirle (Çoklu liste doluysa onları, yoksa tekil personeli al)
     const targets =
       this.multiPersons && this.multiPersons.length > 0
         ? this.multiPersons.map((p) => p.id)
@@ -237,8 +232,6 @@ export class PersonLeaveDialogComponent implements OnChanges {
       return this.personService.assignLeaveCampus(request);
     });
 
-    // Düzenleme modunda: önce mevcut izin silinir, ardından yeni izin(ler) eklenir.
-    // Silme başarısız olursa ekleme hiç yapılmaz.
     const deleteStep$ =
       this.replaceLeaveId != null
         ? this.attendanceService.deleteStudentLeave(this.replaceLeaveId)
@@ -252,7 +245,6 @@ export class PersonLeaveDialogComponent implements OnChanges {
           const responses = res as unknown[];
           this.isProcessing = false;
 
-          // Tüm yanıtların başarılı (Sonuc === '1') olup olmadığını kontrol et
           const allSuccess = responses.every((res) => {
             const result = unwrapResponse<Record<string, unknown>>(
               res as Record<string, unknown> | null | undefined,

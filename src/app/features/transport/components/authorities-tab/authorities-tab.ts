@@ -32,7 +32,6 @@ import { BusStoreService } from '../../services/bus-store.service';
 import { SchoolBusService } from '../../services/school-bus.service';
 import { boldText } from '../../utils/transport.utils';
 
-/** Yetkililer sekmesi: servis yetkilileri (sp_serviskullanicilarcampus_s), ekle/düzenle, çıkış, giriş bilgisi gönderme. */
 @Component({
   selector: 'app-authorities-tab',
   standalone: true,
@@ -64,22 +63,18 @@ export class AuthoritiesTabComponent implements OnInit {
   protected readonly serviceAuthorities = signal<ServiceAuthority[]>([]);
   protected readonly serviceAuthoritiesLoading = signal(false);
 
-  /** Ekle/düzenle formu ve çıkış verme (ortak çıkış penceresi). */
   protected readonly authorityFormVisible = signal(false);
   protected readonly authorityEditing = signal<ServiceAuthority | null>(null);
   protected readonly authoritySaving = signal(false);
   protected readonly authorityLoadingId = signal<number | null>(null);
-  /** Düzenlenen yetkilinin tam sicil kaydı: güncelleme tüm alanları yazdığı için korunur. */
   private authorityEditPerson: Person | null = null;
   protected authorityExitVisible = false;
   protected authorityExitPerson: Person | null = null;
 
-  /** Satıra tıklanınca açılan kişisel profil; butonları bu sekmedeki işlemlere bağlıdır. */
   protected profileVisible = false;
   protected profilePerson: Person | null = null;
   private profileRow: ServiceAuthority | null = null;
 
-  /** "Bilgileri Gönder" onayı: satırdan tek kişi ya da toplu seçimden birden fazla kişi. */
   protected readonly authoritySendVisible = signal(false);
   protected readonly authoritySendTargets = signal<ServiceAuthority[]>([]);
   protected readonly authoritySendLoading = signal(false);
@@ -87,17 +82,9 @@ export class AuthoritiesTabComponent implements OnInit {
     summarizeNames(this.authoritySendTargets().map((t) => t.adSoyad)),
   );
 
-  /**
-   * Toplu gönderim: tablo varsayılan olarak seçimsizdir; "Bilgileri Toplu Gönder" ile çoklu
-   * seçim açılır. Seçim satır referansıyla tutulduğu için liste yenilenince sıfırlanır.
-   */
   protected readonly bulkSendMode = signal(false);
   protected readonly bulkSendSelected = signal<ServiceAuthority[]>([]);
 
-  /**
-   * Telefon p-inputMask ('0 (999) 999 99 99', unmask) ile girilir; değer baştaki 0 olmadan
-   * 10 haneli gelir (kişi formuyla aynı). Eksik girişte maske değeri temizler.
-   */
   protected readonly authorityForm: FormGroup = this.fb.group({
     ad: ['', [Validators.required, Validators.pattern(/\S/), Validators.maxLength(50)]],
     soyad: ['', [Validators.required, Validators.pattern(/\S/), Validators.maxLength(50)]],
@@ -147,7 +134,6 @@ export class AuthoritiesTabComponent implements OnInit {
       return;
     }
 
-    // Liste prosedürü ad/soyadı ayrı vermediği için tam kayıt sicil listesinden alınır.
     this.authorityLoadingId.set(row.sicilId);
     this.personService
       .getPersonListCampus()
@@ -178,7 +164,6 @@ export class AuthoritiesTabComponent implements OnInit {
       });
   }
 
-  /** Kayıtlı telefonu maskenin beklediği 10 haneye çevirir (+90 / 90 / baştaki 0 atılır). */
   private normalizePhone(value: string | null | undefined): string {
     let digits = (value ?? '').replace(/\D/g, '');
     if (digits.startsWith('90') && digits.length >= 12) digits = digits.substring(2);
@@ -193,7 +178,6 @@ export class AuthoritiesTabComponent implements OnInit {
     this.authorityEditPerson = null;
   }
 
-  /** Backend tarihleri 'yyyy-MM-dd' bekler; datetime gelirse tarih kısmı alınır. */
   private dateOnly(value: string | null | undefined): string {
     return value ? (/^\d{4}-\d{2}-\d{2}/.exec(value)?.[0] ?? value) : '';
   }
@@ -218,7 +202,6 @@ export class AuthoritiesTabComponent implements OnInit {
     const original = this.authorityEditPerson;
     let request$;
     if (editing && original) {
-      // Güncelleme tam kayıt yazar: formda olmayan alanlar mevcut değerleriyle gönderilir.
       const payload: PersonInsertRequest & { id: number } = {
         id: original.id,
         userdef: UserDef.Authority,
@@ -252,7 +235,6 @@ export class AuthoritiesTabComponent implements OnInit {
       next: (res) => {
         this.authoritySaving.set(false);
         const result = unwrapResponse<Person>(res);
-        // islemsonuc negatifse backend işlemi reddetmiştir.
         if (result && Number(result.islemsonuc) < 0) {
           this.notification.error(result.sunucucevap || 'SCHOOL_BUS.MSG_OP_ERROR');
           return;
@@ -272,7 +254,6 @@ export class AuthoritiesTabComponent implements OnInit {
     });
   }
 
-  /** Satır tıklaması: toplu seçim modunda tıklama seçime aittir, profil açılmaz. */
   protected openAuthorityProfile(row: ServiceAuthority): void {
     if (this.bulkSendMode()) return;
     this.profileRow = row;
@@ -311,7 +292,6 @@ export class AuthoritiesTabComponent implements OnInit {
     if (row) this.openAuthorityExit(row);
   }
 
-  /** Profil kendi onayını zaten aldığı için gönderim doğrudan yapılır. */
   protected onProfileSendInfo(): void {
     const row = this.profileRow;
     if (!row) return;
@@ -319,9 +299,7 @@ export class AuthoritiesTabComponent implements OnInit {
     this.sendAuthorityLogin();
   }
 
-  /** Çıkış: kişi ortak çıkış penceresiyle (neden + tarih) ayrılır. */
   protected openAuthorityExit(row: ServiceAuthority): void {
-    // Çıkış penceresi yalnızca id ve görünen adı kullanır.
     this.authorityExitPerson = { id: row.sicilId, ad: row.adSoyad, soyad: '' } as Person;
     this.authorityExitVisible = true;
   }
@@ -333,29 +311,24 @@ export class AuthoritiesTabComponent implements OnInit {
 
   protected afterAuthorityChange(): void {
     this.loadServiceAuthorities();
-    // Atamalar sekmesindeki yetkili seçenekleri bir sonraki açılışta yeniden yüklensin.
     this.store.invalidateAuthorities();
   }
 
-  /** Satırdaki anahtar butonu: tek yetkiliye gönderim onayı. */
   protected confirmAuthoritySend(row: ServiceAuthority): void {
     this.authoritySendTargets.set([row]);
     this.authoritySendVisible.set(true);
   }
 
-  /** "Bilgileri Toplu Gönder": tabloda çoklu seçimi açar. */
   protected startBulkSend(): void {
     this.bulkSendSelected.set([]);
     this.bulkSendMode.set(true);
   }
 
-  /** Seçim modundan çıkar ve seçimi temizler (iptal, başarılı gönderim, liste yenileme). */
   protected exitBulkSend(): void {
     this.bulkSendMode.set(false);
     this.bulkSendSelected.set([]);
   }
 
-  /** Seçilenler için ortak onay penceresini açar. */
   protected confirmBulkSend(): void {
     const selected = this.bulkSendSelected();
     if (!selected.length) return;
@@ -375,7 +348,6 @@ export class AuthoritiesTabComponent implements OnInit {
     this.authoritySendTargets.set([]);
   }
 
-  /** Giriş bilgilerini yeniden gönderir (mevcut giriş kaydı silinir, yenisi iletilir). */
   protected sendAuthorityLogin(): void {
     const targets = this.authoritySendTargets();
     if (!targets.length || this.authoritySendLoading()) return;
@@ -389,7 +361,6 @@ export class AuthoritiesTabComponent implements OnInit {
           this.authoritySendLoading.set(false);
           if (res.sonuc === 1) {
             this.notification.success(res.sunucuCevap || 'SCHOOL_BUS.MSG_INFO_SENT');
-            // Toplu gönderim başarılıysa seçim modundan çıkılır; hata durumunda seçim korunur
             if (this.bulkSendMode()) this.exitBulkSend();
           } else {
             this.notification.error(res.sunucuCevap || 'SCHOOL_BUS.MSG_INFO_SEND_ERROR');

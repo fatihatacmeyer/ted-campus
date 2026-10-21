@@ -1,9 +1,5 @@
 import * as XLSX from 'xlsx';
 
-/**
- * Satırları .xlsx dosyası olarak indirir (SheetJS).
- * Sütun genişlikleri içeriğe göre otomatik hesaplanır.
- */
 export function exportToExcel(
   filename: string,
   headers: string[],

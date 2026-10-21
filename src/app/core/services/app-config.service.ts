@@ -14,18 +14,12 @@ export interface AppConfig {
 
 export const APP_CONFIG = new InjectionToken<AppConfig>('APP_CONFIG');
 
-/** Build sonrası dist/ içindeki config.json'dan okunabilen çalışma zamanı değerleri. */
 export interface RuntimeConfig {
   apiUrl?: string;
   reportBaseUrl?: string;
   photoBaseUrl?: string;
 }
 
-/**
- * Production build sonrası `config.json`'dan apiUrl ve reportBaseUrl değerlerini
- * okur ve `environment` nesnesini günceller. Böylece derleme sonrası URL değiştirilebilir.
- * Geliştirme modunda atlanır (dev ortamında environment.ts'deki değerler kullanılır).
- */
 export async function loadRuntimeConfig(): Promise<void> {
   if (isDevMode()) {
     return;
@@ -57,7 +51,6 @@ export async function loadRuntimeConfig(): Promise<void> {
   }
 }
 
-/** APP_CONFIG token'ı: loadRuntimeConfig çalıştıktan sonra güncellenmiş environment nesnesini döner. */
 export function appConfigFactory(): AppConfig {
   return environment;
 }

@@ -42,7 +42,7 @@ export class PersonBusAssignDialogComponent implements OnInit {
 
   busOptions: { label: string; value: number }[] = [];
   selectedBusId: number | null = null;
-  selectedYon = 1; // Varsayılan Gidiş
+  selectedYon = 1;
 
   yonOptions: { label: string; value: number }[] = [];
 
@@ -92,7 +92,6 @@ export class PersonBusAssignDialogComponent implements OnInit {
     const servisId = this.selectedBusId;
     const yon = this.selectedYon;
 
-    // Gidiş ve Dönüş (3) seçildiyse iki isteği aynı anda gönderiyoruz
     if (yon === 3) {
       forkJoin([
         this.busService.assignStudentToBus(ogrenciSicilId, servisId, 1),
@@ -136,7 +135,6 @@ export class PersonBusAssignDialogComponent implements OnInit {
         },
       });
     } else {
-      // Sadece Gidiş (1) veya sadece Dönüş (2)
       this.busService.assignStudentToBus(ogrenciSicilId, servisId, yon as 1 | 2).subscribe({
         next: (res) => {
           this.isProcessing = false;

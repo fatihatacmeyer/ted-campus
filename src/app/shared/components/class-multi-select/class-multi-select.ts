@@ -26,16 +26,10 @@ export interface ClassItem {
 }
 
 interface ClassGroupView {
-  /** Seviye; sayıyla başlamayan sınıflar (ANA, LHZ/A) için null ("Diğer" grubu). */
   grade: number | null;
   items: ClassItem[];
 }
 
-/**
- * Seviye başlıklı, aranabilir çoklu sınıf seçici.
- * Değer, seçili sınıf ID'lerinin virgülle birleşik halidir ("69,70,71"); boş seçim undefined.
- * Seçim "Uygula" ile onaylanır; panel Uygula olmadan kapanırsa taslak atılır.
- */
 @Component({
   selector: 'app-class-multi-select',
   standalone: true,
@@ -53,7 +47,6 @@ export class ClassMultiSelectComponent {
   protected readonly open = signal(false);
   protected readonly panelPos = signal({ x: 0, y: 0 });
   protected readonly search = signal('');
-  /** Panel açıkken düzenlenen taslak seçim. */
   protected readonly draft = signal<ReadonlySet<number>>(new Set());
 
   private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
@@ -73,7 +66,6 @@ export class ClassMultiSelectComponent {
     [...this.classes()].sort((a, b) => compareClassNames(a.ad, b.ad)),
   );
 
-  /** Aramaya uyan sınıflar seviyelere bölünmüş halde; "Diğer" grubu sonda. */
   protected readonly groups = computed<ClassGroupView[]>(() => {
     const term = this.search().trim().toLocaleLowerCase('tr');
     const byGrade = new Map<number | null, ClassItem[]>();
@@ -94,7 +86,6 @@ export class ClassMultiSelectComponent {
     return others ? [...numeric, { grade: null, items: others }] : numeric;
   });
 
-  /** Tetikleyici butonda gösterilen özet: tam seçili seviyeler "5. Sınıf", diğerleri tek tek. */
   protected readonly summary = computed<string[]>(() => {
     const ids = this.appliedIds();
     if (ids.size === 0) return [];
@@ -181,7 +172,6 @@ export class ClassMultiSelectComponent {
     this.draft.set(next);
   }
 
-  /** Seviye kutusu: tamamı seçiliyse seviyeyi temizler, değilse seviyenin tamamını seçer. */
   protected toggleGroup(group: ClassGroupView): void {
     const next = new Set(this.draft());
     const clear = this.gradeAll(group);

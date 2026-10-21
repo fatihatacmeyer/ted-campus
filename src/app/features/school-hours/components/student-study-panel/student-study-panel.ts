@@ -8,7 +8,6 @@ import { TranslatePipe } from '@ngx-translate/core';
 import { Person } from '../../../../core/models/person.model';
 import { WEEKDAYS, WeekdayDef } from '../../models/weekday.model';
 
-/** dayIndex (1-7) -> studentId -> seçili mi */
 export type RowSelections = Partial<Record<number, Record<number, boolean>>>;
 
 function mergeSelections(base: RowSelections, overrides: RowSelections): RowSelections {
@@ -20,15 +19,6 @@ function mergeSelections(base: RowSelections, overrides: RowSelections): RowSele
   return result;
 }
 
-/**
- * Bir sınıfın etüt günleri için öğrenci bazlı seçim paneli (satır genişletildiğinde açılır).
- * Arama metni bu bileşene özel yaşar: satır her açıldığında bileşen yeniden
- * oluşturulduğu için ayrıca "aramayı sıfırla" mantığına gerek kalmaz.
- *
- * `rowSelections` canlı/düzenlenebilir seçim durumudur (iki yönlü bağlanır).
- * `prefill` ise sunucudan asenkron gelen önceki seçimleri tek seferlik aktarmak içindir
- * (canlı state ile karışmasın diye kasıtlı olarak ayrı bir input üzerinden gelir).
- */
 @Component({
   selector: 'app-student-study-panel',
   standalone: true,
@@ -71,9 +61,6 @@ export class StudentStudyPanelComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    // Signal input değerleri constructor'da okunamaz; bu yüzden varsayılan
-    // (işaretsiz) girişler ngOnInit'te oluşturulur — checkbox'lar her zaman
-    // tanımlı bir değere bağlanabilsin diye.
     const defaults: RowSelections = {};
     for (const dayIndex of this.studyDayIndexes()) {
       const dayMap: Record<number, boolean> = {};

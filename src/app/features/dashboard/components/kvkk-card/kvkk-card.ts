@@ -15,7 +15,6 @@ const EMPTY_KVKK: KvkkStats = {
   totalApproved: 0,
 };
 
-/** Onay oranı (%): kayıtlı yoksa 0; 100'ü aşmaz. */
 const percentOf = (approved: number, registered: number): number =>
   registered > 0 ? Math.min(100, Math.round((approved / registered) * 100)) : 0;
 
@@ -24,15 +23,10 @@ interface KvkkBlock {
   icon: string;
   labelKey: string;
   approved: number;
-  /** null → oransız blok (yalnızca sayı). */
   registered: number | null;
   percent: number | null;
 }
 
-/**
- * KVKK onay şeridi (sp_KvkkOnayCampus_s). Kendi verisini yükler; hata verirse yalnızca
- * bu kart hata gösterir, tüm pano hata ekranına düşmez.
- */
 @Component({
   selector: 'app-kvkk-card',
   standalone: true,
@@ -44,7 +38,6 @@ interface KvkkBlock {
 export class KvkkCardComponent {
   private readonly dashboardService = inject(DashboardService);
 
-  /** Yüzdeler için kayıtlı öğrenci / veli sayıları. */
   readonly studentCount = input.required<number>();
   readonly parentCount = input.required<number>();
 

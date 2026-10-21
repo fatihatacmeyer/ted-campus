@@ -4,9 +4,6 @@ import { NotificationService } from '../../../../core/services/notification.serv
 import { isIntervalValid, isValidTime } from '../../../../shared/utils/time.utils';
 import { TimeRangeInputComponent } from '../time-range-input/time-range-input';
 
-/**
- * Bir sınıfın bir gününe ait "Normal" ve "Etüt" saat çiftini gösterir/düzenler.
- */
 @Component({
   selector: 'app-day-hours-cell',
   standalone: true,
@@ -36,10 +33,6 @@ export class DayHoursCellComponent {
     () => isValidTime(this.studyStart()) && isValidTime(this.studyEnd()),
   );
 
-  /**
-   * Bir çiftin (normal ya da etüt) başlangıç/bitişi tamamlandığında çağrılır.
-   * Geçersizse (bitiş <= başlangıç) kullanıcı bilgilendirilir ve bitiş alanı temizlenir.
-   */
   checkInterval(pair: 'normal' | 'study'): void {
     const [start, end, label] =
       pair === 'normal'

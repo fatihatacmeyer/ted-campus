@@ -109,7 +109,7 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  position: relative; // Overlay için gerekli
+  position: relative;
 
   &.clickable {
     cursor: pointer;

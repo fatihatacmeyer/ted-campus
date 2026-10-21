@@ -3,30 +3,26 @@ import { computePeriodRange, formatTime } from './date.utils';
 
 describe('computePeriodRange', () => {
   it('gun: verilen tarihin kendisini döndürür', () => {
-    const range = computePeriodRange('gun', new Date(2026, 7, 6)); // 2026-08-06
+    const range = computePeriodRange('gun', new Date(2026, 7, 6));
     expect(range).toEqual({ baslangic: '2026-08-06', bitis: '2026-08-06' });
   });
 
   it('hafta: çarşamba günü için Pazartesi-Pazar aralığını döndürür', () => {
-    // 2026-08-05 Çarşamba
     const range = computePeriodRange('hafta', new Date(2026, 7, 5));
     expect(range).toEqual({ baslangic: '2026-08-03', bitis: '2026-08-09' });
   });
 
   it('hafta: pazartesi günü kendinden başlar', () => {
-    // 2026-08-03 Pazartesi
     const range = computePeriodRange('hafta', new Date(2026, 7, 3));
     expect(range).toEqual({ baslangic: '2026-08-03', bitis: '2026-08-09' });
   });
 
   it('hafta: pazar günü bir önceki haftaya ait pazartesiden başlar', () => {
-    // 2026-08-09 Pazar
     const range = computePeriodRange('hafta', new Date(2026, 7, 9));
     expect(range).toEqual({ baslangic: '2026-08-03', bitis: '2026-08-09' });
   });
 
   it('hafta: yıl sınırını aşar', () => {
-    // 2026-01-01 Perşembe -> hafta 2025-12-29 / 2026-01-04
     const range = computePeriodRange('hafta', new Date(2026, 0, 1));
     expect(range).toEqual({ baslangic: '2025-12-29', bitis: '2026-01-04' });
   });

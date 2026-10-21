@@ -7,7 +7,6 @@ import { TIME_FIELD_SUFFIXES, WEEKDAYS, timeField } from '../models/weekday.mode
 import { unwrapResponse } from '../../../shared/utils/response.utils';
 import { TypesService, DropdownItem } from '../../persons/services/types.service';
 
-/** Güncelleme uçlarının farklı adlarla döndürdüğü sonuç alanları (backend tutarsız). */
 interface UpdateResultLike {
   Sonuc?: unknown;
   sonuc?: unknown;
@@ -101,7 +100,6 @@ export class SchoolHoursService {
   }
 }
 
-/** Backend bazen "HH:MM:SS" döndürebiliyor; görüntüde/inputlarda hep "HH:MM" kullanıyoruz. */
 function truncateTimeFields(row: SchoolHours): SchoolHours {
   const copy = { ...row } as unknown as Record<string, unknown>;
   for (const day of WEEKDAYS) {

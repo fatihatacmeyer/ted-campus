@@ -20,7 +20,6 @@ export function getUserDefLabel(userdef: number): string {
   }
 }
 
-/** getUserDefLabel'in i18n anahtarı döndüren varyantı (template'lerde | translate ile). */
 export function getUserDefLabelKey(userdef: number): string {
   switch (userdef) {
     case UserDef.Ogrenci:
@@ -60,11 +59,9 @@ export interface Person {
   personelno: string;
   userid: string;
 
-  // Kişiler arası ilişki (öğrenci-veli bağlantısı) — serbest metin alanı
   okod1?: string;
 
-  // Referans alanları — API hem ID hem text döndürebilir
-  firma?: string; // Firma ID (backend'e update'te ID olarak gönderilir)
+  firma?: string;
   firmaad: string;
   bolum?: string;
   bolumad: string;
@@ -90,10 +87,9 @@ export interface Person {
   userdef: number;
   userdefad: string;
 
-  // sp_sicilcampus_s'ten gelen ek kolonlar (opsiyonel — sv2 yanıtında yok)
-  userType?: string; // sys_userdef.ad metni ("Öğrenci"/"Veli"/"Öğretmen")
-  veliSicilId?: number; // RelationCampus üzerinden ilk velinin sicil id
-  veliAdSoyad?: string; // İlk velinin "Ad Soyad" metni (display'de doğrudan kullanılabilir)
+  userType?: string;
+  veliSicilId?: number;
+  veliAdSoyad?: string;
 
   cardid: string;
   yetkistr: string;
@@ -115,7 +111,6 @@ export interface Person {
   gelisServisPlaka?: string;
   donusServisPlaka?: string;
 
-  /** Sadece veli satırları: "Ad Soyad (Sınıf), ..." ve tekrarsız kampüs adları (virgülle). */
   ogrencilerSinif?: string | null;
   ogrenciKampusleri?: string | null;
 }
@@ -151,21 +146,15 @@ export interface PersonInsertRequest {
 
   userdef: number;
 
-  // Fotoğraf (base64 data-URL veya null)
   fotoImage?: string | null;
 }
 
-/** Backend'in Person/Login gibi endpoint'lerden döndüğü ortak sonuç formatı. */
 export interface OperationResultResponse {
   islemsonuc: number | string;
   islemno?: string;
   sunucucevap?: string | null;
 }
 
-/**
- * Login sonrası dönen kullanıcı modeli.
- * Backend hem Person alanlarını hem de auth alanlarını (tokenid, islemno vb.) döner.
- */
 export interface User {
   id: number | null;
   customerCode: string;
@@ -201,30 +190,14 @@ export interface LinkedPerson {
   sicilno?: string;
 }
 
-/**
- * sp_relationcampus_s'ten dönen ham ilişki satırı (RelationCampus).
- *
- * Prosedür @tip'e göre farklı kolonlar döndürür:
- *   tip=0 → tüm kolonlar (Id, OgrenciSicilId, VeliSicilId, ...)
- *   tip=1 → OgrenciSicilId, Id AS relid         — velinin öğrencileri
- *   tip=2 → VeliSicilId, Id AS relid            — öğrencinin velileri
- *
- * NOT: tip=1/2'de SQL alias yüzünden Id anahtarı backend'de "relid" adıyla
- * döner (Id anahtarı GELMEZ). Okuma tarafında `Number(row.relid ?? row.Id)`
- * kullanılmalı — sadece `row.Id` okumak NaN üretir.
- */
 export interface RelationCampusRow {
-  relid?: number | string; // tip=1/2: Id'nin SQL alias'ı (Id yerine döner)
+  relid?: number | string;
   Id?: number | string;
   OgrenciSicilId?: number | string;
   VeliSicilId?: number | string;
   [key: string]: unknown;
 }
 
-/**
- * İzin talebi sonucu (talepkaydet).
- * Legacy: talepkaydet() → { sonuc: number, formid: string }
- */
 export interface LeaveRequestResponse {
   sonuc: number;
   formid: string;
@@ -235,55 +208,45 @@ export interface ReportLinkResponse {
 }
 
 export interface PersonLeaveRequest {
-  bastarih: string; // start date (dd-mm-yyyy format)
-  bittarih: string; // end date (dd-mm-yyyy format)
-  siciller: string; // sicilno value (single person's sicilno string)
-  tip: number; // fixed: 30
-  islemtipi: string; // fixed: 'i'
-  izinadresi: string; // leave address
-  ulasim: number; // transport: 0 or 1
-  yemek: number; // meal: 0 or 1
+  bastarih: string;
+  bittarih: string;
+  siciller: string;
+  tip: number;
+  islemtipi: string;
+  izinadresi: string;
+  ulasim: number;
+  yemek: number;
   aciklama: string;
-  kaynak: string; // fixed: 'izin'
-  point: string; // fixed: 'talep'
+  kaynak: string;
+  point: string;
 }
 
-/** İzin tipi dropdown seçeneği — TypesService.getDropdownList('Izintipleri') dönüşü */
 export interface LeaveType {
   id: number;
   ad: string;
 }
 
-/**
- * sp_izinatacampus_i prosedürüne gönderilen parametreler.
- * point=IzinataCampus & islemtipi=i & sicilid=... & tip=... & bastarih=... & bittarih=... & saatlikmi=... & aciklama=... & blok=...
- * /Dynamic endpoint'i üzerinden GET isteğiyle gider.
- */
 export interface PersonLeaveAssignCampusParams {
   sicilid: number;
   tip: number;
-  bastarih: string; // '2026-07-30T09:00' (DATETIME, T separator)
-  bittarih: string; // '2026-07-30T18:00' (DATETIME, T separator)
-  saatlikmi: number; // 0 | 1
+  bastarih: string;
+  bittarih: string;
+  saatlikmi: number;
   aciklama: string;
-  blok: number; // 0 = gün bazlı, 1 = blok (her gün aynı saat)
+  blok: number;
   kapi: number;
 }
 
-/**
- * sp_pdks_ik prosedürüne gönderilen parametreler (islemtipi=ik).
- * Legacy: izinkaydet2() → POST /TA.
- */
 export interface PersonLeaveAssignParams {
-  islemtipi: string; // 'ik' (sabit)
-  extra: string; // JSON.stringify([{sicilid, tarih, tarihbit}])
-  tip: number; // izin tipi ID
-  saatbas: string; // '09:00'
-  saatbit: string; // '18:00'
+  islemtipi: string;
+  extra: string;
+  tip: number;
+  saatbas: string;
+  saatbit: string;
   ucretli: boolean;
   saatlik: boolean;
   aciklama: string;
-  sicilid: number; // 0 (legacy uyumu)
-  tarih: string; // 'undefined' (legacy uyumu)
-  tarihbit: string; // 'undefined' (legacy uyumu)
+  sicilid: number;
+  tarih: string;
+  tarihbit: string;
 }

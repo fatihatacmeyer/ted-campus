@@ -70,8 +70,6 @@ export class ProxyListComponent implements OnInit {
   selectedProfilePerson: Person | null = null;
 
   onRowClick(proxy: GuardianProxy): void {
-    // Vekil verisini Person modeline uyarlayarak profile gönderiyoruz.
-    // Vekil olduğu profile kind="vekil" girişiyle bildirilir (userdefad yalnızca görünen etikettir).
     this.selectedProfilePerson = {
       id: proxy.id, // Bu aslında VekilCampusId
       adsoyad: proxy.vekilAdSoyad,
@@ -87,11 +85,6 @@ export class ProxyListComponent implements OnInit {
     this.showProfileModal = true;
   }
 
-  /**
-   * "Bilgileri Gönder" butonu (vekil profili).
-   * sp_vekilloginsendcampus_d çağrılır: vekil login kaydı silinir ve yeni
-   * parola SMS ile gönderilir. `${person.id}` aslında VekilCampusId'dir.
-   */
   onForgotPasswordRequest(person: Person): void {
     this.isLoading = true;
     this.cdr.markForCheck();
@@ -103,9 +96,6 @@ export class ProxyListComponent implements OnInit {
         next: (res) => {
           this.isLoading = false;
 
-          // SP durum kodları: 1 = başarılı (yeni parola SMS ile gönderildi),
-          // 2 = login silindi ama vekil pasif/süresi dolmuş (yeniden açılmayacak),
-          // -1 = vekil login kaydı bulunamadı.
           if (res.result === 1) {
             this.notification.success(res.serverMessage || 'PROXIES.SUCCESS');
           } else if (res.result === 2) {
@@ -120,14 +110,12 @@ export class ProxyListComponent implements OnInit {
         error: () => {
           this.isLoading = false;
           this.notification.error('PROXIES.ERROR_SERVER');
-          // Öğrenci akışıyla aynı davranış: istek hata da dönse modal kapanır.
           this.showProfileModal = false;
           this.cdr.markForCheck();
         },
       });
   }
 
-  // Filtre Sekmeleri (PDKS mantığı)
   activeTab = signal<ProxyApprovalStatus | null>(null);
 
   tabOptions: TabOption[] = [
@@ -210,12 +198,7 @@ export class ProxyListComponent implements OnInit {
       });
   }
 
-  /**
-   * Onaylanmış vekilin aktif/pasif durumunu değiştirir.
-   * Toggle anında geri alınır, sunucu onayladıktan sonra kalıcı değişir.
-   */
   onToggleActive(proxy: GuardianProxy, newActiveState: boolean): void {
-    // Toggle'ı geri al — sunucudan onay gelene kadar
     proxy.isActive = !newActiveState;
 
     const onayDurumu = newActiveState ? 1 : 0;

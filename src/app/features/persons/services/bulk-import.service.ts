@@ -20,19 +20,16 @@ import { buildValidationContext, relationKey } from '../utils/bulk-import.utils'
 import { DropdownItem, TypesService } from './types.service';
 import { PersonService } from './person.service';
 
-/** Aynı anda gönderilen en fazla kayıt/ilişki isteği. */
 const IMPORT_CONCURRENCY = 3;
 
 const GENDER_LABELS: Record<string, string> = { E: 'Erkek', K: 'Kadın' };
 
-/** Dropdown kayıtlarını Excel'de yazılacak ada çevirir; "Seçiniz" gibi ID'si 0 olanlar atılır. */
 function toOptions(items: DropdownItem[] | null | undefined): LookupOption[] {
   return (items ?? [])
     .map((item) => ({ id: Number(item.id), ad: String(item.ad ?? '').trim() }))
     .filter((option) => Number.isFinite(option.id) && option.id > 0 && option.ad !== '');
 }
 
-/** DB'de cinsiyet "E"/"K" tutulur; Excel'de "Erkek"/"Kadın" yazılır, ham değer takma ad olarak da kabul edilir. */
 function toGenderOptions(items: DropdownItem[] | null | undefined): LookupOption[] {
   return toOptions(items).map((option) => {
     const label = GENDER_LABELS[option.ad];
@@ -58,11 +55,6 @@ interface RelationPair {
   parentId: number;
 }
 
-/**
- * Toplu aktarımın veri katmanı: liste değerlerini ve mevcut kayıtları yükler, kişileri mevcut
- * PersonService.insertPerson ile (sınırlı eşzamanlılıkla) ekler. Veli aktarımında önce veliler
- * eklenir, ardından öğrenci ilişkileri kurulur ve oluştuğu okunarak doğrulanır.
- */
 @Injectable({
   providedIn: 'root',
 })
@@ -70,7 +62,6 @@ export class BulkImportService {
   private personService = inject(PersonService);
   private typesService = inject(TypesService);
 
-  /** Şablondaki ve doğrulamadaki ad → ID çevrimi için liste değerlerini çeker. */
   loadLookups(): Observable<ImportLookups> {
     return forkJoin({
       firma: this.typesService.getDropdownList('cbo_firma').pipe(map(toOptions)),
@@ -82,14 +73,12 @@ export class BulkImportService {
     });
   }
 
-  /** Sistemdeki öğrenciler (veli şablonundaki "Öğrenci Listesi" sayfası için). */
   loadStudents(): Observable<Person[]> {
     return this.personService
       .getPersonListCampus()
       .pipe(map((persons) => persons.filter((p) => p.userdef === UserDef.Ogrenci)));
   }
 
-  /** Önizleme doğrulamasının dayandığı mevcut verileri (kişiler, ilişkiler, listeler) çeker. */
   loadValidationContext(kind: ImportKind): Observable<ValidationContext> {
     return forkJoin({
       lookups: this.loadLookups(),
@@ -100,12 +89,7 @@ export class BulkImportService {
     );
   }
 
-  /**
-   * 'ready' satırları kaydeder ve olayları yayımlar. Bir satırın hatası diğerlerini durdurmaz.
-   * Veli aktarımında kayıtlar bittikten sonra ilişki aşaması çalışır.
-   */
   importRows(kind: ImportKind, rows: ImportRow[]): Observable<ImportEvent> {
-    // satır no → veli ID'si (mevcut veliler baştan, yeni eklenenler kayıt sonrası dolar)
     const parentIds = new Map<number, number>();
     const insertedOk = new Set<number>();
     for (const row of rows) {
@@ -134,7 +118,6 @@ export class BulkImportService {
     );
   }
 
-  /** 'update' satırı mevcut kaydı günceller, 'ready' satırı yeni kayıt ekler. */
   private saveRow(row: ImportRow): Observable<ImportOutcome> {
     const isUpdate = row.status === 'update';
     const request$ = isUpdate
@@ -144,8 +127,6 @@ export class BulkImportService {
       map((response): ImportOutcome => {
         const result = unwrapResponse<Person>(response);
         const id = extractNewId(result);
-        // Ekleme: islemsonuc=1 ya da yeni kayıt ID'si dönmüş olması.
-        // Güncelleme: yanıt sonuç kodu taşımıyorsa HTTP başarısı yeterli, taşıyorsa 1 olmalı.
         const ok = isUpdate
           ? result?.islemsonuc === undefined || result.islemsonuc === null || isSuccessResult(result)
           : isSuccessResult(result) || id !== null;
@@ -164,11 +145,6 @@ export class BulkImportService {
     );
   }
 
-  /**
-   * 2. aşama: veli–öğrenci ilişkilerini kurar. Mevcut çiftler tekrar eklenmez; sonunda
-   * ilişkiler yeniden okunarak her çiftin gerçekten oluştuğu doğrulanır (addRelationCampus
-   * yanıtı güvenilir başarı bilgisi taşımadığı için karar bu okumaya dayanır).
-   */
   private linkParents(
     rows: ImportRow[],
     parentIds: Map<number, number>,
@@ -179,13 +155,11 @@ export class BulkImportService {
 
     for (const row of rows) {
       if (row.status === 'error' || row.relationStudentIds.length === 0) continue;
-      // Veli eklenemediyse ilişkileri denenmez; satır zaten "eklenemedi" olarak raporlanır.
       if (row.status === 'ready' && !insertedOk.has(row.rowNo)) continue;
 
       const parentId = parentIds.get(row.rowNo);
       for (const studentId of row.relationStudentIds) {
         if (parentId === undefined) {
-          // Veli eklendi ama ID'si yanıttan okunamadı → ilişki kurulamaz.
           unlinkable.push({ type: 'relationResult', rowNo: row.rowNo, studentId, ok: false });
         } else {
           pairs.push({ rowNo: row.rowNo, studentId, parentId });

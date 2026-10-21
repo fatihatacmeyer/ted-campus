@@ -13,7 +13,6 @@ import {
 import { ApiHelperService } from '../../../core/services/api-helper.service';
 import { DropdownItem, TypesService } from '../../../features/persons/services/types.service';
 
-/** Raw DB row returned from sp_pdks_s (Turkish/DB column names). */
 interface AttendanceRowRaw {
   SicilId: number;
   SicilNo: string;
@@ -45,7 +44,6 @@ interface AttendanceRowRaw {
   Onaymipdks: boolean | number;
 }
 
-/** Raw DB row returned from sp_OgrenciHareketRaporu_s (PascalCase column names). */
 interface StudentAttendanceRowRaw {
   SicilId: number;
   SicilNo: string;
@@ -66,22 +64,6 @@ interface StudentAttendanceRowRaw {
   OkulSaatleri: string;
 }
 
-/**
- * Attendance (PDKS) personnel tracking and leave request service.
- *
- * Backend'deki generic "Dynamic" dispatcher, point + islemtipi kombinasyonuna
- * göre ilgili prosedürü çağırıyor:
- *   point=pdks & islemtipi=s -> sp_pdks_s (mesai listesi)
- *   point=izinhak & islemtipi=s -> izin hakkı özeti
- *   point=izinler & islemtipi=li -> personelin izin talepleri
- *   point=talep & islemtipi=ic -> yeni izin talebi ekle
- *   point=izintek & islemtipi=d -> izin talebi sil
- *
- * NOT (ActivityService ile birebir aynı desen):
- * param string'i asla encode edilmiyor, tek parça halinde AES ile
- * şifrelenip "Name" query parametresi olarak GET isteğiyle gönderiliyor.
- * Şifreleme ApiHelperService.callEndpoint içinde yapılır.
- */
 @Injectable({
   providedIn: 'root',
 })
@@ -89,7 +71,6 @@ export class AttendanceService {
   private api = inject(ApiHelperService);
   private typesService = inject(TypesService);
 
-  /** Backend dispatcher point'i (değiştirilmemeli — sp_pdks_* prosedürleriyle eşleşir). */
   private readonly point = 'pdks';
 
   private callDynamic<T>(params: Record<string, string | number>): Observable<T> {
@@ -97,12 +78,6 @@ export class AttendanceService {
     return this.api.callEndpoint<T>('Dynamic', requestParams);
   }
 
-  /**
-   * sp_pdks_s sonuç sütunlarını (Türkçe/DB isimleri) AttendanceRow'a çevirir.
-   * DİKKAT: Sütun adları backend prosedürüyle birebir eşleşmek zorundadır;
-   * adSoyad UI tarafında Ad + Soyad birleştirilerek üretilir, onayMiPdks ise
-   * backend'deki sayısal/bool Onaymipdks alanından boolean'a çevrilir.
-   */
   private mapRowToAttendance(row: AttendanceRowRaw): AttendanceRow {
     return {
       sicilId: row.SicilId,
@@ -137,11 +112,6 @@ export class AttendanceService {
     };
   }
 
-  /**
-   * İzin hakkı yanıtını LeaveBalance'a çevirir.
-   * Backend PascalCase (Kalan, Hak, Kidem...) dönebildiği için her iki kas
-   * varyasyonuna da toleranslıdır; eksik alanlar varsayılanla doldurulur.
-   */
   private mapLeaveBalance(raw: Record<string, unknown>): LeaveBalance {
     return {
       yillikIzinHakTarihi: String(raw['YillikIzinHakTarihi'] ?? raw['yillikIzinHakTarihi'] ?? ''),
@@ -153,11 +123,6 @@ export class AttendanceService {
     };
   }
 
-  /**
-   * İzin talebi kaydını LeaveRecord'a çevirir.
-   * Backend sütunu 'izintipi' (küçük harf) döner; durum alanı yoksa 'Talep'
-   * varsayılır (bekleyen talep anlamında).
-   */
   private mapLeaveRecord(raw: Record<string, unknown>): LeaveRecord {
     return {
       id: Number(raw['Id'] ?? raw['id'] ?? 0),
@@ -170,11 +135,6 @@ export class AttendanceService {
     };
   }
 
-  /**
-   * Attendance mesai listesini döndürür.
-   * listeTip'e göre sekme filtresi uygulanır:
-   * 0=genel liste, 4=geç gelenler, 5=erken çıkanlar, 6=izinliler.
-   */
   getAttendanceRows(params: {
     listeTip: AttendanceListType;
     baslangic: string;
@@ -192,12 +152,10 @@ export class AttendanceService {
     }).pipe(map((rows) => (rows || []).map((row) => this.mapRowToAttendance(row))));
   }
 
-  /** İzin tipi combosu için dropdown listesini döndürür (cbo_izintipleri). */
   getLeaveTypes(): Observable<DropdownItem[]> {
     return this.typesService.getDropdownList('y_izintipleri', 0);
   }
 
-  /** Personelin yıllık izin hakkı özetini döndürür. */
   getLeaveBalance(): Observable<LeaveBalance> {
     return this.callDynamic<Record<string, unknown>>({
       point: 'izinhak',
@@ -205,7 +163,6 @@ export class AttendanceService {
     }).pipe(map((raw) => this.mapLeaveBalance(raw ?? {})));
   }
 
-  /** Personelin kendi izin taleplerini (talep geçmişini) döndürür. */
   getMyLeaves(): Observable<LeaveRecord[]> {
     return this.callDynamic<Record<string, unknown>[]>({
       point: 'izinler',
@@ -213,11 +170,6 @@ export class AttendanceService {
     }).pipe(map((rows) => (rows || []).map((row) => this.mapLeaveRecord(row))));
   }
 
-  /**
-   * Yeni izin talebi oluşturur.
-   * Legacy talepkaydet kontratıyla uyumlu parametreler gönderilir
-   * (kaynak='izin', siciller=tek sicil no — yalnızca tek personel talebi).
-   */
   requestLeave(req: LeaveRequest): Observable<unknown> {
     return this.callDynamic<unknown>({
       point: 'talep',
@@ -236,14 +188,10 @@ export class AttendanceService {
     });
   }
 
-  /** Bekleyen bir izin talebini iptal eder. */
   cancelLeave(izinId: number): Observable<unknown> {
     return this.callDynamic<unknown>({ point: 'izintek', islemtipi: 'd', izinid: izinId });
   }
 
-  // Öğrenci Devam — sp_OgrenciHareketRaporu_s
-
-  /** Backend dispatcher point'i öğrenci hareket raporu prosedürüyle eşleşir. */
   private readonly studentPoint = 'OgrenciHareketRaporu';
 
   private callStudentDynamic<T>(params: Record<string, string | number>): Observable<T> {
@@ -255,7 +203,6 @@ export class AttendanceService {
     return this.api.callEndpoint<T>('Dynamic', requestParams);
   }
 
-  /** sp_OgrenciHareketRaporu_s sonuç sütunlarını StudentAttendanceRow'a çevirir. */
   private mapRowToStudentAttendance(row: StudentAttendanceRowRaw): StudentAttendanceRow {
     return {
       sicilId: row.SicilId,
@@ -278,16 +225,6 @@ export class AttendanceService {
     };
   }
 
-  /**
-   * Öğrenci devam listesini döndürür.
-   * gosterimTuru'ne göre sekme filtresi uygulanır:
-   * 0=genel liste, 1=izinliler, 2=erken çıkanlar, 3=geç gelenler.
-   *
-   * SP: sp_OgrenciHareketRaporu_s
-   * @FiltreTipi, @Tarih, @BaslangicTarih, @BitisTarih, @AdSoyadArama,
-   * @SicilId, @SinifId, @KampusId, @GosterimTuru
-   * (point/islemtipi/islemno SP tarafından kullanılmaz)
-   */
   getStudentAttendanceRows(params: {
     GosterimTuru: StudentAttendanceFilterType;
     baslangic?: string;
@@ -303,8 +240,6 @@ export class AttendanceService {
       GosterimTuru: params.GosterimTuru,
     };
 
-    // BaslangicTarih + BitisTarih verilirse SP doğrudan bu aralığı kullanır
-    // ve FiltreTipi/Tarih'i yok sayar.
     if (params.baslangic && params.bitis) {
       spParams['BaslangicTarih'] = params.baslangic;
       spParams['BitisTarih'] = params.bitis;
@@ -331,7 +266,6 @@ export class AttendanceService {
     );
   }
 
-  /** Tek Id ya da birden fazla Id verilebilir; çoklu silme sp'ye ';' ile ayrılmış liste olarak gider. */
   deleteStudentLeave(izinId: number | number[]): Observable<unknown> {
     return this.api.callEndpoint<unknown>('Dynamic', {
       point: 'izinlercampus',

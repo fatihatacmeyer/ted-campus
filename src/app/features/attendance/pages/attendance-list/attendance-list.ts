@@ -75,7 +75,6 @@ export class AttendanceListComponent {
   assignLeaveDialogVisible = signal(false);
   assignLeaveTargets = signal<{ id: number; adSoyad: string }[]>([]);
 
-  /** İzin düzenleme (sil + yeniden ekle) dialog state'i. */
   editLeaveDialogVisible = signal(false);
   editLeaveTargets = signal<{ id: number; adSoyad: string }[]>([]);
   editLeaveId = signal<number | null>(null);
@@ -83,15 +82,12 @@ export class AttendanceListComponent {
   rows = signal<StudentAttendanceRow[]>([]);
   isLoading = signal(false);
 
-  /** Active list tab: 0=Hepsi, 1=İzinliler, 2=Erken Çıkanlar, 3=Geç Kalanlar. */
   activeTab = signal<number>(0);
 
-  /** Selected period type and date; range is computed from them. */
   period = signal<Period>('gun');
   selectedDate = signal<Date>(new Date());
   range = computed(() => computePeriodRange(this.period(), this.selectedDate()));
 
-  /** Toolbar range label (dd-MM-yyyy - dd-MM-yyyy). */
   rangeLabel = computed(() => {
     const { baslangic, bitis } = this.range();
     return `${this.toDisplayDate(baslangic)} - ${this.toDisplayDate(bitis)}`;
@@ -99,7 +95,6 @@ export class AttendanceListComponent {
 
   searchQuery = signal('');
 
-  /** Seçili satırlardaki benzersiz izin kayıt Id'leri (toplu silme için). */
   selectedLeaveIds = computed(() => [
     ...new Set(
       this.selectedRows()
@@ -107,11 +102,6 @@ export class AttendanceListComponent {
         .filter((id): id is number => id != null),
     ),
   ]);
-
-  /** Students who have a leave — shown in the side panel. */
-  // leaveStudents = computed(() =>
-  //   this.rows().filter((r) => r.izinTipi != null && r.izinTipi !== ''),
-  // );
 
   leaveStudents = computed(() =>
     this.selectedRows().filter((r) => r.izinTipi != null && r.izinTipi !== ''),
@@ -200,12 +190,10 @@ export class AttendanceListComponent {
     this.loadRows();
   }
 
-  /** Converts 'yyyy-MM-dd' to dd-MM-yyyy display format. */
   private toDisplayDate(dateStr: string): string {
     return dateStr.split('-').reverse().join('-');
   }
 
-  /** Fetches student attendance rows for the active tab and period range. */
   loadRows(): void {
     this.isLoading.set(true);
     const { baslangic, bitis } = this.range();
@@ -241,7 +229,6 @@ export class AttendanceListComponent {
     this.loadRows();
   }
 
-  /** Changes period type; resets the date to today and refreshes the list. */
   setPeriod(p: Period): void {
     if (this.period() === p) return;
     this.period.set(p);
@@ -291,7 +278,6 @@ export class AttendanceListComponent {
     this.assignLeaveDialogVisible.set(true);
   }
 
-  /** Detay modalından düzenleme dialogunu açar; kayıtta eski izin silinip yenisi eklenir. */
   openEditLeaveDialog(): void {
     const row = this.selectedLeaveRow();
     if (!row?.izinId) return;
@@ -304,10 +290,9 @@ export class AttendanceListComponent {
   onLeaveConfirmed(message: string): void {
     this.notification.success(message);
     this.selectedRows.set([]);
-    this.loadRows(); // Tabloyu yenile ki izin ikonları düşsün
+    this.loadRows();
   }
 
-  /** İzin detay modalından silme işlemini tetikler */
   deleteLeave(izinId: number): void {
     this.attendanceService
       .deleteStudentLeave(izinId)
@@ -326,7 +311,6 @@ export class AttendanceListComponent {
       });
   }
 
-  /** Seçili satırların izinlerini onay sonrası tek istekle toplu siler. */
   bulkDeleteLeaves(): void {
     const ids = this.selectedLeaveIds();
     if (ids.length === 0) return;

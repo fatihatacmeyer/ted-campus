@@ -10,7 +10,6 @@ import { ApiHelperService } from '../../../core/services/api-helper.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { formatDate } from '../../../shared/utils/date.utils';
 
-/** sp_etkinlikcampus_s'den dönen  DB satırı  */
 interface ActivityRow {
   Id: number;
   EtkinlikAdi: string;
@@ -45,7 +44,6 @@ interface ActivityRow {
   Sinif: string;
 }
 
-/** sp_EtkinlikOnayCampus_s'ten dönen  DB satırı */
 interface ActivityApprovalRow {
   EtkinlikId: number;
   Bekleyen: number;
@@ -54,7 +52,6 @@ interface ActivityApprovalRow {
   Toplam: number;
 }
 
-/** sp_EtkinlikKatilimcilari_s'ten dönen  DB satırı. */
 interface ParticipantRow {
   SiraNo: number;
   OgrenciSicilId: number;
@@ -78,8 +75,7 @@ export class ActivityService {
 
   private callDynamic<T>(params: Record<string, string | number>): Observable<T> {
     const requestParams: Record<string, string | number> = { point: this.point, ...params };
-    // Debug: giden isteğin şifrelenmemiş (okunabilir) hali — backend'e giden
-    // gerçek wire string, ApiHelperService.callEndpoint içinde AES ile şifrelenir.
+
     console.log('[ActivityService] giden istek:', requestParams);
     return this.api.callEndpoint<T>('Dynamic', requestParams);
   }

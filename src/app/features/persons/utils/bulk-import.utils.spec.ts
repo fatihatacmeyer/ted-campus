@@ -35,7 +35,6 @@ function person(partial: Partial<Person>): Person {
   return partial as Person;
 }
 
-/** İki öğrenci (239, 240), bir mevcut veli (500, TC 11111111111), 500–239 ilişkisi. */
 const PERSONS: Person[] = [
   person({ id: 239, userdef: 11, sicilno: '1001', personelno: '44444444444' }),
   person({ id: 240, userdef: 11, sicilno: '1002', personelno: '55555555555' }),
@@ -239,7 +238,6 @@ describe('validateImportRows (öğrenci)', () => {
 
 describe('validateImportRows (öğrenci güncelleme)', () => {
   const UPDATE = { updateExisting: true };
-  /** Sistemdeki öğrenci: tüm alanlar dolu, liste alanları ad/ham değer olarak. */
   const EXISTING = person({
     id: 300,
     userdef: 11,
@@ -325,7 +323,6 @@ describe('validateImportRows (öğrenci güncelleme)', () => {
     expect(row.status).toBe('update');
     expect(row.payload).toMatchObject({ bolum: '11', email: 'eski@ornek.com' });
     expect(row.issues[0].params).toEqual({ fields: 'Sınıf / Şube' });
-    // Ekranda liste ID'leri ad olarak gösterilir.
     expect(row.changes).toEqual([{ field: 'Sınıf / Şube', from: '5-A', to: '5-B' }]);
   });
 
@@ -436,7 +433,7 @@ describe('validateImportRows (veli)', () => {
     expect(row.status).toBe('exists');
     expect(row.payload).toBeNull();
     expect(row.existingId).toBe(500);
-    expect(row.relationStudentIds).toEqual([240]); // 239 zaten bağlı
+    expect(row.relationStudentIds).toEqual([240]);
     expect(row.alreadyLinked).toBe(1);
     expect(row.issues[0].key).toBe('BULK_IMPORT.ISSUE_EXISTS_PARENT_LINK');
   });

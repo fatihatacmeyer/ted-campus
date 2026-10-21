@@ -165,8 +165,6 @@
   color: var(--ted-text-secondary);
 }
 
-// Neden dökümü
-
 .reasons {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
@@ -291,8 +289,6 @@
     opacity: 1;
   }
 }
-
-// Tablo araçları
 
 .table-tools {
   display: flex;

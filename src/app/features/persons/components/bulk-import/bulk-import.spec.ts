@@ -75,7 +75,7 @@ describe('BulkImportComponent önizleme tablosu', () => {
     await fixture.whenStable();
     const table = fixture.debugElement.query((de) => de.componentInstance instanceof Table)
       .componentInstance as InstanceType<typeof Table>;
-    table.first = 50; // kullanıcı 3. sayfaya geçmiş
+    table.first = 50;
     fixture.detectChanges();
 
     component.reset();

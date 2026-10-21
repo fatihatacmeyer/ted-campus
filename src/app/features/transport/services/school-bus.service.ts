@@ -234,10 +234,6 @@ export class SchoolBusService {
       .pipe(map(this.mapStandardResponse));
   }
 
-  /**
-   * sp_ogrenciservisplancampus_s: öğrenci servis planları. Prosedürün tüm
-   * filtreleri opsiyonel; liste istemci tarafında tablo filtreleriyle daraltılır.
-   */
   getStudentBusPlans(): Observable<StudentBusPlan[]> {
     return this.api
       .callEndpoint<OgrenciServisPlanRow[]>('Dynamic', {
@@ -276,7 +272,6 @@ export class SchoolBusService {
       );
   }
 
-  /** Tüm Yön x Gün kombinasyonları tek işlemde eklenir; biri çakışırsa hiçbiri eklenmez. */
   addStudentBusPlan(
     ogrenciSicilId: number,
     plan: StudentBusPlanInput,
@@ -291,11 +286,6 @@ export class SchoolBusService {
       .pipe(map(this.mapStandardResponse));
   }
 
-  /**
-   * Tam güncelleme: prosedür tüm alanları yollanan değerle değiştirir (öğrenci hariç).
-   * Birden fazla yön/gün gönderilirse ilk kombinasyon bu kaydı günceller, kalanlar
-   * yeni kayıt olarak eklenir (tek işlemde; çakışmada hiçbiri değişmez).
-   */
   updateStudentBusPlan(
     id: number,
     plan: StudentBusPlanInput,
@@ -321,10 +311,6 @@ export class SchoolBusService {
       .pipe(map(this.mapStandardResponse));
   }
 
-  /**
-   * Boş değerler '' gider; prosedür '' / 0 / 1900-01-01'i NULL sayar.
-   * Yön ve hafta günleri ';' ile birleştirilir ('1;2', '2;4').
-   */
   private planParams(plan: StudentBusPlanInput) {
     return {
       ServisId: plan.servisId ?? '',
@@ -337,7 +323,6 @@ export class SchoolBusService {
     };
   }
 
-  /** API tarihini form/gönderim için yyyy-MM-dd yapar; boş/ayrıştırılamazsa null. */
   private toIsoDate(value: string | null | undefined): string | null {
     if (!value) return null;
     const match = /^\d{4}-\d{2}-\d{2}/.exec(value);
@@ -348,7 +333,6 @@ export class SchoolBusService {
     return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
   }
 
-  /** ISO / SQL tarihini dd.MM.yyyy (withTime ile HH:mm) olarak döndürür; ayrıştırılamazsa olduğu gibi. */
   private formatDate(value: string, withTime = false): string {
     const date = new Date(value);
     if (isNaN(date.getTime())) return value;
@@ -357,11 +341,6 @@ export class SchoolBusService {
     return withTime ? `${day} ${pad(date.getHours())}:${pad(date.getMinutes())}` : day;
   }
 
-  /**
-   * sp_serviskullanicilarcampus_s: servis yetkililerinin listesi.
-   * (Prosedür @Ara ile isim araması da destekler; liste küçük olduğu için
-   * arama tablonun kendi arama kutusunda istemci tarafında yapılır.)
-   */
   getServiceAuthorities(): Observable<ServiceAuthority[]> {
     return this.api
       .callEndpoint<ServisKullaniciRow[]>('Dynamic', {

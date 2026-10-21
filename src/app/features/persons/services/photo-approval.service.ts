@@ -4,7 +4,6 @@ import { map } from 'rxjs/operators';
 import { ApiHelperService } from '../../../core/services/api-helper.service';
 import { unwrapResponse } from '../../../shared/utils/response.utils';
 
-// SP'den dönen kolonların birebir karşılığı
 export interface PhotoApproval {
   Id: number;
   SicilId: number | null;
@@ -25,7 +24,6 @@ export interface PhotoApproval {
 export class PhotoApprovalService {
   private api = inject(ApiHelperService);
 
-  // Sadece OnayDurumu = 0 (Bekliyor) olanları çeker
   getPendingPhotos(): Observable<PhotoApproval[]> {
     return this.api
       .callEndpoint<PhotoApproval[]>('Dynamic', {
@@ -36,7 +34,6 @@ export class PhotoApprovalService {
       .pipe(map((rows) => rows || []));
   }
 
-  // Fotoğrafı onayla (1) veya reddet (-1)
   updatePhotoStatus(
     profilFotografId: number,
     onayDurumu: number,

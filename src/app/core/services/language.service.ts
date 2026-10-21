@@ -11,10 +11,6 @@ export const SUPPORTED_LANGS: AppLang[] = ['tr', 'en'];
 
 const LANG_STORAGE_KEY = 'ted_lang';
 
-/**
- * Dil yönetimi: ngx-translate, PrimeNG locale ve tarayıcı başlığını
- * tek noktadan senkronize eder. Seçim localStorage'da kalıcıdır.
- */
 @Injectable({
   providedIn: 'root',
 })
@@ -23,10 +19,8 @@ export class LanguageService {
   private primeNG = inject(PrimeNG);
   private router = inject(Router);
 
-  /** Aktif route'un document.title için kullandığı i18n anahtarı. */
   private titleKey = 'APP.TITLE';
 
-  /** Uygulama başlangıcında bir kez çağrılır (app initializer). */
   init(): void {
     this.applyLang(this.readInitialLang());
     this.trackRouteTitles();
@@ -43,7 +37,6 @@ export class LanguageService {
     this.updateTitle(this.titleKey);
   }
 
-  /** Kayıtlı tercih → tarayıcı dili → 'tr' fallback. */
   private readInitialLang(): AppLang {
     const saved = localStorage.getItem(LANG_STORAGE_KEY);
     if (saved === 'tr' || saved === 'en') return saved;
@@ -54,7 +47,6 @@ export class LanguageService {
 
   private applyLang(lang: AppLang): void {
     this.translateService.use(lang);
-    // CSS text-transform: uppercase (i → İ, ı → I) tarayıcıya dilini bildirmeden doğru çalışmaz
     document.documentElement.lang = lang;
     this.primeNG.setTranslation(lang === 'tr' ? PRIME_NG_TR : PRIME_NG_EN);
   }
@@ -67,7 +59,6 @@ export class LanguageService {
     this.translateService.onLangChange.subscribe(() => this.updateTitle(this.titleKey));
   }
 
-  /** Route verisindeki titleKey'i (data.titleKey) bulur; yoksa APP.TITLE. */
   private readTitleFromRoute(): void {
     let route = this.router.routerState.root;
     while (route.firstChild) {

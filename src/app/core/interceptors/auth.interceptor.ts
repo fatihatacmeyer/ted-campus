@@ -8,31 +8,8 @@ import { catchError, throwError } from 'rxjs';
 import { AuthService } from '../services/auth.service';
 import { NotificationService } from '../services/notification.service';
 
-/**
- * Bu token'ı true yapan isteklerde interceptor hata toast'u göstermez.
- * Çağrı noktası (component/service) hatayı kendisi ele alıp kullanıcıya
- * özel bir mesaj gösterdiğinde çift toast'u önlemek için kullanılır.
- *
- * Kullanım:
- *   this.api.callEndpoint<T>('Dynamic', params, {
- *     context: new HttpContext().set(SILENT_ERROR, true),
- *   });
- */
 export const SILENT_ERROR = new HttpContextToken<boolean>(() => false);
 
-/**
- * Outgoing isteklere otomatik olarak kullanıcının auth token'ını ekler.
- * Login endpoint'ini hariç tutar (auth header'ı gerektirmez).
- *
- * Ayrıca HTTP hatalarını global ölçekte normalize eder:
- *   - 401/403  → UNAUTHORIZED toast + logout (oturum geçersiz/eksik)
- *   - status 0 → NETWORK_ERROR toast (sunucuya ulaşılamadı / CORS / timeout)
- *   - 5xx      → SYSTEM_ERROR toast (beklenmeyen sunucu hatası)
- *   - diğer 4xx → toast GÖSTERMEZ: iş hataları çağrı noktasında ele alınır
- *
- * Hata her durumda aşağıya (caller'a) yeniden fırlatılır; çağrı noktası
- * kendi hata akışını (inline errorMessage vb.) kaybetmez.
- */
 export const authInterceptor: HttpInterceptorFn = (req, next) => {
   if (req.url.includes('/Login')) {
     return next(req);

@@ -34,12 +34,10 @@ import { PersonLinkedSectionComponent } from '../person-linked-section/person-li
 import { linkedKindKey, linkedTargetUserdef } from '../../utils/linked-person.utils';
 import { PersonFormOptions } from './person-form-options.service';
 
-/** Form alanlarının tek kaynağı (single source of truth) — alan adları yalnızca burada tanımlanır. */
 interface PersonFormFieldMeta {
   key: string;
   required?: boolean;
   isDate?: boolean;
-  /** Form ilk değeri — yalnızca varsayılandan farklıysa verilir (varsayılan: '') */
   initValue?: unknown;
 }
 
@@ -99,7 +97,6 @@ export class PersonFormComponent implements OnChanges, OnInit {
   @Output() visibleChange = new EventEmitter<boolean>();
   @Output() saved = new EventEmitter<unknown>();
 
-  /** Düzenleme modunda mı? ngOnChanges tarafından ayarlanır. */
   isEditMode = false;
 
   private fb = inject(FormBuilder);
@@ -109,7 +106,6 @@ export class PersonFormComponent implements OnChanges, OnInit {
   private translate = inject(TranslateService);
   protected readonly options = inject(PersonFormOptions);
 
-  /** Veli/çocuk bölümü; yalnızca öğrenci ve veli formlarında (ve form açıkken) vardır. */
   private readonly linked = viewChild(PersonLinkedSectionComponent);
 
   form: FormGroup = this.fb.group(this.buildFormControls());
@@ -122,12 +118,10 @@ export class PersonFormComponent implements OnChanges, OnInit {
       } else if (field.isDate) {
         controls[field.key] = [null as Date | null];
       } else {
-        // DİKKAT: `null ?? ''` === '' — initValue null ise null kalmalı!
         controls[field.key] = [field.initValue !== undefined ? field.initValue : ''];
       }
     }
 
-    // İlişkili kişi bölümünün (PersonLinkedSectionComponent) kullandığı alanlar.
     controls['linkedPersonId'] = [null];
     controls['yeniLinkedAd'] = [''];
     controls['yeniLinkedSoyad'] = [''];
@@ -143,7 +137,7 @@ export class PersonFormComponent implements OnChanges, OnInit {
     return {
       show: {
         personelno: true, //isOgrenci || isOgretmen,
-        kurumsal: isOgrenci || isOgretmen, // Veli'nin sınıfı, branşı olmaz
+        kurumsal: isOgrenci || isOgretmen,
         pozisyon: !isOgrenci,
         gorev: !isOgrenci,
       },
@@ -195,15 +189,14 @@ export class PersonFormComponent implements OnChanges, OnInit {
   private patchFormForEdit(): void {
     const p = this.editPerson!;
 
-    // Telefon numarasını p-inputMask'in '0 (999)...' formatına uyması için normalize et
     let cleanPhone = p.ceptelefon || '';
-    cleanPhone = cleanPhone.replace(/\D/g, ''); // '+' ve boşlukları at, sadece rakam kalsın
+    cleanPhone = cleanPhone.replace(/\D/g, '');
 
     if (cleanPhone.startsWith('90') && cleanPhone.length >= 12) {
-      cleanPhone = cleanPhone.substring(2); // Baştaki '90' ülke kodunu temizle
+      cleanPhone = cleanPhone.substring(2);
     }
     if (cleanPhone.startsWith('0')) {
-      cleanPhone = cleanPhone.substring(1); // Maske içindeki statik '0' ile çakışmaması için baştaki sıfırı at
+      cleanPhone = cleanPhone.substring(1);
     }
 
     this.form.patchValue({
@@ -264,7 +257,6 @@ export class PersonFormComponent implements OnChanges, OnInit {
     this.photoFileName = '';
   }
 
-  /** İlişki yönetimi bu formda aktif mi (Öğrenci veya Veli). */
   get isRelationMode(): boolean {
     return this.userdef === UserDef.Ogrenci || this.userdef === UserDef.Veli;
   }
@@ -280,7 +272,6 @@ export class PersonFormComponent implements OnChanges, OnInit {
     const formVals = this.form.value;
     const linked = this.linked();
 
-    // Eğer YENİ ilişkili kişi oluşturuluyorsa (öğrenci düzenlerken veli, veli düzenlerken öğrenci)
     if (linked?.isCreatingNewLinked) {
       const kind = this.translate.instant(linkedKindKey(this.userdef));
       const yeniLinkedPayload: PersonInsertRequest = {
@@ -290,7 +281,6 @@ export class PersonFormComponent implements OnChanges, OnInit {
         userdef: linkedTargetUserdef(this.userdef),
       };
 
-      // 1. ÖNCE YENİ KİŞİYİ KAYDET
       this.personService.insertPerson(yeniLinkedPayload).subscribe({
         next: (yeniRes) => {
           const yeniResult = unwrapResponse<Person>(yeniRes);
@@ -311,7 +301,6 @@ export class PersonFormComponent implements OnChanges, OnInit {
             return;
           }
 
-          // 2. ARDINDAN DÜZENLENEN KİŞİYİ KAYDET VE İLİŞKİYİ KUR
           linked.addPendingLinked(yeniLinkedId);
           linked.stopCreatingNew();
           this.savePersonAndLink();
@@ -325,7 +314,6 @@ export class PersonFormComponent implements OnChanges, OnInit {
       return;
     }
 
-    // Mevcut ilişkili kişi seçildiyse (ekleme alanı) bekleyen eklemelere al.
     if (this.isRelationMode) {
       const mevcutLinkedId = formVals.linkedPersonId ? Number(formVals.linkedPersonId) : null;
       if (mevcutLinkedId) linked?.addPendingLinked(mevcutLinkedId);
@@ -334,11 +322,6 @@ export class PersonFormComponent implements OnChanges, OnInit {
     this.savePersonAndLink();
   }
 
-  /**
-   * Öğrenciyi kaydeder, ardından bekleyen ilişki işlemlerini (sil → değiştir → ekle)
-   * sırayla uygular. İlişki işlemleri öğrenci kaydına bağlı olduğu için öğrenci
-   * (insert/update) başarılı olduktan sonra çalıştırılır.
-   */
   private savePersonAndLink(): void {
     const payload = this.buildPayload(this.form.value);
 
@@ -394,7 +377,6 @@ export class PersonFormComponent implements OnChanges, OnInit {
     this.close();
   }
 
-  /** PERSON_FORM_FIELDS metadata'sından insert/update payload'ını üretir. */
   private buildPayload(v: Record<string, unknown>): PersonInsertRequest {
     const payload: Record<string, unknown> = {
       userdef: this.userdef,

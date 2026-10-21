@@ -77,7 +77,6 @@ describe('BusesTabComponent', () => {
     await vi.waitFor(() => expect(dialogs()).toHaveLength(1));
     expect(dialogs()[0].querySelector('form')).not.toBeNull();
 
-    // p-dialog kapat butonu -> visibleChange(false) -> closeBusForm()
     fixture.nativeElement.querySelector('.p-dialog-close-button')?.click();
     fixture.detectChanges();
     await fixture.whenStable();

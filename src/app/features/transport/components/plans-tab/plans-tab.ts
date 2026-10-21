@@ -33,7 +33,6 @@ import { BusStoreService } from '../../services/bus-store.service';
 import { SchoolBusService } from '../../services/school-bus.service';
 import { boldText, injectI18nVersion } from '../../utils/transport.utils';
 
-/** Planlar sekmesi: öğrenci servis planları (sp_ogrenciservisplancampus_s). */
 @Component({
   selector: 'app-plans-tab',
   standalone: true,
@@ -67,19 +66,16 @@ export class PlansTabComponent implements OnInit {
   protected readonly studentBusPlans = signal<StudentBusPlan[]>([]);
   protected readonly studentBusPlansLoading = signal(false);
 
-  /** Ekle/düzenle formu ve silme onayı. */
   protected readonly planFormVisible = signal(false);
   protected readonly planEditing = signal<StudentBusPlan | null>(null);
   protected readonly planDeleteVisible = signal(false);
   protected readonly planDeleting = signal<StudentBusPlan | null>(null);
   protected readonly planSaving = signal(false);
 
-  /** Toplu silme: tabloda işaretlenen planlar ve onay penceresi. */
   protected readonly selectedPlans = signal<StudentBusPlan[]>([]);
   protected readonly planBulkDeleteVisible = signal(false);
   protected readonly planBulkDeleting = signal(false);
 
-  /** busId 0 = "servis kullanmıyor"; direction ve weekday çoklu seçimdir (dizi). */
   protected readonly planForm: FormGroup = this.fb.group({
     studentId: [null, Validators.required],
     busId: [0, Validators.required],
@@ -147,7 +143,6 @@ export class PlansTabComponent implements OnInit {
     })),
   );
 
-  /** Plan yönleri (çoklu seçim: ikisi birden seçilirse her yön ayrı kayıt olur). */
   protected readonly planDirectionOptions = computed(() => {
     this.i18nVersion();
     return [
@@ -203,7 +198,6 @@ export class PlansTabComponent implements OnInit {
       .subscribe(() => this.applyPlanRepeatValidators());
   }
 
-  /** Tek günlükte tarih, haftalıkta hafta günü zorunlu. */
   private applyPlanRepeatValidators(): void {
     const single = this.planForm.get('repeatType')?.value === 'single';
     const date = this.planForm.get('date')!;
@@ -218,7 +212,6 @@ export class PlansTabComponent implements OnInit {
     return this.planForm.get('repeatType')?.value === 'single';
   }
 
-  /** Haftalık planda bitiş, başlangıçtan önce olamaz (yyyy-MM-dd metin karşılaştırması yeterli). */
   protected planDateRangeInvalid(): boolean {
     if (this.planIsSingle()) return false;
     const { startDate, endDate } = this.planForm.value;
@@ -298,7 +291,6 @@ export class PlansTabComponent implements OnInit {
       next: (result) => {
         this.planSaving.set(false);
         if (result.sonuc === 1) {
-          // Prosedür tek işlemde çalışır; yalnızca başarıda liste değişir.
           this.loadStudentBusPlans();
           this.notification.success(result.sunucuCevap || 'SCHOOL_BUS.MSG_OP_SUCCESS');
           this.closePlanForm();
@@ -333,10 +325,6 @@ export class PlansTabComponent implements OnInit {
     this.planBulkDeleteVisible.set(false);
   }
 
-  /**
-   * Seçili planları siler. Silme prosedürü tek kayıt aldığı için her plan ayrı
-   * istek olarak gider (atomik değil); başarısız olanlar sayılıp özetlenir.
-   */
   protected deleteSelectedPlans(): void {
     const targets = this.selectedPlans();
     if (targets.length === 0 || this.planBulkDeleting()) return;
@@ -406,7 +394,6 @@ export class PlansTabComponent implements OnInit {
       .subscribe({
         next: (rows) => {
           this.studentBusPlans.set(rows);
-          // Satır nesneleri yenilendiği için eski seçim (referans) geçersiz.
           this.selectedPlans.set([]);
           this.studentBusPlansLoading.set(false);
         },

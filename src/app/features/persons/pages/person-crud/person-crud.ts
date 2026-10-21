@@ -59,7 +59,6 @@ import { PageHeaderComponent } from '../../../../shared/components/page-header/p
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class PersonCrudComponent implements OnInit {
-  /** Route'dan gelen userdef değeri. */
   readonly USERDEF: UserDef;
   readonly UserDef = UserDef;
 
@@ -80,26 +79,18 @@ export class PersonCrudComponent implements OnInit {
   showBusAssignDialog = false;
   busAssignPerson: Person | null = null;
 
-  /** Toplu aktarım diyaloğu (yalnızca öğrenci sayfası). Aktarım sürerken kapatılamaz. */
   showBulkImport = false;
   bulkImporting = false;
 
-  /**
-   * Toplu bilgi gönderimi: tablo varsayılan olarak seçimsizdir; "Bilgileri Toplu Gönder"
-   * ile çoklu seçim açılır. Seçim satır referansıyla tutulduğu için liste yenilenince sıfırlanır.
-   */
   bulkSendMode = false;
   bulkSendSelected: Person[] = [];
   showBulkSendConfirm = false;
   bulkSending = false;
 
-  /** Veli sayfası: veliId → çocukları (sp_relationcampus_s tip=0'dan tek çağrıda kurulur). */
   childrenMap = new Map<number, Person[]>();
 
-  /** Öğrenci sayfası: ogrenciId → velileri (aynı getAllRelations çağrısında kurulur). */
   parentsMap = new Map<number, Person[]>();
 
-  /** Tablo sütunları — userdef'a göre başlık override + export hook'ları uygulanır. */
   columns: ColumnDef<Person>[] = PERSON_COLUMNS.map((c) => ({ ...c }));
 
   readonly PERSON_DEFAULT_FIELDS = PERSON_DEFAULT_FIELDS;
@@ -114,8 +105,6 @@ export class PersonCrudComponent implements OnInit {
   constructor() {
     this.USERDEF = Number(this.route.snapshot.data['userDef']) as UserDef;
   }
-
-  // Derived labels
 
   get pageTitleKey(): string {
     return getUserDefLabelKey(this.USERDEF) + '_PLURAL';
@@ -140,12 +129,10 @@ export class PersonCrudComponent implements OnInit {
 
   readonly hasProfileModal = true;
 
-  /** İşlem kolu sadece Ogrenci sayfasında gösterilir (İzin Ata). */
   get showActionsColumn(): boolean {
     return this.USERDEF === UserDef.Ogrenci;
   }
 
-  /** Excel ile toplu aktarım Öğrenci ve Veli sayfalarında vardır. */
   get canBulkImport(): boolean {
     return this.USERDEF === UserDef.Ogrenci || this.USERDEF === UserDef.Veli;
   }
@@ -163,12 +150,10 @@ export class PersonCrudComponent implements OnInit {
     this.cdr.markForCheck();
   }
 
-  /** Aktarım sonrası listeyi (ve ilişki haritalarını) yeniler. */
   onBulkImported(): void {
     this.fetchPersonList();
   }
 
-  /** Ogrenci ve Veli sayfalarında allPersons gereklidir. */
   get needsAllPersons(): boolean {
     return this.USERDEF !== UserDef.Ogretmen;
   }
@@ -187,7 +172,7 @@ export class PersonCrudComponent implements OnInit {
         { field: 'veliAdSoyad', header: 'PERSON_COLUMNS.CHILDREN' },
         { field: 'ogrencilerSinif', header: 'PERSON_COLUMNS.STUDENTS_CLASS' },
         { field: 'ogrenciKampusleri', header: 'PERSON_COLUMNS.CAMPUS' },
-        { field: 'personelno', header: 'PERSON_COLUMNS.TC' }, // Sütun adını TC Kimlik yaptık
+        { field: 'personelno', header: 'PERSON_COLUMNS.TC' },
         { field: 'sicilno', header: 'PERSON_COLUMNS.SICIL_NO' },
       ];
     }
@@ -237,8 +222,6 @@ export class PersonCrudComponent implements OnInit {
     return this.PERSON_DEFAULT_FIELDS;
   }
 
-  // Column config
-
   private applyColumnOverrides(): void {
     for (const override of this.columnOverrides) {
       const col = this.columns.find((c) => c.field === override.field);
@@ -246,7 +229,6 @@ export class PersonCrudComponent implements OnInit {
     }
   }
 
-  /** Sınıf sütunlarında seviye/şube çoklu seçim filtresi (Veli: çocukların sınıfları, Öğrenci: kendi sınıfı). */
   private applyClassFilters(): void {
     const field =
       this.USERDEF === UserDef.Veli
@@ -258,7 +240,6 @@ export class PersonCrudComponent implements OnInit {
     if (col) col.filterType = 'class';
   }
 
-  /** Dışa aktarmada görünen hücre değerini değil, kişiye özel değeri kullan. */
   private applyExportHooks(): void {
     const setHook = (field: string, fn: (p: Person) => string): void => {
       const col = this.columns.find((c) => c.field === field);
@@ -270,13 +251,10 @@ export class PersonCrudComponent implements OnInit {
     }
     setHook('indirimorani', (p) => (p.indirimorani != null ? `${p.indirimorani}%` : ''));
 
-    // Öğrenci ("Veliler") ve Veli ("Çocuklar") sayfalarında ilgili kolon excel'e ad listesi olarak yazılsın
     if (this.USERDEF !== UserDef.Ogretmen) {
       setHook('veliAdSoyad', (p) => this.childrenSummary(p));
     }
   }
-
-  // Lifecycle
 
   ngOnInit() {
     this.applyColumnOverrides();
@@ -284,8 +262,6 @@ export class PersonCrudComponent implements OnInit {
     this.applyExportHooks();
     this.fetchPersonList();
   }
-
-  // Data
 
   fetchPersonList(): void {
     this.isLoading = true;
@@ -303,7 +279,6 @@ export class PersonCrudComponent implements OnInit {
           }
           this.persons = data.filter((p) => p.userdef === this.USERDEF);
 
-          // Öğrenci ("Veliler") ve Veli ("Çocuklar") sayfaları için ilişki haritalarını kur
           if (this.needsAllPersons) {
             this.loadRelationsMap();
           } else {
@@ -342,12 +317,10 @@ export class PersonCrudComponent implements OnInit {
 
             if (!veli && !child) continue;
 
-            // childrenMap: eski davranış korunur (çocuk çözülebilen her satır)
             if (child) {
               if (!this.childrenMap.has(veliId)) this.childrenMap.set(veliId, []);
               this.childrenMap.get(veliId)!.push(child);
             }
-            // parentsMap: ters yön — veli çözülebilen her satır
             if (veli) {
               if (!this.parentsMap.has(ogrenciId)) this.parentsMap.set(ogrenciId, []);
               this.parentsMap.get(ogrenciId)!.push(veli);
@@ -397,9 +370,6 @@ export class PersonCrudComponent implements OnInit {
       });
   }
 
-  // Toplu bilgi gönderimi
-
-  /** Bilgi gönderimi (tekli ve toplu) yalnızca Öğrenci ve Veli sayfalarında vardır. */
   get canSendLoginInfo(): boolean {
     return this.USERDEF === UserDef.Ogrenci || this.USERDEF === UserDef.Veli;
   }
@@ -408,18 +378,15 @@ export class PersonCrudComponent implements OnInit {
     return this.bulkSendSelected.length > LOGIN_SEND_MAX;
   }
 
-  /** Onay penceresindeki ad listesi (ilk 5 ad + kalan sayısı). */
   get bulkSendNames(): { shown: string; rest: number } {
     return summarizeNames(this.bulkSendSelected.map((p) => p.adsoyad));
   }
 
-  /** "Bilgileri Toplu Gönder": tabloda çoklu seçimi açar. */
   startBulkSend(): void {
     this.bulkSendMode = true;
     this.bulkSendSelected = [];
   }
 
-  /** Seçim modundan çıkar ve seçimi temizler (iptal, başarılı gönderim, liste yenileme). */
   exitBulkSend(): void {
     this.bulkSendMode = false;
     this.bulkSendSelected = [];
@@ -461,7 +428,6 @@ export class PersonCrudComponent implements OnInit {
             this.notification.success(result.sunucuCevap || 'PERSON_CRUD.BULK_SEND_SUCCESS');
             this.exitBulkSend();
           } else {
-            // Hata: seçim korunur, kullanıcı tekrar deneyebilir
             this.notification.error(result.sunucuCevap || 'PERSON_CRUD.LOGIN_NOT_FOUND');
             this.showBulkSendConfirm = false;
             this.cdr.markForCheck();
@@ -475,13 +441,6 @@ export class PersonCrudComponent implements OnInit {
       });
   }
 
-  /**
-   * veliAdSoyad kolon hücresi:
-   *   - Öğrenci sayfası → veli adları (ilk 2 + kalan sayısı) — parentsMap'ten
-   *   - Veli sayfası → çocuk adları (ilk 2 + kalan sayısı) — childrenMap'ten
-   *   - Öğretmen sayfası → tek veli adı (sicilcampus TOP(1), eski davranış)
-   * İlişki haritası boşsa sicil listesinden gelen tek veli adına düşülür.
-   */
   childrenSummary(p: Person): string {
     if (this.USERDEF === UserDef.Ogretmen) {
       return p.veliAdSoyad || '-';
@@ -494,10 +453,6 @@ export class PersonCrudComponent implements OnInit {
     return `${names.slice(0, 2).join(', ')} +${names.length - 2} daha`;
   }
 
-  /**
-   * Satırda tüm ilişkili kişi adlarını tooltip olarak döndürür (boşsa null → tooltip yok).
-   * Öğrenci → veliler, Veli → çocuklar, Öğretmen → tooltip yok.
-   */
   childrenTooltip(p: Person): string | null {
     if (this.USERDEF === UserDef.Ogretmen) return null;
     const linked =
@@ -505,15 +460,12 @@ export class PersonCrudComponent implements OnInit {
     return linked.length ? linked.map((k) => k.adsoyad).join('\n') : null;
   }
 
-  // Dialog open / close
-
   openAddDialog(): void {
     this.editPerson = null;
     this.showAddDialog = true;
   }
 
   onRowClick(person: Person): void {
-    // Seçim modunda satır tıklaması profil açmaz; seçim checkbox ile yapılır
     if (this.bulkSendMode) return;
     this.selectedProfilePerson = person;
     this.showProfileModal = true;
@@ -528,8 +480,6 @@ export class PersonCrudComponent implements OnInit {
     this.fetchPersonList();
   }
 
-  // Exit / Restore
-
   onExitDialogClose(): void {
     this.exitPerson = null;
   }
@@ -539,9 +489,6 @@ export class PersonCrudComponent implements OnInit {
     this.fetchPersonList();
   }
 
-  // Leave
-
-  /** İzin Ata — satır tıklamasını tetiklemesin diye olay yayılımı durdurulur. */
   onLeaveRequest(event: Event, person: Person): void {
     event.stopPropagation();
     this.leavePerson = person;
@@ -559,8 +506,6 @@ export class PersonCrudComponent implements OnInit {
 
     this.fetchPersonList();
   }
-
-  // Profile modal
 
   onLinkedPersonClick(person: Person): void {
     this.selectedProfilePerson = person;

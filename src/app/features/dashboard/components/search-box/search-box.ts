@@ -3,7 +3,6 @@ import { FormsModule } from '@angular/forms';
 import { TranslatePipe } from '@ngx-translate/core';
 import { InputTextModule } from 'primeng/inputtext';
 
-/** İsimden arama kutusu: `[(value)]` ile bağlanır, doluyken temizle butonu gösterir. */
 @Component({
   selector: 'app-search-box',
   standalone: true,

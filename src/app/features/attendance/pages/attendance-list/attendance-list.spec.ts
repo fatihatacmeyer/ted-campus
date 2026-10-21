@@ -16,7 +16,6 @@ describe('AttendanceListComponent', () => {
     deleteStudentLeave: ReturnType<typeof vi.fn>;
   };
 
-  /** Test satırı üretici. */
   const mockRow = (overrides: Partial<StudentAttendanceRow> = {}): StudentAttendanceRow => ({
     sicilId: 1,
     sicilNo: '100',
@@ -109,7 +108,6 @@ describe('AttendanceListComponent', () => {
   });
 
   it('computePeriodRange: hafta ay sınırını aşar (29 Haz – 5 Tem 2026)', () => {
-    // 30 Haziran 2026 Salı — hafta 29 Haziran Pazartesi başlar, 5 Temmuz Pazar biter.
     const r = computePeriodRange('hafta', new Date(2026, 5, 30));
     expect(r.baslangic).toBe('2026-06-29');
     expect(r.bitis).toBe('2026-07-05');

@@ -17,11 +17,6 @@ export const TEST_APP_CONFIG: AppConfig = {
   photoBaseUrl: 'http://localhost/photos',
 };
 
-/**
- * Bileşen testleri için ortak altyapı: sahte HTTP, çeviri servisi, uygulama ayarı ve bildirim.
- * Servisler gerçek HTTP'ye gitmesin diye ya bu sağlayıcıyla (istek yanıtsız kalır)
- * ya da servis stub'ıyla birlikte kullanılmalıdır.
- */
 export function provideAppTesting(): (Provider | EnvironmentProviders)[] {
   return [
     provideHttpClient(),

@@ -4,11 +4,6 @@ import {
   uniqueFilterOptions,
 } from '../components/customizable-table/customizable-table';
 
-/**
- * Person listeleri için ortak sütun tanımları.
- * `person-crud` sayfası bu tanımları kullanır; userdef'a göre başlık
- * override'ları ve dışa aktarma hook'ları sayfada uygulanır.
- */
 export const PERSON_COLUMNS: ColumnDef<Person>[] = [
   { field: 'ad', header: 'PERSON_COLUMNS.AD', sortable: true, alwaysVisible: true },
   { field: 'soyad', header: 'PERSON_COLUMNS.SOYAD', sortable: true, alwaysVisible: true },
@@ -61,7 +56,6 @@ export const PERSON_COLUMNS: ColumnDef<Person>[] = [
   { field: 'ogrenciKampusleri', header: 'PERSON_COLUMNS.STUDENT_CAMPUSES', sortable: true },
 ];
 
-/** Varsayılan görünür sütunlar (kullanıcı tercihi olmadığında / sıfırlamada) */
 export const PERSON_DEFAULT_FIELDS: string[] = [
   'ad',
   'soyad',
