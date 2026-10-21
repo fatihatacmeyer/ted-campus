@@ -11,9 +11,8 @@ export const adminGuard: CanActivateFn = () => {
   const isAdmin = user?.admin === true; //|| user?.admin === 1;
 
   if (isAdmin) {
-    return true; // Adminse geçişe izin ver
+    return true;
   }
 
-  // Admin değilse, zorla anasayfaya (dashboard) yönlendir
   return router.parseUrl('/home');
 };

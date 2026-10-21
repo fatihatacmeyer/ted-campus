@@ -7,10 +7,6 @@ import { PersonService } from '../../persons/services/person.service';
 import { Bus } from '../models/school-bus.model';
 import { SchoolBusService } from './school-bus.service';
 
-/**
- * Servis sayfasındaki sekmelerin ortak kullandığı listeler (araçlar, öğrenciler, yetkili sicilleri).
- * Sayfa bileşeninde sağlandığı için sayfadan çıkınca state de yok olur.
- */
 @Injectable()
 export class BusStoreService {
   private readonly busService = inject(SchoolBusService);
@@ -20,12 +16,10 @@ export class BusStoreService {
 
   readonly buses = signal<Bus[]>([]);
   readonly students = signal<Person[]>([]);
-  /** Servise atanabilecek yetkili sicilleri (Atamalar sekmesi seçenekleri). */
   readonly authorities = signal<Person[]>([]);
 
   private busesLoaded = false;
 
-  /** Araç listesini her zaman yeniden okur (araç/atama değişikliklerinden sonra). */
   loadBuses(): void {
     this.busService
       .getBuses()
@@ -39,7 +33,6 @@ export class BusStoreService {
       });
   }
 
-  /** Araçlar daha önce yüklenmediyse yükler; sonraki değişiklikler zaten `loadBuses` ile yenilenir. */
   ensureBuses(): void {
     if (!this.busesLoaded) this.loadBuses();
   }
@@ -67,7 +60,6 @@ export class BusStoreService {
       });
   }
 
-  /** Yetkili eklendi/güncellendi/çıkış verildi: atama seçenekleri bir sonraki açılışta yeniden yüklensin. */
   invalidateAuthorities(): void {
     this.authorities.set([]);
   }

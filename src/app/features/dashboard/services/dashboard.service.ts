@@ -2,18 +2,6 @@ import { Injectable, inject } from '@angular/core';
 import { Observable, map } from 'rxjs';
 import { ApiHelperService } from '../../../core/services/api-helper.service';
 
-/**
- * sp_DashboardCampus_s'ten dönen ham DB satırı (Türkçe/DB sütun adları).
- *
- * Backend'deki generic "Dynamic" dispatcher, point + islemtipi kombinasyonuna
- * göre ilgili prosedürü çağırıyor:
- *   point=DashboardCampus & islemtipi=s -> sp_DashboardCampus_s (özet sayılar)
- *
- * Prosedür tek satır döner; Sicil -> UserList -> sys_userdef zincirinden
- * türü OGRENCI/VELI olan HERKES sayılır (LoginMeCampus'ta hesabı olsun
- * olmasın). "Okulda" kolonları, son geçiş kaydı (Pool/Terminaller) giriş
- * (IO=2) olan kişileri ifade eder.
- */
 interface DashboardCampusRow {
   OgrenciSayisi?: number | null;
   VeliSayisi?: number | null;
@@ -23,16 +11,10 @@ interface DashboardCampusRow {
   ToplamOkuldaSayisi?: number | null;
 }
 
-/**
- * sp_KvkkOnayCampus_s'ten dönen tek satır: KVKK onaylayan (uygulamayı kurup
- * giriş yapan) kişi sayıları. Kişi başı tek sayılır; vekillerin Sicil kaydı yok.
- *   point=KvkkOnayCampus & islemtipi=s -> sp_KvkkOnayCampus_s
- */
 interface KvkkOnayRow {
   OgrenciOnaySayisi?: number | null;
   VeliOnaySayisi?: number | null;
   VekilOnaySayisi?: number | null;
-  /** Servis yetkilisi (UserDef=YETKILI) onayı; ToplamOnaySayisi'na dahil değil. */
   ServisOnaySayisi?: number | null;
   ToplamOnaySayisi?: number | null;
 }
@@ -41,7 +23,6 @@ export interface KvkkStats {
   studentApproved: number;
   parentApproved: number;
   proxyApproved: number;
-  /** Servis yetkilisi onayı; totalApproved'a dahil değildir. */
   serviceApproved: number;
   totalApproved: number;
 }
@@ -73,7 +54,6 @@ interface AbsenteeRaw {
   Okul: string;
 }
 
-/** Kartlarda gösterilen özet istatistikler (null-safe sayılar). */
 export interface DashboardCampusStats {
   studentCount: number;
   parentCount: number;
@@ -110,8 +90,6 @@ export interface Absentee {
   schoolName: string;
 }
 
-/** "O an okulda olan" kişi listesi (sp_DashboardKisilerCampus_s). */
-/** Kişi türü filtresi / değeri. Backend karşılıkları: OGRENCI / VELI. */
 export type PersonType = 'STUDENT' | 'PARENT';
 
 export interface InsidePerson {
@@ -122,7 +100,6 @@ export interface InsidePerson {
   schoolName: string | null;
   registryNo: string | null;
   isInside: boolean;
-  /** Veli satırında velinin aktif öğrencileri ("Ad Soyad (Sınıf), ..."); öğrencide null. */
   students: string | null;
 }
 
@@ -135,28 +112,17 @@ export interface AccessTransaction {
   badgeLabel: string;
   cardId: string;
   time: string;
-  /** Olay zamanı (ms); tarih filtresi için. Ayrıştırılamazsa null. */
   timestamp: number | null;
-  /** Kişinin sınıfı / kampüsü (tanımsızsa null). Vekilde bağlı olduğu öğrencinin. */
   className: string | null;
   campusName: string | null;
-  /** Yön bilinmiyorsa (vekil geçişinde yön kaydı yoksa) null. */
   direction: 'in' | 'out' | null;
   device: string;
-  /** 'service': servis geçişi (OlayKodu 4102 + terminal 55/56) — hata değildir. */
   result: 'success' | 'failed' | 'service';
-  /** Vekil geçişi: Sonuc serbest metindir (log Response), çevrilmez. */
   isProxy: boolean;
   rawDirectionText: string;
   rawResultText: string;
 }
 
-/**
- * sp_SonHareketlerCampus_s'ten dönen ham satır. Öğrenci/veli geçişlerine
- * (pool) ek olarak vekil geçişleri de gelir (userDef = 'Vekil'; SicilNo,
- * CardID boş, Ad/terminalAdi yön/terminal kaydı yoksa NULL olabilir).
- * Sonuc: 'Servis' | olay açıklaması | vekil Response metni | 'Başarısız: ...'.
- */
 interface RecentTransactionRow {
   userDef: string;
   adSoyad: string;
@@ -170,16 +136,6 @@ interface RecentTransactionRow {
   Sonuc: string | null;
 }
 
-/**
- * sp_DashboardKisilerCampus_s'ten dönen ham DB satırı (Türkçe/DB sütun adları).
- *
- * Backend'deki generic "Dynamic" dispatcher, point + islemtipi kombinasyonuna
- * göre ilgili prosedürü çağırıyor:
- *   point=DashboardKisilerCampus & islemtipi=s -> sp_DashboardKisilerCampus_s
- *
- * SadeceOkulda=1 sabiti ile yalnızca son geçişi giriş (IO=2) olan, yani "o an
- * okulda olan" kişiler döner; kayıtlı olup okulda olmayanlar listeye girmez.
- */
 interface InsidePersonRow {
   SicilId: number;
   AdSoyad: string;
@@ -191,7 +147,6 @@ interface InsidePersonRow {
   Ogrenciler: string | null;
 }
 
-/** Backend'in beklediği kişi türü değerleri. */
 const PERSON_TYPE_TO_DB: Record<PersonType, string> = {
   STUDENT: 'OGRENCI',
   PARENT: 'VELI',
@@ -203,11 +158,6 @@ const PERSON_TYPE_TO_DB: Record<PersonType, string> = {
 export class DashboardService {
   private api = inject(ApiHelperService);
 
-  /**
-   * sp_DashboardCampus_s üzerinden öğrenci/veli/toplam kayıtlı ve okuldaki
-   * kişi sayılarını tek çağrıda çeker. Prosedür tek satır döndürür;
-   * satır yoksa tüm sayılar 0 kabul edilir.
-   */
   getDashboardStats(): Observable<DashboardCampusStats> {
     return this.api
       .callEndpoint<DashboardCampusRow[]>('Dynamic', {
@@ -217,7 +167,6 @@ export class DashboardService {
       .pipe(map((rows) => this.mapStats((rows || [])[0])));
   }
 
-  /** sp_KvkkOnayCampus_s: onaylayan öğrenci/veli/vekil sayıları (tek satır). */
   getKvkkStats(): Observable<KvkkStats> {
     return this.api
       .callEndpoint<KvkkOnayRow[]>('Dynamic', {
@@ -314,12 +263,6 @@ export class DashboardService {
       );
   }
 
-  /**
-   * sp_DashboardKisilerCampus_s üzerinden "o an okulda olan" kişi listesini
-   * çeker. SadeceOkulda=1 sabiti, yalnızca son geçişi giriş (IO=2) olan
-   * kişileri döndürür — kayıtlı olup okulda olmayanlar listeye girmez.
-   * islemno bilinçli olarak gönderilmez; backend oturumdan çözer.
-   */
   getInsidePersons(type: PersonType | null): Observable<InsidePerson[]> {
     return this.api
       .callEndpoint<InsidePersonRow[]>('Dynamic', {
@@ -344,7 +287,6 @@ export class DashboardService {
       );
   }
 
-  /** @param ara isimden arama (backend @Ara); boşsa filtre uygulanmaz. */
   getRecentTransactions(adet = 10, ara?: string): Observable<AccessTransaction[]> {
     return this.api
       .callEndpoint<RecentTransactionRow[]>('Dynamic', {
@@ -356,7 +298,6 @@ export class DashboardService {
       .pipe(
         map((rows) =>
           (rows || []).map((row, index) => {
-            // SQL'den gelen metinlere göre UI sınıflarını (renk/ikon) belirliyoruz
             const sonuc = (row.Sonuc || '').toLowerCase();
             const userDef = (row.userDef || '').toLocaleUpperCase('tr-TR');
             const isProxy = userDef === 'VEKİL' || userDef === 'VEKIL';
@@ -368,7 +309,6 @@ export class DashboardService {
             } else if (sonuc === 'servis') {
               result = 'service';
             } else if (isProxy) {
-              // Vekil Response'u serbest metin: "Başarısız:" ile başlamıyorsa başarılı.
               result = 'success';
             } else {
               result =
@@ -385,10 +325,10 @@ export class DashboardService {
                 : 'out';
 
             return {
-              id: index + 1, // Satır numarası olarak kullanıyoruz
+              id: index + 1,
               personName: row.adSoyad || '-',
               registryNo: row.SicilNo || '-',
-              userdef: isStudent ? 11 : 12, // UI renk ayrımları için
+              userdef: isStudent ? 11 : 12,
               badgeClass: isProxy ? 'badge-proxy' : isStudent ? 'badge-student' : 'badge-parent',
               badgeLabel: row.userDef || '-',
               cardId: row.CardID || '-',
@@ -413,7 +353,6 @@ export class DashboardService {
     return isNaN(time) ? null : time;
   }
 
-  // ISO veya SQL DateTime formatını tarih + saat (dd.MM.yyyy HH:mm:ss) olarak döndürür
   private formatEventTime(dateStr: string): string {
     if (!dateStr) return '-';
     try {

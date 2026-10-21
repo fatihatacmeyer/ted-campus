@@ -24,13 +24,8 @@ import {
 } from '../../../../shared/components/customizable-table/customizable-table';
 import { ActivityService } from '../../services/activity.service';
 
-/** Katılımcı durum filtreleri — onay kartlarıyla eşleşir. */
 type ParticipantFilter = 'Tümü' | ActivityParticipant['durum'];
 
-/**
- * Etkinlik detay diyaloğu: onay istatistikleri (sp_EtkinlikOnayCampus_s) ve katılımcı listesi
- * (sp_EtkinlikKatilimcilari_s). Sayfa `open(activity)` ile açar; veriyi bileşen kendisi yükler.
- */
 @Component({
   selector: 'app-activity-detail-dialog',
   standalone: true,
@@ -60,17 +55,14 @@ export class ActivityDetailDialogComponent {
   isLoadingParticipants = signal(false);
   participantError = signal<string | null>(null);
 
-  /** Katılımcı listesi için aktif filtre — onay kartlarından seçilir. */
   activeParticipantFilter = signal<ParticipantFilter>('Tümü');
 
-  /** Aktif filtreye göre filtrelenmiş katılımcı listesi. */
   filteredParticipants = computed(() => {
     const filter = this.activeParticipantFilter();
     const list = this.participants();
     return filter === 'Tümü' ? list : list.filter((p) => p.durum === filter);
   });
 
-  /** Katılımcı tablosu sütun tanımları — filtreler başlıkta olduğu için filterable: false */
   participantColumns: ColumnDef<ActivityParticipant>[] = [
     { field: 'ogrenci', header: 'ACTIVITIES.COLUMN_STUDENT', sortable: true, filterable: false },
     {
@@ -91,7 +83,6 @@ export class ActivityDetailDialogComponent {
     },
   ];
 
-  /** Etkinliği seçip diyaloğu açar; istatistikleri ve katılımcıları çeker. */
   open(activity: ActivityInterface) {
     this.activeParticipantFilter.set('Tümü');
     this.selectedActivity.set(activity);
@@ -109,7 +100,6 @@ export class ActivityDetailDialogComponent {
     this.participantError.set(null);
   }
 
-  /** sp_EtkinlikOnayCampus_s'ten o etkinliğin onay istatistiklerini çeker. */
   loadApprovalStats(etkinlikId: number) {
     this.isLoadingStats.set(true);
     this.approvalError.set(null);
@@ -129,7 +119,6 @@ export class ActivityDetailDialogComponent {
       });
   }
 
-  /** sp_EtkinlikKatilimcilari_s'ten o etkinliğin katılımcılarını çeker. */
   loadParticipants(etkinlikId: number) {
     this.isLoadingParticipants.set(true);
     this.participantError.set(null);
@@ -149,7 +138,6 @@ export class ActivityDetailDialogComponent {
       });
   }
 
-  /** Katılımcı durumu için p-tag severity değeri. */
   getParticipantSeverity(durum: string) {
     switch (durum) {
       case 'Onaylanan':
@@ -157,11 +145,10 @@ export class ActivityDetailDialogComponent {
       case 'Reddedilen':
         return 'danger';
       default:
-        return 'warn'; // Bekleyen
+        return 'warn';
     }
   }
 
-  /** Onay kartına tıklanınca katılımcı listesini filtreler. */
   setParticipantFilter(filter: ParticipantFilter) {
     this.activeParticipantFilter.set(filter);
   }

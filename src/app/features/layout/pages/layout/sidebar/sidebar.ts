@@ -52,7 +52,6 @@ export class SidebarComponent implements OnInit {
     const user = this.authService.currentUserValue;
     const isAdmin = user?.admin === true; //|| user?.admin === 1;
 
-    // Adminse hepsini göster, değilse sadece /home rotasını (Anasayfa) göster
     this.navItems = isAdmin
       ? this.allNavItems
       : this.allNavItems.filter(

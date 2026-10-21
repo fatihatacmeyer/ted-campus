@@ -4,13 +4,11 @@ import { map } from 'rxjs/operators';
 import { ApiHelperService } from '../../../core/services/api-helper.service';
 import { LastPassRecord, TerminalGroup } from '../models/last-pass.model';
 
-/** sp_lastpass_tl satırı. */
 interface TerminalGroupRow {
   Id: number;
   Ad: string;
 }
 
-/** sp_lastpass_pp satırı (alan anlamları LastPassRecord içinde). */
 interface LastPassRow {
   SicilId: number;
   FotoImage: string | null;
@@ -34,7 +32,6 @@ interface LastPassRow {
 export class LastPassService {
   private api = inject(ApiHelperService);
 
-  // sp_lastpass_tl (Terminal List)
   getTerminalGroups(): Observable<TerminalGroup[]> {
     return this.api
       .callEndpoint<TerminalGroupRow[]>('Dynamic', {
@@ -51,7 +48,6 @@ export class LastPassService {
       );
   }
 
-  // sp_lastpass_pp (Last Passes by Group)
   getRecentPassesByGroup(terminalGroupId: number): Observable<LastPassRecord[]> {
     return this.api
       .callEndpoint<LastPassRow[]>('Dynamic', {

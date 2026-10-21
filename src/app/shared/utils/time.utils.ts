@@ -1,9 +1,3 @@
-/**
- * "HH:MM" maskeli saat inputları için framework'ten tamamen bağımsız,
- * saf (pure) yardımcı fonksiyonlar. Herhangi bir Angular bağımlılığı yok,
- * bu sayede tek başına unit test edilebilir ve tek bir yerde bakım yapılır.
- */
-
 const TIME_REGEX = /^([01][0-9]|2[0-3]):([0-5][0-9])$/;
 const EMPTY_LIKE_VALUES = new Set(['00:00', '00:00:00', '-']);
 
@@ -17,14 +11,12 @@ function pad(n: number): string {
   return n.toString().padStart(2, '0');
 }
 
-/** 4 haneli ham rakamdan "HH:MM" üretir (saat/dakika üst sınırlara kırpılır). */
 export function digitsToTime(rawDigits: string): string {
   const h = Math.min(parseInt(rawDigits.slice(0, 2), 10), 23);
   const m = Math.min(parseInt(rawDigits.slice(2, 4), 10), 59);
   return `${pad(h)}:${pad(m)}`;
 }
 
-/** Kullanıcı input'tan çıktığında (blur) alanı temiz bir "HH:MM" değerine (ya da '') normalize eder. */
 export function finalizeTimeValue(rawValue: string): string {
   const value = (rawValue || '').trim();
   if (!value || EMPTY_LIKE_VALUES.has(value)) return '';
@@ -51,7 +43,6 @@ export interface CaretEdit {
   caret: number;
 }
 
-/** 5 karakterlik "HH:MM" değerinde imleç konumuna göre tek bir rakamın üzerine yazar. */
 export function applyDigitAtCaret(current: string, caret: number, digit: string): CaretEdit | null {
   if (current.length !== 5 || current[2] !== ':') return null;
   const chars = current.split('');
@@ -75,7 +66,6 @@ export function applyDigitAtCaret(current: string, caret: number, digit: string)
   }
 }
 
-/** Backspace tuşunda imleç konumundaki haneyi '0' yaparak temizler. */
 export function applyBackspaceAtCaret(current: string, caret: number): CaretEdit | null {
   if (current.length !== 5 || current[2] !== ':') return null;
   const chars = current.split('');
@@ -92,7 +82,6 @@ export function applyBackspaceAtCaret(current: string, caret: number): CaretEdit
   return null;
 }
 
-/** İki saat de doluysa başlangıç < bitiş olmalı; eksikse (henüz) geçerli sayılır. */
 export function isIntervalValid(start: string | null | undefined, end: string | null | undefined): boolean {
   if (!isValidTime(start) || !isValidTime(end)) return true;
   return start! < end!;

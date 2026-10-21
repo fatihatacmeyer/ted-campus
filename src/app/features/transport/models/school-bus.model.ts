@@ -35,7 +35,6 @@ export interface StudentAssignmentFilter {
   yon?: number;
 }
 
-/** sp_ogrenciservisplancampus_s: öğrencinin tek günlük / haftalık servis planı. */
 export interface StudentBusPlan {
   id: number;
   ogrenciSicilId: number;
@@ -43,18 +42,14 @@ export interface StudentBusPlan {
   sinif: string | null;
   kampus: string | null;
   servisId: number | null;
-  /** null → "servis kullanmıyor" planı. */
   plaka: string | null;
   servisKullanmiyor: boolean;
   yon: BusDirection;
   yonAciklama: string;
-  /** 'Tek gün' | 'Haftalık' (prosedür metni). */
   tekrarTuru: string;
-  /** Tek günlük planda gün, haftalıkta haftanın günü (gösterim metni). */
   gunAciklama: string;
   baslangicTarih: string | null;
   bitisTarih: string | null;
-  /** Düzenleme formu için ham değerler (yyyy-MM-dd; haftaGunu ISO 1=Pzt..7=Paz). */
   tarih: string | null;
   haftaGunu: number | null;
   baslangicIso: string | null;
@@ -67,12 +62,6 @@ export interface StudentBusPlan {
   guncellemeTarihi: string | null;
 }
 
-/**
- * Plan ekle/güncelle alanları. Tek günlük planda tarih dolu, haftaGunu boş;
- * haftalıkta tersi. servisId null = "servis kullanmıyor".
- * yon ve haftaGunu çoklu seçimdir (API'ye ';' ile ayrılmış gider): her Yön x Gün
- * kombinasyonu ayrı kayıt olur.
- */
 export interface StudentBusPlanInput {
   servisId: number | null;
   yon: BusDirection[];
@@ -81,7 +70,6 @@ export interface StudentBusPlanInput {
   baslangicTarih: string | null;
   bitisTarih: string | null;
   aciklama: string | null;
-  /** Yalnızca güncellemede gönderilir. */
   isActive?: boolean;
 }
 
@@ -104,7 +92,6 @@ export interface AuthorityAssignment {
   createdDate: string | null;
 }
 
-/** sp_serviskullanicilarcampus_s: servis yetkilileri (UserDef = YETKILI, çıkış yapmamış). */
 export interface ServiceAuthority {
   sicilId: number;
   sicilNo: string;

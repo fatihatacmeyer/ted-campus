@@ -1,7 +1,6 @@
 import { ChangeDetectionStrategy, Component, input, output } from '@angular/core';
 import { TranslatePipe } from '@ngx-translate/core';
 
-/** Kayıtlı / okulda sayısını gösteren özet kartı; tıklanınca `selected` yayar. */
 @Component({
   selector: 'app-stat-card',
   standalone: true,

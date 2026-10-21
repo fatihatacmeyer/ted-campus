@@ -31,7 +31,6 @@ import { ActivityLookups } from '../../services/activity-lookups.service';
 import { ActivityService } from '../../services/activity.service';
 import { ClassScopePickerComponent } from '../class-scope-picker/class-scope-picker';
 
-/** Cross-field: Bitiş tarihi başlangıç tarihinden küçük olamaz. */
 function dateRangeValidator(startKey: string, endKey: string, errorKey: string) {
   return (group: FormGroup) => {
     const start = group.get(startKey)?.value;
@@ -41,7 +40,6 @@ function dateRangeValidator(startKey: string, endKey: string, errorKey: string) 
   };
 }
 
-/** Cross-field: isPaid true iken fee boş olamaz. */
 function paidFeeValidator(group: FormGroup) {
   const isPaid = group.get('isPaid')?.value;
   const fee = group.get('fee')?.value;
@@ -51,18 +49,12 @@ function paidFeeValidator(group: FormGroup) {
   return null;
 }
 
-/** En az bir sınıf seçili olmalı. */
 function minClassroomValidator(control: AbstractControl) {
   const val = control.value;
   if (Array.isArray(val) && val.length > 0) return null;
   return { minClassroom: true };
 }
 
-/**
- * Etkinlik ekle / düzenle diyaloğu ve "tüm sınıflar" onayı. Sayfa `openAdd()` / `openEdit()` ile
- * açar; kayıt başarılı olunca `saved` yayar (sayfa listeyi yeniler). Lookup listeleri sayfanın
- * sağladığı `ActivityLookups` servisinden gelir.
- */
 @Component({
   selector: 'app-activity-form-dialog',
   standalone: true,
@@ -90,7 +82,6 @@ export class ActivityFormDialogComponent {
   private translate = inject(TranslateService);
   protected readonly lookups = inject(ActivityLookups);
 
-  /** Kayıt (ekleme/güncelleme) başarıyla tamamlandı. */
   readonly saved = output<void>();
 
   isSaving = signal(false);
@@ -131,7 +122,6 @@ export class ActivityFormDialogComponent {
     },
   );
 
-  /** Sınıf seçicinin bağlandığı kontrol. */
   protected readonly classroomControl = this.activityForm.get('classroom') as FormControl<
     string[] | null
   >;
@@ -176,7 +166,6 @@ export class ActivityFormDialogComponent {
       : this.translate.instant('ACTIVITIES.ADD');
   }
 
-  /** Alanın dokunulmuş ve geçersiz olup olmadığını kontrol eder (hata border + mesaj tetikleme için). */
   isFieldInvalid(field: string): boolean {
     const ctrl = this.activityForm.get(field);
     return !!(ctrl && ctrl.touched && ctrl.invalid);
@@ -203,7 +192,6 @@ export class ActivityFormDialogComponent {
     this.editingActivity.set(activity);
     this.formSubmitted.set(false);
 
-    // Sınıfları string'den diziye (array) çeviriyoruz
     const classArray =
       activity.classroom && activity.classroom !== 'Tüm Sınıflar'
         ? activity.classroom.split(', ')
@@ -236,12 +224,10 @@ export class ActivityFormDialogComponent {
 
     const formValues = this.activityForm.getRawValue();
 
-    // Sınıf dizisine göre classroom string ve isPrivate türet
     const hasClassroom = Array.isArray(formValues.classroom) && formValues.classroom.length > 0;
     const classroomStr = hasClassroom ? formValues.classroom.join(', ') : 'Tüm Sınıflar';
     const isPrivate = hasClassroom;
 
-    // Seçilen ad'lardan FK id'lerini lookup ile türet (yazma SP'leri Id bekliyor)
     const classroomOptions = this.lookups.classrooms();
     const selectedType = this.lookups.types().find((o) => o.ad === formValues.activityType);
     const selectedTransportation = this.lookups
@@ -250,10 +236,6 @@ export class ActivityFormDialogComponent {
     const selectedClasses = classroomOptions.filter((o) =>
       (formValues.classroom as string[]).includes(o.ad),
     );
-    // "Tüm Sınıflar" seçildiğinde (classroom boş) hiç sınıf id'si gönderilmiyordu;
-    // bu yüzden SP'nin EtkinlikDurumCampus kayıtları hiç oluşmuyordu. Tüm sınıf
-    // id'lerini ';' ile birleştirerek gönderiyoruz → tüm sınıflardaki öğrencilere
-    // katılımcı kaydı oluşturulur.
     const classIdList = hasClassroom
       ? selectedClasses.map((c) => c.id)
       : classroomOptions.map((c) => c.id);
@@ -269,7 +251,6 @@ export class ActivityFormDialogComponent {
       fee: formValues.isPaid ? formValues.fee : null,
       turId: selectedType?.id ?? '',
       ulasimId: selectedTransportation?.id ?? '',
-      // Edit'te lookup boşsa (sınıf silinmiş vb.) DB'den gelen orijinal SinifId korunur.
       sinifId:
         classIdList.length > 0 ? classIdList.join(';') : (this.editingActivity()?.sinifId ?? ''),
       egitimDuzeyiId: selectedEducationLevel?.id ?? '',
@@ -310,7 +291,7 @@ export class ActivityFormDialogComponent {
       next: () => {
         this.isSaving.set(false);
         this.closeDialog();
-        this.saved.emit(); // sayfa sunucudaki güncel/otoriter listeyi tekrar çeker
+        this.saved.emit();
 
         if (currentActivity) {
           this.notification.notifyUpdated();

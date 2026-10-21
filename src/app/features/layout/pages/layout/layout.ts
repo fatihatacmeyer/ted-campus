@@ -19,7 +19,6 @@ export class LayoutComponent {
   private router = inject(Router);
   private activatedRoute = inject(ActivatedRoute);
 
-  /** Aktif (en derin) child route'un data['scrollable'] değeri — true ise sayfa kayabilir */
   isContentScrollable = toSignal(
     this.router.events.pipe(
       filter((e) => e instanceof NavigationEnd),

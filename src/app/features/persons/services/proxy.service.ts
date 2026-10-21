@@ -5,7 +5,6 @@ import { ApiHelperService } from '../../../core/services/api-helper.service';
 import { unwrapResponse } from '../../../shared/utils/response.utils';
 import { GuardianProxy, ProxyApprovalStatus } from '../../../core/models/proxy.model';
 
-/** sp_vekil..._s satırı: GuardianProxy alanlarının DB (PascalCase) karşılıkları. */
 interface GuardianProxyRow {
   Id: number;
   VeliSicilId: number;
@@ -43,8 +42,6 @@ export class ProxyService {
       islemtipi: 's',
     };
 
-    // Eğer null veya undefined değilse (0, 1, -1 ise) parametreye ekle.
-    // Null ise hiç gönderme, SQL Server'da NULL varsayılan değeri çalışsın.
     if (onayDurumu !== null && onayDurumu !== undefined) {
       params['OnayDurumu'] = onayDurumu;
     }
@@ -96,10 +93,6 @@ export class ProxyService {
       );
   }
 
-  /**
-   * Onaylanmış vekillerin aktif/pasif durumunu değiştirir.
-   * sp_VekilTalep_ap procedure'ünü çağırır — hem VekilCampus hem LoginMeCampus tablosunu günceller.
-   */
   toggleProxyActive(
     vekilCampusId: number,
     onayDurumu: 0 | 1,
@@ -122,20 +115,11 @@ export class ProxyService {
       );
   }
 
-  /**
-   * Deletes the proxy login record (LoginMeCampus) and triggers sending a new
-   * password via SMS.
-   * Calls sp_vekilloginsendcampus_d — the proxy counterpart of the student
-   * flow sendLoginInfo (sp_loginsendcampus_d).
-   */
-  sendProxyLogin(
-    proxyCampusId: number,
-  ): Observable<{ result: number; serverMessage: string }> {
+  sendProxyLogin(proxyCampusId: number): Observable<{ result: number; serverMessage: string }> {
     return this.api
       .callEndpoint<DBInsertResult[]>('Dynamic', {
         point: 'vekilloginsendcampus',
         islemtipi: 'd',
-        // NOTE: API payload key matches the SP parameter @vekilCampusId.
         vekilCampusId: proxyCampusId,
       })
       .pipe(
@@ -143,9 +127,7 @@ export class ProxyService {
           const unwrapped = unwrapResponse(response);
           return {
             result: unwrapped ? Number(unwrapped.Sonuc) : -1,
-            serverMessage: unwrapped
-              ? String(unwrapped.SunucuCevap)
-              : 'Could not reach the server.',
+            serverMessage: unwrapped ? String(unwrapped.SunucuCevap) : '',
           };
         }),
       );

@@ -1,7 +1,7 @@
 @use 'tokens' as *;
 /* Kart iskeleti: başlık, gövde, ikon, boş durum, yükleme/hata ve giriş animasyonu. */
 
-/* ── Loading / Error ───────────────────────────────────── */
+/* Loading / Error */
 .loading-container {
   display: flex;
   flex-direction: column;
@@ -115,7 +115,7 @@
   overflow-y: auto;
 }
 
-/* ── Full Width Card (Row 3 — İşlemler) ────────────────── */
+/* Full Width Card (Row 3 — İşlemler) */
 .full-card {
   background: $bg-surface;
   border-radius: $radius-md;

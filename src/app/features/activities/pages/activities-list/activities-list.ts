@@ -26,16 +26,11 @@ import { PageHeaderComponent } from '../../../../shared/components/page-header/p
 import { ActivityDetailDialogComponent } from '../../components/activity-detail-dialog/activity-detail-dialog';
 import { ActivityFormDialogComponent } from '../../components/activity-form-dialog/activity-form-dialog';
 
-/** Boole sütun filtreleri için Evet/Hayır seçenekleri */
 const BOOLEAN_FILTER_OPTIONS: FilterOption[] = [
   { label: 'COMMON.YES', value: true },
   { label: 'COMMON.NO', value: false },
 ];
 
-/**
- * Etkinlik listesi sayfası: tablo ve satır işlemleri. Ekle/düzenle formu ve detay (onay durumu +
- * katılımcılar) kendi diyalog bileşenlerinde yaşar.
- */
 @Component({
   selector: 'app-activities',
   standalone: true,
@@ -140,7 +135,6 @@ export class ActivitiesComponent {
     this.loadActivities();
   }
 
-  /** sp_etkinlikcampus_s'ten gerçek listeyi çeker. */
   loadActivities(): void {
     this.isLoading.set(true);
     this.errorMessage.set(null);
@@ -168,7 +162,6 @@ export class ActivitiesComponent {
     this.formDialog().openEdit(activity);
   }
 
-  /** Tablo satırına tıklandığında detay diyaloğunu açar. */
   openDetailDialog(activity: ActivityInterface) {
     this.detailDialog().open(activity);
   }

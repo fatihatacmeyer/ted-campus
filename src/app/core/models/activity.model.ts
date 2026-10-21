@@ -1,39 +1,38 @@
 export interface ActivityInterface {
-  id: number; // etkinlik id'si
-  name: string; // etkinlik adı
-  startDate: Date | string; // etkinlik başlangıç tarihi
-  endDate: Date | string; // etkinlik bitiş tarihi
-  activityType: string; // etkinlik türü/ pilav günü, mezuniyet gecesi, ankara gezisi vs
-  isPaid: boolean; // ücretli / ücretsiz durumu
-  fee: number | null; // ödenecek ücret eğer isPaid 1 ise
-  status: string; // durum / aktif pasif // boolean da olabilir
-  requestStartDate: Date | string; // etkinlik için başvurulabilecek ilk tarih
-  requestEndDate: Date | string; // etkinlik için başvurulabilecek son tarih
-  isParentRequired: boolean; // veli getirmek zorunlu mu
-  description: string; // açıklama
-  maxStudentCount: number; // etkinliğe katılabilecek maksimum öğrenci sayısı
-  studentParentCount: number; // öğrencinin getirebileceği veli sayısı
-  maxGuestPerParent?: number; // veli başına maksimum misafir sayısı (VeliBasinaMisafirSayisi)
-  transportation: string; // ulaşım
-  educationLevel?: string; // eğitim düzeyi (cbo_direktorluk lookup'ından, ekranda ad saklanır)
-  campus?: string; // kampüs bilgisi (cbo_firma lookup'ından, ekranda ad saklanır)
-  campusId?: number; // kampüs id'si (CampusId) — _s prosedürü döndüğünden beri edit'te korunur
-  eventManager: string; // etkinlik yöneticisi
-  sorumluSicilId?: number; // etkinlik sorumlusunun sicil id'si (SorumluSicilId)
-  yasSiniri?: string; // yaş sınırı (YasSiniri)
-  sinifId?: string; // ';' ile ayrılmış sınıf id listesi (SinifId)
-  oKod1: string; // ekstra alanlar 1
+  id: number;
+  name: string;
+  startDate: Date | string;
+  endDate: Date | string;
+  activityType: string;
+  isPaid: boolean;
+  fee: number | null;
+  status: string;
+  requestStartDate: Date | string;
+  requestEndDate: Date | string;
+  isParentRequired: boolean;
+  description: string;
+  maxStudentCount: number;
+  studentParentCount: number;
+  maxGuestPerParent?: number;
+  transportation: string;
+  educationLevel?: string;
+  campus?: string;
+  campusId?: number;
+  eventManager: string;
+  sorumluSicilId?: number;
+  yasSiniri?: string;
+  sinifId?: string;
+  oKod1: string;
   oKod2: string;
   oKod3: string;
   oKod4: string;
-  oKod5: string; // estra alanlar 5, bitiş
-  xSicilID: number; // etkinliği oluşturan
+  oKod5: string;
+  xSicilID: number;
   createdAt: Date | string;
-  isPrivate: boolean; // sadece belli sınıfları seçebilmek için
-  classroom: string; // etkinliğe katılacak sınıflar
+  isPrivate: boolean;
+  classroom: string;
 }
 
-/** sp_EtkinlikOnayCampus'ten dönen etkinlik onay istatistikleri. */
 export interface ActivityApprovalStats {
   etkinlikId: number;
   bekleyen: number;
@@ -42,14 +41,13 @@ export interface ActivityApprovalStats {
   toplam: number;
 }
 
-/** sp_EtkinlikKatilimcilari_s'ten dönen katılımcı kaydı. */
 export interface ActivityParticipant {
-  id: number; // SiraNo
+  id: number;
   ogrenciSicilId: number;
-  ogrenci: string; // Ogrenci (ad soyad)
-  sinif: string; // Sinif
+  ogrenci: string;
+  sinif: string;
   veliSicilId: number;
-  veli: string; // Veli (ad soyad)
-  telefon: string; // Telefon
-  durum: 'Bekleyen' | 'Onaylanan' | 'Reddedilen'; // DurumMetni
+  veli: string;
+  telefon: string;
+  durum: 'Bekleyen' | 'Onaylanan' | 'Reddedilen';
 }

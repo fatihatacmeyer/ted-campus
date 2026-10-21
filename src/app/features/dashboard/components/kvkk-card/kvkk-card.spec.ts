@@ -41,9 +41,8 @@ describe('KvkkCardComponent', () => {
 
     const blocks = fixture.nativeElement.querySelectorAll('.kvkk-block');
     expect(blocks).toHaveLength(5);
-    expect(blocks[0].textContent).toContain('%50'); // 50/100
-    expect(blocks[1].textContent).toContain('%50'); // 30/60
-    // vekil / servis / toplam: oransız, ilerleme çubuğu yok
+    expect(blocks[0].textContent).toContain('%50');
+    expect(blocks[1].textContent).toContain('%50');
     expect(blocks[2].querySelector('.kvkk-bar')).toBeNull();
     expect(blocks[4].textContent).toContain('84');
   });

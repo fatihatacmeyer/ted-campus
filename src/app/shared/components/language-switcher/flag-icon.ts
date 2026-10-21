@@ -1,10 +1,6 @@
 import { ChangeDetectionStrategy, Component, Input } from '@angular/core';
 import { AppLang } from '../../../core/services/language.service';
 
-/**
- * Ülke bayraklarını gömülü SVG olarak çizer.
- * Emoji bayraklar Windows tarayıcılarda render edilmediği için SVG kullanılır.
- */
 @Component({
   selector: 'app-flag-icon',
   standalone: true,

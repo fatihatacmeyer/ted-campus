@@ -42,7 +42,7 @@ export class PersonBusAssignDialogComponent implements OnInit {
 
   busOptions: { label: string; value: number }[] = [];
   selectedBusId: number | null = null;
-  selectedYon = 1; // Varsayılan Gidiş
+  selectedYon = 1;
 
   yonOptions: { label: string; value: number }[] = [];
 
@@ -92,7 +92,6 @@ export class PersonBusAssignDialogComponent implements OnInit {
     const servisId = this.selectedBusId;
     const yon = this.selectedYon;
 
-    // Gidiş ve Dönüş (3) seçildiyse iki isteği aynı anda gönderiyoruz
     if (yon === 3) {
       forkJoin([
         this.busService.assignStudentToBus(ogrenciSicilId, servisId, 1),
@@ -104,13 +103,11 @@ export class PersonBusAssignDialogComponent implements OnInit {
           const gidisRes = results[0];
           const donusRes = results[1];
 
-          // İkisi de başarılıysa
           if (gidisRes.sonuc === 1 && donusRes.sonuc === 1) {
             this.notification.success('PERSON_BUS_ASSIGN.MSG_ASSIGNED_BOTH');
             this.confirmed.emit();
             this.close();
           } else {
-            // Hata olan yönlerin mesajlarını birleştir ve göster
             const errorMessages = [];
             if (gidisRes.sonuc !== 1) {
               errorMessages.push(
@@ -127,7 +124,6 @@ export class PersonBusAssignDialogComponent implements OnInit {
               );
             }
 
-            // Kullanıcıya tam olarak sunucunun döndüğü metinleri (Örn: "Bu öğrenci bu yön için zaten bir servise atanmış") gösteriyoruz
             this.notification.error(errorMessages.join(' | '));
           }
           this.cdr.markForCheck();
@@ -139,7 +135,6 @@ export class PersonBusAssignDialogComponent implements OnInit {
         },
       });
     } else {
-      // Sadece Gidiş (1) veya sadece Dönüş (2)
       this.busService.assignStudentToBus(ogrenciSicilId, servisId, yon as 1 | 2).subscribe({
         next: (res) => {
           this.isProcessing = false;
@@ -148,7 +143,6 @@ export class PersonBusAssignDialogComponent implements OnInit {
             this.confirmed.emit();
             this.close();
           } else {
-            // Doğrudan backend'den gelen "Bu öğrenci bu yön için zaten bir servise atanmış" mesajı gösterilecek
             this.notification.error(res.sunucuCevap || 'PERSON_BUS_ASSIGN.MSG_ASSIGN_ERROR');
           }
           this.cdr.markForCheck();

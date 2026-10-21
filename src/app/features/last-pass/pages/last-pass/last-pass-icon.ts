@@ -3,12 +3,6 @@ import { Component, input } from '@angular/core';
 export type LastPassIconName =
   'idle' | 'user' | 'check' | 'x' | 'clock' | 'department' | 'company' | 'terminal';
 
-/**
- * last-pass.html içinde tekrar tekrar yazılan el-yapımı SVG ikonları
- * için tek noktadan yönetilen, sade bir sunum (presentational) component'i.
- *
- * Kullanım:  <app-last-pass-icon name="clock" [size]="13" />
- */
 @Component({
   selector: 'app-last-pass-icon',
   standalone: true,

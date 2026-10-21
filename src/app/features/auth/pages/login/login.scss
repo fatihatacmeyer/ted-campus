@@ -1,5 +1,4 @@
 @use '../../../../../styles/vars' as t;
-/* Renk Değişkenleri - Tasarımdan Alınmıştır */
 $bg-main: t.$bg-page;
 $bg-left: var(--ted-login-bg);
 $card-bg: t.$bg-surface;
@@ -218,7 +217,6 @@ $error-border: t.$danger-solid;
   }
 }
 
-// Field validation error message
 .field-error {
   display: flex;
   align-items: center;
@@ -235,7 +233,6 @@ $error-border: t.$danger-solid;
   }
 }
 
-// Password visibility toggle button
 .password-toggle {
   position: absolute;
   right: 14px;
@@ -260,7 +257,6 @@ $error-border: t.$danger-solid;
   }
 }
 
-// Caps lock warning banner
 .capslock-warning {
   display: flex;
   align-items: center;
@@ -280,7 +276,6 @@ $error-border: t.$danger-solid;
   }
 }
 
-// Shake animation for error state
 @keyframes shake {
   0%, 100% { transform: translateX(0); }
   10%, 30%, 50%, 70%, 90% { transform: translateX(-6px); }
@@ -291,7 +286,6 @@ $error-border: t.$danger-solid;
   animation: shake 0.5s ease-in-out;
 }
 
-// Loading spinner animation
 @keyframes spin {
   from { transform: rotate(0deg); }
   to { transform: rotate(360deg); }
@@ -307,7 +301,6 @@ $error-border: t.$danger-solid;
   animation: spin 0.6s linear infinite;
 }
 
-// Success login animation
 @keyframes fadeOutUp {
   from {
     opacity: 1;

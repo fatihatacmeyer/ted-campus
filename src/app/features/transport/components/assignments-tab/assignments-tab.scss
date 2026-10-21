@@ -8,13 +8,13 @@
   padding: 40px 0;
 }
 
-/* ── Öğrenci Atama Dialogu: Gidiş / Dönüş sekmesi ──────── */
+/* Öğrenci Atama Dialogu: Gidiş / Dönüş sekmesi */
 .direction-tab-bar {
   margin-top: 20px;
   margin-bottom: 12px;
 }
 
-/* ── Search Bar ────────────────────────────────────────── */
+/* Search Bar */
 .search-bar {
   display: flex;
   align-items: center;
@@ -44,7 +44,7 @@
   }
 }
 
-/* ── Bus Grid (Assignments) ────────────────────────────── */
+/* Bus Grid (Assignments) */
 .bus-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
@@ -91,7 +91,7 @@
   }
 }
 
-/* ── Route Info ────────────────────────────────────────── */
+/* Route Info */
 .bus-route {
   margin-bottom: 12px;
 }
@@ -177,7 +177,7 @@
   }
 }
 
-/* ── Bus Yetkilileri (servis bazlı, çoklu) ─────────────── */
+/* Bus Yetkilileri (servis bazlı, çoklu) */
 .bus-authorities {
   margin-bottom: 14px;
 
@@ -226,7 +226,7 @@
   }
 }
 
-/* ── Bus Actions ───────────────────────────────────────── */
+/* Bus Actions */
 .bus-actions {
   display: flex;
   justify-content: flex-end;
@@ -236,7 +236,7 @@
   border-top: 1px solid $border-light;
 }
 
-/* ── Dialog içi yetkili chip listesi ───────────────────── */
+/* Dialog içi yetkili chip listesi */
 .authority-chip-list {
   display: flex;
   flex-wrap: wrap;
@@ -294,7 +294,7 @@
   }
 }
 
-/* ── Dialog Summary (Detail) ───────────────────────────── */
+/* Dialog Summary (Detail) */
 .dialog-summary {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
@@ -336,7 +336,7 @@
   }
 }
 
-/* ── Sefer Türü Filter Bar ─────────────────────────── */
+/* Sefer Türü Filter Bar */
 .sefer-filter-bar {
   display: flex;
   gap: 8px;
@@ -381,7 +381,7 @@
   }
 }
 
-/* ── Bus Card Tags (sefer türü + durum) ────────────── */
+/* Bus Card Tags (sefer türü + durum) */
 .bus-card-tags {
   display: flex;
   gap: 6px;

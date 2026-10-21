@@ -4,7 +4,6 @@ import { map } from 'rxjs/operators';
 import { ApiHelperService } from '../../../core/services/api-helper.service';
 import { SmsLog, SmsLogQuery } from '../models/sms-log.model';
 
-/** sp_smskuyrukcampus_s satırı (PascalCase). */
 interface SmsLogRow {
   Id: number;
   SicilId: number | null;
@@ -18,13 +17,11 @@ interface SmsLogRow {
   TimerId: string | null;
 }
 
-/** Parametre / yetki hatasında prosedür tek satır { Sonuc: -1, SunucuCevap } döner. */
 interface SmsLogErrorRow {
   Sonuc: number | string;
   SunucuCevap: string;
 }
 
-/** Prosedürün reddettiği istek; mesaj SunucuCevap'tır. */
 export class SmsLogError extends Error {}
 
 @Injectable({
@@ -33,7 +30,6 @@ export class SmsLogError extends Error {}
 export class SmsLogService {
   private api = inject(ApiHelperService);
 
-  /** Kişinin SMS logunu en yeni önce getirir (sp_smskuyrukcampus_s). */
   getSmsLog(query: SmsLogQuery): Observable<SmsLog[]> {
     const hasSicil = !!query.sicilId;
     const hasVekil = !!query.vekilCampusId;

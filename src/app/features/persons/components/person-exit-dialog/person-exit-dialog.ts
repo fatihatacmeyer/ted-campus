@@ -97,7 +97,6 @@ export class PersonExitDialogComponent implements OnChanges {
       },
       error: (err: unknown) => {
         console.error('Ayrılış nedenleri yüklenemedi:', err);
-        // Fallback options
         this.reasonOptions = [
           { label: this.translate.instant('PERSON_EXIT.REASON_N', { n: 1 }), value: 1 },
           { label: this.translate.instant('PERSON_EXIT.REASON_N', { n: 2 }), value: 2 },
@@ -171,14 +170,12 @@ export class PersonExitDialogComponent implements OnChanges {
     }
   }
 
-  /** Hata nesnesinden kullanıcıya gösterilecek çevrilmiş mesajı üretir. */
   private errorText(err: unknown): string {
     return this.translate.instant('COMMON.ERROR_OCCURRED', {
       message: err instanceof Error ? err.message : this.translate.instant('COMMON.UNKNOWN_ERROR'),
     });
   }
 
-  /** `[innerHTML]` çevirilerinde kullanıcı verisini kaçışlayıp kalın yazar. */
   bold(value: string | null | undefined): string {
     const escaped = String(value ?? '')
       .replace(/&/g, '&amp;')

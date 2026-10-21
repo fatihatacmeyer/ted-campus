@@ -5,13 +5,11 @@ export interface OptimalGrid {
   cardHeight: number;
 }
 
-// Verilen sayıda kartı, sabit en-boy oranını koruyarak container'a
-// en büyük şekilde sığdıran sütun/satır kombinasyonunu bulur.
 export function computeOptimalGrid(
   count: number,
   containerWidth: number,
   containerHeight: number,
-  ratio: number = 9 / 13, // genişlik / yükseklik
+  ratio: number = 9 / 13,
   gap = 14,
 ): OptimalGrid {
   if (count <= 0 || containerWidth <= 0 || containerHeight <= 0) {

@@ -14,7 +14,6 @@ import { DashboardService } from '../../../dashboard/services/dashboard.service'
 import { BusDashboardStats } from '../../models/school-bus.model';
 import { SchoolBusService } from '../../services/school-bus.service';
 
-/** Genel Bakış sekmesi: araç ve yolcu özet kartları. */
 @Component({
   selector: 'app-overview-tab',
   standalone: true,
@@ -30,7 +29,6 @@ export class OverviewTabComponent implements OnInit {
   private destroyRef = inject(DestroyRef);
 
   protected readonly dashboardStats = signal<BusDashboardStats | null>(null);
-  /** KVKK onaylayan servis yetkilisi sayısı (sp_KvkkOnayCampus_s.ServisOnaySayisi). */
   protected readonly kvkkServiceApproved = signal(0);
 
   ngOnInit(): void {
@@ -38,7 +36,6 @@ export class OverviewTabComponent implements OnInit {
     this.loadKvkkServiceApproved();
   }
 
-  /** Kart ikincil bilgi: hata durumunda sayfayı bozmadan 0 kalır. */
   private loadKvkkServiceApproved(): void {
     this.dashboardService
       .getKvkkStats()

@@ -91,7 +91,7 @@ export const routes: Routes = [
       {
         path: 'photo-approval',
         canActivate: [adminGuard],
-        data: { titleKey: 'MENU.PHOTO_APPROVAL', scrollable: true }, // Varsa i18n key'in
+        data: { titleKey: 'MENU.PHOTO_APPROVAL', scrollable: true },
         loadComponent: () =>
           import('./features/persons/pages/photo-approval/photo-approval').then(
             (m) => m.PhotoApprovalComponent,

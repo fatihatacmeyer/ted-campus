@@ -10,7 +10,6 @@ import { TooltipModule } from 'primeng/tooltip';
 import { AccessTransaction } from '../../services/dashboard.service';
 import { toLowerTr, uniqueSorted } from '../../utils/dashboard.utils';
 
-/** Son işlemler tablosundaki kolon filtreleri ('' / null = filtre yok). */
 export interface TxnFilters {
   type: string;
   className: string;
@@ -37,10 +36,6 @@ export const EMPTY_TXN_FILTERS: TxnFilters = {
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
-/**
- * Son hareketler tablosu. `filterable` açıkken ikinci başlık satırında kolon filtreleri çıkar;
- * filtre durumu `[(filters)]` ile dışarıda tutulabilir (diyalog kapanıp açılınca korunur).
- */
 @Component({
   selector: 'app-transactions-table',
   standalone: true,
@@ -58,12 +53,9 @@ const DAY_MS = 24 * 60 * 60 * 1000;
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class TransactionsTableComponent {
-  /** Süzülmemiş tüm kayıtlar; filtreler tablonun içinde uygulanır. */
   readonly rows = input.required<AccessTransaction[]>();
-  /** Diyalog görünümü: DB metinleri çeviri anahtarı olarak çözülür. */
   readonly translated = input(false);
   readonly filterable = input(false);
-  /** Arama metni uygulanmışsa boş sonuç mesajı "sonuç yok" olur. */
   readonly searching = input(false);
   readonly filters = model<TxnFilters>(EMPTY_TXN_FILTERS);
 
@@ -104,7 +96,6 @@ export class TransactionsTableComponent {
     const sicil = toLowerTr(f.sicil.trim());
     const card = toLowerTr(f.card.trim());
     const from = f.range?.[0] ? f.range[0].getTime() : null;
-    // Bitiş seçilmediyse tek gün; seçildiyse bitiş gününün sonuna kadar (dahil).
     const to = from === null ? null : (f.range?.[1] ?? f.range?.[0])!.getTime() + DAY_MS;
     return this.rows().filter(
       (t) =>

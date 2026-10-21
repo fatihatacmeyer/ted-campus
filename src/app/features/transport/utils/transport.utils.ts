@@ -4,7 +4,6 @@ import { TranslateService } from '@ngx-translate/core';
 import { merge } from 'rxjs';
 import { map, startWith } from 'rxjs/operators';
 
-/** `[innerHTML]` çevirilerinde kullanıcı verisini kaçışlayıp kalın yazar. */
 export function boldText(value: string | null | undefined): string {
   const escaped = String(value ?? '')
     .replace(/&/g, '&amp;')
@@ -14,10 +13,6 @@ export function boldText(value: string | null | undefined): string {
   return `<strong>${escaped}</strong>`;
 }
 
-/**
- * Dil veya çeviri yüklemesi değişince seçenek etiketlerini yeniden hesaplamak için:
- * `computed` içinde okunur. Enjeksiyon bağlamında çağrılmalıdır.
- */
 export function injectI18nVersion(): Signal<unknown> {
   const translate = inject(TranslateService);
   return toSignal(

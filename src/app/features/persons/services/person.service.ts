@@ -22,27 +22,6 @@ import { ApiHelperService } from '../../../core/services/api-helper.service';
 import { unwrapResponse } from '../../../shared/utils/response.utils';
 import { LoginSendResult, parseLoginSendResponse, toSicilIdList } from '../utils/login-send.utils';
 
-/**
- * sp_sicilcampus_s'ten dönen ham DB satırı (Türkçe/DB sütun adları).
- *
- * Backend'deki generic "Dynamic" dispatcher, point + islemtipi kombinasyonuna
- * göre ilgili prosedürü çağırıyor:
- *   point=SicilCampus & islemtipi=s -> sp_sicilcampus_s (liste)
- *
- * Prosedür Sicil tablosunun tüm kolonlarına ek olarak:
- *   - UserType     (sys_userdef.ad tip kodu — "OGRENCI"/"VELI"/"OGRETMEN",
- *                   UserDef kolonu DÖNMEZ; frontend tipi bu metinden türetir)
- *   - VeliSicilId  (RelationCampus üzerinden ilk velinin sicil id, TOP(1);
- *                   backend JSON'da bazen string döndürebilir)
- *   - VeliAdSoyad  (ilk velinin "Ad Soyad" metni)
- *   - OgrencilerSinif / OgrenciKampusleri (yalnızca VELI satırları: "Ad Soyad (Sınıf), ..."
- *                   ve tekrarsız kampüs adları, virgülle ayrılmış; diğerlerinde NULL)
- * döndürür. @userdef boş bırakılırsa tüm tipler döner (backend'de
- * `WHERE (UserDef = @userdef OR @userdef IS NULL)` düzeltmesi uygulanmıştır).
- *
- * Kolon adları DB'den geldiği gibi (PascalCase/Türkçe) tutulur; Person
- * modeline çevrim mapSicilCampusRow içinde yapılır.
- */
 interface SicilCampusRow {
   ID: number;
   Ad: string;
@@ -88,13 +67,11 @@ interface SicilCampusRow {
   Ilce?: string | null;
   GirisTarih?: string | null;
   OKod1?: string;
-  // sp_sicilcampus_s ek kolonları
   UserType?: string;
   VeliSicilId?: number | string;
   VeliAdSoyad?: string;
   GelisServisPlaka?: string;
   DonusServisPlaka?: string;
-  // Sadece VELI satırlarında dolu (aktif öğrencilerden türetilir); diğerlerinde NULL
   OgrencilerSinif?: string | null;
   OgrenciKampusleri?: string | null;
 }
@@ -109,14 +86,6 @@ export class PersonService {
   private prepareService = inject(PrepareService);
   private api = inject(ApiHelperService);
 
-  /**
-   * insertPerson ve updatePerson arasındaki ortak payload yapısını oluşturur.
-   * Farklılık sadece islemtipi ('i'|'u') ve id (0|gerçek id) parametreleridir.
-   *
-   * okod17-okod20 için "undefined" string'i legacy sistemde de aynen
-   * gönderiliyor (muhtemelen eski koddaki bir kusur) — backend bunu kabul
-   * ettiği için biz de birebir koruyoruz.
-   */
   private buildPersonPayload(
     personData: PersonInsertRequest,
     islemtipi: 'i' | 'u',
@@ -211,7 +180,7 @@ export class PersonService {
       sicilgroup: '',
       cardid: '',
       userdef: '',
-      aktif: 1, // sadece aktif siciller, 0 yaparsan pasiflerle beraber tüm liste gelir
+      aktif: 1,
       okod1: '',
       okod2: '',
       okod3: '',
@@ -225,16 +194,6 @@ export class PersonService {
     return this.api.postParam<Person[]>('PersonList', paramString);
   }
 
-  /**
-   * sp_sicilcampus_s üzerinden tüm sicil tiplerini (öğrenci/veli/öğretmen)
-   * tek çağrıda çeker. @userdef boş gider -> backend `UserDef = @userdef OR
-   * @userdef IS NULL` sayesinde tüm kayıtları döndürür (client-side
-   * filtreleme ve allPersons mantığı sv2 ile aynı şekilde çalışır).
-   *
-   * Dynamic dispatcher deseni: point=SicilCampus & islemtipi=s.
-   * NOT: islemno Dynamic deseninde parametre olarak gönderilmez — AES
-   * oturum anahtarının SC bileşeni olarak PrepareService içinde kullanılır.
-   */
   getPersonListCampus(): Observable<Person[]> {
     return this.api
       .callEndpoint<SicilCampusRow[]>('Dynamic', {
@@ -244,12 +203,6 @@ export class PersonService {
       .pipe(map((rows) => (rows || []).map((row) => this.mapSicilCampusRow(row))));
   }
 
-  /**
-   * sp_sicilcampus_s UserDef kolonu DÖNDÜRMÜYOR; sicil tipi UserType
-   * metninden ("OGRENCI"/"VELI"/"OGRETMEN") türetilir. Prosedür ileride
-   * UserDef da döndürürse öncelik ona verilir.
-   * Bilinmeyen/boş UserType -> 0 döner (hiçbir listeye takılmaz).
-   */
   private resolveUserDef(row: SicilCampusRow): number {
     if (row.UserDef != null) return row.UserDef;
     const type = (row.UserType || '').toUpperCase();
@@ -260,11 +213,6 @@ export class PersonService {
     return 0;
   }
 
-  /**
-   * sp_sicilcampus_s ham DB satırını Person modeline çevirir.
-   * AdSoyad DB'de yoksa Ad + Soyad birleştirilerek üretilir; islemsonuc
-   * sv2 yanıtıyla aynı sözleşmeyi taşımadığı için 0 varsayılır.
-   */
   private mapSicilCampusRow(row: SicilCampusRow): Person {
     const userdef = this.resolveUserDef(row);
     const veliSicilId =
@@ -317,7 +265,6 @@ export class PersonService {
       ilce: row.Ilce ?? null,
       giristarih: row.GirisTarih ?? null,
       okod1: row.OKod1 || '',
-      // sp_sicilcampus_s ek kolonları
       userType: row.UserType,
       veliSicilId: veliSicilId,
       veliAdSoyad: row.VeliAdSoyad,
@@ -328,9 +275,6 @@ export class PersonService {
     };
   }
 
-  /**
-   * insertPerson ve updatePerson için ortak ön-koşul: userdef zorunludur.
-   */
   private assertUserDef(personData: PersonInsertRequest | null | undefined): void {
     if (!personData || personData.userdef == null) {
       throw new Error(
@@ -339,10 +283,6 @@ export class PersonService {
     }
   }
 
-  /**
-   * Yeni sicil (öğrenci / öğretmen / veli) ekler.
-   * Hangi component'ten çağrıldığı fark etmez; ayrımı `personData.userdef` yapar.
-   */
   insertPerson(personData: PersonInsertRequest): Observable<Person[]> {
     this.assertUserDef(personData);
 
@@ -350,11 +290,6 @@ export class PersonService {
     return this.http.post<Person[]>(`${this.config.apiUrl}/Person`, payload);
   }
 
-  /**
-   * Mevcut bir sicil kaydını günceller.
-   * insertPerson ile aynı payload yapısını kullanır; fark olarak
-   * `islemtipi: 'u'` ve gerçek `id` gönderilir.
-   */
   updatePerson(personData: PersonInsertRequest & { id: number }): Observable<Person[]> {
     this.assertUserDef(personData);
 
@@ -362,15 +297,6 @@ export class PersonService {
     return this.http.post<Person[]>(`${this.config.apiUrl}/Person`, payload);
   }
 
-  /**
-   * Güncelle + Onayla: AngelWeb'deki iki aşamalı update flow'unu takip eder.
-   * 1. POST /Person (islemtipi: 'u') — veriyi kaydeder
-   * 2. GET /Dynamic (point=SicilIslem, islemtipi=u) — kaydı aktifleştirir
-   *
-   * AngelWeb'de "Kaydet" butonuna basıldığında aynı iki istek atılıyor:
-   *   POST /Person → ardından GET /Dynamic?Name=SCI!...
-   * Dynamic olmadan veri geçici olarak kaydedilir ama aktifleşmez.
-   */
   updateAndConfirm(personData: PersonInsertRequest & { id: number }): Observable<unknown> {
     return this.updatePerson(personData).pipe(
       switchMap(() => {
@@ -404,8 +330,6 @@ export class PersonService {
   }
 
   requestLeave(leaveRequest: PersonLeaveRequest): Observable<LeaveRequestResponse[]> {
-    // Legacy JS'te boş değişkenler string concatenation sırasında "undefined" string'ine dönüşür.
-    // Backend bu formatta parse ettiği için aynı davranışı koruyoruz.
     const params = {
       point: 'talep',
       kaynak: 'izin',
@@ -423,24 +347,7 @@ export class PersonService {
     return this.api.callEndpoint<LeaveRequestResponse[]>('Dynamic', params);
   }
 
-  /**
-   * İzin formu PDF'ini getirir.
-   * Legacy: formgosternew(formid, 'izin') → GET /report?Name={encrypted}
-   * Params: islemtipi=s&reportid=IZINFORM&params=id:{formid}&islemno=1
-   */
-  /**
-   * Direkt izin atama — sp_pdks_ik prosedürüne gider.
-   * Legacy: izinkaydet2() → POST /TA → sp_pdks_ik
-   *
-   * Legacy param formatı (birebir):
-   *   islemtipi=ik&extra= [JSON]&tip=...&saatbas=...&saatbit=...&ucretli=...&saatlik=...&aciklama=...&sicilid=0&tarih=undefined&tarihbit=undefined
-   *
-   * Response: [{ islemsonuc: "1"|"2", sunucucevap: string }]
-   *   "1" = başarılı, "2" = başarısız
-   */
   assignLeave(params: PersonLeaveAssignParams): Observable<OperationResultResponse[]> {
-    // Legacy uyumu: "extra= " (boşluk) + JSON — buildParamString ile yapılamaz,
-    // manuel concatenation ile birebir aynı string oluşturulur.
     const paramString =
       `islemtipi=${params.islemtipi}` +
       `&extra= ${params.extra}` +
@@ -519,16 +426,6 @@ export class PersonService {
       .pipe(map((data) => (Array.isArray(data) ? data : []) as ExitReason[]));
   }
 
-  // --- VELİ - ÖĞRENCİ İLİŞKİSİ (RelationCampus) ---
-
-  /**
-   * Öğrencinin tüm velilerini getirir (sp_relationcampus_s, tip=2).
-   * Her satır: { VeliSicilId, relid } — relid (Id'nin SQL alias'ı), ilişkiyi güncellemek/silmek için zorunludur.
-   *
-   * NOT: Prosedürde parametre varsayılanı yok; dispatcher yalnızca gönderilen
-   * parametreleri iletiyor. Bu yüzden kullanılmayanlar boş string ('') gönderilir
-   * (int'e 0 olarak dönüşür) — aksi halde "expects parameter" hatası döner.
-   */
   getStudentRelation(ogrenciSicilId: number): Observable<RelationCampusRow[]> {
     return this.api
       .callEndpoint<RelationCampusRow[]>('Dynamic', {
@@ -546,11 +443,6 @@ export class PersonService {
       );
   }
 
-  /**
-   * Velinin tüm öğrencilerini getirir (sp_relationcampus_s, tip=1).
-   * Her satır: { OgrenciSicilId, relid } (Id'nin SQL alias'ı).
-   * Kullanılmayan parametreler boş string gönderilir (bkz. getStudentRelation notu).
-   */
   getParentRelations(veliSicilId: number): Observable<RelationCampusRow[]> {
     return this.api
       .callEndpoint<RelationCampusRow[]>('Dynamic', {
@@ -568,12 +460,6 @@ export class PersonService {
       );
   }
 
-  /**
-   * TÜM veli-öğrenci ilişkilerini tek çağrıda getirir (sp_relationcampus_s, tip=0).
-   * Veli listesi sayfasında "Çocuklar" kolonunu beslemek için kullanılır —
-   * satır başına N+1 çağrı yapmak yerine tek istek + client-side map kurulur.
-   * Kullanılmayan parametreler boş string gönderilir (bkz. getStudentRelation notu).
-   */
   getAllRelations(): Observable<RelationCampusRow[]> {
     return this.api
       .callEndpoint<RelationCampusRow[]>('Dynamic', {
@@ -622,11 +508,6 @@ export class PersonService {
     });
   }
 
-  /**
-   * "Bilgileri Gönder" (sp_loginsendcampus_d): verilen sicillerin login kaydı silinir,
-   * AutoUserWorker yeni parolayla tekrar açıp SMS gönderir. Tek kişi için `[id]` verilir;
-   * birden fazla Id tek istekte ('5;6;7') ve tek transaction'da işlenir.
-   */
   sendLoginInfo(sicilIds: readonly number[]): Observable<LoginSendResult> {
     return this.api
       .callEndpoint<unknown>('Dynamic', {

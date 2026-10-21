@@ -15,7 +15,6 @@
   </app-page-header>
 
   <div class="admin-card">
-    <!-- PDKS Tarzı Filtre Sekmeleri -->
     <div class="d-flex flex-wrap align-items-center gap-2 mb-3 filter-tabs">
       @for (tab of tabOptions; track tab.status ?? 'all') {
         <button
@@ -42,7 +41,6 @@
       [rowClickable]="true"
       (rowClick)="onRowClick($event)"
     >
-      <!-- Durum Kolonu -->
       <ng-template appColumnCell="onayDurumu" let-row>
         <p-tag
           [value]="getStatusLabel(row.onayDurumu) | translate"
@@ -50,10 +48,8 @@
         ></p-tag>
       </ng-template>
 
-      <!-- İşlemler (Onay/Red) Kolonu -->
       <ng-template #actionsTpl let-row>
         <div class="d-flex gap-2 justify-content-end align-items-center">
-          <!-- Sadece BEKLİYOR durumundaysa Onay/Red butonları çıkar -->
           @if (row.onayDurumu === ProxyApprovalStatus.Pending) {
             <button
               pButton

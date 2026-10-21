@@ -1,10 +1,5 @@
-<!-- ════════════════════════════════════════════════════════════
-     TED Dashboard — Ana Sayfa
-     Kartlar ve diyaloglar components/ altındaki bileşenlerde yaşar.
-     ════════════════════════════════════════════════════════════ -->
-
 <div class="dashboard">
-  <!-- ── Welcome Banner ──────────────────────────────────── -->
+  <!-- Welcome Banner -->
   <app-page-header
     [title]="(greeting | translate) + ', ' + userName()"
     [subtitle]="'DASHBOARD.WELCOME_HINT' | translate"
@@ -16,14 +11,14 @@
     </span>
   </app-page-header>
 
-  <!-- ── Loading State ───────────────────────────────────── -->
+  <!-- Loading State -->
   @if (isLoading()) {
     <div class="loading-container">
       <p-progressSpinner strokeWidth="4" animationDuration=".8s" />
       <p class="loading-text">{{ 'DASHBOARD.LOADING_DATA' | translate }}</p>
     </div>
   } @else if (errorMessage()) {
-    <!-- ── Error State ─────────────────────────────────────── -->
+    <!-- Error State -->
     <div class="error-banner">
       <span class="material-symbols-outlined">error</span>
       <span>{{ errorMessage() | translate }}</span>

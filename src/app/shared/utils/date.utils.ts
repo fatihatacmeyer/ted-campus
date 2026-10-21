@@ -1,11 +1,3 @@
-/**
- * Tarihi YYYY-MM-DD formatına çevirir.
- * - string ise aynen döner (zaten formatlı geldiği varsayılır)
- * - Date ise LOCAL saat diliminden (getFullYear/getMonth/getDate) formatlar
- *   — toISOString() UTC'ye çevirdiği için Türkiye saatiyle gece yarısına yakın
- *   Date'lerde bir gün kaymasına yol açar, o yüzden KULLANILMAZ.
- * - null/undefined ise '' döner.
- */
 export function formatDate(date: Date | string | null | undefined): string {
   if (!date) return '';
   if (typeof date === 'string') return date;
@@ -15,14 +7,6 @@ export function formatDate(date: Date | string | null | undefined): string {
   return `${year}-${month}-${day}`;
 }
 
-/**
- * Backend'den gelen 'YYYY-MM-DD' string'ini Date objesine çevirir.
- * - Yerel saat dilimine göre parse eder (new Date('YYYY-MM-DD') UTC parse eder,
- *   bu yüzden split ile parçalara ayırıp yerel kurar).
- * - Date ise kopyasını döner (yeni Date nesnesi).
- * - boş/geçersiz/eksik format → null döner.
- */
-// YENİ HALİ
 export function parseDate(dateStr: Date | string | null | undefined): Date | null {
   if (!dateStr) return null;
   if (dateStr instanceof Date) return new Date(dateStr);
@@ -44,16 +28,8 @@ export function parseDate(dateStr: Date | string | null | undefined): Date | nul
   return new Date(year, month - 1, day, hours, minutes, seconds);
 }
 
-/** PDKS dönem seçimi: gün / hafta / ay */
 export type PeriodType = 'gun' | 'hafta' | 'ay';
 
-/**
- * Dönem tipine göre kapsayıcı [başlangıç, bitiş] tarih aralığını hesaplar.
- * - 'gun'   -> verilen tarihin kendisi
- * - 'hafta' -> içinde bulunduğu haftanın Pazartesi–Pazar günleri
- * - 'ay'    -> ayın 1. günü ile son günü
- * Dönüş formatı: yyyy-MM-dd (backend kabulü, kapsayıcı aralık).
- */
 export function computePeriodRange(
   period: PeriodType,
   date: Date = new Date(),
@@ -67,7 +43,7 @@ export function computePeriodRange(
       end = d;
       break;
     case 'hafta': {
-      const day = d.getDay(); // 0=Pazar, 1=Pazartesi ...
+      const day = d.getDay();
       const diffToMonday = day === 0 ? -6 : 1 - day;
       start = new Date(d.getFullYear(), d.getMonth(), d.getDate() + diffToMonday);
       end = new Date(start.getFullYear(), start.getMonth(), start.getDate() + 6);
@@ -81,10 +57,6 @@ export function computePeriodRange(
   return { baslangic: formatDate(start), bitis: formatDate(end) };
 }
 
-/**
- * 'yyyy-MM-ddTHH:mm:ss' (veya 'yyyy-MM-dd HH:mm:ss') formatındaki zaman
- * damgasından saat kısmını 'HH:mm' olarak döndürür; parse edilemezse '' döner.
- */
 export function formatTime(datetime: string | null | undefined): string {
   if (!datetime) return '';
   const match = datetime.match(/T(\d{2}:\d{2})|(\d{2}:\d{2})/);

@@ -38,7 +38,6 @@ import { BusStoreService } from '../../services/bus-store.service';
 import { SchoolBusService } from '../../services/school-bus.service';
 import { boldText, injectI18nVersion } from '../../utils/transport.utils';
 
-/** Atamalar sekmesi: araç kartları, araca öğrenci ve yetkili atama diyaloğu. */
 @Component({
   selector: 'app-assignments-tab',
   standalone: true,

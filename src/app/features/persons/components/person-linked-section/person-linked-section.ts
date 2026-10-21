@@ -21,37 +21,23 @@ import { Person, RelationCampusRow, UserDef } from '../../../../core/models/pers
 import { PersonService } from '../../services/person.service';
 import { linkedKindKey, linkedTargetUserdef } from '../../utils/linked-person.utils';
 
-/**
- * Mevcut ilişki satırı. Yön, formun userdef'ine bağlıdır:
- *  - Öğrenci modunda (userdef=11) linkedId = veli sicil id  (sp_relationcampus_s tip=2)
- *  - Veli modunda (userdef=12) linkedId = öğrenci sicil id (sp_relationcampus_s tip=1)
- */
 interface ExistingRelation {
-  relid: number; // RelationCampus.Id — güncelleme/silme için zorunlu
+  relid: number;
   linkedId: number;
   linkedName: string;
   sicilno: string;
 }
 
-/** "Değiştir" işlemi — mevcut ilişki satırı (relid) yeni kişiye güncellenir (sp_velicampus_u). */
 interface RelationChange {
   relid: number;
   newLinkedId: number;
 }
 
-/** Şablonda listelenen birleşik satır: mevcut ilişki veya bekleyen ekleme. */
 interface RelationDisplayRow extends ExistingRelation {
   changed?: boolean;
   pending?: boolean;
 }
 
-/**
- * Kişi formunun "Veli / Çocuk Bilgisi" bölümü (öğrenci ↔ veli ilişkisi).
- * Ekleme, değiştirme ve silme işlemleri burada biriktirilir; kişi kaydedildikten sonra
- * üst form `applyRelationOps(personId)` ile sırayla uygular.
- *
- * Alanlar üst formun `FormGroup`'una bağlıdır (linkedPersonId, changeLinkedId, yeniLinked*).
- */
 @Component({
   selector: 'app-person-linked-section',
   standalone: true,
@@ -63,7 +49,6 @@ interface RelationDisplayRow extends ExistingRelation {
     SelectModule,
     TooltipModule,
   ],
-  // formControlName'lerin üst formdaki <form [formGroup]>'a bağlanması için.
   viewProviders: [
     {
       provide: ControlContainer,
@@ -79,7 +64,6 @@ export class PersonLinkedSectionComponent implements OnChanges {
   @Input({ required: true }) userdef!: number;
   @Input() allPersons: Person[] = [];
   @Input() isEditMode = false;
-  /** Düzenlenen kişinin id'si; doluysa mevcut ilişkiler yüklenir. */
   @Input() personId: number | null = null;
 
   private personService = inject(PersonService);
@@ -88,19 +72,13 @@ export class PersonLinkedSectionComponent implements OnChanges {
 
   isCreatingNewLinked = false;
 
-  existingRelations: ExistingRelation[] = []; // DB'deki mevcut ilişkiler
-  removedRelIds: number[] = []; // silinecek ilişkiler (sp_velicampus_d)
-  changedRelations: RelationChange[] = []; // velisi değişecek ilişkiler (sp_velicampus_u)
-  pendingAdditions: number[] = []; // eklenecek veli sicil id'leri (sp_velicampus_i)
-  changingRelid: number | null = null; // "Değiştir" modundaki satırın relid'si
-  confirmRemoveKey: string | null = null; // "Kaldır" onayı bekleyen satır
+  existingRelations: ExistingRelation[] = [];
+  removedRelIds: number[] = [];
+  changedRelations: RelationChange[] = [];
+  pendingAdditions: number[] = [];
+  changingRelid: number | null = null;
+  confirmRemoveKey: string | null = null;
 
-  /**
-   * linkedPersonOptions cache'i — getter her change detection'da çağrıldığı için
-   * binlerce kayıtlık allPersons listesini her seferinde yeniden filtreleyip
-   * map'lememek adına, girdiler (allPersons/ilişki durumu/userdef) değişmedikçe
-   * sonuç burada tutulur. Geçersiz kılma: invalidateLinkedOptions().
-   */
   private cachedLinkedOptions: { label: string; value: number }[] | null = null;
 
   private invalidateLinkedOptions(): void {
@@ -108,70 +86,54 @@ export class PersonLinkedSectionComponent implements OnChanges {
   }
 
   ngOnChanges(changes: SimpleChanges): void {
-    // linkedPersonOptions girdileri değişti → cache'i tazele
     if (changes['allPersons'] || changes['userdef']) {
       this.invalidateLinkedOptions();
     }
     if (changes['personId']) {
       this.resetRelationState();
-      // Düzenleme modunda mevcut ilişkileri ilişki tablosundan yükle (öğrenci: tip=2, veli: tip=1)
       if (this.personId) this.loadExistingRelations(this.personId);
     }
   }
 
-  /** İlişkili kişinin tekil adı (i18n anahtarı): öğrenci düzenlerken "Veli", veli düzenlerken "Öğrenci". */
   get linkedKind(): string {
     return linkedKindKey(this.userdef);
   }
 
-  /** Bölüm başlığı (i18n anahtarı): "Veli Bilgisi" / "Çocuk Bilgisi". */
   get linkedSectionTitle(): string {
     return this.userdef === UserDef.Veli ? 'PERSON.CHILD_INFO' : 'PERSON.PARENT_INFO';
   }
 
-  /** Toggle buton etiketi (i18n anahtarı): "Listeden Seç" / "Yeni Veli Oluştur" / "Yeni Öğrenci Oluştur". */
   get newLinkedToggleLabel(): string {
     return this.isCreatingNewLinked ? 'PERSON.SELECT_FROM_LIST' : 'PERSON.CREATE_NEW_LINKED';
   }
 
-  /** "Veli seçin" / "Öğrenci seçin" placeholder'ı (i18n anahtarı). */
   readonly linkedSelectPlaceholder = 'PERSON.SELECT_LINKED';
 
-  /** Değiştir dropdown'ı placeholder'ı (i18n anahtarı): "Yeni veli seçin" / "Yeni öğrenci seçin". */
   readonly changeLinkedPlaceholder = 'PERSON.SELECT_NEW_LINKED';
 
-  /** "Veli Ekle" / "Öğrenci Ekle" buton etiketi (i18n anahtarı). */
   readonly addLinkedButtonLabel = 'PERSON.ADD_LINKED';
 
-  /** Değiştir tooltip'i (i18n anahtarı): "Veliyi Değiştir" / "Öğrenciyi Değiştir". */
   get changeLinkedTooltip(): string {
     return this.userdef === UserDef.Veli ? 'PERSON.CHANGE_STUDENT' : 'PERSON.CHANGE_PARENT';
   }
 
-  /** Kaldır tooltip'i (i18n anahtarı): "Veli İlişkisini Kaldır" / "Öğrenci İlişkisini Kaldır". */
   get removeLinkedTooltip(): string {
     return this.userdef === UserDef.Veli
       ? 'PERSON.REMOVE_STUDENT_RELATION'
       : 'PERSON.REMOVE_PARENT_RELATION';
   }
 
-  /** Boş liste metni (i18n anahtarı): "Veli atanmamış" / "Çocuk atanmamış". */
   get noLinkedText(): string {
     return this.userdef === UserDef.Veli ? 'PERSON.NO_STUDENT' : 'PERSON.NO_PARENT';
   }
 
-  /** Dropdown içindeki arama kutusu placeholder'ı (i18n anahtarı): "Veli ara..." / "Öğrenci ara...". */
   readonly linkedFilterPlaceholder = 'PERSON.SEARCH_LINKED';
 
   get linkedPersonOptions(): { label: string; value: number }[] {
     if (this.cachedLinkedOptions) return this.cachedLinkedOptions;
 
-    // userdef=Ogrenci → show userdef=Veli, userdef=Veli → show userdef=Ogrenci
     const targetUserdef = linkedTargetUserdef(this.userdef);
 
-    // Zaten ilişkili olan velileri dropdown'dan çıkar (mükerrer ilişki oluşmasın):
-    // - mevcut ilişkiler (kaldırılmamış olanlar)
-    // - bekleyen eklemeler
     const excludedIds = new Set<number>();
     for (const rel of this.existingRelations) {
       if (!this.removedRelIds.includes(rel.relid)) excludedIds.add(rel.linkedId);
@@ -187,7 +149,6 @@ export class PersonLinkedSectionComponent implements OnChanges {
   toggleNewLinkedMode(): void {
     this.isCreatingNewLinked = !this.isCreatingNewLinked;
 
-    // Mod değiştiğinde gereksiz alanları temizle
     if (this.isCreatingNewLinked) {
       this.form.get('linkedPersonId')?.setValue(null);
     } else {
@@ -195,19 +156,11 @@ export class PersonLinkedSectionComponent implements OnChanges {
     }
   }
 
-  /** Yeni kişi oluşturma modundan çıkar (üst form, yeni kişiyi kaydettikten sonra çağırır). */
   stopCreatingNew(): void {
     this.isCreatingNewLinked = false;
     this.cdr.markForCheck();
   }
 
-  // ─── Veli ilişkisi yönetimi (sp_relationcampus_s / sp_velicampus_i-u-d) ───
-
-  /**
-   * Düzenleme modunda mevcut ilişkileri yükler:
-   *  - öğrenci düzenlerken sp_relationcampus_s tip=2 (velileri) → { VeliSicilId, relid }
-   *  - veli düzenlerken sp_relationcampus_s tip=1 (çocukları) → { OgrenciSicilId, relid }
-   */
   private loadExistingRelations(personId: number): void {
     const ogrenciModu = this.userdef === UserDef.Ogrenci;
     const obs = ogrenciModu
@@ -251,7 +204,6 @@ export class PersonLinkedSectionComponent implements OnChanges {
     this.cdr.markForCheck();
   }
 
-  /** Şablonda listelenen birleşik satırlar: mevcut (değişenler güncel isimle) + bekleyen eklemeler. */
   get relationRows(): RelationDisplayRow[] {
     const rows: RelationDisplayRow[] = [];
 
@@ -285,12 +237,10 @@ export class PersonLinkedSectionComponent implements OnChanges {
     return rows;
   }
 
-  /** @for track anahtarı — relid yoksa (bekleyen ekleme) ilişkili kişi id üzerinden tekil olur. */
   rowKey(row: RelationDisplayRow): string {
     return row.relid ? `rel-${row.relid}` : `add-${row.linkedId}`;
   }
 
-  /** Eklenmek üzere seçilen mevcut kişiyi bekleyen eklemelere alır (edit modundaki "Ekle" butonu). */
   addSelectedLinked(): void {
     const linkedId = this.form.value.linkedPersonId ? Number(this.form.value.linkedPersonId) : null;
     if (!linkedId) return;
@@ -299,7 +249,6 @@ export class PersonLinkedSectionComponent implements OnChanges {
     this.cdr.markForCheck();
   }
 
-  /** Bekleyen eklemelere kişi ekler (üst form kayıt sırasında da çağırır). */
   addPendingLinked(linkedId: number): void {
     if (this.pendingAdditions.includes(linkedId)) return;
     this.pendingAdditions.push(linkedId);
@@ -307,7 +256,6 @@ export class PersonLinkedSectionComponent implements OnChanges {
     this.cdr.markForCheck();
   }
 
-  /** Satırı "Değiştir" moduna alır — dropdown ile yeni ilişkili kişi seçilir. */
   startChange(row: RelationDisplayRow): void {
     if (!row.relid) return;
     this.changingRelid = row.relid;
@@ -321,7 +269,6 @@ export class PersonLinkedSectionComponent implements OnChanges {
     this.cdr.markForCheck();
   }
 
-  /** "Değiştir" modunda seçilen yeni kişiyi onaylar → kayıtta sp_velicampus_u (relid ile) uygulanır. */
   confirmChange(): void {
     const linkedId = this.form.value.changeLinkedId ? Number(this.form.value.changeLinkedId) : null;
     if (!linkedId || !this.changingRelid) return;
@@ -333,7 +280,6 @@ export class PersonLinkedSectionComponent implements OnChanges {
     } else {
       this.changedRelations.push({ relid, newLinkedId: linkedId });
     }
-    // Değiştirilen satır aynı zamanda silinmemeli
     this.removedRelIds = this.removedRelIds.filter((id) => id !== relid);
     this.invalidateLinkedOptions();
 
@@ -342,7 +288,6 @@ export class PersonLinkedSectionComponent implements OnChanges {
     this.cdr.markForCheck();
   }
 
-  /** Satırda iki aşamalı silme onayı başlatır (yanlışlıkla tıklamaya karşı). */
   requestRemove(row: RelationDisplayRow): void {
     this.confirmRemoveKey = this.rowKey(row);
     this.cdr.markForCheck();
@@ -353,13 +298,11 @@ export class PersonLinkedSectionComponent implements OnChanges {
     this.cdr.markForCheck();
   }
 
-  /** Silme onayını tamamlar → sp_velicampus_d (relid) işaretlenir. */
   confirmRemove(row: RelationDisplayRow): void {
     this.confirmRemoveKey = null;
     this.removeRelation(row);
   }
 
-  /** İlişkiyi silinmek üzere işaretler veya bekleyen eklemeyi geri alır. */
   removeRelation(row: RelationDisplayRow): void {
     if (row.relid) {
       this.removedRelIds.push(row.relid);
@@ -372,12 +315,6 @@ export class PersonLinkedSectionComponent implements OnChanges {
     this.cdr.markForCheck();
   }
 
-  /**
-   * Bekleyen ilişki değişikliklerini sırayla uygular (kişi kaydedildikten sonra):
-   *   1. silmeler  → sp_velicampus_d (relid)
-   *   2. değişimler → sp_velicampus_u (relid ile — relid eksikse SP sessizce hiçbir satırı güncellemez)
-   *   3. eklemeler → sp_velicampus_i (veli sicil id)
-   */
   applyRelationOps(personId: number): Observable<unknown> {
     const ops: Observable<unknown>[] = [];
     const ogrenciModu = this.userdef === UserDef.Ogrenci;
@@ -386,7 +323,6 @@ export class PersonLinkedSectionComponent implements OnChanges {
       ops.push(this.personService.deleteRelationCampus(relid));
     }
     for (const change of this.changedRelations) {
-      // sp_velicampus_u(ogrenciSicilId, veliSicilId, relid): sabit taraf yöne göre değişir.
       ops.push(
         ogrenciModu
           ? this.personService.updateRelationCampus(personId, change.newLinkedId, change.relid)

@@ -112,7 +112,6 @@ describe('DashboardComponent', () => {
     service['getDashboardStats'].mockImplementation(() => {
       throw new Error('boom');
     });
-    // rxResource stream hatası → hata durumu
     fixture = TestBed.createComponent(DashboardComponent);
     await flush();
 

@@ -3,7 +3,6 @@ import { bootstrapApplication } from '@angular/platform-browser';
 import { appConfig } from './app/app.config';
 import { App } from './app/app';
 
-// Production build'de debug logları (ör. "[Req] plaintext param") kapatılır.
 if (!isDevMode()) {
   const noop = () => undefined;
   console.log = noop;

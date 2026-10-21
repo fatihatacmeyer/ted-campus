@@ -11,10 +11,6 @@ import { BusStoreService } from '../../services/bus-store.service';
 
 type TabKey = 'dashboard' | 'buses' | 'assignments' | 'plans' | 'authorities';
 
-/**
- * Servis sayfası kabuğu: başlık ve sekme çubuğu. Her sekme kendi bileşeninde yaşar;
- * seçili olmayan sekmeler yok edilir ve açılırken verisini kendisi yükler.
- */
 @Component({
   selector: 'app-school-bus',
   standalone: true,

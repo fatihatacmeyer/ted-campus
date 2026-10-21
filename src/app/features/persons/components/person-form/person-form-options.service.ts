@@ -5,10 +5,6 @@ import { catchError } from 'rxjs/operators';
 
 import { DropdownItem, TypesService } from '../../services/types.service';
 
-/**
- * Kişi formundaki lookup (dropdown) listeleri. Form bileşenine özel sağlanır;
- * `load()` ile bir kez yüklenir, hatalı lookup boş liste olarak devam eder.
- */
 @Injectable()
 export class PersonFormOptions {
   private readonly typesService = inject(TypesService);
@@ -24,8 +20,6 @@ export class PersonFormOptions {
   readonly gender = signal<{ label: string; value: string }[]>([]);
   readonly bloodType = signal<{ label: string; value: string }[]>([]);
 
-  // Ham DB değerinden (örn. 'E', 'A RH+') seçenek ID'sine çeviri için arama tabloları.
-  // Edit modunda form.patchValue ham değeri alır; bu map ile item.id'ye çevrilir.
   private genderIdByAd = new Map<string, number>();
   private bloodTypeIdByAd = new Map<string, number>();
 
@@ -58,7 +52,6 @@ export class PersonFormOptions {
           E: 'PERSON.GENDER_MALE',
           K: 'PERSON.GENDER_FEMALE',
         };
-        // Backend'e seçenek ID'si gidiyor (item.id), görünen etiket item.ad kalıyor.
         this.gender.set(
           lists.sys_cinsiyet.map((item) => ({
             label: genderLabelMap[item.ad] ?? item.ad,
@@ -74,17 +67,14 @@ export class PersonFormOptions {
       });
   }
 
-  /** Ham DB cinsiyet değerini (örn. 'E') seçenek ID'sine çevirir; eşleşmezse olduğu gibi döner. */
   toGenderId(raw: unknown): string | null {
     return this.toOptionId(this.genderIdByAd, raw);
   }
 
-  /** Ham DB kan grubu değerini (örn. 'A RH+') seçenek ID'sine çevirir; eşleşmezse olduğu gibi döner. */
   toBloodTypeId(raw: unknown): string | null {
     return this.toOptionId(this.bloodTypeIdByAd, raw);
   }
 
-  /** Bir lookup hata verirse formun geri kalanı çalışsın diye boş listeye düşer. */
   private safe(source: Observable<DropdownItem[]>, label: string): Observable<DropdownItem[]> {
     return source.pipe(
       catchError((err) => {
@@ -94,7 +84,6 @@ export class PersonFormOptions {
     );
   }
 
-  /** DropdownItem listesinden "ad → id" arama tablosu üretir. */
   private idLookup(items: DropdownItem[]): Map<string, number> {
     return new Map(items.map((item) => [item.ad, item.id]));
   }

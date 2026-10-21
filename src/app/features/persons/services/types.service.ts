@@ -41,7 +41,7 @@ export class TypesService {
         map((rows) =>
           (rows || []).map((row) => ({
             id: row.id,
-            ad: row.terminalname, // DB'den gelen 'terminalname'i UI'ın beklediği 'ad' alanına bağlıyoruz
+            ad: row.terminalname,
           })),
         ),
       );

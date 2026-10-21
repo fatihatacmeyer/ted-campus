@@ -22,14 +22,11 @@ import { AppConfig, APP_CONFIG } from '../../../../core/services/app-config.serv
 import { LastPassIconComponent } from './last-pass-icon';
 import { PageHeaderComponent } from '../../../../shared/components/page-header/page-header';
 
-// Kullanıcının son seçtiği terminal grubu ve grid sayısı oturumlar arası
-// localStorage'da korunur; sayfa her açılışında aynı seçimler tekrarlanmaz.
 const STORAGE_KEY_SELECTED_GROUP = 'lastPass.selectedGroupId';
 const STORAGE_KEY_GRID_SIZE = 'lastPass.gridSize';
 const POLLING_INTERVAL_MS = 3000;
 const DEFAULT_AVATAR = 'assets/images/default-avatar.png';
 
-// 1 → 1 sütun, 2 → 2 sütun, 3 → 3 sütun, 4 → 2x2, 5 → 3+2, 6 → 3x2
 const GRID_CLASSES = ['', 'grid-1', 'grid-2', 'grid-3', 'grid-4', 'grid-5', 'grid-6'];
 
 function createIdleRecord(): LastPassRecord {
@@ -91,7 +88,6 @@ export class LastPassComponent implements OnInit {
   private readonly destroyRef = inject(DestroyRef);
   private readonly config: AppConfig = inject(APP_CONFIG);
 
-  // --- State ---
   isFullScreen = signal(false);
   terminalGroups = signal<TerminalGroup[]>([]);
   selectedGroupId = signal<number | null>(null);
@@ -101,7 +97,6 @@ export class LastPassComponent implements OnInit {
 
   readonly gridOptions = [1, 2, 3, 4, 5, 6].map((n) => ({ label: String(n), value: n }));
 
-  // Eksik kalan alanları boş (idle) kartlarla doldurarak grid yapısını sabitler
   visibleRecords = computed<LastPassRecord[]>(() => {
     const records = this.recentPasses().slice(0, this.gridSize());
     const paddingCount = this.gridSize() - records.length;
@@ -110,7 +105,6 @@ export class LastPassComponent implements OnInit {
       : records;
   });
 
-  // Grid sınıfını veri sayısına göre değil, kullanıcının seçtiği grid boyutuna göre ayarlar
   gridClass = computed(() => GRID_CLASSES[this.gridSize()] ?? 'grid-1');
 
   private readonly fullscreenListener = () => {
@@ -118,9 +112,6 @@ export class LastPassComponent implements OnInit {
   };
 
   constructor() {
-    // selectedGroupId değiştikçe (ilk yükleme dahil) 3 saniyede bir yoklama
-    // (polling) başlatır/yeniler. Eski RxJS Subscription alanı yerine tek bir
-    // reaktif zincir: toObservable + switchMap + takeUntilDestroyed.
     toObservable(this.selectedGroupId)
       .pipe(
         filter((groupId): groupId is number => groupId !== null),
@@ -136,8 +127,6 @@ export class LastPassComponent implements OnInit {
         error: (err) => console.error('Polling error', err),
       });
 
-    // document seviyesindeki listener bir @HostListener ile yakalanamaz;
-    // temizliği DestroyRef.onDestroy ile yapıyoruz, ayrı bir ngOnDestroy'a gerek kalmıyor.
     document.addEventListener('fullscreenchange', this.fullscreenListener);
     this.destroyRef.onDestroy(() =>
       document.removeEventListener('fullscreenchange', this.fullscreenListener),
@@ -169,8 +158,6 @@ export class LastPassComponent implements OnInit {
     writeSavedNumber(STORAGE_KEY_GRID_SIZE, size);
   }
 
-  // Bir fotoğraf URL'i (dosya bazlı ya da data URI) döner,
-  // fotoğraf yoksa template'in ikona düşmesi için null döner.
   getPhotoSource(record: LastPassRecord): string | null {
     const fileName = record.profilePhotoFileName?.trim();
     if (fileName) {
@@ -183,7 +170,6 @@ export class LastPassComponent implements OnInit {
     return null;
   }
 
-  // Fotoğraf yüklenemediğinde (bozuk dosya, ağ hatası vb.) varsayılan avatara düşer.
   onPhotoError(event: Event): void {
     (event.target as HTMLImageElement).src = DEFAULT_AVATAR;
   }
@@ -198,7 +184,6 @@ export class LastPassComponent implements OnInit {
 
   private isValidBase64Photo(value: string | null | undefined): boolean {
     const trimmed = (value ?? '').trim();
-    // Anlamsız kısa değerleri ele; sadece base64 karakter setine (padding '=' dahil) izin ver.
     if (trimmed.length < 16) return false;
     return /^[A-Za-z0-9+/]+={0,2}$/.test(trimmed);
   }
@@ -213,7 +198,6 @@ export class LastPassComponent implements OnInit {
           this.terminalGroups.set(groups);
           if (groups.length > 0) {
             const savedGroupId = readSavedNumber(STORAGE_KEY_SELECTED_GROUP, -1);
-            // Kayıtlı grup hâlâ listedeyse onu seç, silinmişse ilk gruba düş
             const groupId = groups.some((g) => g.id === savedGroupId) ? savedGroupId : groups[0].id;
             this.selectedGroupId.set(groupId);
             writeSavedNumber(STORAGE_KEY_SELECTED_GROUP, groupId);

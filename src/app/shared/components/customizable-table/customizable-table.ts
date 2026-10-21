@@ -16,7 +16,8 @@ import {
   Output,
   QueryList,
   TemplateRef,
-  ViewChild, AfterViewInit,
+  ViewChild,
+  AfterViewInit,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
@@ -43,29 +44,26 @@ import {
 
 import { TABLE_FILTER_STORAGE_PREFIX } from '../../config/table-storage';
 
-/** PrimeNG özel eşleşme modu — sınıf filtresi (değer: token dizisi) */
 const CLASS_MATCH_MODE = 'classSelection';
 
-/** Select filtre seçenekleri */
 export interface FilterOption {
   label: string;
   value: unknown;
 }
 
 export interface ColumnDef<T = unknown> {
-  field: string; // veri alanı adı
-  header: string; // başlık
+  field: string;
+  header: string;
   headerTooltip?: string;
   sortable?: boolean;
-  width?: string; // css genişliği (örn '70px')
-  alwaysVisible?: boolean; // panelden kaldırılamaz
-  filterType?: 'text' | 'select' | 'class'; // filtre widget türü (varsayılan 'text'); 'class' = seviye/şube çoklu seçim
-  filterOptions?: FilterOption[] | ((rows: T[]) => FilterOption[]); // select seçenekleri (statik veya satırlardan türetilen)
-  exportValue?: (row: T) => string | number | null; // dışa aktarma için özel değer (hücre görünümünden bağımsız)
+  width?: string;
+  alwaysVisible?: boolean;
+  filterType?: 'text' | 'select' | 'class';
+  filterOptions?: FilterOption[] | ((rows: T[]) => FilterOption[]);
+  exportValue?: (row: T) => string | number | null;
   filterable?: boolean;
 }
 
-/** Sütun filtreleri için satırlardan benzersiz değer listesi üretir (null/boş hariç) */
 export function uniqueFilterOptions<T extends object, K extends keyof T>(
   rows: T[],
   field: K,
@@ -116,27 +114,22 @@ export class CustomizableTableComponent<T extends object = Record<string, unknow
   @Input() rows: T[] = [];
   @Input() columns: ColumnDef<T>[] = [];
   @Input() loading = false;
-  /** false: filtre/arama saklanmaz (bir kayda özel modal tabloları — başka kayıtta eski filtre kalmasın) */
   @Input() persistFilters = true;
-  @Input() tableId = 'default'; // localStorage anahtarı: ted_table_columns_${tableId}
-  @Input() defaultFields: string[] | null = null; // null ise tüm sütunlar varsayılan
+  @Input() tableId = 'default';
+  @Input() defaultFields: string[] | null = null;
   @Input() emptyMessage = 'COMMON.NO_RECORDS';
-  @Input() emptyCellValue = '-'; // boş hücre (null/undefined) görünümü
+  @Input() emptyCellValue = '-';
   @Input() showSearch = true;
   @Input() showColumnSelector = true;
   @Input() searchPlaceholder = 'COMMON.SEARCH';
   @Input() rowClickable = false;
-  @Input() actionsTemplate: TemplateRef<{ $implicit: T }> | null = null; // her satırın sonundaki sabit İşlemler sütunu
-  @Input() exportable = true; // Dışa Aktar (Excel/CSV) butonu
-  @Input() exportFilename = ''; // varsayılan: tablo_${tableId}
-  /** Tablonun başına görünür satır numarası sütunu ekler */
+  @Input() actionsTemplate: TemplateRef<{ $implicit: T }> | null = null;
+  @Input() exportable = true;
+  @Input() exportFilename = '';
   @Input() showRowNumbers = false;
-  @Input() rowNumberHeader = '#'; // satır numarası sütun başlığı
-  /** Satır seçim modu — null ise seçim kapalı, 'multiple' çoklu seçim (checkbox) sağlar */
+  @Input() rowNumberHeader = '#';
   @Input() selectionMode: 'single' | 'multiple' | null = null;
-  /** Seçili satırlar (parent bileşen tutar) */
   @Input() selectedRows: T[] = [];
-  /** Seçim değiştiğinde parent'a yeni seçim listesini bildirir */
 
   @Input() displayMode: 'paginated' | 'scroll' | 'fit' = 'paginated';
   @Input() scrollHeight = 'calc(100vh - 240px)';
@@ -159,21 +152,16 @@ export class CustomizableTableComponent<T extends object = Record<string, unknow
 
   filterText = '';
 
-  /** Kullanıcının seçtiği sayfa boyutu — localStorage'da saklanır */
   rowsPerPage = 10;
 
   @ViewChild('dt', { static: false }) dt!: Table;
 
-  /** Başlık filtresi popup'ı — açık sütun ve ekran koordinatları (fixed konumlu) */
   filterPopup: { col: ColumnDef<T>; x: number; y: number } | null = null;
 
-  /** Popup'ın açıldığı filtre butonu ve o andaki ekran konumu (kaydırmada kopma kontrolü) */
   private filterAnchor: { el: HTMLElement; top: number; left: number } | null = null;
 
-  /** Sütun bazlı aktif filtreler (field → değer) — localStorage'da saklanır */
   private columnFilters = new Map<string, unknown>();
 
-  /** Geçerli sayfanın ilk satır indeksi — satır numarası hesabı için */
   private currentFirst = 0;
 
   private destroyRef = inject(DestroyRef);
@@ -187,19 +175,16 @@ export class CustomizableTableComponent<T extends object = Record<string, unknow
 
   private cachedVisibleColumns: ColumnDef<T>[] = [];
 
-  /** Kullanıcının yeniden boyutlandırdığı sütun genişlikleri (field → css değeri) */
   private columnWidths = new Map<string, string>();
 
   private get storageKey(): string {
     return `ted_table_columns_${this.tableId}`;
   }
 
-  /** alwaysVisible işaretli sütunların field'ları */
   private get alwaysVisibleFields(): string[] {
     return this.columns.filter((col) => col.alwaysVisible).map((col) => col.field);
   }
 
-  /** Varsayılan sütun listesi — defaultFields verilmediyse tüm sütunlar varsayılan */
   private get defaultColumnFields(): string[] {
     return this.defaultFields ?? this.columns.map((col) => col.field);
   }
@@ -209,10 +194,8 @@ export class CustomizableTableComponent<T extends object = Record<string, unknow
   }
 
   ngOnInit(): void {
-    this.primeFilterService.register(
-      CLASS_MATCH_MODE,
-      (value: unknown, filter: string[] | null) =>
-        matchesClassSelection(extractClassNames(value as string | null), filter),
+    this.primeFilterService.register(CLASS_MATCH_MODE, (value: unknown, filter: string[] | null) =>
+      matchesClassSelection(extractClassNames(value as string | null), filter),
     );
     this.listenScrollToCloseFilter();
     this.loadPageSize();
@@ -223,7 +206,6 @@ export class CustomizableTableComponent<T extends object = Record<string, unknow
   }
 
   ngAfterViewInit(): void {
-    // sessionStorage'dan geri yüklenen filtreleri tabloya uygula
     for (const [field, value] of this.columnFilters) {
       const col = this.columns.find((c) => c.field === field);
       if (col) {
@@ -233,12 +215,10 @@ export class CustomizableTableComponent<T extends object = Record<string, unknow
     if (this.filterText) {
       this.dt?.filterGlobal(this.filterText, 'contains');
     }
-    // Filtre popup'ı açıkken herhangi bir kaydırma (sayfa veya tablo içi) popup'ı kapatır
     const onScroll = (event: Event): void => {
       if (this.filterPopup) {
         const target = event.target as HTMLElement | null;
 
-        // Eğer kaydırılan alan dropdown listesi veya popup'ın kendisiyse kapatma
         if (target?.closest && target.closest('.col-filter-popup, .p-select-overlay')) {
           return;
         }
@@ -276,20 +256,14 @@ export class CustomizableTableComponent<T extends object = Record<string, unknow
     return this.allColumnFields.filter((field) => !this.selectedColumnFields.includes(field));
   }
 
-  /**
-   * Seçim kaynağı — filtre aktifse filtrelenmiş satırlar (hiç eşleşme yoksa boş),
-   * filtre yoksa tüm satırlar. Boş sonuçta tüm satırlara düşmek toplu işlemlerde riskli.
-   */
   private selectionSource(): T[] {
-    return ((this.dt?.filteredValue as T[] | null | undefined) ?? this.rows) ?? [];
+    return (this.dt?.filteredValue as T[] | null | undefined) ?? this.rows ?? [];
   }
 
-  /** Satır seçili mi? (referans karşılaştırması) */
   isRowSelected(row: T): boolean {
     return this.selectedRows.includes(row);
   }
 
-  /** Tek bir satırın seçimini değiştirir */
   onRowSelectionChange(row: T, checked: boolean): void {
     let next: T[];
     if (checked) {
@@ -300,13 +274,11 @@ export class CustomizableTableComponent<T extends object = Record<string, unknow
     this.selectedRowsChange.emit(next);
   }
 
-  /** Filtrelenmiş satırların tamamı seçili mi? */
   isAllRowsSelected(): boolean {
     const source = this.selectionSource();
     return source.length > 0 && source.every((r) => this.selectedRows.includes(r));
   }
 
-  /** Tüm (filtrelenmiş) satırları seçer / seçimi kaldırır */
   toggleAllRows(): void {
     const source = this.selectionSource();
     const selectAll = !this.isAllRowsSelected();
@@ -325,7 +297,6 @@ export class CustomizableTableComponent<T extends object = Record<string, unknow
     return this.columns.find((col) => col.field === field)?.header ?? field;
   }
 
-  /** Sütun seçici panelde gösterilecek uzun ismi döner */
   getColDisplayName(field: string): string {
     const col = this.columns.find((c) => c.field === field);
     return col ? (col.headerTooltip ?? col.header) : field;
@@ -396,16 +367,14 @@ export class CustomizableTableComponent<T extends object = Record<string, unknow
     }
   }
 
-  /** Varsayılan sütunlara dön */
   onClearColumns(): void {
     this.selectedColumnFields = [...this.defaultColumnFields];
     this.refreshVisibleColumns();
     this.saveToStorage();
   }
 
-  /* ── Sütun Filtreleri ──────────────────────────────────── */
+  /* Sütun Filtreleri */
 
-  /** Sütunun filtre widget türü — select seçenek tanımlıysa açılır menü, değilse arama kutusu */
   getColumnFilterType(col: ColumnDef<T>): 'text' | 'select' | 'class' {
     if (col.filterType === 'class') return 'class';
     return col.filterType === 'select' || col.filterOptions !== undefined ? 'select' : 'text';
@@ -416,22 +385,18 @@ export class CustomizableTableComponent<T extends object = Record<string, unknow
     return type === 'class' ? CLASS_MATCH_MODE : type === 'select' ? 'equals' : 'contains';
   }
 
-  /** En az bir aktif filtre varsa toolbar'da temizle butonu görünür */
   get hasActiveFilters(): boolean {
     return this.columnFilters.size > 0;
   }
 
-  /** Popup'ı açılan sütunun tanımı */
   getActiveFilterColumn(): ColumnDef<T> | null {
     return this.filterPopup?.col ?? null;
   }
 
-  /** Sütunda aktif filtre değeri varsa buton vurgulanır */
   hasFilterOn(field: string): boolean {
     return this.columnFilters.has(field);
   }
 
-  /** Başlıktaki filtre butonu — popup'ı butonun altında açar (viewport içinde kalır) */
   onFilterBtnClick(event: MouseEvent, col: ColumnDef<T>): void {
     event.stopPropagation();
     if (this.filterPopup?.col.field === col.field) {
@@ -451,17 +416,11 @@ export class CustomizableTableComponent<T extends object = Record<string, unknow
     if (y + popupHeight > window.innerHeight) {
       y = Math.max(8, rect.top - popupHeight - 4);
     }
-    // Tablo transform'lu bir kabın içindeyse (ör. p-dialog) fixed konum o kaba göre hesaplanır;
-    // ekran koordinatlarından kabın konumu düşülmezse popup kabın ofseti kadar kayar.
     const origin = this.fixedContainingBlockOrigin();
     this.filterPopup = { col, x: x - origin.x, y: y - origin.y };
     this.filterAnchor = { el: btn, top: rect.top, left: rect.left };
   }
 
-  /**
-   * position: fixed bir öğenin konumlandığı kabın ekrandaki sol-üst köşesi. Ata zincirinde
-   * transform / filter / perspective / contain / will-change olan ilk öğe kap olur; yoksa ekran.
-   */
   private fixedContainingBlockOrigin(): { x: number; y: number } {
     let el: HTMLElement | null = this.hostRef.nativeElement;
     while (el && el !== document.body && el !== document.documentElement) {
@@ -475,7 +434,6 @@ export class CustomizableTableComponent<T extends object = Record<string, unknow
         /transform|perspective|filter/.test(s.willChange);
       if (createsBlock) {
         const r = el.getBoundingClientRect();
-        // Fixed öğe kabın dolgu kutusuna göre yerleşir: kenarlık kalınlığı da düşülür.
         return { x: r.left + el.clientLeft, y: r.top + el.clientTop };
       }
       el = el.parentElement;
@@ -483,18 +441,11 @@ export class CustomizableTableComponent<T extends object = Record<string, unknow
     return { x: 0, y: 0 };
   }
 
-  /**
-   * Sayfa ya da herhangi bir kap (modal içeriği, tablonun kaydırma alanı) kaydırılıp filtre
-   * butonu yer değiştirince popup butondan kopacağı için kapatılır. Buton yerinde kalıyorsa
-   * (yapışkan başlık, süzme sonrası liste kısalması) popup açık kalır. Kaydırma olayı
-   * kabarcıklanmadığından capture ile dinlenir.
-   */
   private listenScrollToCloseFilter(): void {
     const onScroll = (event: Event) => {
       const anchor = this.filterAnchor;
       if (!this.filterPopup || !anchor) return;
       const target = event.target;
-      // Popup'ın kendi içindeki (sınıf listesi) ve select açılır listesindeki kaydırma hariç.
       if (target instanceof Element && target.closest('.col-filter-popup, .p-select-overlay')) {
         return;
       }
@@ -509,12 +460,10 @@ export class CustomizableTableComponent<T extends object = Record<string, unknow
     );
   }
 
-  /** Popup'ı kapatır (× butonu, Escape, dışarı tıklama, kaydırma) */
   closeFilterPopup(): void {
     this.filterPopup = null;
   }
 
-  /** Tek sütunun filtresini temizler (popup açık kalır) */
   clearColumnFilter(col: ColumnDef<T>): void {
     this.columnFilters.delete(col.field);
     this.dt?.filter(null, col.field, this.getMatchMode(col));
@@ -525,7 +474,6 @@ export class CustomizableTableComponent<T extends object = Record<string, unknow
   onDocumentClickFilter(event: MouseEvent): void {
     if (!this.filterPopup) return;
     const target = event.target as HTMLElement | null;
-    // Popup içi, filtre butonları ve select açılır listesi dışındaki tıklamalar popup'ı kapatır
     if (target?.closest('.col-filter-popup, .col-filter-btn, .p-select-overlay')) return;
     this.filterPopup = null;
   }
@@ -542,16 +490,14 @@ export class CustomizableTableComponent<T extends object = Record<string, unknow
     this.filterPopup = null;
   }
 
-  /** Select seçenekleri — statik dizi veya satırlardan türetilen fonksiyon */
   getFilterOptions(col: ColumnDef<T>): FilterOption[] {
     const opts =
       typeof col.filterOptions === 'function' ? col.filterOptions(this.rows) : col.filterOptions;
     return opts ?? [];
   }
 
-  /* ── Sınıf filtresi (seviye + şube çoklu seçim) ───────────── */
+  /* Sınıf filtresi (seviye + şube çoklu seçim) */
 
-  /** Satırlardaki sınıflardan seviye/şube ağacı — rows değişmedikçe önbellekten döner */
   getClassGroups(col: ColumnDef<T>): ClassGroup[] {
     const cached = this.classGroupCache.get(col.field);
     if (cached && cached.rows === this.rows) return cached.groups;
@@ -570,24 +516,20 @@ export class CustomizableTableComponent<T extends object = Record<string, unknow
     return Array.isArray(value) ? (value as string[]) : [];
   }
 
-  /** Seviyenin tamamı seçili mi */
   isGradeSelected(col: ColumnDef<T>, group: ClassGroup): boolean {
     return this.classTokens(col).includes(group.key);
   }
 
-  /** Seviyede yalnızca bazı şubeler seçili mi (kutuda yarı seçili gösterim) */
   isGradePartial(col: ColumnDef<T>, group: ClassGroup): boolean {
     const tokens = this.classTokens(col);
     return !tokens.includes(group.key) && tokens.some((t) => t.startsWith(`${group.key}/`));
   }
 
-  /** Şube seçili sayılır: seviyenin tamamı seçiliyse ya da şube tek başına seçiliyse */
   isSectionSelected(col: ColumnDef<T>, group: ClassGroup, section: string): boolean {
     const tokens = this.classTokens(col);
     return tokens.includes(group.key) || tokens.includes(`${group.key}/${section}`);
   }
 
-  /** Seviye kutusu: seçili/kısmi ise temizler, hiç seçili değilse seviyenin tamamını seçer */
   toggleGrade(col: ColumnDef<T>, group: ClassGroup): void {
     const prefix = `${group.key}/`;
     const rest = this.classTokens(col).filter((t) => t !== group.key && !t.startsWith(prefix));
@@ -595,7 +537,6 @@ export class CustomizableTableComponent<T extends object = Record<string, unknow
     this.onColumnFilterChange(col, hasAny ? rest : [...rest, group.key]);
   }
 
-  /** Şube kutusu: seviye tamamı seçiliyken tıklanırsa o şube çıkarılıp diğerleri kalır; hepsi seçilince seviyeye indirgenir */
   toggleSection(col: ColumnDef<T>, group: ClassGroup, section: string): void {
     const prefix = `${group.key}/`;
     const tokens = this.classTokens(col);
@@ -619,7 +560,6 @@ export class CustomizableTableComponent<T extends object = Record<string, unknow
     return this.columnFilters.get(field) ?? null;
   }
 
-  /** Filtre değiştiğinde PrimeNG tablosuna uygular ve kalıcı hale getirir */
   onColumnFilterChange(col: ColumnDef<T>, value: unknown): void {
     const matchMode = this.getMatchMode(col);
     const isEmptyArray = Array.isArray(value) && value.length === 0;
@@ -633,19 +573,16 @@ export class CustomizableTableComponent<T extends object = Record<string, unknow
     this.saveColumnFilters();
   }
 
-  /** Genel arama değiştiğinde tabloya uygular ve oturum boyunca saklar */
   onSearchChange(value: string): void {
     this.filterText = value ?? '';
     this.dt?.filterGlobal(this.filterText, 'contains');
     this.saveColumnFilters();
   }
 
-  /** Aktif filtre sayısı (sütun filtreleri + genel arama) */
   get activeFilterCount(): number {
     return this.columnFilters.size + (this.filterText ? 1 : 0);
   }
 
-  /** Tüm sütun filtrelerini ve genel aramayı temizler */
   clearColumnFilters(): void {
     for (const col of this.columns) {
       this.columnFilters.delete(col.field);
@@ -660,8 +597,6 @@ export class CustomizableTableComponent<T extends object = Record<string, unknow
     return `${TABLE_FILTER_STORAGE_PREFIX}${this.tableId}`;
   }
 
-  // Filtreler kullanıcı tercihi değil, geçici görünümdür: sekme kapanınca ve
-  // çıkışta (AuthService.logout) silinmesi için sessionStorage'da tutulur.
   private loadColumnFilters(): void {
     if (!this.persistFilters) return;
     try {
@@ -720,36 +655,29 @@ export class CustomizableTableComponent<T extends object = Record<string, unknow
     return this.cellTemplateMap.get(field) ?? null;
   }
 
-  /* ── Sayfalama ─────────────────────────────────────────── */
+  /* Sayfalama */
 
-  /** p-table (onPage) — sayfa başlangıcını ve seçilen sayfa boyutunu kaydeder */
   onPageChange(event: { first: number; rows: number }): void {
     this.currentFirst = event.first;
     this.rowsPerPage = event.rows;
     this.savePageSize();
   }
 
-  /** Görünür satır numarası — sayfa başına göre hesaplanır */
   rowNumberFor(index: number): number {
     // return this.currentFirst + index + 1;
     return index + 1;
   }
 
-  /** p-table rowTrackBy — gereksiz DOM güncellemelerini önler */
   trackByRow(index: number, row: T): unknown {
     return (row as unknown as Record<string, unknown>)['id'] ?? index;
   }
 
-  /* ── Dışa Aktarma (Excel) ──────────────────────────────── */
+  /* Dışa Aktarma (Excel) */
 
   private get exportBaseName(): string {
     return this.exportFilename?.trim() || `tablo_${this.tableId}`;
   }
 
-  /**
-   * Görünür sütunlara göre dışa aktarma verisi üretir.
-   * Aktif filtreler varsa yalnızca filtrelenmiş satırlar dışa aktarılır (E1).
-   */
   private buildExportData(): { headers: string[]; rows: (string | number)[][] } {
     const headers = this.visibleColumns.map((col) => this.translateService.instant(col.header));
     const sourceRows = this.dt?.filteredValue ?? this.rows;
@@ -778,7 +706,7 @@ export class CustomizableTableComponent<T extends object = Record<string, unknow
     return String(value);
   }
 
-  /* ── Sayfa boyutu kalıcılığı ───────────────────────────── */
+  /* Sayfa boyutu kalıcılığı */
 
   private get pageSizeStorageKey(): string {
     return `ted_table_page_size_${this.tableId}`;
@@ -805,18 +733,16 @@ export class CustomizableTableComponent<T extends object = Record<string, unknow
     }
   }
 
-  /* ── Sütun genişliği kalıcılığı ────────────────────────── */
+  /* Sütun genişliği kalıcılığı */
 
   private get colWidthStorageKey(): string {
     return `ted_table_col_widths_${this.tableId}`;
   }
 
-  /** Sütun genişliği — kullanıcı tercihi varsa onu, yoksa tanımlı genişliği döner */
   getColumnWidth(field: string): string | undefined {
     return this.columnWidths.get(field) ?? this.columns.find((col) => col.field === field)?.width;
   }
 
-  /** p-table (onColResize) — yeni genişliği kaydeder */
   onColResize(event: TableColResizeEvent): void {
     const field = event.element.getAttribute('data-field');
     if (!field) return;
@@ -863,9 +789,7 @@ export class CustomizableTableComponent<T extends object = Record<string, unknow
       const raw = localStorage.getItem(this.storageKey);
       if (raw) {
         const parsed: string[] = JSON.parse(raw);
-        // Depolanan değerler hâlâ columns'ta var mı filtrele
         const filtered = parsed.filter((field) => this.allColumnFields.includes(field));
-        // Yeni default alanları depolanan listeye ekle
         for (const field of this.defaultColumnFields) {
           if (!filtered.includes(field) && this.allColumnFields.includes(field)) {
             filtered.push(field);

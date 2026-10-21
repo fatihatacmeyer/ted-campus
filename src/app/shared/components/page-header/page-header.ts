@@ -1,9 +1,5 @@
 import { ChangeDetectionStrategy, Component, input } from '@angular/core';
 
-/**
- * Sayfa başlık kartı: ikon + başlık (+ opsiyonel alt metin) solda,
- * içerik projeksiyonu ile verilen aksiyon/filtreler sağda.
- */
 @Component({
   selector: 'app-page-header',
   standalone: true,

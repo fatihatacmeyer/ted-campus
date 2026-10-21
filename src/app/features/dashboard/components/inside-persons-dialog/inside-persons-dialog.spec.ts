@@ -7,7 +7,6 @@ import { InsidePersonsDialogComponent } from './inside-persons-dialog';
 import { DashboardService, InsidePerson } from '../../services/dashboard.service';
 import { provideAppTesting } from '../../../../testing/test-providers';
 
-/** Şablonun kullandığı protected üyelerin test görünümü. */
 interface DialogInternals {
   insideSchoolFilter: WritableSignal<string>;
   insideClassFilter: WritableSignal<string>;

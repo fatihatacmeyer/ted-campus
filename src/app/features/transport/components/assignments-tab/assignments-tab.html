@@ -27,7 +27,6 @@
           class="bus-card"
           [class.bus-waiting]="bus.bosKoltukGidis <= 0 && bus.bosKoltukDonus <= 0"
         >
-          <!-- Bus Header -->
           <div class="bus-card-header">
             <div class="bus-plate">
               <span class="material-symbols-outlined">pin</span>
@@ -41,7 +40,6 @@
             </div>
           </div>
 
-          <!-- Araç Info -->
           <div class="bus-route">
             <div class="route-point">
               <span class="material-symbols-outlined">directions_bus</span>
@@ -61,13 +59,11 @@
             </div>
           </div>
 
-          <!-- Açıklama -->
           <div class="bus-route-name">
             <span class="material-symbols-outlined">info</span>
             {{ bus.description || ('SCHOOL_BUS.NO_DESCRIPTION' | translate) }}
           </div>
 
-          <!-- Gidiş / Dönüş Doluluk -->
           <div class="bus-passengers">
             <div class="passenger-stats">
               <span class="passenger-count">
@@ -109,7 +105,6 @@
             }
           </div>
 
-          <!-- Actions -->
           <div class="bus-actions">
             <button
               pButton
@@ -127,9 +122,7 @@
   }
 </div>
 
-<!-- ══════════════════════════════════════════════════════════ -->
-<!-- DIALOG: Öğrenci Servis Atama (araca bağlı)                 -->
-<!-- ══════════════════════════════════════════════════════════ -->
+<!-- DIALOG: Öğrenci Servis Atama (araca bağlı) -->
 @if (studentAssignVisible() && studentAssignBus(); as bus) {
   <p-dialog
     [visible]="true"
@@ -146,7 +139,6 @@
         {{ bus.plate }} — {{ bus.brand }} {{ bus.model }}
       </h3>
     </ng-template>
-    <!-- Araç özeti -->
     <div class="dialog-summary">
       <div class="summary-item">
         <span class="material-symbols-outlined">pin</span>
@@ -254,7 +246,6 @@
       </div>
     </form>
 
-    <!-- Öğrenci atama formu -->
     <form [formGroup]="studentAssignForm" (ngSubmit)="submitStudentAssign()" class="entity-form">
       <div class="form-field">
         <label for="assignStudent"
@@ -368,9 +359,7 @@
   </p-dialog>
 }
 
-<!-- ══════════════════════════════════════════════════════════ -->
-<!-- DIALOG: Öğrenci Servis Ataması Silme Onayı                 -->
-<!-- ══════════════════════════════════════════════════════════ -->
+<!-- DIALOG: Öğrenci Servis Ataması Silme Onayı -->
 @if (studentAssignDeleteVisible() && studentAssignDeleting(); as deleting) {
   <p-dialog
     [visible]="true"
@@ -424,9 +413,7 @@
   </p-dialog>
 }
 
-<!-- ══════════════════════════════════════════════════════════ -->
-<!-- DIALOG: Yetkili Servis Ataması Silme Onayı                 -->
-<!-- ══════════════════════════════════════════════════════════ -->
+<!-- DIALOG: Yetkili Servis Ataması Silme Onayı -->
 @if (authorityAssignDeleteVisible() && authorityAssignDeleting(); as deleting) {
   <p-dialog
     [visible]="true"

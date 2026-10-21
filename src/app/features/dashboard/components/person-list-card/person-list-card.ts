@@ -8,12 +8,10 @@ import { TooltipModule } from 'primeng/tooltip';
 import { filterPeople } from '../../utils/dashboard.utils';
 import { SearchBoxComponent } from '../search-box/search-box';
 
-/** Özet kartlarında gösterilecek maksimum satır sayısı. */
 const PREVIEW_LIMIT = 5;
 
 export type PersonListKind = 'early' | 'late' | 'absent';
 
-/** Erken çıkan / geç kalan / gelmeyen kayıtlarının ortak alanları (saatler türe göre dolu). */
 export interface PersonListItem {
   fullName: string;
   className: string;
@@ -24,10 +22,6 @@ export interface PersonListItem {
   expectedEntryTime?: string;
 }
 
-/**
- * Kişi listesi kartı: başlık, arama, ilk birkaç satır ve "tümünü gör" diyaloğu.
- * Erken çıkanlar, geç kalanlar ve gelmeyenler için aynı bileşen kullanılır.
- */
 @Component({
   selector: 'app-person-list-card',
   standalone: true,
@@ -52,7 +46,6 @@ export class PersonListCardComponent {
   readonly icon = input.required<string>();
   readonly iconCls = input.required<string>();
 
-  /** Kart ve diyalog aynı arama metnini paylaşır. */
   protected readonly search = signal('');
   protected readonly dialogVisible = signal(false);
 

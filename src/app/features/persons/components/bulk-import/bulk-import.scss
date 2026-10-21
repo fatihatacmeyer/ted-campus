@@ -82,7 +82,6 @@
     outline: none;
     box-shadow: var(--ted-focus-ring);
   }
-  /* Seçili filtre */
   &.active {
     border-color: var(--ted-text-secondary);
   }
@@ -165,8 +164,6 @@
   line-height: 1.4;
   color: var(--ted-text-secondary);
 }
-
-// ─── Neden dökümü ───
 
 .reasons {
   display: grid;
@@ -292,8 +289,6 @@
     opacity: 1;
   }
 }
-
-// ─── Tablo araçları ───
 
 .table-tools {
   display: flex;
