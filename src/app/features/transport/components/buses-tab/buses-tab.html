@@ -14,7 +14,6 @@
     ></button>
   </div>
 
-  <!-- Table -->
   <app-customizable-table
     [rows]="buses()"
     [columns]="busColumns"
@@ -59,9 +58,7 @@
   </app-customizable-table>
 </div>
 
-<!-- ══════════════════════════════════════════════════════════ -->
-<!-- DIALOG: Bus Form (Add/Edit)                              -->
-<!-- ══════════════════════════════════════════════════════════ -->
+<!-- DIALOG: Bus Form (Add/Edit) -->
 @if (busFormVisible()) {
   <p-dialog
     [visible]="true"
@@ -203,9 +200,7 @@
   </p-dialog>
 }
 
-<!-- ══════════════════════════════════════════════════════════ -->
-<!-- DIALOG: Bus Delete Confirmation                           -->
-<!-- ══════════════════════════════════════════════════════════ -->
+<!-- DIALOG: Bus Delete Confirmation -->
 @if (busDeleteVisible() && busDeleting()) {
   <p-dialog
     [visible]="true"

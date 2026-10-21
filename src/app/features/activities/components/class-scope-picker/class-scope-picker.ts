@@ -32,7 +32,6 @@ export class ClassScopePickerComponent {
     return this.control().value || [];
   }
 
-  /** Grubun tüm şubeleri seçili mi? */
   isGroupSelected(group: ClassGroup): boolean {
     return (
       group.items.length > 0 && group.items.every((item) => this.selected.includes(item.value))
@@ -45,33 +44,27 @@ export class ClassScopePickerComponent {
     return selectedCount > 0 && selectedCount < group.items.length;
   }
 
-  /** Grup içinde kaç şube seçili? */
   getGroupSelectedCount(group: ClassGroup): number {
     return group.items.filter((item) => this.selected.includes(item.value)).length;
   }
 
-  /** Toplam sınıf sayısı */
   get allClassesCount(): number {
     return this.groups().reduce((sum, group) => sum + group.items.length, 0);
   }
 
-  /** Tüm sınıflar seçili mi? */
   get isAllClassesSelected(): boolean {
     if (this.allClassesCount === 0) return false;
     return this.selected.length === this.allClassesCount;
   }
 
-  /** Tüm sınıfları seç */
   selectAllClasses(): void {
     this.setSelection(this.groups().flatMap((g) => g.items.map((i) => i.value)));
   }
 
-  /** Seçimi temizle */
   clearAllClasses(): void {
     this.setSelection([]);
   }
 
-  /** Seçim özeti string */
   get getSelectionSummary(): string {
     const selected = this.selected;
     if (selected.length === 0) return '';
@@ -97,10 +90,8 @@ export class ClassScopePickerComponent {
     const groupValues = new Set(group.items.map((i) => i.value));
 
     if (this.isGroupSelected(group)) {
-      // Tümünü kaldır
       this.setSelection(current.filter((v) => !groupValues.has(v)));
     } else {
-      // Tümünü ekle
       this.setSelection([...new Set([...current, ...group.items.map((i) => i.value)])]);
     }
   }

@@ -23,15 +23,10 @@ export class ActivityLookups {
   private readonly translate = inject(TranslateService);
   private readonly destroyRef = inject(DestroyRef);
 
-  /** Etkinlik türleri — TurCampus lookup'undan doldurulur. */
   readonly types = signal<DropdownItem[]>([]);
-  /** Ulaşım bilgileri — UlasimCampus lookup'undan doldurulur. */
   readonly transportations = signal<DropdownItem[]>([]);
-  /** Eğitim düzeyleri — cbo_direktorluk lookup'undan doldurulur. */
   readonly educationLevels = signal<DropdownItem[]>([]);
-  /** Kampüs seçenekleri — cbo_firma lookup'undan doldurulur. */
   readonly campuses = signal<DropdownItem[]>([]);
-  /** Ham sınıf listesi — cbo_bolum lookup'undan doldurulur. */
   readonly classrooms = signal<DropdownItem[]>([]);
   /** Sınıflardan türetilen seviye grupları (1. Sınıflar, 2. Sınıflar...). */
   readonly classroomGroups = signal<ClassGroup[]>([]);

@@ -63,7 +63,6 @@ export class ActivityDetailDialogComponent {
   /** Katılımcı listesi için aktif filtre — onay kartlarından seçilir. */
   activeParticipantFilter = signal<ParticipantFilter>('Tümü');
 
-  /** Aktif filtreye göre filtrelenmiş katılımcı listesi. */
   filteredParticipants = computed(() => {
     const filter = this.activeParticipantFilter();
     const list = this.participants();
@@ -149,7 +148,6 @@ export class ActivityDetailDialogComponent {
       });
   }
 
-  /** Katılımcı durumu için p-tag severity değeri. */
   getParticipantSeverity(durum: string) {
     switch (durum) {
       case 'Onaylanan':

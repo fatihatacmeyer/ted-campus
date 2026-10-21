@@ -131,7 +131,6 @@ export class ActivityFormDialogComponent {
     },
   );
 
-  /** Sınıf seçicinin bağlandığı kontrol. */
   protected readonly classroomControl = this.activityForm.get('classroom') as FormControl<
     string[] | null
   >;
@@ -176,7 +175,6 @@ export class ActivityFormDialogComponent {
       : this.translate.instant('ACTIVITIES.ADD');
   }
 
-  /** Alanın dokunulmuş ve geçersiz olup olmadığını kontrol eder (hata border + mesaj tetikleme için). */
   isFieldInvalid(field: string): boolean {
     const ctrl = this.activityForm.get(field);
     return !!(ctrl && ctrl.touched && ctrl.invalid);
@@ -203,7 +201,6 @@ export class ActivityFormDialogComponent {
     this.editingActivity.set(activity);
     this.formSubmitted.set(false);
 
-    // Sınıfları string'den diziye (array) çeviriyoruz
     const classArray =
       activity.classroom && activity.classroom !== 'Tüm Sınıflar'
         ? activity.classroom.split(', ')

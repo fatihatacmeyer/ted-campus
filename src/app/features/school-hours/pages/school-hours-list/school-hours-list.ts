@@ -59,7 +59,7 @@ import { PageHeaderComponent } from '../../../../shared/components/page-header/p
 export class SchoolHoursListComponent implements OnInit {
   protected readonly days = WEEKDAYS;
 
-  // ---- reaktif ekran durumu (hepsi signal — CD tetiklemek için ChangeDetectorRef gerekmiyor) ----
+  // reaktif ekran durumu (hepsi signal — CD tetiklemek için ChangeDetectorRef gerekmiyor)
   protected readonly hours = signal<SchoolHours[]>([]);
   protected readonly loading = signal(false);
   protected readonly campuses = signal<DropdownItem[]>([]);
@@ -90,7 +90,7 @@ export class SchoolHoursListComponent implements OnInit {
     this.loadStudents();
   }
 
-  // ---- öğrenciler -----------------------------------------------------
+  // öğrenciler
   protected getStudents(campusId: number | string, sinifId: number | string): Person[] {
     return this.studentsMap().get(`${campusId}_${sinifId}`) ?? [];
   }
@@ -113,7 +113,7 @@ export class SchoolHoursListComponent implements OnInit {
     });
   }
 
-  // ---- satır bazlı etüt/gün yardımcıları -------------------------------
+  // satır bazlı etüt/gün yardımcıları
   protected hasStudyTime(row: SchoolHours, dayKey: string): boolean {
     const r = row as unknown as Record<string, string | undefined>;
     return isValidTime(r[dayKey + 'EtutluBas']) && isValidTime(r[dayKey + 'EtutluBit']);
@@ -127,7 +127,7 @@ export class SchoolHoursListComponent implements OnInit {
     return this.days.filter((d) => this.hasStudyTime(row, d.key)).map((d) => d.index);
   }
 
-  // ---- satır düzenleme yaşam döngüsü -----------------------------------
+  // satır düzenleme yaşam döngüsü
   protected onRowEditInit(row: SchoolHours): void {
     if (this.editingRowId() !== null && this.editingRowId() !== row.Id) {
       this.notification.info('SCHOOL_HOURS.MSG_ONE_EDIT');
@@ -252,7 +252,7 @@ export class SchoolHoursListComponent implements OnInit {
     this.editingRowId.set(null);
   }
 
-  // ---- kampüs / sınıf filtreleri (kaydedilmemiş değişiklik kontrolü dahil) ----
+  // kampüs / sınıf filtreleri (kaydedilmemiş değişiklik kontrolü dahil)
   protected onCampusSelect(newCampusId: number | string | undefined): void {
     if (typeof newCampusId !== 'number') return;
 

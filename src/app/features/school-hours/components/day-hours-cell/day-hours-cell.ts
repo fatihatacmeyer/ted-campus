@@ -6,8 +6,6 @@ import { TimeRangeInputComponent } from '../time-range-input/time-range-input';
 
 /**
  * Bir sınıfın bir gününe ait "Normal" ve "Etüt" saat çiftini gösterir/düzenler.
- * Orijinal component'te tek bir @for bloğunun içinde ~90 satır tutan bu mantık
- * artık kendi kapsülünde, bağımsız test edilebilir bir bileşen.
  */
 @Component({
   selector: 'app-day-hours-cell',

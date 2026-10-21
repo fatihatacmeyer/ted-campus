@@ -168,7 +168,6 @@ export class ActivitiesComponent {
     this.formDialog().openEdit(activity);
   }
 
-  /** Tablo satırına tıklandığında detay diyaloğunu açar. */
   openDetailDialog(activity: ActivityInterface) {
     this.detailDialog().open(activity);
   }

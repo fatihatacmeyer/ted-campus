@@ -1,8 +1,3 @@
-<!-- ════════════════════════════════════════════════════════════
-     TED Servis Takip — School Bus
-     Komple servis yönetimi: Araçlar, araca bağlı öğrenci atamaları
-     ════════════════════════════════════════════════════════════ -->
-
 <div class="school-bus">
   <app-page-header
     [title]="'SCHOOL_BUS.TITLE' | translate"
@@ -10,9 +5,6 @@
     icon="directions_bus"
   />
 
-  <!-- ════════════════════════════════════════════════════ -->
-  <!-- Tab Navigation                                       -->
-  <!-- ════════════════════════════════════════════════════ -->
   <div class="tab-nav">
     @for (tab of tabs; track tab.key) {
       <button class="tab-btn" [class.active]="activeTab() === tab.key" (click)="setTab(tab.key)">

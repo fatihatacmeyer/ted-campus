@@ -1,21 +1,3 @@
-<!-- <nav class="sidebar">
-  <div class="sidebar-header">MENÜ</div>
-  <ul class="nav-list">
-    @for (item of navItems; track item.label) {
-      <li>
-        <a
-          [routerLink]="item.route"
-          routerLinkActive="active"
-          [routerLinkActiveOptions]="{ exact: false }"
-        >
-          <span class="material-symbols-outlined">{{ item.icon }}</span>
-          <span class="nav-label">{{ item.label }}</span>
-        </a>
-      </li>
-    }
-  </ul>
-</nav> -->
-
 <nav class="sidebar" [class.closed]="!isOpen">
   <div class="sidebar-header">
     <span class="header-title">{{ 'HEADER.MENU' | translate }}</span>

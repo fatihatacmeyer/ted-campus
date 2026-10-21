@@ -91,7 +91,7 @@ export class LastPassComponent implements OnInit {
   private readonly destroyRef = inject(DestroyRef);
   private readonly config: AppConfig = inject(APP_CONFIG);
 
-  // --- State ---
+  // State
   isFullScreen = signal(false);
   terminalGroups = signal<TerminalGroup[]>([]);
   selectedGroupId = signal<number | null>(null);

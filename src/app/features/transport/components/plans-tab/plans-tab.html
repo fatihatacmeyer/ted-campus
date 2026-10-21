@@ -78,9 +78,7 @@
   </app-customizable-table>
 </div>
 
-<!-- ══════════════════════════════════════════════════════════ -->
-<!-- DIALOG: Plan Form (Add/Edit)                              -->
-<!-- ══════════════════════════════════════════════════════════ -->
+<!-- DIALOG: Plan Form (Add/Edit) -->
 @if (planFormVisible()) {
   <p-dialog
     [visible]="true"
@@ -305,9 +303,7 @@
   </p-dialog>
 }
 
-<!-- ══════════════════════════════════════════════════════════ -->
-<!-- DIALOG: Plan Delete Confirmation                          -->
-<!-- ══════════════════════════════════════════════════════════ -->
+<!-- DIALOG: Plan Delete Confirmation -->
 @if (planDeleteVisible() && planDeleting(); as deletingPlan) {
   <p-dialog
     [visible]="true"
@@ -362,9 +358,7 @@
   </p-dialog>
 }
 
-<!-- ══════════════════════════════════════════════════════════ -->
-<!-- DIALOG: Plan Toplu Silme Onayı                            -->
-<!-- ══════════════════════════════════════════════════════════ -->
+<!-- DIALOG: Plan Toplu Silme Onayı -->
 @if (planBulkDeleteVisible()) {
   <p-dialog
     [visible]="true"

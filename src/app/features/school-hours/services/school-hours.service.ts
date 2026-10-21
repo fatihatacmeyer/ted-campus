@@ -79,7 +79,6 @@ export class SchoolHoursService {
         SinifSeviyesi: data.SinifSeviyesi,
         Aciklama: data.Aciklama,
         ...collectDayTimeFields(data),
-        // Yeni Toplu Format Alanı
         GunlerVeSiciller: data.GunlerVeSiciller ?? null,
       })
       .pipe(
@@ -117,7 +116,6 @@ function truncateTimeFields(row: SchoolHours): SchoolHours {
   return copy as unknown as SchoolHours;
 }
 
-/** 28 satırlık elle yazılmış alan listesi yerine WEEKDAYS üzerinden üretilir. */
 function collectDayTimeFields(data: SchoolHours): Record<string, string | undefined> {
   const fields: Record<string, string | undefined> = {};
   for (const day of WEEKDAYS) {

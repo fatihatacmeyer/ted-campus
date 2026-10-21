@@ -110,9 +110,7 @@
   </app-customizable-table>
 </div>
 
-<!-- ══════════════════════════════════════════════════════════ -->
-<!-- DIALOG: Yetkili Ekle / Düzenle                             -->
-<!-- ══════════════════════════════════════════════════════════ -->
+<!-- DIALOG: Yetkili Ekle / Düzenle -->
 @if (authorityFormVisible()) {
   <p-dialog
     [visible]="true"
@@ -269,9 +267,7 @@
   (confirmed)="afterAuthorityChange()"
 ></app-person-exit-dialog>
 
-<!-- ══════════════════════════════════════════════════════════ -->
-<!-- DIALOG: Yetkiliye Giriş Bilgilerini Gönder Onayı           -->
-<!-- ══════════════════════════════════════════════════════════ -->
+<!-- DIALOG: Yetkiliye Giriş Bilgilerini Gönder Onayı -->
 @if (authoritySendVisible() && authoritySendTargets().length) {
   @let targets = authoritySendTargets();
   <p-dialog
