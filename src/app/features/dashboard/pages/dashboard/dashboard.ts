@@ -65,7 +65,7 @@ export class DashboardComponent implements OnInit {
 
   private readonly insideDialog = viewChild.required(InsidePersonsDialogComponent);
 
-  /* ── State ─────────────────────────────────────────────── */
+  /* State */
   /** Özet sayılar (sp_DashboardCampus_s): Kayıtlı / Okulda */
   private readonly statsResource = this.createResource(
     () => this.dashboardService.getDashboardStats(),
@@ -114,7 +114,7 @@ export class DashboardComponent implements OnInit {
     }),
   );
 
-  /* ── Lifecycle ─────────────────────────────────────────── */
+  /* Lifecycle */
   ngOnInit(): void {
     const user = this.authService.currentUserValue;
     this.userName.set(
@@ -122,7 +122,7 @@ export class DashboardComponent implements OnInit {
     );
   }
 
-  /* ── Data ──────────────────────────────────────────────── */
+  /* Data */
   /** Kart verilerini yeniden yükler ("Tekrar dene"). */
   protected fetchData(): void {
     this.resources.forEach((r) => r.reload());
@@ -138,7 +138,7 @@ export class DashboardComponent implements OnInit {
     });
   }
 
-  /* ── UI actions ────────────────────────────────────────── */
+  /* UI actions */
   /**
    * Özet kartına tıklanınca "o an okulda olan" kişi listesini diyalogda gösterir.
    * type: 'STUDENT' | 'PARENT' | null (ikisi birden).

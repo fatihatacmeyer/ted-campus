@@ -110,7 +110,6 @@ export interface Absentee {
   schoolName: string;
 }
 
-/** "O an okulda olan" kişi listesi (sp_DashboardKisilerCampus_s). */
 /** Kişi türü filtresi / değeri. Backend karşılıkları: OGRENCI / VELI. */
 export type PersonType = 'STUDENT' | 'PARENT';
 
@@ -356,7 +355,6 @@ export class DashboardService {
       .pipe(
         map((rows) =>
           (rows || []).map((row, index) => {
-            // SQL'den gelen metinlere göre UI sınıflarını (renk/ikon) belirliyoruz
             const sonuc = (row.Sonuc || '').toLowerCase();
             const userDef = (row.userDef || '').toLocaleUpperCase('tr-TR');
             const isProxy = userDef === 'VEKİL' || userDef === 'VEKIL';
@@ -385,7 +383,7 @@ export class DashboardService {
                 : 'out';
 
             return {
-              id: index + 1, // Satır numarası olarak kullanıyoruz
+              id: index + 1,
               personName: row.adSoyad || '-',
               registryNo: row.SicilNo || '-',
               userdef: isStudent ? 11 : 12, // UI renk ayrımları için

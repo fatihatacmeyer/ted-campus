@@ -241,9 +241,7 @@ export class AttendanceService {
     return this.callDynamic<unknown>({ point: 'izintek', islemtipi: 'd', izinid: izinId });
   }
 
-  // ────────────────────────────────────────────────────────────────
   // Öğrenci Devam — sp_OgrenciHareketRaporu_s
-  // ────────────────────────────────────────────────────────────────
 
   /** Backend dispatcher point'i öğrenci hareket raporu prosedürüyle eşleşir. */
   private readonly studentPoint = 'OgrenciHareketRaporu';

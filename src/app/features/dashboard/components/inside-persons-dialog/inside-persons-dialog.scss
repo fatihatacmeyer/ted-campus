@@ -7,7 +7,7 @@
   display: block;
 }
 
-/* ── Kişi Listesi Modalı (sabit boyut + arama) ────────────
+/* Kişi Listesi Modalı (sabit boyut + arama)
    Dialog'a sabit height verildiği için içerik flex-column;
    liste kalan tüm alanı doldurur, taşarsa kendi içinde kayar. */
 $inside-type-col-width: 130px;
