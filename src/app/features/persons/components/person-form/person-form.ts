@@ -136,23 +136,20 @@ export class PersonFormComponent implements OnChanges, OnInit {
     return controls;
   }
 
-  // Form alanlarının isimlendirmesi ve görünürlüğü için i18n uyumlu dinamik yapı
   get formConfig() {
     const isOgrenci = this.userdef === UserDef.Ogrenci;
     const isOgretmen = this.userdef === UserDef.Ogretmen;
 
     return {
       show: {
-        personelno: true, //isOgrenci || isOgretmen,
+        personelno: true,
         kurumsal: isOgrenci || isOgretmen, // Veli'nin sınıfı, branşı olmaz
         pozisyon: !isOgrenci,
         gorev: !isOgrenci,
       },
       labels: {
-        // Öğrenciyse "Okul No", değilse "Sicil No"
         sicilno: isOgrenci ? 'PERSON.SCHOOL_NO' : 'Sicil No',
 
-        // personelno: Öğretmen için "Personel No", Öğrenci ve Veli için "TC Kimlik"
         personelno: isOgretmen ? 'PERSON.PERSONNEL_NO' : 'PERSON.IDENTITY_DEFAULT',
 
         firma: 'PERSON.CAMPUS',
@@ -195,7 +192,6 @@ export class PersonFormComponent implements OnChanges, OnInit {
     }
   }
 
-  /** Düzenleme modunda form alanlarını mevcut person verisiyle doldurur. */
   private patchFormForEdit(): void {
     const p = this.editPerson!;
 
@@ -219,7 +215,7 @@ export class PersonFormComponent implements OnChanges, OnInit {
       sicilno: p.sicilno || '',
       personelno: p.personelno || '',
       cardid: p.cardid || '',
-      ceptelefon: cleanPhone, // Temizlenmiş telefonu buraya ver
+      ceptelefon: cleanPhone,
       telefon1: p.telefon1 || '',
       email: p.email || '',
       adres: p.adres || '',
@@ -353,13 +349,6 @@ export class PersonFormComponent implements OnChanges, OnInit {
     saveObs.subscribe({
       next: (stdRes) => {
         const stdResult = unwrapResponse<Person>(stdRes);
-        // if (!isSuccessResult(stdResult)) {
-        //   this.errorMessage =
-        //     stdResult?.sunucucevap || this.translate.instant('PERSON.SAVE_FAILED');
-        //   this.isSaving = false;
-        //   this.cdr.markForCheck();
-        //   return;
-        // }
 
         const personId = this.isEditMode ? this.editPerson!.id : extractNewId(stdResult);
         const linked = this.linked();
@@ -415,7 +404,6 @@ export class PersonFormComponent implements OnChanges, OnInit {
       return formatDate(v[field.key] as Date | null);
     }
     if (field.key === 'personelno') {
-      // Artık P: T: gibi formatlamalar yapmıyoruz. Direkt girilen Personel No'yu döndürüyoruz!
       return (v['personelno'] as string) || '';
     }
     return (v[field.key] as string) || '';

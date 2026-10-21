@@ -328,9 +328,6 @@ export class PersonService {
     };
   }
 
-  /**
-   * insertPerson ve updatePerson için ortak ön-koşul: userdef zorunludur.
-   */
   private assertUserDef(personData: PersonInsertRequest | null | undefined): void {
     if (!personData || personData.userdef == null) {
       throw new Error(
@@ -350,11 +347,6 @@ export class PersonService {
     return this.http.post<Person[]>(`${this.config.apiUrl}/Person`, payload);
   }
 
-  /**
-   * Mevcut bir sicil kaydını günceller.
-   * insertPerson ile aynı payload yapısını kullanır; fark olarak
-   * `islemtipi: 'u'` ve gerçek `id` gönderilir.
-   */
   updatePerson(personData: PersonInsertRequest & { id: number }): Observable<Person[]> {
     this.assertUserDef(personData);
 
@@ -423,11 +415,6 @@ export class PersonService {
     return this.api.callEndpoint<LeaveRequestResponse[]>('Dynamic', params);
   }
 
-  /**
-   * İzin formu PDF'ini getirir.
-   * Legacy: formgosternew(formid, 'izin') → GET /report?Name={encrypted}
-   * Params: islemtipi=s&reportid=IZINFORM&params=id:{formid}&islemno=1
-   */
   /**
    * Direkt izin atama — sp_pdks_ik prosedürüne gider.
    * Legacy: izinkaydet2() → POST /TA → sp_pdks_ik
@@ -519,7 +506,7 @@ export class PersonService {
       .pipe(map((data) => (Array.isArray(data) ? data : []) as ExitReason[]));
   }
 
-  // --- VELİ - ÖĞRENCİ İLİŞKİSİ (RelationCampus) ---
+  // VELİ - ÖĞRENCİ İLİŞKİSİ (RelationCampus)
 
   /**
    * Öğrencinin tüm velilerini getirir (sp_relationcampus_s, tip=2).
@@ -534,7 +521,6 @@ export class PersonService {
       .callEndpoint<RelationCampusRow[]>('Dynamic', {
         point: 'relationcampus',
         islemtipi: 's',
-        //islemno: '',
         tip: 2,
         vsicilid: '',
         osicilid: ogrenciSicilId,
@@ -556,7 +542,6 @@ export class PersonService {
       .callEndpoint<RelationCampusRow[]>('Dynamic', {
         point: 'relationcampus',
         islemtipi: 's',
-        //islemno: '',
         tip: 1,
         vsicilid: veliSicilId,
         osicilid: '',
@@ -579,7 +564,6 @@ export class PersonService {
       .callEndpoint<RelationCampusRow[]>('Dynamic', {
         point: 'relationcampus',
         islemtipi: 's',
-        //islemno: '',
         tip: 0,
         vsicilid: '',
         osicilid: '',

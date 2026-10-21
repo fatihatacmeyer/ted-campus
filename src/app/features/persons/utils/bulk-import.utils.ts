@@ -39,7 +39,7 @@ export interface ImportColumn {
   example: string;
 }
 
-// ─── Sütun tanımları (şablonun tek kaynağı) ───
+// Sütun tanımları (şablonun tek kaynağı)
 
 const LIST_HINT = "'Listeler' sayfasındaki değerlerden biri";
 
@@ -178,7 +178,7 @@ export function userdefOf(kind: ImportKind): number {
   return kind === 'student' ? UserDef.Ogrenci : UserDef.Veli;
 }
 
-// ─── Metin normalizasyonu ───
+// Metin normalizasyonu
 
 /** Büyük/küçük harf ve Türkçe karakter farklarını yok sayan karşılaştırma anahtarı. */
 export function normalizeKey(value: unknown): string {
@@ -205,7 +205,7 @@ export function cellToText(value: unknown): string {
   return String(value).replace(/\s+/g, ' ').trim();
 }
 
-// ─── Değer ayrıştırıcıları ───
+// Değer ayrıştırıcıları
 
 export type ParseResult = { ok: true; value: string } | { ok: false };
 
@@ -291,7 +291,7 @@ export function parseStudentIds(value: unknown): { ids: number[]; invalid: strin
   return { ids, invalid };
 }
 
-// ─── Liste (lookup) çözümü ───
+// Liste (lookup) çözümü
 
 export interface LookupIndex {
   exact: Map<string, number>;
@@ -320,7 +320,7 @@ export function resolveLookup(index: LookupIndex, text: string): number | null {
   return id === undefined ? null : id;
 }
 
-// ─── Sayfa (sheet) ayrıştırma ───
+// Sayfa (sheet) ayrıştırma
 
 const HEADER_MAPS: Record<ImportKind, Map<string, ImportColumn>> = {
   student: buildHeaderMap(STUDENT_COLUMNS),
@@ -422,7 +422,7 @@ export function buildFixSheetRows(
   ];
 }
 
-// ─── Doğrulama bağlamı ───
+// Doğrulama bağlamı
 
 function relationKey(studentId: number, parentId: number): string {
   return `${studentId}:${parentId}`;
@@ -467,7 +467,7 @@ export function buildValidationContext(
 
 export { relationKey };
 
-// ─── Satır doğrulama ───
+// Satır doğrulama
 
 type FieldValues = Record<ImportField, string>;
 

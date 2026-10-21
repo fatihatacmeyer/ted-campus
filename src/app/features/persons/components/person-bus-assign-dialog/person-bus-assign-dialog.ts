@@ -104,13 +104,11 @@ export class PersonBusAssignDialogComponent implements OnInit {
           const gidisRes = results[0];
           const donusRes = results[1];
 
-          // İkisi de başarılıysa
           if (gidisRes.sonuc === 1 && donusRes.sonuc === 1) {
             this.notification.success('PERSON_BUS_ASSIGN.MSG_ASSIGNED_BOTH');
             this.confirmed.emit();
             this.close();
           } else {
-            // Hata olan yönlerin mesajlarını birleştir ve göster
             const errorMessages = [];
             if (gidisRes.sonuc !== 1) {
               errorMessages.push(
@@ -127,7 +125,6 @@ export class PersonBusAssignDialogComponent implements OnInit {
               );
             }
 
-            // Kullanıcıya tam olarak sunucunun döndüğü metinleri (Örn: "Bu öğrenci bu yön için zaten bir servise atanmış") gösteriyoruz
             this.notification.error(errorMessages.join(' | '));
           }
           this.cdr.markForCheck();
@@ -148,7 +145,6 @@ export class PersonBusAssignDialogComponent implements OnInit {
             this.confirmed.emit();
             this.close();
           } else {
-            // Doğrudan backend'den gelen "Bu öğrenci bu yön için zaten bir servise atanmış" mesajı gösterilecek
             this.notification.error(res.sunucuCevap || 'PERSON_BUS_ASSIGN.MSG_ASSIGN_ERROR');
           }
           this.cdr.markForCheck();

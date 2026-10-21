@@ -11,7 +11,6 @@
     ></button>
   </div>
 
-  <!-- DÜZENLEME MODU: MEVCUT VELİLER -->
   @if (isEditMode) {
     <div class="relation-list">
       @for (row of relationRows; track rowKey(row)) {
@@ -123,7 +122,6 @@
     </div>
   }
 
-  <!-- VAR OLAN KİŞİYİ EKLE -->
   @if (!isCreatingNewLinked) {
     <div class="field">
       <p-select
@@ -154,7 +152,6 @@
     }
   }
 
-  <!-- YENİ VELİ/ÖĞRENCİ OLUŞTUR -->
   @else {
     <div class="p-3 border rounded bg-light">
       <div class="field-row mb-2">

@@ -248,7 +248,7 @@ export class BulkImportComponent {
     return total === 0 ? 0 : Math.round((done / total) * 100);
   });
 
-  // ─── Şablon ───
+  // Şablon
 
   async downloadTemplate(): Promise<void> {
     this.busy.set(true);
@@ -268,7 +268,7 @@ export class BulkImportComponent {
     }
   }
 
-  // ─── Dosya yükleme ve doğrulama ───
+  // Dosya yükleme ve doğrulama
 
   async onFileSelected(event: Event): Promise<void> {
     const input = event.target as HTMLInputElement;
@@ -322,7 +322,7 @@ export class BulkImportComponent {
     this.revalidate();
   }
 
-  // ─── Aktarım ───
+  // Aktarım
 
   startImport(): void {
     const toProcess = this.rows().filter((r) => this.needsRecord(r) || this.hasWork(r));
@@ -440,7 +440,7 @@ export class BulkImportComponent {
     this.step.set('upload');
   }
 
-  // ─── Gösterim yardımcıları ───
+  // Gösterim yardımcıları
 
   statusTag(row: ImportRow): { labelKey: string; severity: TagSeverity } {
     if (row.outcome === 'imported') {

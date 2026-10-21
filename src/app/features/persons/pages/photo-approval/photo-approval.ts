@@ -17,7 +17,6 @@ import { NotificationService } from '../../../../core/services/notification.serv
 import { AppConfig, APP_CONFIG } from '../../../../core/services/app-config.service';
 import { PageHeaderComponent } from '../../../../shared/components/page-header/page-header';
 
-// UI için hesaplanmış alanları barındıran genişletilmiş arayüz
 interface PhotoApprovalUI extends PhotoApproval {
   photoUrl: string;
   displayName: string;
@@ -64,7 +63,6 @@ export class PhotoApprovalComponent implements OnInit {
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: (data) => {
-          // Gerçek API'den gelen veriyi UI modeline dönüştürür
           const mappedData = data.map((photo) => this.mapToUI(photo));
           this.pendingPhotos.set(mappedData);
           this.isLoading.set(false);
@@ -87,7 +85,6 @@ export class PhotoApprovalComponent implements OnInit {
           this.processingId.set(null);
           if (res.sonuc === 1) {
             this.notification.success(res.sunucuCevap || 'PHOTO_APPROVAL.SUCCESS');
-            // Başarılı olanı listeden (UI'dan) anında temizler
             this.pendingPhotos.update((photos) => photos.filter((p) => p.Id !== photo.Id));
           } else {
             this.notification.error(res.sunucuCevap || 'PHOTO_APPROVAL.FAILED');
@@ -112,7 +109,6 @@ export class PhotoApprovalComponent implements OnInit {
       pTypeStr = 'PHOTO_APPROVAL.PROXY';
       pSeverity = 'warn'; // Turuncu Rozet
     }
-    // 2. UserDef (ID) Kontrolü
     else {
       switch (photo.UserDef) {
         case 11:

@@ -101,7 +101,6 @@ export class PersonProfileComponent implements OnChanges {
       .subscribe({
         next: (rows) => {
           if (rows && rows.length > 0 && rows[0].DosyaAdi) {
-            // Konfigürasyondan gelen dinamik URL'i kullanıyoruz
             const baseUrl =
               this.config.photoBaseUrl || 'http://localhost/MeCampus/ProfilFotograflari';
             this.photoUrl = `${baseUrl}/${rows[0].DosyaAdi}`;
@@ -149,7 +148,6 @@ export class PersonProfileComponent implements OnChanges {
 
     const veliId = Number(this.person.veliSicilId);
 
-    // Tıklanabilir (link) yapabilmek için, bu veliyi allPersons (tüm kişiler) listesinde arıyoruz.
     const found = this.allPersons.find((p) => p.id === veliId);
 
     if (found) {
@@ -172,7 +170,6 @@ export class PersonProfileComponent implements OnChanges {
     return ctx === UserDef.Ogrenci || ctx === UserDef.Veli;
   }
 
-  /** Dinamik label — tıklanan kişinin userdef değerine göre */
   get linkedPersonsLabel(): string {
     const ctx = this.person?.userdef ?? this.userdefContext;
     if (ctx === UserDef.Ogrenci) return 'PERSON_PROFILE.LINKED_PARENTS';
@@ -188,7 +185,6 @@ export class PersonProfileComponent implements OnChanges {
     const found = this.allPersons.find((p) => p.id === linked.id);
 
     if (found) {
-      // Eğer ana listede bulursa tüm verileriyle modalı aç
       this.personClick.emit(found);
     } else {
       // Eğer listede bulamazsa (API'den gelmemişse), elimizdeki isim ve ID ile

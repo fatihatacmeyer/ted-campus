@@ -93,12 +93,12 @@ export class PersonLeaveDialogComponent implements OnChanges {
     if (changes['visible'] && this.visible) {
       this.resetForm();
       this.loadLeaveTypes();
-      this.loadTerminals(); // ← YENİ
+      this.loadTerminals();
     }
   }
 
   selectedTerminal: number | null = null;
-  terminals: DropdownItem[] = []; // artık boş başlıyor, backend'den dolduruluyor
+  terminals: DropdownItem[] = [];
 
   /** sp_MeCampusterminal_s'ten çıkış terminali (kapı) listesini çeker. */
   private loadTerminals(): void {
@@ -107,7 +107,7 @@ export class PersonLeaveDialogComponent implements OnChanges {
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: (items: DropdownItem[]) => {
-          this.terminals = items; // Dropdown'ı besleyen dizi
+          this.terminals = items;
           this.cdr.markForCheck();
         },
         error: (err) => {
@@ -223,7 +223,6 @@ export class PersonLeaveDialogComponent implements OnChanges {
         ? this.multiPersons.map((p) => p.id)
         : [this.person!.id];
 
-    // Her bir sicil için ayrı bir backend isteği hazırla
     const requests = targets.map((sicilid) => {
       const request: PersonLeaveAssignCampusParams = {
         sicilid,

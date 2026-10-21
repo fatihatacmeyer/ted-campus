@@ -88,7 +88,7 @@ export class PersonLinkedSectionComponent implements OnChanges {
 
   isCreatingNewLinked = false;
 
-  existingRelations: ExistingRelation[] = []; // DB'deki mevcut ilişkiler
+  existingRelations: ExistingRelation[] = [];
   removedRelIds: number[] = []; // silinecek ilişkiler (sp_velicampus_d)
   changedRelations: RelationChange[] = []; // velisi değişecek ilişkiler (sp_velicampus_u)
   pendingAdditions: number[] = []; // eklenecek veli sicil id'leri (sp_velicampus_i)
@@ -134,13 +134,10 @@ export class PersonLinkedSectionComponent implements OnChanges {
     return this.isCreatingNewLinked ? 'PERSON.SELECT_FROM_LIST' : 'PERSON.CREATE_NEW_LINKED';
   }
 
-  /** "Veli seçin" / "Öğrenci seçin" placeholder'ı (i18n anahtarı). */
   readonly linkedSelectPlaceholder = 'PERSON.SELECT_LINKED';
 
-  /** Değiştir dropdown'ı placeholder'ı (i18n anahtarı): "Yeni veli seçin" / "Yeni öğrenci seçin". */
   readonly changeLinkedPlaceholder = 'PERSON.SELECT_NEW_LINKED';
 
-  /** "Veli Ekle" / "Öğrenci Ekle" buton etiketi (i18n anahtarı). */
   readonly addLinkedButtonLabel = 'PERSON.ADD_LINKED';
 
   /** Değiştir tooltip'i (i18n anahtarı): "Veliyi Değiştir" / "Öğrenciyi Değiştir". */
@@ -160,7 +157,6 @@ export class PersonLinkedSectionComponent implements OnChanges {
     return this.userdef === UserDef.Veli ? 'PERSON.NO_STUDENT' : 'PERSON.NO_PARENT';
   }
 
-  /** Dropdown içindeki arama kutusu placeholder'ı (i18n anahtarı): "Veli ara..." / "Öğrenci ara...". */
   readonly linkedFilterPlaceholder = 'PERSON.SEARCH_LINKED';
 
   get linkedPersonOptions(): { label: string; value: number }[] {
@@ -201,7 +197,7 @@ export class PersonLinkedSectionComponent implements OnChanges {
     this.cdr.markForCheck();
   }
 
-  // ─── Veli ilişkisi yönetimi (sp_relationcampus_s / sp_velicampus_i-u-d) ───
+  // Veli ilişkisi yönetimi (sp_relationcampus_s / sp_velicampus_i-u-d)
 
   /**
    * Düzenleme modunda mevcut ilişkileri yükler:

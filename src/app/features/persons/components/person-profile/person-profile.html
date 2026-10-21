@@ -9,7 +9,6 @@
 >
   @if (person) {
     <div class="profile-content">
-      <!-- FOTOĞRAF VE BAŞLIK BÖLÜMÜ -->
       <div class="profile-header">
         @if (!photoFailed && photoUrl) {
           <div
@@ -31,7 +30,6 @@
             </div>
           </div>
         } @else {
-          <!-- Varsayılan (Default) Fotoğraf İkonu -->
           <div class="default-avatar">
             <i class="pi pi-user"></i>
           </div>
@@ -176,7 +174,6 @@
   }
 </p-dialog>
 
-<!-- Tam Boyut Fotoğraf Önizleme -->
 <p-dialog
   [(visible)]="showFullPhoto"
   [modal]="true"

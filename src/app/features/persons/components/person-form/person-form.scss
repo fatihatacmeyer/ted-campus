@@ -4,7 +4,7 @@
   padding-right: 4px;
 }
 
-/* ── Sections ──────────────────────────────────────────── */
+/* Sections */
 
 .form-section {
   margin-bottom: 1.25rem;
@@ -25,7 +25,7 @@
   }
 }
 
-/* ── Field Layout ──────────────────────────────────────── */
+/* Field Layout */
 
 .field-row {
   display: grid;
@@ -69,7 +69,7 @@
   color: var(--ted-red-600);
 }
 
-/* ── Photo Upload ──────────────────────────────────────── */
+/* Photo Upload */
 
 .photo-upload-area {
   display: flex;
@@ -146,7 +146,7 @@
   flex-shrink: 0;
 }
 
-/* ── Validation & Error ────────────────────────────────── */
+/* Validation & Error */
 
 .field-error {
   color: var(--p-red-500, var(--ted-danger-solid));
@@ -166,7 +166,7 @@
   }
 }
 
-/* ── Actions ───────────────────────────────────────────── */
+/* Actions */
 
 .actions {
   display: flex;

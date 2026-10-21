@@ -97,7 +97,6 @@ export class PersonExitDialogComponent implements OnChanges {
       },
       error: (err: unknown) => {
         console.error('Ayrılış nedenleri yüklenemedi:', err);
-        // Fallback options
         this.reasonOptions = [
           { label: this.translate.instant('PERSON_EXIT.REASON_N', { n: 1 }), value: 1 },
           { label: this.translate.instant('PERSON_EXIT.REASON_N', { n: 2 }), value: 2 },

@@ -127,7 +127,7 @@ export class ProxyListComponent implements OnInit {
       });
   }
 
-  // --- Filtre Sekmeleri (PDKS mantığı) ---
+  // Filtre Sekmeleri (PDKS mantığı)
   activeTab = signal<ProxyApprovalStatus | null>(null);
 
   tabOptions: TabOption[] = [
@@ -169,7 +169,6 @@ export class ProxyListComponent implements OnInit {
     this.loadProxies();
   }
 
-  // Aktif sekmeyi güncelleyip veriyi yeniden çeker
   onTabChange(status: ProxyApprovalStatus | null): void {
     this.activeTab.set(status);
     this.loadProxies();
@@ -177,7 +176,6 @@ export class ProxyListComponent implements OnInit {
 
   loadProxies(): void {
     this.isLoading = true;
-    // Seçili sekmeye (status) göre istek atıyoruz
     this.proxyService
       .getProxies(this.activeTab())
       .pipe(takeUntilDestroyed(this.destroyRef))

@@ -102,7 +102,6 @@ export class PersonCrudComponent implements OnInit {
   /** Tablo sütunları — userdef'a göre başlık override + export hook'ları uygulanır. */
   columns: ColumnDef<Person>[] = PERSON_COLUMNS.map((c) => ({ ...c }));
 
-  /** Varsayılan görünür sütunlar (tablo tercihi olmadığında / sıfırlamada). */
   readonly PERSON_DEFAULT_FIELDS = PERSON_DEFAULT_FIELDS;
 
   private personService = inject(PersonService);
@@ -116,7 +115,7 @@ export class PersonCrudComponent implements OnInit {
     this.USERDEF = Number(this.route.snapshot.data['userDef']) as UserDef;
   }
 
-  // ─── Derived labels ───
+  // Derived labels
 
   get pageTitleKey(): string {
     return getUserDefLabelKey(this.USERDEF) + '_PLURAL';
@@ -139,7 +138,6 @@ export class PersonCrudComponent implements OnInit {
 
   readonly descriptionTextKey = 'PERSON.LIST_DESCRIPTION';
 
-  /** Tüm personel tiplerinde profil modalı gösterilir. */
   readonly hasProfileModal = true;
 
   /** İşlem kolu sadece Ogrenci sayfasında gösterilir (İzin Ata). */
@@ -175,7 +173,6 @@ export class PersonCrudComponent implements OnInit {
     return this.USERDEF !== UserDef.Ogretmen;
   }
 
-  /** Tablo sütun başlıkları — userdef'a göre farklılık gösterir. */
   get columnOverrides(): { field: string; header: string }[] {
     if (this.USERDEF === UserDef.Ogrenci) {
       return [
@@ -205,7 +202,6 @@ export class PersonCrudComponent implements OnInit {
     return [];
   }
 
-  /** Tablo ilk açıldığında veya varsayılanlara dönüldüğünde gösterilecek sütunlar. */
   get currentDefaultFields(): string[] {
     if (this.USERDEF === UserDef.Ogrenci) {
       return [
@@ -241,7 +237,7 @@ export class PersonCrudComponent implements OnInit {
     return this.PERSON_DEFAULT_FIELDS;
   }
 
-  // ─── Column config ───
+  // Column config
 
   private applyColumnOverrides(): void {
     for (const override of this.columnOverrides) {
@@ -280,7 +276,7 @@ export class PersonCrudComponent implements OnInit {
     }
   }
 
-  // ─── Lifecycle ───
+  // Lifecycle
 
   ngOnInit() {
     this.applyColumnOverrides();
@@ -289,7 +285,7 @@ export class PersonCrudComponent implements OnInit {
     this.fetchPersonList();
   }
 
-  // ─── Data ───
+  // Data
 
   fetchPersonList(): void {
     this.isLoading = true;
@@ -298,7 +294,6 @@ export class PersonCrudComponent implements OnInit {
 
     this.personService
       .getPersonListCampus()
-      //.getPersonList()
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: (data: Person[]) => {
@@ -329,7 +324,6 @@ export class PersonCrudComponent implements OnInit {
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: (relations) => {
-          // 1. Eşleştirme için allPersons dizisini hızlı erişilebilir bir Map'e çeviriyoruz O(N)
           const personLookup = new Map<number, Person>();
           for (const p of this.allPersons) {
             personLookup.set(p.id, p);
@@ -338,13 +332,10 @@ export class PersonCrudComponent implements OnInit {
           this.childrenMap.clear();
           this.parentsMap.clear();
 
-          // 2. Döngü içinde array.find() yerine lookup.get() kullanıyoruz O(1)
           for (const rel of relations || []) {
             const veliId = Number(rel.VeliSicilId);
             const ogrenciId = Number(rel.OgrenciSicilId);
 
-            // HIZLANDIRILMIŞ KISIM:
-            // this.allPersons.find(p => p.id === ...) yerine direkt erişim:
             const veli = personLookup.get(veliId);
             const child = personLookup.get(ogrenciId);
 
@@ -374,7 +365,6 @@ export class PersonCrudComponent implements OnInit {
   }
 
   onForgotPasswordRequest(person: Person): void {
-    // Sadece öğrenci ve veli için geçerli kısıtlaması
     if (!this.canSendLoginInfo) {
       this.notification.error('PERSON_CRUD.ONLY_STUDENT_PARENT');
       return;
@@ -406,7 +396,7 @@ export class PersonCrudComponent implements OnInit {
       });
   }
 
-  // ─── Toplu bilgi gönderimi ───
+  // Toplu bilgi gönderimi
 
   /** Bilgi gönderimi (tekli ve toplu) yalnızca Öğrenci ve Veli sayfalarında vardır. */
   get canSendLoginInfo(): boolean {
@@ -514,7 +504,7 @@ export class PersonCrudComponent implements OnInit {
     return linked.length ? linked.map((k) => k.adsoyad).join('\n') : null;
   }
 
-  // ─── Dialog open / close ───
+  // Dialog open / close
 
   openAddDialog(): void {
     this.editPerson = null;
@@ -537,7 +527,7 @@ export class PersonCrudComponent implements OnInit {
     this.fetchPersonList();
   }
 
-  // ─── Exit / Restore ───
+  // Exit / Restore
 
   onExitDialogClose(): void {
     this.exitPerson = null;
@@ -548,7 +538,7 @@ export class PersonCrudComponent implements OnInit {
     this.fetchPersonList();
   }
 
-  // ─── Leave ───
+  // Leave
 
   /** İzin Ata — satır tıklamasını tetiklemesin diye olay yayılımı durdurulur. */
   onLeaveRequest(event: Event, person: Person): void {
@@ -569,7 +559,7 @@ export class PersonCrudComponent implements OnInit {
     this.fetchPersonList();
   }
 
-  // ─── Profile modal ───
+  // Profile modal
 
   onLinkedPersonClick(person: Person): void {
     this.selectedProfilePerson = person;

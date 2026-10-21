@@ -27,7 +27,6 @@
         <span class="text-muted">{{ 'PHOTO_APPROVAL.EMPTY_DESCRIPTION' | translate }}</span>
       </div>
     } @else {
-      <!-- Kart Izgarası (Grid) -->
       <div class="photo-grid">
         @for (photo of pendingPhotos(); track photo.Id) {
           <div class="photo-card" [class.processing]="processingId() === photo.Id">
