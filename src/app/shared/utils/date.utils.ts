@@ -22,7 +22,6 @@ export function formatDate(date: Date | string | null | undefined): string {
  * - Date ise kopyasını döner (yeni Date nesnesi).
  * - boş/geçersiz/eksik format → null döner.
  */
-// YENİ HALİ
 export function parseDate(dateStr: Date | string | null | undefined): Date | null {
   if (!dateStr) return null;
   if (dateStr instanceof Date) return new Date(dateStr);

@@ -1,9 +1,3 @@
-/**
- * "HH:MM" maskeli saat inputları için framework'ten tamamen bağımsız,
- * saf (pure) yardımcı fonksiyonlar. Herhangi bir Angular bağımlılığı yok,
- * bu sayede tek başına unit test edilebilir ve tek bir yerde bakım yapılır.
- */
-
 const TIME_REGEX = /^([01][0-9]|2[0-3]):([0-5][0-9])$/;
 const EMPTY_LIKE_VALUES = new Set(['00:00', '00:00:00', '-']);
 

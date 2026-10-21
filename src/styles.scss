@@ -1,5 +1,4 @@
 @use './styles/tokens';
-/* @import url("https://fonts.googleapis.com/css?family=Poppins:300,400,500,600,700|Roboto:300,400,500,600,700"); */
 @import 'primeicons/primeicons.css';
 
 html,
@@ -16,7 +15,7 @@ body {
   font-family: 'Manrope', sans-serif;
 }
 
-/* ── Admin Layout Shell ──────────────────────────────────── */
+/* Admin Layout Shell */
 
 .admin-wrapper {
   width: 100%; /* sayfa içeriği .content padding'i kadar kenar boşluğu bırakır */
@@ -36,7 +35,7 @@ body {
   margin-bottom: var(--ted-space-4);
 }
 
-/* ── Admin Table ─────────────────────────────────────────── */
+/* Admin Table */
 
 .admin-table {
   background: var(--ted-bg-surface);
@@ -56,7 +55,7 @@ body {
   min-width: 260px;
 }
 
-/* ── Table Compact Styles ────────────────────────────────── */
+/* Table Compact Styles */
 
 .admin-table-th {
   padding: 0.45rem 0.5rem !important;
@@ -68,7 +67,7 @@ body {
   font-size: 12px !important;
 }
 
-/* ── Column Width Classes ────────────────────────────────── */
+/* Column Width Classes */
 
 .col-id {
   width: 70px;
@@ -95,7 +94,7 @@ body {
   width: 120px;
 }
 
-/* ── Resizable Column Handles (görünür sürükleme çizgisi) ── */
+/* Resizable Column Handles (görünür sürükleme çizgisi) */
 
 .p-datatable-thead > tr > th.p-datatable-resizable-column .p-datatable-column-resizer {
   z-index: 1;
@@ -133,7 +132,7 @@ body {
   background: var(--ted-red-600);
 }
 
-/* ── Inline Action Cell ──────────────────────────────────── */
+/* Inline Action Cell */
 
 .inline-action-cell {
   display: inline-flex;
@@ -150,7 +149,7 @@ body {
   white-space: nowrap;
 }
 
-/* ── Badge Styles ────────────────────────────────────────── */
+/* Badge Styles */
 
 .metric-badge {
   background: var(--ted-bg-subtle);
@@ -163,7 +162,7 @@ body {
   border-radius: 6px;
 }
 
-/* ── Loading State ───────────────────────────────────────── */
+/* Loading State */
 
 .loading-box {
   display: flex;
@@ -180,7 +179,7 @@ body {
   }
 }
 
-/* ── Error State ─────────────────────────────────────────── */
+/* Error State */
 
 .error-box {
   padding: 20px;
@@ -191,7 +190,7 @@ body {
   font-weight: 600;
 }
 
-/* ── Responsive ──────────────────────────────────────────── */
+/* Responsive */
 
 @media (max-width: 1320px) {
   .table-toolbar {
@@ -218,7 +217,7 @@ body {
   }
 }
 
-/* ── Utility Classes (Bootstrap-compatible) ──────────────── */
+/* Utility Classes (Bootstrap-compatible) */
 
 .d-flex {
   display: flex;
@@ -359,7 +358,7 @@ body {
   text-align: center;
 }
 
-/* Spacing utilities on the 4px scale (previously undefined: gap-4, mb-4, py-3, py-4, pb-3, p-3) */
+/* Spacing utilities on the 4px scale */
 .gap-4 {
   gap: var(--ted-space-6);
 }

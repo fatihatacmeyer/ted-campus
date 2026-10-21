@@ -46,7 +46,6 @@ interface ClassGroupView {
 })
 export class ClassMultiSelectComponent {
   readonly classes = input<ClassItem[]>([]);
-  /** Seçili ID'ler, virgülle ayrılmış. */
   readonly value = input<string | number | undefined>(undefined);
   readonly placeholder = input('');
   readonly valueChange = output<string | undefined>();
@@ -68,7 +67,6 @@ export class ClassMultiSelectComponent {
       .subscribe(() => this.cdr.markForCheck());
   }
 
-  /** Dışarıdan gelen değerin ID kümesi. */
   private readonly appliedIds = computed(() => this.parseIds(this.value()));
 
   private readonly sorted = computed(() =>
@@ -124,7 +122,6 @@ export class ClassMultiSelectComponent {
     return parts;
   });
 
-  // ---- panel ---------------------------------------------------------
   protected toggleOpen(event: MouseEvent): void {
     event.stopPropagation();
     if (this.open()) {
@@ -165,7 +162,6 @@ export class ClassMultiSelectComponent {
     this.close();
   }
 
-  // ---- seçim ---------------------------------------------------------
   protected isSelected(id: number): boolean {
     return this.draft().has(id);
   }

@@ -75,7 +75,7 @@ overflow-x: auto;
   background: var(--ted-bg-subtle);
 }
 
-/* ── Responsive ──────────────────────────────────────────── */
+/* Responsive */
 
 @media (max-width: 1320px) {
   .table-toolbar {
@@ -111,7 +111,7 @@ overflow-x: auto;
   text-align: center;
 }
 
-/* ── Sütun Başlığı ───────────────────────────────────────── */
+/* Sütun Başlığı */
 
 .col-head {
   display: flex;
@@ -134,7 +134,7 @@ overflow-x: auto;
   margin-right: 6px;
 }
 
-/* ── Sütun Başlığı Filtre Butonu ─────────────────────────── */
+/* Sütun Başlığı Filtre Butonu */
 
 .col-filter-btn {
   &.is-active {
@@ -142,7 +142,7 @@ overflow-x: auto;
   }
 }
 
-/* ── Filtre Popup'ı ─────────────────────────────────────── */
+/* Filtre Popup'ı */
 
 .col-filter-popup {
   position: fixed;
@@ -176,7 +176,7 @@ overflow-x: auto;
   }
 }
 
-/* ── Sınıf Filtresi (seviye + şube) ──────────────────────── */
+/* Sınıf Filtresi (seviye + şube) */
 
 .class-filter {
   display: flex;
@@ -233,7 +233,7 @@ overflow-x: auto;
   }
 }
 
-/* ── Satır Numarası ─────────────────────────────────────── */
+/* Satır Numarası */
 
 .col-row-number {
   width: 30px;
@@ -242,7 +242,7 @@ overflow-x: auto;
   font-weight: 500;
 }
 
-/* ── Column Width Classes ────────────────────────────────── */
+/* Column Width Classes */
 
 .col-id          { width: 70px; }
 .col-ad          { width: 120px; }
@@ -272,7 +272,7 @@ overflow-x: auto;
 .col-yetkistr    { width: 90px; }
 .col-yetkistrad  { width: 110px; }
 
-/* ── Column Selector Panel ──────────────────────────────── */
+/* Column Selector Panel */
 
 .col-selector-wrapper {
   position: relative;
@@ -410,7 +410,7 @@ overflow-x: auto;
   margin: 2px 12px;
 }
 
-/* ── Toggle Switch ──────────────────────────────────────── */
+/* Toggle Switch */
 
 .col-toggle {
   position: relative;
